@@ -1,0 +1,1787 @@
+Styles modernes pour la page
+    .clickable-row:hover {
+        background: linear-gradient(90deg, rgba(0,128,128,0.1), transparent);
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+    
+    .clickable-row:active {
+        transform: scale(0.99);
+    }
+    
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    /* Animation pour les inputs */
+    .form-control:focus {
+        border-color: teal;
+        box-shadow: 0 0 0 0.2rem rgba(0,128,128,0.25);
+    }
+    
+    /* Style pour les tableaux */
+    table td {
+        vertical-align: middle;
+    }
+    
+    /* Scrollbar personnalisée */
+    .table-responsive::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: teal;
+        border-radius: 10px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        table td {
+            display: block;
+            width: 100%;
+        }
+        
+        table td:first-child {
+            padding-bottom: 0;
+        }
+    }
+    
+    /* Animation de chargement */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .card {
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    /* Style pour les inputs dans les tableaux */
+    .form-control-sm {
+        font-size: 14px;
+        padding: 4px 8px;
+    }
+
+
+
+    /* Styles modernes pour la page de retrait */
+    .form-control:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220,53,69,0.25);
+    }
+    
+    .btn-danger-custom {
+        background: linear-gradient(135deg, #dc3545, #b02a37);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-danger-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(220,53,69,0.4);
+    }
+    
+    .btn-danger-custom:active {
+        transform: translateY(0);
+    }
+    
+    .table-hover tbody tr:hover {
+        background: linear-gradient(90deg, rgba(220,53,69,0.05), transparent);
+    }
+    
+    /* Animation d'entrée */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .card {
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        table td {
+            display: block;
+            width: 100%;
+        }
+        
+        table td:first-child {
+            padding-bottom: 0;
+        }
+    }
+    
+    /* Scrollbar personnalisée */
+    .table-responsive::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #dc3545;
+        border-radius: 10px;
+    }
+
+
+    /* Styles modernes pour la page de visa */
+    .clickable-row:hover {
+        background: linear-gradient(90deg, rgba(23,162,184,0.1), transparent);
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+    
+    .clickable-row:active {
+        transform: scale(0.99);
+    }
+    
+    .form-control:focus {
+        border-color: #17a2b8;
+        box-shadow: 0 0 0 0.2rem rgba(23,162,184,0.25);
+    }
+    
+    .btn-visa-custom {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-visa-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(23,162,184,0.4);
+    }
+    
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Style pour l'iframe de signature */
+    iframe {
+        transition: all 0.3s ease;
+    }
+    
+    iframe:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        table td {
+            display: block;
+            width: 100%;
+        }
+        
+        table td:first-child {
+            padding-bottom: 0;
+        }
+        
+        iframe {
+            height: 200px;
+        }
+    }
+    
+    /* Scrollbar personnalisée */
+    .table-responsive::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #17a2b8;
+        border-radius: 10px;
+    }
+    
+    /* Badge styles */
+    .badge {
+        padding: 5px 10px;
+        font-weight: 500;
+        border-radius: 20px;
+    }
+    
+    .bg-info {
+        background: linear-gradient(135deg, #17a2b8, #138496) !important;
+    }
+    
+    .bg-success {
+        background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+    }
+
+
+
+    /* Styles modernes pour la page d'approvisionnement */
+    .form-control:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.2rem rgba(255,193,7,0.25);
+    }
+    
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .table tbody tr:hover {
+        background: linear-gradient(90deg, rgba(255,193,7,0.05), transparent);
+    }
+    
+    /* Scrollbar personnalisée */
+    .table-responsive::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #ffc107;
+        border-radius: 10px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        table td {
+            display: block;
+            width: 100%;
+        }
+        
+        table td:first-child {
+            padding-bottom: 0;
+        }
+    }
+
+
+
+    /* Styles modernes pour la page de délestage */
+    .form-control:focus {
+        border-color: #6c757d;
+        box-shadow: 0 0 0 0.2rem rgba(108,117,125,0.25);
+    }
+    
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .table tbody tr:hover {
+        background: linear-gradient(90deg, rgba(108,117,125,0.05), transparent);
+    }
+    
+    /* Style pour le champ montant désactivé */
+    input:disabled {
+        cursor: not-allowed;
+        opacity: 0.9;
+    }
+    
+    /* Scrollbar personnalisée */
+    .table-responsive::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #6c757d;
+        border-radius: 10px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        table td {
+            display: block;
+            width: 100%;
+        }
+        
+        table td:first-child {
+            padding-bottom: 0;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+    }
+    
+    /* Animation pour le bouton */
+    .btn {
+        transition: all 0.3s ease;
+    }
+    
+    .btn:active {
+        transform: scale(0.98);
+    }
+    
+    /* Style pour les totaux */
+    tfoot tr th {
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+
+
+
+
+    /* Styles modernes pour la page Entrée Trésor */
+    .form-control:focus {
+        border-color: #20c997;
+        box-shadow: 0 0 0 0.2rem rgba(32,201,151,0.25);
+    }
+    
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    
+    .card:hover {
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .table tbody tr:hover {
+        background: linear-gradient(90deg, rgba(32,201,151,0.05), transparent);
+    }
+    
+    /* Style pour les boutons d'action */
+    .btn-group .btn {
+        transition: all 0.2s ease;
+    }
+    
+    .btn-group .btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    .btn-group .btn:active {
+        transform: translateY(0);
+    }
+    
+    /* Scrollbar personnalisée */
+    .table-responsive::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #20c997;
+        border-radius: 10px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .btn-group .btn {
+            border-radius: 6px !important;
+            margin: 0;
+        }
+        
+        table td {
+            display: block;
+            width: 100%;
+        }
+        
+        table td:first-child {
+            padding-bottom: 0;
+        }
+    }
+    
+    /* Animation pour les boutons */
+    .btn {
+        transition: all 0.3s ease;
+    }
+    
+    /* Style pour les totaux */
+    tfoot tr th {
+        font-size: 18px;
+        font-weight: bold;
+    }
+
+
+
+
+
+
+   
+    /* Styles modernes pour la page de gestion de crédit */
+    .nav-tabs .nav-link {
+        transition: all 0.3s ease;
+        border-radius: 8px 8px 0 0;
+        margin-right: 5px;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        background-color: rgba(32, 201, 151, 0.1);
+        color: #20c997 !important;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #20c997 !important;
+        background-color: white !important;
+        border-bottom: 3px solid #20c997 !important;
+    }
+    
+    .form-control:focus {
+        border-color: #20c997;
+        box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+    }
+    
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        animation: fadeInUp 0.4s ease-out;
+    }
+    
+    .card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Style pour les champs désactivés */
+    input:disabled, select:disabled {
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+    
+    /* Style pour les boutons d'action */
+    .btn {
+        transition: all 0.3s ease;
+    }
+    
+    .btn:active {
+        transform: scale(0.98);
+    }
+    
+    /* Style pour les switchs */
+    .form-switch .form-check-input {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .form-switch .form-check-input:checked {
+        background-color: #20c997;
+        border-color: #20c997;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        .nav-tabs .nav-link {
+            padding: 8px 12px !important;
+            font-size: 12px;
+        }
+        
+        table td {
+            display: block;
+            width: 100%;
+        }
+        
+        table td:first-child {
+            padding-bottom: 0;
+        }
+        
+        .d-flex.flex-wrap.gap-3 {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+    }
+    
+    /* Scrollbar personnalisée */
+    .table-responsive::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #20c997;
+        border-radius: 10px;
+    }
+    
+    /* Style pour les messages d'erreur */
+    .text-danger {
+        font-size: 11px;
+        margin-top: 4px;
+    }
+    
+    /* Style pour les champs en erreur */
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+    
+    /* Animation pour les onglets */
+    .tab-pane {
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    
+    /* Style pour le bouton rapport */
+    .btn-rapport {
+        transition: all 0.3s ease;
+    }
+    
+    .btn-rapport:hover {
+        transform: translateY(-2px);
+    }
+
+
+
+
+    /* Style Page Echeancier */
+
+
+
+
+     .form-check-input:checked {
+        background-color: #20c997;
+        border-color: #20c997;
+    }
+    
+    .form-check-input:focus {
+        border-color: #20c997;
+        box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+    }
+    
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 11px;
+        }
+        
+        .btn {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+    }
+
+
+
+
+
+
+
+    /* Styles pour la page d'adhésion */
+    .nav-tabs .nav-link {
+        transition: all 0.3s ease;
+        border-radius: 8px 8px 0 0;
+        margin-right: 5px;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        background-color: rgba(32, 201, 151, 0.1);
+        color: #20c997 !important;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #20c997 !important;
+        background-color: white !important;
+        border-bottom: 3px solid #20c997 !important;
+    }
+    
+    .form-control:focus {
+        border-color: #20c997;
+        box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+    }
+    
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        animation: fadeInUp 0.4s ease-out;
+    }
+    
+    .card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .drop-container {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .drop-container:hover {
+        background-color: #e6f2f9 !important;
+        border-color: #198764 !important;
+    }
+    
+    /* Scrollbar personnalisée */
+    .table-responsive::-webkit-scrollbar,
+    .card-body::-webkit-scrollbar {
+        width: 5px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track,
+    .card-body::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb,
+    .card-body::-webkit-scrollbar-thumb {
+        background: #20c997;
+        border-radius: 10px;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .nav-tabs .nav-link {
+            padding: 8px 12px !important;
+            font-size: 12px;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        table td {
+            display: block;
+            width: 100%;
+        }
+        
+        table td:first-child {
+            padding-bottom: 0;
+        }
+        
+        .d-flex.gap-2 {
+            flex-direction: column;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+    }
+    
+    /* Animation pour les onglets */
+    .tab-pane {
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    
+    /* Style pour les messages d'erreur */
+    .text-danger {
+        font-size: 11px;
+        margin-top: 4px;
+    }
+    
+    /* Style pour les champs en erreur */
+    .is-invalid {
+        border-color: #dc3545 !important;
+    }
+
+
+
+
+/* PAGE DE RELEVE */
+    .clickable-row:hover {
+        background: linear-gradient(90deg, rgba(32, 201, 151, 0.1), transparent);
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+    
+    .clickable-row:active {
+        transform: scale(0.99);
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(32, 201, 151, 0.05);
+    }
+    
+    .table thead th {
+        font-weight: 600;
+    }
+    
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 11px;
+        }
+        
+        .btn {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        
+        .card-body {
+            padding: 15px;
+        }
+    }
+    
+    .badge {
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    
+    .bg-info {
+        background: linear-gradient(135deg, #17a2b8, #138496) !important;
+    }
+    
+    .bg-success {
+        background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+    }
+    
+    .text-danger {
+        font-weight: 500;
+    }
+    
+    .text-success {
+        font-weight: 500;
+    }
+    
+    tfoot td {
+        background-color: #e6f2f9;
+        font-weight: bold;
+    }
+
+
+
+
+
+
+/* PAGE SOMMAIRE DE COMPTE */
+    .form-check-input:checked {
+        background-color: #20c997;
+        border-color: #20c997;
+    }
+    
+    .form-check-input:focus {
+        border-color: #20c997;
+        box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+    }
+    
+    .table th, .table td {
+        vertical-align: middle;
+        padding: 12px 8px;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(32, 201, 151, 0.05);
+    }
+    
+    .pagination {
+        display: flex;
+        gap: 5px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .pagination li {
+        display: inline-block;
+    }
+    
+    .pagination button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .pagination .active-page button {
+        background: #20c997;
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        .table-responsive {
+            font-size: 12px;
+        }
+        
+        .btn {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+    }
+
+
+
+
+
+
+
+/* PAGE REMBOURSEMENT ATTENDU */
+    .form-check-input:checked {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    
+    .form-check-input:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    .table th, .table td {
+        vertical-align: middle;
+        padding: 12px 8px;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+    
+    .table-danger {
+        background-color: rgba(220, 53, 69, 0.1) !important;
+    }
+    
+    .badge {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    
+    .bg-info {
+        background: linear-gradient(135deg, #17a2b8, #138496) !important;
+    }
+    
+    .bg-success {
+        background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+    }
+    
+    .bg-danger {
+        background: linear-gradient(135deg, #dc3545, #b02a37) !important;
+    }
+    
+    .pagination {
+        display: flex;
+        gap: 5px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .pagination li {
+        display: inline-block;
+    }
+    
+    .pagination button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #e9ecef;
+        color: #495057;
+    }
+    
+    .pagination button:hover:not(:disabled) {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .pagination .active-page button {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .pagination button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        .table-responsive {
+            font-size: 12px;
+        }
+        
+        .btn {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        
+        .badge {
+            font-size: 10px;
+            padding: 3px 6px;
+        }
+    }
+
+
+    /* PAGE SMS BANKING  */
+
+
+  
+    .form-check-input:checked {
+        background-color: #20c997;
+        border-color: #20c997;
+    }
+    
+    .form-check-input:focus {
+        border-color: #20c997;
+        box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+    }
+    
+    .table th, .table td {
+        vertical-align: middle;
+        padding: 12px 8px;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(32, 201, 151, 0.05);
+    }
+    
+    .btn-group .btn {
+        transition: all 0.2s ease;
+    }
+    
+    .btn-group .btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    .form-switch .form-check-input {
+        cursor: pointer;
+        width: 2em;
+    }
+    
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        .table-responsive {
+            font-size: 12px;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .btn-group .btn {
+            border-radius: 6px !important;
+            margin: 0;
+        }
+        
+        .d-flex.gap-2 {
+            flex-direction: column;
+        }
+    }
+
+
+
+
+    /* Styles pour le modal SMS Banking */
+    .modal-content {
+        animation: slideInDown 0.3s ease-out;
+    }
+    
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .modal-header .close {
+        background: none;
+        border: none;
+        font-size: 28px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .modal-header .close:hover {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+    
+    .form-control:focus {
+        border-color: #20c997 !important;
+        box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25) !important;
+    }
+    
+    /* Responsive pour le modal */
+    @media (max-width: 768px) {
+        .modal-dialog {
+            margin: 10px;
+        }
+        
+        .modal-body {
+            padding: 15px !important;
+        }
+        
+        table td {
+            display: block;
+            width: 100%;
+            padding: 8px 0 !important;
+        }
+        
+        table td:first-child {
+            padding-bottom: 0 !important;
+        }
+        
+        .btn {
+            font-size: 13px;
+            padding: 10px !important;
+        }
+    }
+
+
+
+    /* STYLE DE LA PAGE TFR */
+    .form-check-input:checked {
+        background-color: #20c997;
+        border-color: #20c997;
+    }
+    
+    .form-check-input:focus {
+        border-color: #20c997;
+        box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+    }
+    
+    .table th, .table td {
+        vertical-align: middle;
+        padding: 10px 8px;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(32, 201, 151, 0.05);
+    }
+    
+    .form-select {
+        padding: 4px 8px;
+        font-size: 13px;
+    }
+    
+    .pagination {
+        display: flex;
+        gap: 5px;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .pagination li {
+        display: inline-block;
+    }
+    
+    .pagination button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: #e9ecef;
+        color: #495057;
+    }
+    
+    .pagination button:hover:not(:disabled) {
+        background: #20c997;
+        color: white;
+    }
+    
+    .pagination .active-page button {
+        background: #20c997;
+        color: white;
+    }
+    
+    .pagination button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        .table-responsive {
+            font-size: 11px;
+        }
+        
+        .btn {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        
+        .d-flex.align-items-center.gap-3 {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+
+
+
+
+
+
+
+/* STYLE DE LA PAGE REPERTOIRE CAISSE */
+    .form-control:focus {
+        border-color: #20c997 !important;
+        box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25) !important;
+    }
+    
+    .table th, .table td {
+        vertical-align: middle;
+        padding: 10px 8px;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(32, 201, 151, 0.05);
+    }
+    
+    .alert-info {
+        background-color: #e6f2f9;
+        border-left: 4px solid #20c997;
+    }
+    
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        .table-responsive {
+            font-size: 11px;
+        }
+        
+        .btn {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        
+        .table td, .table th {
+            padding: 6px 4px;
+        }
+    }
+    
+    /* Animation pour les lignes */
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .table tbody tr:hover {
+        transform: scale(1.01);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Style pour les totaux */
+    tfoot tr td, tfoot tr th {
+        font-weight: bold;
+    }
+
+
+
+
+    /* JOURNAL */
+
+
+    .form-check-input:checked {
+        background-color: #20c997;
+        border-color: #20c997;
+    }
+    
+    .form-check-input:focus {
+        border-color: #20c997;
+        box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #20c997 !important;
+        box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25) !important;
+    }
+    
+    .table th, .table td {
+        vertical-align: middle;
+        padding: 10px 8px;
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(32, 201, 151, 0.05);
+    }
+    
+    .badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    
+    .bg-info {
+        background: linear-gradient(135deg, #17a2b8, #138496) !important;
+    }
+    
+    .bg-success {
+        background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+    }
+    
+    .bg-warning {
+        background: linear-gradient(135deg, #ffc107, #e0a800) !important;
+        color: #1a2632 !important;
+    }
+    
+    .bg-secondary {
+        background: linear-gradient(135deg, #6c757d, #495057) !important;
+    }
+    
+    .bg-dark {
+        background: linear-gradient(135deg, #343a40, #1a2632) !important;
+    }
+    
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        .table-responsive {
+            font-size: 11px;
+        }
+        
+        .btn {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        
+        .badge {
+            font-size: 10px;
+            padding: 4px 8px;
+        }
+        
+        .form-check-label {
+            font-size: 12px;
+        }
+        
+        .form-select {
+            font-size: 12px;
+            padding: 4px 8px;
+        }
+    }
+    
+    /* Animation pour les lignes */
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .table tbody tr:hover {
+        transform: scale(1.01);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Style pour les badges de filtres */
+    .badge {
+        transition: all 0.2s ease;
+    }
+    
+    .badge:hover {
+        transform: translateY(-2px);
+    }
+
+
+
+
+    
+    /* LOGIN */
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 0.5;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+    
+    .shadow-xl {
+        box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.15);
+    }
+    
+    .form-control:focus {
+        outline: none;
+    }
+
+
+
+
+
+
+
+/* DEBITEUR  */
+
+
+ .form-check-input:checked {
+        background-color: #20c997;
+        border-color: #20c997;
+    }
+    
+    .form-control:focus {
+        border-color: #20c997;
+        box-shadow: 0 0 0 0.2rem rgba(32, 201, 151, 0.25);
+    }
+    
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        animation: fadeInUp 0.4s ease-out;
+    }
+    
+    .card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .table tbody tr:hover {
+        background-color: rgba(32, 201, 151, 0.05);
+    }
+    
+    .badge {
+        padding: 4px 8px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    
+    .bg-info {
+        background: linear-gradient(135deg, #17a2b8, #138496) !important;
+    }
+    
+    .bg-success {
+        background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+    }
+    
+    .bg-danger {
+        background: linear-gradient(135deg, #dc3545, #b02a37) !important;
+    }
+    
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 10px !important;
+        }
+        
+        .card {
+            margin-bottom: 15px;
+        }
+        
+        .table-responsive {
+            font-size: 12px;
+        }
+        
+        .btn {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+        
+        .d-flex.gap-2 {
+            flex-direction: column;
+        }
+        
+        .input-group {
+            width: 100% !important;
+        }
+    }
+
+
+
+
+
+
+
+
+ /* Styles pour mobile */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 0 6px !important;
+        }
+        
+        /* Réduction des marges et paddings */
+        .card {
+            margin-bottom: 8px !important;
+        }
+        
+        .card .p-2 {
+            padding: 8px !important;
+        }
+        
+        /* Inputs plus petits mais confortables */
+        .form-control-sm {
+            font-size: 13px !important;
+            padding: 4px 8px !important;
+        }
+        
+        .btn-sm {
+            font-size: 12px !important;
+            padding: 4px 8px !important;
+        }
+        
+        /* Tableau des opérations - scroll horizontal */
+        .table-responsive {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Fixer la largeur minimale pour éviter le retour à la ligne */
+        .table-responsive table {
+            min-width: 480px;
+        }
+        
+        /* Police des labels */
+        .form-label {
+            font-size: 11px !important;
+            margin-bottom: 2px !important;
+        }
+        
+        /* Montant en grand */
+        .form-control-lg {
+            font-size: 20px !important;
+        }
+        
+        /* Badges plus petits */
+        .badge {
+            font-size: 10px !important;
+            padding: 3px 6px !important;
+        }
+    }
+    
+    /* Pour les très petits écrans (iPhone SE) */
+    @media (max-width: 480px) {
+        .table-responsive table {
+            min-width: 420px;
+        }
+        
+        .btn-sm {
+            font-size: 10px !important;
+            padding: 2px 6px !important;
+        }
+        
+        .table td, .table th {
+            padding: 4px 6px !important;
+            font-size: 11px !important;
+        }
+    }
+    
+    /* Scrollbar personnalisée pour le tableau */
+    .table-responsive::-webkit-scrollbar {
+        height: 4px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 5px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: teal;
+        border-radius: 5px;
+    }
+
+
+
+
+
+
+     /* Styles responsifs pour le billetage */
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 8px !important;
+        }
+        
+        .table-bordered th,
+        .table-bordered td {
+            padding: 6px 4px !important;
+        }
+        
+        .form-control-sm {
+            font-size: 12px !important;
+            padding: 4px 4px !important;
+            height: auto !important;
+        }
+        
+        .fw-bold {
+            font-size: 13px !important;
+        }
+        
+        .text-success {
+            font-size: 13px !important;
+        }
+        
+        /* Réduction de la taille des colonnes sur mobile */
+        .table-responsive table {
+            min-width: 280px;
+        }
+    }
+    
+    /* Pour les très petits écrans */
+    @media (max-width: 480px) {
+        .table-responsive table {
+            min-width: 260px;
+        }
+        
+        .table-bordered th,
+        .table-bordered td {
+            padding: 4px 2px !important;
+        }
+        
+        .form-control-sm {
+            font-size: 11px !important;
+            padding: 2px 2px !important;
+        }
+        
+        .fw-bold, .text-success {
+            font-size: 11px !important;
+        }
+    }
+    
+    /* Animation pour les inputs */
+    .form-control-sm:focus {
+        border-color: #20c997;
+        box-shadow: 0 0 0 2px rgba(32, 201, 151, 0.2);
+        outline: none;
+    }
+    
+    /* Style pour les cellules du tableau */
+    .table-bordered td, 
+    .table-bordered th {
+        vertical-align: middle;
+    }
+    
+    /* Suppression des flèches sur les inputs number */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+        opacity: 0.5;
+    }
