@@ -4,628 +4,661 @@ import Swal from "sweetalert2";
 import { EnteteRapport } from "./HeaderReport";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
-import * as FileSaver from "file-saver";
 import html2canvas from "html2canvas";
+import { Bars } from "react-loader-spinner";
 
-const Tfr = () => {
-    const [loading, setloading] = useState(false);
-    const [date_debut_balance, setdate_debut_balance] = useState("");
-    const [date_fin_balance, setdate_fin_balance] = useState("");
-    const [radioValue, setRadioValue] = useState("type_balance");
-    const [radioValue2, setRadioValue2] = useState("");
-    const handleRadioChange = (event) => {
-        setRadioValue(event.target.value);
-    };
-    const handleRadioChange2 = (event) => {
-        setRadioValue2(event.target.value);
-    };
-    const [compte_balance_debut, setcompte_balance_debut] = useState();
-    const [compte_balance_fin, setcompte_balance_fin] = useState();
-    const [devise, setdevise] = useState();
-    const [fetchData, setFetchData] = useState();
-    const [fetchResultat, setFetchResultat] = useState();
-    // const [fetchData2, setFetchData2] = useState();
-    // const [fetchDataConverti, setFetchDataConverti] = useState();
-    // const [fetchDataNonConverti, setFetchDataNonConverti] = useState();
+const TFR = () => {
+    const [loading, setLoading] = useState(false);
+    const [date_debut, setDateDebut] = useState("");
+    const [date_fin, setDateFin] = useState("");
+    const [devise, setDevise] = useState("CDF");
+    const [typeTFR, setTypeTFR] = useState("detail");
+    const [tfrData, setTfrData] = useState([]);
+    const [totaux, setTotaux] = useState({ produits: 0, charges: 0, resultat: 0 });
     const [currentPage, setCurrentPage] = useState(1);
-    // const [currentPage2, setCurrentPage2] = useState(1);
-    // const [transactions, setTransactions] = useState([]);
-    // const [total1, setTotal1] = useState(0);
-    // const [total2, setTotal2] = useState(0);
-    // const [totalConvertie1, setTotalConvertie1] = useState(0);
-    // const [totalConvertie2, setTotalConvertie2] = useState(0);
+    const itemsPerPage = 20;
 
     useEffect(() => {
-        // GET CURRENT DATE
         const today = new Date();
         const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, "0"); // Les mois commencent à 0, donc ajoutez 1
+        const month = String(today.getMonth() + 1).padStart(2, "0");
         const day = String(today.getDate()).padStart(2, "0");
-        setdate_fin_balance(`${year}-${month}-${day}`);
+        setDateFin(`${year}-${month}-${day}`);
+        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        setDateDebut(
+            `${firstDayOfMonth.getFullYear()}-${String(firstDayOfMonth.getMonth() + 1).padStart(2, "0")}-${String(firstDayOfMonth.getDate()).padStart(2, "0")}`
+        );
+    }, []);
 
-        // GET LAST DAY OF THE PREVIOUS MONTH
-        const lastDayPrevMonth = new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            0,
-        ); // 0th day of the current month gives the last day of the previous month
-        const year2 = lastDayPrevMonth.getFullYear();
-        const month2 = String(lastDayPrevMonth.getMonth() + 1).padStart(2, "0"); // Ajout de 1 car les mois sont indexés à partir de 0
-        const day2 = String(lastDayPrevMonth.getDate()).padStart(2, "0");
-        const formattedDate = `${year2}-${month2}-${day2}`;
-        setdate_debut_balance(formattedDate);
-    }, []); // Le tableau vide [] signifie que cet effet s'exécute une seule fois après le premier rendu
+    const handleSearch = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const res = await axios.post("/eco/pages/rapport/etat-financier/tfr", {
+                date_debut,
+                date_fin,
+                devise,
+                type_tfr: typeTFR,
+            });
+            if (res.data.status === 1) {
+                setTfrData(res.data.data);
+                setTotaux(res.data.totaux);
+                setCurrentPage(1);
+            } else {
+                Swal.fire("Erreur", res.data.msg || "Aucune donnée trouvée", "error");
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire("Erreur", "Erreur serveur", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const numberWithSpaces = (x) => {
+        if (x === null || x === undefined) return "0,00";
+        return Number(x).toLocaleString("fr-FR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    };
 
     const dateParser = (num) => {
-        const options = {
-            // weekday: "long",
-            year: "numeric",
-            month: "numeric",
-            day: "numeric",
-        };
-        let timestamp = Date.parse(num);
-
-        let date = new Date(timestamp).toLocaleDateString("fr-FR", options);
-
-        return date.toString();
+        if (!num) return "";
+        return new Date(num).toLocaleDateString("fr-FR");
     };
 
-    const AfficherBalance = async (e) => {
-        e.preventDefault();
-        setloading(true);
-        const res = await axios.post("/eco/pages/rapport/etat-financier/tfr", {
-            radioValue,
-            radioValue2,
-            date_debut_balance,
-            date_fin_balance,
-            devise,
-            compte_balance_debut,
-            compte_balance_fin,
-        });
-        if (res.data.status == 1) {
-            setloading(false);
-            setFetchData(res.data.data);
-            setFetchResultat(res.data.resultatNet);
-            // setFetchData2(res.data.data2);
-            setTransactions(fetchData);
-            const data = fetchData;
-            // setFetchDataConverti(res.data.data_converti);
-            // setFetchDataNonConverti(res.data.data_non_converti);
-            // Calculer les totaux
-            if (data) {
-            }
-            const totalAmount1 = fetchData.reduce(
-                (acc, transaction) =>
-                    transaction.RefTypeCompte === 7
-                        ? acc + transaction.soldeDebut
-                        : acc - transaction.soldeDebut,
-                0,
-            );
-            const totalAmount2 = fetchData.reduce(
-                (acc, transaction) =>
-                    transaction.RefTypeCompte === 7
-                        ? acc + transaction.soldeFin
-                        : acc - transaction.soldeFin,
-                0,
-            );
-            setTotal1(totalAmount1);
-            setTotal2(totalAmount2);
+    // Pagination
+    const totalPages = Math.ceil(tfrData.length / itemsPerPage);
+    const startIdx = (currentPage - 1) * itemsPerPage;
+    const currentItems = tfrData.slice(startIdx, startIdx + itemsPerPage);
 
-            // const data = fetchData;
-
-            // const fetchData2 = data;
-
-            // const totalAmountConvertie1 = fetchData2.reduce(
-            //     (acc, transaction) => {
-            //         const soldeDebutCDF = parseFloat(transaction.soldeDebutCDF);
-            //         const soldeDebutUSD = parseFloat(transaction.soldeDebutUSD);
-            //         if (transaction.RefTypeCompte === "7") {
-            //             return acc + soldeDebutCDF + soldeDebutUSD;
-            //         } else if (transaction.RefTypeCompte === "6") {
-            //             return acc + soldeDebutCDF - soldeDebutUSD;
-            //         }
-            //         return acc;
-            //     },
-            //     0
-            // );
-
-            // const totalAmountConvertie2 = fetchData2.reduce(
-            //     (acc, transaction) => {
-            //         const soldeFinCDF = parseFloat(transaction.soldeFinCDF);
-            //         const soldeFinUSD = parseFloat(transaction.soldeFinUSD);
-            //         if (transaction.RefTypeCompte === "7") {
-            //             return acc + soldeFinCDF + soldeFinUSD;
-            //         } else if (transaction.RefTypeCompte === "6") {
-            //             return acc + soldeFinCDF - soldeFinUSD;
-            //         }
-            //         return acc;
-            //     },
-            //     0
-            // );
-
-            // console.log("totalAmountConvertie1:", totalAmountConvertie1);
-            // console.log("totalAmountConvertie2:", totalAmountConvertie2);
-
-            // setTotalConvertie1(totalAmountConvertie1);
-            // setTotalConvertie2(totalAmountConvertie2);
+    const PaginationModerne = ({ currentPage, totalPages, onPageChange }) => {
+        const maxPagesToShow = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+        let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+        if (endPage - startPage + 1 < maxPagesToShow) {
+            startPage = Math.max(1, endPage - maxPagesToShow + 1);
         }
-    };
-
-    function numberWithSpaces(x) {
-        var parts = x.toString().split(".");
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        return parts.join(".");
-    }
-
-    // function removeLastWord(sentence) {
-    //     // Vérifie si sentence est null ou undefined, retourne une chaîne vide si c'est le cas
-    //     if (!sentence) {
-    //         return "";
-    //     }
-    //     // Convert the sentence to lowercase
-    //     const modifiedSentence = sentence.toLowerCase();
-
-    //     // Split the sentence into words
-    //     let words = modifiedSentence.split(" ");
-
-    //     // Check if the last word is "en" and remove it if it is
-    //     if (words[words.length - 1] === "en" || "En") {
-    //         words = words.slice(0, -1);
-    //     }
-
-    //     // Remove the actual last word
-    //     const wordsWithoutLast = words.slice(0, -1);
-
-    //     // Capitalize the first letter of each word
-    //     const capitalizedWords = wordsWithoutLast.map(
-    //         (word) => word.charAt(0).toUpperCase() + word.slice(1)
-    //     );
-
-    //     // Recompose the sentence without the last word
-    //     return capitalizedWords.join(" ");
-    // }
-
-    // Calculate the index of the first and last item of the current page
-    let itemsPerPage = 40;
-    const indexOfLastItem = currentPage * itemsPerPage;
-    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-    const currentItems =
-        fetchData && fetchData.slice(indexOfFirstItem, indexOfLastItem);
-
-    // Function to handle page change
-    const handlePageChange = (pageNumber) => {
-        setCurrentPage(pageNumber);
-    };
-
-    // Render pagination buttons
-    const renderPagination = () => {
-        const pageNumbers = [];
-        for (
-            let i = 1;
-            i <= Math.ceil(fetchData && fetchData.length / itemsPerPage);
-            i++
-        ) {
-            pageNumbers.push(
-                <li key={i} className={i === currentPage ? "active" : ""}>
-                    <button
-                        style={
-                            i === currentPage
-                                ? selectedButtonStyle
-                                : buttonStyle
-                        }
-                        onClick={() => handlePageChange(i)}
-                    >
-                        {i}
+        const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+        return (
+            <div className="pagination-modern">
+                <button className="page-nav" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
+                    <i className="fas fa-chevron-left"></i>
+                </button>
+                {startPage > 1 && (
+                    <>
+                        <button className="page-number" onClick={() => onPageChange(1)}>1</button>
+                        {startPage > 2 && <span className="page-dots">...</span>}
+                    </>
+                )}
+                {pages.map(page => (
+                    <button key={page} className={`page-number ${page === currentPage ? "active" : ""}`} onClick={() => onPageChange(page)}>
+                        {page}
                     </button>
-                </li>,
-            );
-        }
-        return pageNumbers;
-    };
-
-    const goToNextPage = () => {
-        setCurrentPage((prevPage) =>
-            Math.min(
-                prevPage + 1,
-                Math.ceil(fetchData && fetchData.length / itemsPerPage),
-            ),
+                ))}
+                {endPage < totalPages && (
+                    <>
+                        {endPage < totalPages - 1 && <span className="page-dots">...</span>}
+                        <button className="page-number" onClick={() => onPageChange(totalPages)}>{totalPages}</button>
+                    </>
+                )}
+                <button className="page-nav" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+                    <i className="fas fa-chevron-right"></i>
+                </button>
+                <div className="page-info">Page {currentPage} sur {totalPages}</div>
+            </div>
         );
     };
 
-    const goToPrevPage = () => {
-        setCurrentPage((prevPage) => Math.max(prevPage - 1, 1));
+    const exportToExcel = () => {
+        const wsData = tfrData.map(item => ({
+            "Compte": item.compte,
+            "Nature": item.nature === 'PRODUIT' ? 'Produit' : 'Charge',
+            "Montant": item.solde,
+        }));
+        const ws = XLSX.utils.json_to_sheet(wsData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "TFR");
+        XLSX.writeFile(wb, `tfr_${date_debut}_${date_fin}.xlsx`);
     };
 
-    const exportTableData = (tableId) => {
-        const s2ab = (s) => {
-            const buf = new ArrayBuffer(s.length);
-            const view = new Uint8Array(buf);
-            for (let i = 0; i !== s.length; ++i)
-                view[i] = s.charCodeAt(i) & 0xff;
-            return buf;
-        };
-
-        const table = document.getElementById(tableId);
-
-        if (!table) {
-            console.error(`Table with id ${tableId} not found`);
-            return;
-        }
-
-        // Convert table to workbook
-        const wb = XLSX.utils.table_to_book(table, { raw: true });
-
-        // Optionally set column widths
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const cols = Array.from(
-            table.querySelectorAll("tr:first-child th"),
-        ).map(
-            () => ({ wpx: 100 }), // Set default width in pixels
-        );
-        ws["!cols"] = cols;
-
-        // Write workbook
-        const wbout = XLSX.write(wb, { bookType: "xlsx", type: "binary" });
-
-        // Save file
-        const fileName = `table_${tableId}.xlsx`;
-        saveAs(
-            new Blob([s2ab(wbout)], { type: "application/octet-stream" }),
-            fileName,
-        );
-    };
     const exportToPDF = () => {
-        const content = document.getElementById("content-to-download-tfr");
-
-        if (!content) {
-            console.error("Element not found!");
-            return;
-        }
-
-        // Reduce scale to lower quality
-        html2canvas(content, { scale: 2 }).then((canvas) => {
-            const paddingTop = 50;
-            const paddingRight = 50;
-            const paddingBottom = 50;
-            const paddingLeft = 50;
-
-            const canvasWidth = canvas.width + paddingLeft + paddingRight;
-            const canvasHeight = canvas.height + paddingTop + paddingBottom;
-
-            const newCanvas = document.createElement("canvas");
-            newCanvas.width = canvasWidth;
-            newCanvas.height = canvasHeight;
-            const ctx = newCanvas.getContext("2d");
-
-            if (ctx) {
-                ctx.fillStyle = "#ffffff"; // Background color
-                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-                ctx.drawImage(canvas, paddingLeft, paddingTop);
-            }
-
+        const element = document.getElementById("tfr-content");
+        if (!element) return;
+        html2canvas(element, { scale: 2 }).then(canvas => {
             const pdf = new jsPDF("p", "mm", "a4");
-            const imgData = newCanvas.toDataURL("image/jpeg", 0.8); // Use JPEG format and set quality to 0.8
+            const imgData = canvas.toDataURL("image/png");
             const imgProps = pdf.getImageProperties(imgData);
             const pdfWidth = pdf.internal.pageSize.getWidth();
             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-            pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
-            pdf.autoPrint();
-            window.open(pdf.output("bloburl"), "_blank");
-            // pdf.save("releve-de-compte.pdf");
+            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`tfr_${date_debut}_${date_fin}.pdf`);
         });
     };
 
-    // const replaceCurrencyByCDF = (text) => {
-    //     return text.replace(/EN USD/g, "EN CDF");
-    // };
 
-    // const replaceCurrencyByUSD = (text) => {
-    //     return text.replace(/EN USD/g, "EN CDF");
-    // };
 
-    const paginationStyle = {
-        listStyle: "none",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        background: "",
-    };
-
-    const buttonStylePrevNext = {
-        padding: "2px 20px",
-        backgroundColor: "steelblue",
-        color: "white",
-        border: "none",
-        borderRadius: "5px",
-        cursor: "pointer",
-        margin: "0 5px",
-    };
-    const buttonStyle = {
-        padding: "1px 5px",
-        backgroundColor: "steelblue",
-        color: "white",
-        border: "none",
-        borderRadius: "5px",
-        cursor: "pointer",
-        margin: "0 5px",
-    };
-
-    const selectedButtonStyle = {
-        ...buttonStyle,
-        backgroundColor: "#FFC107", // Change color for selected button
-    };
+    const isPeriodValid = () => {
+    if (!date_debut || !date_fin) return true;
+    const anneeDebut = new Date(date_debut).getFullYear();
+    const anneeFin = new Date(date_fin).getFullYear();
+    return anneeDebut === anneeFin;
+};
 
     return (
-       <div className="container-fluid" style={{ marginTop: "10px", padding: "0 15px" }}>
-    {/* En-tête moderne */}
-    <div className="row mb-4">
-        <div className="col-12">
-            <div className="card border-0 shadow-sm rounded-3">
-                <div className="card-body p-3" style={{
-                    background: "#138496",
-                    borderRadius: "12px"
-                }}>
-                    <div className="d-flex align-items-center">
-                        <div className="me-3">
-                            <i className="fas fa-chart-line" style={{ fontSize: "28px", color: "white" }}></i>
-                        </div>
-                        <div>
-                            <h5 className="text-white fw-bold mb-0">Tableau de Formation de Résultat (TFR)</h5>
-                            <small className="text-white-50">Analyse des performances financières</small>
-                        </div>
+        <div className="tfr-container">
+            {loading && (
+                <div className="loader-overlay">
+                    <div className="loader-card">
+                        <Bars height="70" width="70" color="#10b981" />
+                        <h5>Calcul du Tableau de Résultat...</h5>
+                    </div>
+                </div>
+            )}
+
+            <div className="tfr-header" style={{background: "#138496", }}>
+                <div className="tfr-header-content">
+                    <div className="tfr-header-icon">
+                        <i className="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h1>Tableau de Formation du Résultat (TFR)</h1>
+                        <p>Produits - Charges = Résultat net</p>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    {/* Filtres */}
-    <div className="row g-3 mb-4">
-        {/* Période */}
-        <div className="col-md-3">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-calendar-alt me-2"></i>Période
-                    </h6>
-                </div>
-                <div className="card-body">
-                    <div className="mb-3">
-                        <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Période N-1</label>
-                        <input type="date" className="form-control" style={{ borderRadius: "8px", borderColor: "#20c997" }}
-                            onChange={(e) => setdate_debut_balance(e.target.value)} value={date_debut_balance} />
-                    </div>
-                    <div className="mb-2">
-                        <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Date Fin</label>
-                        <input type="date" className="form-control" style={{ borderRadius: "8px", borderColor: "#20c997" }}
-                            onChange={(e) => setdate_fin_balance(e.target.value)} value={date_fin_balance} />
+            <div className="tfr-filters">
+                <div className="filter-card">
+                    <div className="filter-header"><i className="fas fa-calendar-alt"></i> Période</div>
+                    <div className="filter-body">
+                        <label>Date début</label>
+                        <input type="date" className="modern-input" value={date_debut} onChange={e => setDateDebut(e.target.value)} />
+                                       {!isPeriodValid() && (
+           <small className="text-muted" style={{ fontSize: "16px" }}>
+                           
+                       
+        <i className="fas fa-exclamation-triangle text-danger"> Les dates doivent être dans la même année </i> 
+         </small>
+ 
+)}
+                        <label>Date fin</label>
+                        <input type="date" className="modern-input" value={date_fin} onChange={e => setDateFin(e.target.value)} />
+                       
                     </div>
                 </div>
-            </div>
-        </div>
-
-        {/* Consolidation */}
-        <div className="col-md-5">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-exchange-alt me-2"></i>Consolidation % à la monnaie
-                    </h6>
-                </div>
-                <div className="card-body">
-                    <div className="d-flex align-items-center gap-3 flex-wrap">
-                        <div className="form-check">
-                            <input type="radio" className="form-check-input" id="type_balance" name="type_balance"
-                                value="type_balance" checked={radioValue === "type_balance"} onChange={handleRadioChange} />
-                            <label className="form-check-label" style={{ color: "steelblue" }}>
-                                Balance uniquement en
-                            </label>
-                            <select name="devise" id="devise" className="form-select d-inline-block w-auto ms-2" 
-                                style={{ borderRadius: "6px", borderColor: "#20c997" }} onChange={(e) => setdevise(e.target.value)}>
-                                <option value="">Dévise</option>
-                                <option value="CDF">CDF</option>
-                                <option value="USD">USD</option>
-                            </select>
-                        </div>
+                <div className="filter-card">
+                    <div className="filter-header"><i className="fas fa-exchange-alt"></i> Devise</div>
+                    <div className="filter-body">
+                        <select className="modern-select" value={devise} onChange={e => setDevise(e.target.value)}>
+                            <option value="CDF">CDF (Franc Congolais)</option>
+                            <option value="USD">USD (Dollar US)</option>
+                        </select>
                     </div>
-                    <div className="mt-2">
+                </div>
+                <div className="filter-card">
+                    <div className="filter-header"><i className="fas fa-chart-pie"></i> Type TFR</div>
+                    <div className="filter-body">
                         <div className="form-check mb-2">
-                            <input disabled type="radio" className="form-check-input" id="balance_convertie_cdf" name="balance_convertie_cdf"
-                                value="balance_convertie_cdf" checked={radioValue === "balance_convertie_cdf"} onChange={handleRadioChange} />
-                            <label className="form-check-label" style={{ color: "steelblue" }}>
-                                TFR convertie en CDF
-                            </label>
+                            <input type="radio" className="form-check-input" id="detail" value="detail" checked={typeTFR === "detail"} onChange={e => setTypeTFR(e.target.value)} />
+                            <label className="form-check-label" htmlFor="detail">Détaillé (par compte)</label>
                         </div>
                         <div className="form-check">
-                            <input disabled type="radio" className="form-check-input" id="balance_convertie_usd" name="balance_convertie_usd"
-                                value="balance_convertie_usd" checked={radioValue === "balance_convertie_usd"} onChange={handleRadioChange} />
-                            <label className="form-check-label" style={{ color: "steelblue" }}>
-                                TFR convertie en USD
-                            </label>
+                            <input type="radio" className="form-check-input" id="consolide" value="consolide" checked={typeTFR === "consolide"} onChange={e => setTypeTFR(e.target.value)} />
+                            <label className="form-check-label" htmlFor="consolide">Consolidé (par groupe)</label>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        {/* Action */}
-        <div className="col-md-2">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-play me-2"></i>Action
-                    </h6>
+                <div className="filter-card action-card">
+     
+                   <div className="btn-with-tooltip" style={{ width: '100%' }}>
+    <button 
+        className="btn-primary-gradient mt-2" 
+        onClick={handleSearch}
+        disabled={!isPeriodValid()}
+        style={{ opacity: !isPeriodValid() ? 0.6 : 1, width: '100%' }}
+    >
+        {loading ? <span className="spinner-border spinner-border-sm"></span> : <i className="fas fa-calculator"></i>}
+        Calculer le résultat
+    </button>
+    {!isPeriodValid() && (
+        <span className="tooltip-text">
+            <i className="fas fa-info-circle me-1"></i> Les dates doivent être dans la même année
+        </span>
+    )}
+</div>
                 </div>
-                <div className="card-body d-flex align-items-center justify-content-center">
-                    <button onClick={AfficherBalance} className="btn w-100 py-2" 
-                        style={{ background: "linear-gradient(135deg, #20c997, #198764)", color: "white", borderRadius: "8px" }}>
-                        <i className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-desktop me-2"}`}></i>
-                        Afficher
-                    </button>
-                </div>
             </div>
-        </div>
-    </div>
 
-    {/* Tableau TFR */}
-    {fetchData && fetchData.length != 0 && (
-        <>
-            <div className="card border-0 shadow-sm rounded-3 mb-4">
-                <div className="card-body p-4">
-                    <div id="content-to-download-tfr">
-                        {/* En-tête du rapport */}
-                        <div className="text-center mb-3"><EnteteRapport /></div>
-                        
-                        <div className="text-center mb-4">
-                            <h4 style={{ 
-                                background: "#1a2632", 
-                                padding: "12px", 
-                                color: "#fff", 
-                                borderRadius: "8px", 
-                                display: "inline-block",
-                                borderLeft: "5px solid #20c997"
-                            }}>
-                                TFR 
-                                {radioValue == "type_balance" && devise == "USD" && " - UNIQUEMENT EN USD"}
-                                {radioValue == "type_balance" && devise == "CDF" && " - UNIQUEMENT EN CDF"}
-                                {radioValue == "balance_convertie_cdf" && " - CONVERTIE EN CDF"}
-                                {radioValue == "balance_convertie_usd" && " - CONVERTIE EN USD"}
-                                <br />
-                                <small style={{ fontSize: "14px" }}>AU {dateParser(new Date())}</small>
-                            </h4>
+            {tfrData.length > 0 && (
+             <>
+                <div id="tfr-content">
+                    <div className="tfr-report-card">
+                        <div className="tfr-report-header">
+                            <EnteteRapport />
+                            <h2>TABLEAU DE FORMATION DU RÉSULTAT</h2>
+                            <p>Du {dateParser(date_debut)} au {dateParser(date_fin)} | Devise : {devise}</p>
                         </div>
-
-                        {/* Tableau principal */}
                         <div className="table-responsive">
-                            <table className="table table-bordered" style={{ fontSize: "13px" }}>
-                                <thead style={{ backgroundColor: "#1a2632", color: "white" }}>
+                            <table className="tfr-table">
+                                <thead>
                                     <tr>
-                                        <th rowSpan="2" style={{ textAlign: "left" }}>Code Désignation du compte</th>
-                                        <th colSpan="1" style={{ textAlign: "center" }}>N</th>
-                                        <th colSpan="1" style={{ textAlign: "center" }}>N-1</th>
-                                    </tr>
-                                    <tr>
-                                        <th style={{ textAlign: "center" }}>AU {date_fin_balance && dateParser(date_fin_balance)}</th>
-                                        <th style={{ textAlign: "center" }}>AU {date_debut_balance && dateParser(date_debut_balance)}</th>
+                                        <th>Compte</th>
+                                        <th>Nature</th>
+                                        <th className="text-end">Montant</th>
                                     </tr>
                                 </thead>
-
                                 <tbody>
-                                    {currentItems && currentItems.map((res, index) => {
-                                        const isTotalLine = res.NumCompte == "851" || res.NumCompte == "850";
-                                        const isResultLine = res.NumCompte == "871" || res.NumCompte == "870";
-                                        const rowStyle = {
-                                            background: isTotalLine ? "#e6f2f9" : isResultLine ? "#20c997" : "",
-                                            fontSize: isTotalLine || isResultLine ? "18px" : "",
-                                            fontWeight: isTotalLine || isResultLine ? "bold" : ""
-                                        };
-                                        
-                                        return radioValue == "type_balance" ? (
-                                            <tr key={index} style={rowStyle}>
-                                                <td>
-                                                    {res.RefTypeCompte == "7" ? " + " : res.RefTypeCompte == "6" ? " - " : ""}
-                                                    {res.RefCadre} {res.NomCompte}
-                                                </td>
-                                                <td className="text-end fw-bold">
-                                                    {res.RefCadre == "85" || res.RefCadre == "87"
-                                                        ? numberWithSpaces(res.soldeFin?.toFixed(2))
-                                                        : numberWithSpaces(Math.abs(res.soldeFin)?.toFixed(2))}
-                                                </td>
-                                                <td className="text-end fw-bold">
-                                                    {res.RefCadre == "85" || res.RefCadre == "87"
-                                                        ? numberWithSpaces(res.soldeDebut?.toFixed(2))
-                                                        : numberWithSpaces(Math.abs(res.soldeDebut)?.toFixed(2))}
-                                                </td>
-                                            </tr>
-                                        ) : radioValue == "balance_convertie_cdf" ? (
-                                            <tr key={index} style={rowStyle}>
-                                                <td>
-                                                    {res.RefTypeCompte == "7" ? " + " : res.RefTypeCompte == "6" ? " - " : ""}
-                                                    {res.RefCadre} {res.NomCompte}
-                                                </td>
-                                                <td className="text-end fw-bold">
-                                                    {res.RefCadre == "85" || res.RefCadre == "87"
-                                                        ? numberWithSpaces(parseFloat(res.solde_consolide_cdf_to_usd_date_2)?.toFixed(2))
-                                                        : numberWithSpaces(Math.abs(parseFloat(res.solde_consolide_cdf_to_usd_date_2))?.toFixed(2))}
-                                                </td>
-                                                <td className="text-end fw-bold">
-                                                    {res.RefCadre == "85" || res.RefCadre == "87"
-                                                        ? numberWithSpaces(parseFloat(res.solde_consolide_cdf_to_usd_date_1)?.toFixed(2))
-                                                        : numberWithSpaces(Math.abs(parseFloat(res.solde_consolide_cdf_to_usd_date_1))?.toFixed(2))}
-                                                </td>
-                                            </tr>
-                                        ) : radioValue == "balance_convertie_usd" ? (
-                                            <tr key={index} style={rowStyle}>
-                                                <td>
-                                                    {res.RefTypeCompte == "7" ? " + " : res.RefTypeCompte == "6" ? " - " : ""}
-                                                    {res.RefCadre} {res.NomCompte}
-                                                </td>
-                                                <td className="text-end fw-bold">
-                                                    {res.RefCadre == "85" || res.RefCadre == "87"
-                                                        ? numberWithSpaces(parseFloat(res.solde_consolide_usd_to_cdf_date_2)?.toFixed(2))
-                                                        : numberWithSpaces(Math.abs(parseFloat(res.solde_consolide_usd_to_cdf_date_2))?.toFixed(2))}
-                                                </td>
-                                                <td className="text-end fw-bold">
-                                                    {res.RefCadre == "85" || res.RefCadre == "87"
-                                                        ? numberWithSpaces(parseFloat(res.solde_consolide_cdf_to_usd_date_2)?.toFixed(2))
-                                                        : numberWithSpaces(Math.abs(parseFloat(res.solde_consolide_cdf_to_usd_date_1))?.toFixed(2))}
-                                                </td>
-                                            </tr>
-                                        ) : null;
-                                    })}
+                                    {currentItems.map((item, idx) => (
+                                        <tr key={idx}>
+                                            <td>{item.compte}</td>
+                                            <td>{item.nature === 'PRODUIT' ? 'Produit' : 'Charge'}</td>
+                                            <td className="text-end">{numberWithSpaces(item.solde)}</td>
+                                        </tr>
+                                    ))}
                                 </tbody>
-                                <tfoot style={{ backgroundColor: "#20c997", color: "white", fontWeight: "bold" }}>
-                                    <tr>
-                                        <td className="fw-bold fs-5">Résultat Net de l'exercice</td>
-                                        <td className="text-end fs-5">{fetchResultat && numberWithSpaces(fetchResultat?.toFixed(2))}</td>
-                                        <td className="text-center">////////////////</td>
+                                <tfoot className="tfr-footer">
+                                    <tr style={{ background: "#e2e3e5", fontWeight: "bold" }}>
+                                        <td colSpan="2">TOTAL PRODUITS</td>
+                                        <td className="text-end text-success">{numberWithSpaces(totaux.produits)}</td>
+                                    </tr>
+                                    <tr style={{ background: "#e2e3e5", fontWeight: "bold" }}>
+                                        <td colSpan="2">TOTAL CHARGES</td>
+                                        <td className="text-end text-danger">{numberWithSpaces(totaux.charges)}</td>
+                                    </tr>
+                                    <tr style={{ background: "#d1d5db", fontWeight: "bold", fontSize: "1.05rem" }}>
+                                        <td colSpan="2">RÉSULTAT NET</td>
+                                        <td className="text-end fw-bold">
+                                            {numberWithSpaces(totaux.resultat)}
+                                            {totaux.resultat >= 0 ? ' (Bénéfice)' : ' (Perte)'}
+                                        </td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
+                        {totalPages > 1 && <PaginationModerne currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
                     </div>
+                  
                 </div>
-            </div>
 
-            {/* Pagination */}
-            <div className="d-flex justify-content-center align-items-center gap-2 mt-3 mb-4">
-                <button onClick={goToPrevPage} disabled={currentPage === 1} 
-                    className="btn btn-sm" style={{ background: currentPage === 1 ? "#ccc" : "#20c997", color: "white", borderRadius: "6px", padding: "5px 12px" }}>
-                    <i className="fas fa-chevron-left me-1"></i>Précédent
-                </button>
-                {renderPagination()}
-                <button onClick={goToNextPage} disabled={currentPage === Math.ceil(fetchData?.length / itemsPerPage)} 
-                    className="btn btn-sm" style={{ background: currentPage === Math.ceil(fetchData?.length / itemsPerPage) ? "#ccc" : "#20c997", color: "white", borderRadius: "6px", padding: "5px 12px" }}>
-                    Suivant<i className="fas fa-chevron-right ms-1"></i>
-                </button>
-            </div>
+                  <div className="tfr-export-buttons">
+                        <button className="btn-excel" onClick={exportToExcel}><i className="fas fa-file-excel"></i> Excel</button>
+                        <button className="btn-pdf" onClick={exportToPDF}><i className="fas fa-file-pdf"></i> PDF</button>
+                    </div>
+             </>
+                
+            )}
 
-            {/* Boutons d'export */}
-            <div className="d-flex justify-content-end gap-2 mt-3 mb-4">
-                <button onClick={() => exportTableData("content-to-download-tfr")} 
-                    className="btn" style={{ background: "#28a745", color: "white", borderRadius: "8px" }}>
-                    <i className="fas fa-file-excel me-2"></i>Exporter en Excel
-                </button>
-                <button onClick={exportToPDF} 
-                    className="btn" style={{ background: "#dc3545", color: "white", borderRadius: "8px" }}>
-                    <i className="fas fa-file-pdf me-2"></i>Exporter en PDF
-                </button>
-            </div>
-        </>
-    )}
+            {tfrData.length === 0 && !loading && (
+                <div className="tfr-empty">
+                    <i className="fas fa-chart-line"></i>
+                    <p>Aucune donnée trouvée pour la période sélectionnée.</p>
+                    <span>Vérifiez que des transactions existent pour les comptes de produits/charges.</span>
+                </div>
+            )}
 
-    {/* Message si aucune donnée */}
-    {fetchData && fetchData.length === 0 && (
-        <div className="text-center py-5">
-            <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
-            <p className="text-muted">Aucune donnée trouvée pour la période sélectionnée.</p>
+            <style jsx>{`
+                .tfr-container {
+                    background: #f4f7fc;
+                    min-height: 100vh;
+                    padding: 20px 24px;
+                    font-family: 'Inter', system-ui, sans-serif;
+                }
+                .loader-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.6);
+                    backdrop-filter: blur(4px);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1050;
+                }
+                .loader-card {
+                    background: white;
+                    border-radius: 28px;
+                    padding: 30px 40px;
+                    text-align: center;
+                    box-shadow: 0 20px 35px -10px rgba(0,0,0,0.2);
+                }
+                .tfr-header {
+                    background: linear-gradient(135deg, #0f766e, #14b8a6);
+                    border-radius: 28px;
+                    padding: 20px 28px;
+                    margin-bottom: 32px;
+                    box-shadow: 0 12px 24px -8px rgba(0,0,0,0.1);
+                }
+                .tfr-header-content {
+                    display: flex;
+                    align-items: center;
+                    gap: 20px;
+                    color: white;
+                }
+                .tfr-header-icon {
+                    background: rgba(255,255,255,0.2);
+                    width: 60px;
+                    height: 60px;
+                    border-radius: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 28px;
+                }
+                .tfr-header h1 {
+                    margin: 0;
+                    font-size: 1.8rem;
+                    font-weight: 700;
+                }
+                .tfr-header p {
+                    margin: 4px 0 0;
+                    opacity: 0.85;
+                }
+                .tfr-filters {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                    gap: 20px;
+                    margin-bottom: 40px;
+                }
+                .filter-card {
+                    background: white;
+                    border-radius: 24px;
+                    box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                    overflow: hidden;
+                }
+                .filter-card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: 0 16px 28px -8px rgba(0,0,0,0.12);
+                }
+                .filter-header {
+                    background: #f8fafc;
+                    padding: 14px 20px;
+                    font-weight: 600;
+                    color: #1e293b;
+                    border-bottom: 1px solid #eef2ff;
+                }
+                .filter-header i {
+                    color: #6366f1;
+                    margin-right: 8px;
+                }
+                .filter-body {
+                    padding: 20px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 14px;
+                }
+                .filter-body label {
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    color: #475569;
+                }
+                .modern-input, .modern-select {
+                    border: 1px solid #e2e8f0;
+                    border-radius: 16px;
+                    padding: 12px 16px;
+                    font-size: 0.9rem;
+                    transition: all 0.2s;
+                    background: white;
+                    width: 100%;
+                }
+                .modern-input:focus, .modern-select:focus {
+                    border-color: #6366f1;
+                    box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+                    outline: none;
+                }
+                .action-card {
+                    background: transparent;
+                    box-shadow: none;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .btn-primary-gradient {
+                    background: linear-gradient(105deg, #10b981, #059669);
+                    border: none;
+                    border-radius: 40px;
+                    padding: 14px 20px;
+                    width: 100%;
+                    color: white;
+                    font-weight: 700;
+                    font-size: 0.95rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                    transition: all 0.25s;
+                    cursor: pointer;
+                }
+                .btn-primary-gradient:hover {
+                    transform: scale(1.02);
+                    background: linear-gradient(105deg, #059669, #047857);
+                    box-shadow: 0 10px 20px rgba(16,185,129,0.3);
+                }
+                .tfr-report-card {
+                    background: white;
+                    border-radius: 28px;
+                    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+                    overflow: hidden;
+                    margin-bottom: 24px;
+                }
+                .tfr-report-header {
+                    text-align: center;
+                    padding: 24px 20px 16px;
+                    border-bottom: 1px solid #edf2f7;
+                }
+                .tfr-report-header h2 {
+                    margin: 12px 0 4px;
+                    font-size: 1.4rem;
+                    font-weight: 700;
+                    color: #0f172a;
+                }
+                .tfr-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 0.85rem;
+                }
+                .tfr-table thead th {
+                    background: #f1f5f9;
+                    padding: 14px 12px;
+                    font-weight: 600;
+                    color: #1e293b;
+                    border-bottom: 1px solid #e2e8f0;
+                }
+                .tfr-table tbody td {
+                    padding: 10px 12px;
+                    border-bottom: 1px solid #f0f2f5;
+                }
+                .tfr-table tbody tr:hover {
+                    background: #fafcff;
+                }
+                .tfr-footer td {
+                    background: #f8fafc;
+                    font-weight: 700;
+                    border-top: 2px solid #e2e8f0;
+                    padding: 12px;
+                }
+                .text-end {
+                    text-align: right;
+                }
+                .text-success {
+                    color: #10b981;
+                }
+                .text-danger {
+                    color: #ef4444;
+                }
+                .fw-bold {
+                    font-weight: 700;
+                }
+                .tfr-export-buttons {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 16px;
+                    margin-bottom: 20px;
+                }
+                .btn-excel, .btn-pdf {
+                    border: none;
+                    border-radius: 40px;
+                    padding: 10px 24px;
+                    font-weight: 600;
+                    font-size: 0.85rem;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.2s;
+                    cursor: pointer;
+                }
+                .btn-excel {
+                    background: #10b981;
+                    color: white;
+                }
+                .btn-excel:hover {
+                    background: #059669;
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 12px rgba(16,185,129,0.3);
+                }
+                .btn-pdf {
+                    background: #ef4444;
+                    color: white;
+                }
+                .btn-pdf:hover {
+                    background: #dc2626;
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 12px rgba(239,68,68,0.3);
+                }
+                .tfr-empty {
+                    text-align: center;
+                    background: white;
+                    border-radius: 32px;
+                    padding: 60px 20px;
+                    margin-top: 20px;
+                    box-shadow: 0 6px 14px rgba(0,0,0,0.05);
+                }
+                .tfr-empty i {
+                    font-size: 48px;
+                    color: #cbd5e1;
+                    margin-bottom: 16px;
+                }
+                .pagination-modern {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
+                    flex-wrap: wrap;
+                    margin-top: 1.5rem;
+                    padding-bottom: 20px;
+                }
+                .page-number, .page-nav {
+                    min-width: 40px;
+                    height: 40px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: none;
+                    background: white;
+                    border-radius: 14px;
+                    font-weight: 500;
+                    font-size: 0.9rem;
+                    color: #1e293b;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                    padding: 0 0.75rem;
+                }
+                .page-number {
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                }
+                .page-number.active {
+                    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+                    border-color: transparent;
+                    color: white;
+                    box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+                }
+                .page-nav {
+                    background: #f1f5f9;
+                    border: 1px solid #e2e8f0;
+                }
+                .page-nav:disabled {
+                    opacity: 0.4;
+                    cursor: not-allowed;
+                }
+                .page-info {
+                    margin-left: 1rem;
+                    font-size: 0.8rem;
+                    color: #475569;
+                    background: #f1f5f9;
+                    padding: 0.3rem 0.8rem;
+                    border-radius: 30px;
+                }
+                @media (max-width: 768px) {
+                    .tfr-container { padding: 12px; }
+                    .tfr-header h1 { font-size: 1.4rem; }
+                    .tfr-filters { grid-template-columns: 1fr; }
+                }
+
+
+
+                /* Tooltip container */
+.btn-with-tooltip {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+/* Tooltip text */
+.btn-with-tooltip .tooltip-text {
+    visibility: hidden;
+    background-color: #1e293b;
+    color: #fff;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 0.8rem;
+    font-weight: normal;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Tooltip arrow */
+.btn-with-tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1e293b transparent transparent transparent;
+}
+
+/* Show tooltip on hover */
+.btn-with-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Désactiver le tooltip quand le bouton est actif */
+.btn-with-tooltip:hover .tooltip-text:not(:disabled) {
+    visibility: visible;
+    opacity: 1;
+}
+            `}</style>
         </div>
-    )}
-
-    <div style={{ height: "30px" }}></div>
-</div>
     );
 };
 
-export default Tfr;
+export default TFR;

@@ -371,7 +371,7 @@ const GrandLivre = () => {
                                         className="fas fa-filter me-2"
                                         style={{ color: "#6366f1" }}
                                     ></i>
-                                    Portée comptes 
+                                    Portée comptes
                                 </h6>
                             </div>
                             <div className="card-body pt-2">
@@ -520,17 +520,15 @@ const GrandLivre = () => {
                                                                 ),
                                                             ),
                                                         )}
-                                                        
                                                     </td>
                                                     <td className="text-end">
-                                                         {numberWithSpaces(
+                                                        {numberWithSpaces(
                                                             Math.abs(
                                                                 Number(
-                                                                     ligne.credit,
+                                                                    ligne.credit,
                                                                 ),
                                                             ),
                                                         )}
-                                                        
                                                     </td>
                                                     <td className="text-end">
                                                         {numberWithSpaces(
@@ -554,27 +552,26 @@ const GrandLivre = () => {
                                                 <td>{ligne.libelle}</td>
                                                 <td className="text-end">
                                                     {numberWithSpaces(
-                                                            Math.abs(
-                                                                Number(
-                                                                    ligne.debit
-                                                                ),
-                                                            ),
-                                                        )}
-                                                   
-                                                </td>
-                                                <td className="text-end">
-                                                   
-                                                    {numberWithSpaces(
                                                         Math.abs(
-                                                            Number(ligne.credit),
+                                                            Number(ligne.debit),
                                                         ),
                                                     )}
-                                                  
                                                 </td>
                                                 <td className="text-end">
                                                     {numberWithSpaces(
                                                         Math.abs(
-                                                            Number(ligne.credit),
+                                                            Number(
+                                                                ligne.credit,
+                                                            ),
+                                                        ),
+                                                    )}
+                                                </td>
+                                                <td className="text-end">
+                                                    {numberWithSpaces(
+                                                        Math.abs(
+                                                            Number(
+                                                                ligne.solde_abs,
+                                                            ),
                                                         ),
                                                     )}
                                                 </td>
