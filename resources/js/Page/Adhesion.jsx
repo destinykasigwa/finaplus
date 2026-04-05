@@ -260,7 +260,6 @@ const Adhesion = () => {
             throw error;
         }
     };
-
     //CREATE NEW ACCOUNT FOR USER
     const createAccount = async (e) => {
         e.preventDefault();

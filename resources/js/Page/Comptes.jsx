@@ -245,18 +245,18 @@ const Comptes = () => {
         }
     };
 
-    const hideAccountSession = async (e) => {
-        e.preventDefault();
-        setfetchCreatedAccount(false);
-        setshowAccountSession(true);
-        setshowAccountSessionEpargne(false);
-    };
-    const hideAccountEpargneSession = async (e) => {
-        e.preventDefault();
-        setFetchCompteEpargne(false);
-        setshowAccountSessionEpargne(true);
-        setshowAccountSession(false);
-    };
+    // const hideAccountSession = async (e) => {
+    //     e.preventDefault();
+    //     setfetchCreatedAccount(false);
+    //     setshowAccountSession(true);
+    //     setshowAccountSessionEpargne(false);
+    // };
+    // const hideAccountEpargneSession = async (e) => {
+    //     e.preventDefault();
+    //     setFetchCompteEpargne(false);
+    //     setshowAccountSessionEpargne(true);
+    //     setshowAccountSession(false);
+    // };
 
     //GET COMPANY DATA
     const getCompanyData = async () => {
@@ -1039,6 +1039,7 @@ const Comptes = () => {
     // };
 
     const downloadReport = (type) => {
+   
         setchargement(true);
         // Générer le nom du fichier avec la date du jour
         const filename = `liste_compte_epargne_${
@@ -1048,7 +1049,8 @@ const Comptes = () => {
             .post(
                 "/download-report/liste-compte/epargne",
                 {
-                    fetchData: fetchCompteEpargne, // Assurez-vous que fetchData contient vos données
+                    fetchDataCompteInterne: fetchCreatedAccount, // Assurez-vous que fetchData contient vos données
+                    fetchDataCompteEpargne:fetchCompteEpargne,
                     type: type, // Ajouter le paramètre type à la requête
                 },
                 {
@@ -1075,6 +1077,8 @@ const Comptes = () => {
             })
             .catch((error) => console.error("Error:", error));
     };
+
+
 
     //CREATE PAGINATION
 
@@ -6944,10 +6948,10 @@ const Comptes = () => {
                                         <div className="d-flex justify-content-end">
                                             <button
                                                 onClick={() =>
-                                                    exportTableData(
-                                                        "main-table-balance",
-                                                    )
-                                                }
+                                                            downloadReport(
+                                                                "excel"
+                                                            )
+                                                        }
                                                 className="btn btn-sm"
                                                 style={{
                                                     background: "#28a745",
@@ -6959,7 +6963,11 @@ const Comptes = () => {
                                                 Exporter Excel
                                             </button>
                                             <button
-                                                onClick={exportToPDF}
+                                                 onClick={() =>
+                                                            downloadReport(
+                                                                "pdf"
+                                                            )
+                                                        }
                                                 className="btn btn-sm ms-2"
                                                 style={{
                                                     background: "#dc3545",

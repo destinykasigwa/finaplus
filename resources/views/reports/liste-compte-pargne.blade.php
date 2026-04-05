@@ -65,9 +65,9 @@
 
         table,
         th,
-        td {
+        /* td {
             border: 1px solid black !important;
-        }
+        } */
 
         th,
         td {
@@ -136,52 +136,61 @@
                 </table>
             </div>
         </div>
-        <h1 style="text-align: center">Liste des comptes epargnes</h1>
-        {{-- <p>Date de début : {{ $date_debut_balance }}</p>
-        <p>Date de fin : {{ $date_fin_balance }}</p> --}}
-        <table>
-            @foreach ($fetchData as $data)
-                @if ($loop->first)
-                    <thead class="{{ $loop->first ? '' : 'hide-on-next-pages' }}">
-                        <tr>
-                            <th>NumCompte</th>
-                            <th>NomCompte</th>
-                            <th>Genre</th>
-                            <th>NumAbregé</th>
-                            <th>Solde</th>
-                            <th>Dévise</th>
-                            <th>DateDernièreTrans.</th>
-                        </tr>
-                    </thead>
-                @endif
+          <h2 style="text-align: center">PLAN COMPTABLE INTERNE</h2>
 
-                <tbody>
+            @php
+$sections = [
+    'ACTIF' => 'SECTION 1 : COMPTE DU BILAN - ACTIF',
+    'PASSIF' => 'SECTION 2 : COMPTE DU BILAN - PASSIF',
+    'PRODUIT' => 'SECTION 3 : COMPTE DE RESULTAT - PRODUIT',
+    'CHARGE' => 'SECTION 4 : COMPTE DE RESULTAT - CHARGE',
+    'HORS BILAN' => 'SECTION 5 : COMPTE HORS BILAN'
+];
+@endphp
 
-                    <tr>
-                        {{-- <td>{{ $data['RefCadre'] }}</td>
-                        <td>{{ $data['RefSousGroupe'] }}</td> --}}
-                        {{-- <td>{{ $data['RefTypeCompte'] }}</td> --}}
-                        <td>{{ $data['NumCompte'] }}</td>
-                        <td>{{ $data['NomCompte'] }}</td>
-                        <td>{{ $data['sexe'] }}</td>
-                        <td>{{ $data['NumAdherant'] }}</td>
-                        <td>{{ $data['solde'] }}</td>
-                        <td>{{ $data['CodeMonnaie'] == 1 ? 'USD' : 'CDF' }}</td>
-                        <td>{{ $data['derniere_date_transaction'] }}</td>
-                    </tr>
-            @endforeach
-            </tbody>
+@foreach($sections as $key => $title)
 
-        </table>
+    <h3>{{ $title }}</h3>
+
+    {{-- USD --}}
+    <h4>USD</h4>
+    <table border="1" width="100%" cellspacing="0" cellpadding="5">
+        @forelse($groupedData[$key]['USD'] as $compte)
+            <tr>
+                <td>{{ $compte->NumCompte }}</td>
+                <td>{{ $compte->NomCompte }}</td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="2">Aucun compte USD</td>
+            </tr>
+        @endforelse
+    </table>
+
+    {{-- CDF --}}
+    <h4>CDF</h4>
+    <table border="1" width="100%" cellspacing="0" cellpadding="5">
+        @forelse($groupedData[$key]['CDF'] as $compte)
+            <tr>
+                <td>{{ $compte->NumCompte }}</td>
+                <td>{{ $compte->NomCompte }}</td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="2">Aucun compte CDF</td>
+            </tr>
+        @endforelse
+    </table>
+
+@endforeach
+
+        </div>
+
+        <br><br>
+
+        <p>Edité par {{ auth()->user()->name }}</p>
+
     </div>
-    <br><br>
-    <p>Edité par {{ auth()->user()->name }}</p>
-
-    <script>
-        window.onload = function() {
-            window.print(); // Cette ligne ouvre la fenêtre d'impression automatiquement.
-        }
-    </script>
 
 </body>
 
@@ -196,22 +205,17 @@
 
 
 
-{{-- <html>
-<head>
-  <style>
-    @page { margin: 100px 25px; }
-    header { position: fixed; top: -60px; left: 0px; right: 0px; background-color: lightblue; height: 50px; }
-    footer { position: fixed; bottom: -60px; left: 0px; right: 0px; background-color: lightblue; height: 50px; }
-    p { page-break-after: always; }
-    p:last-child { page-break-after: never; }
-  </style>
-</head>
-<body>
-  <header>header on each page</header>
-  <footer>footer on each page</footer>
-  <main>
-    <p>page1</p>
-    <p>page2></p>
-  </main>
-</body>
-</html> --}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

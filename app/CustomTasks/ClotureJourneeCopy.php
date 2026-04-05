@@ -1612,6 +1612,10 @@ class ClotureJourneeCopy
                     'RefSousGroupe' => "3801",
                     'CodeMonnaie' => 2,
                     'NumAdherant' => $refCompteMembre,
+                    'nature_compte'=>"PASSIF",
+                    'niveau'=>"5",
+                    'est_classe'=>null,
+                    'compte_parent'=>"3801",
                 ]);
 
                 //MET A JOUR LA TABLE JOUR RETARD POUR RENSEIGNER LE COMPTE DE PROVISUON
@@ -1631,6 +1635,10 @@ class ClotureJourneeCopy
                     'RefSousGroupe' => $devise == 2 ? "3201" : "3200",
                     'CodeMonnaie' =>  $devise == 1 ? 1 : 2,
                     'NumAdherant' => $refCompteMembre,
+                    'nature_compte'=>"ACTIF",
+                    'niveau'=>"5",
+                    'est_classe'=>null,
+                    'compte_parent'=>$devise == 2 ? "3201" : "3200",
                 ]);
             }
             //ON CREE LE COMPTE CREANCE LITIGIEUSE
@@ -1647,6 +1655,10 @@ class ClotureJourneeCopy
                     'RefSousGroupe' => "3901",
                     'CodeMonnaie' => 2,
                     'NumAdherant' => $refCompteMembre,
+                    'nature_compte'=>"ACTIF",
+                    'niveau'=>"5",
+                    'est_classe'=>null,
+                    'compte_parent'=> "3901",
                 ]);
             }
             //MET A JOUR LA TABLE JOUR RETARD POUR RENSEIGNER LE COMPTE DE PROVISUON
@@ -1703,6 +1715,10 @@ class ClotureJourneeCopy
                     'RefSousGroupe' => "3800",
                     'CodeMonnaie' => 1,
                     'NumAdherant' => $refCompteMembre,
+                    'nature_compte'=>"PASSIF",
+                    'niveau'=>"5",
+                    'est_classe'=>null,
+                    'compte_parent'=>"3800",
 
                 ]);
             }
@@ -1721,6 +1737,10 @@ class ClotureJourneeCopy
                     'RefSousGroupe' => "3900",
                     'CodeMonnaie' => 1,
                     'NumAdherant' => $refCompteMembre,
+                    'nature_compte'=>"ACTIF",
+                    'niveau'=>"5",
+                    'est_classe'=>null,
+                    'compte_parent'=>"3900",
                 ]);
             }
 
@@ -2872,6 +2892,10 @@ class ClotureJourneeCopy
                         'RefSousGroupe' => $devise == 2 ? "3201" : "3200",
                         'CodeMonnaie' => $devise == 2 ?  2 : 1,
                         'NumAdherant' => $refCompteMembre,
+                        'nature_compte'=>"ACTIF",
+                        'niveau'=>"5",
+                        'est_classe'=>null,
+                        'compte_parent'=>$devise == 2 ? "3201" : "3200",
                     ]);
                 }
             }
@@ -3013,6 +3037,10 @@ class ClotureJourneeCopy
                     'RefSousGroupe' => "3801",
                     'CodeMonnaie' => 2,
                     'NumAdherant' => $refCompteMembre,
+                    'nature_compte'=>"PASSIF",
+                    'niveau'=>"5",
+                    'est_classe'=>null,
+                    'compte_parent'=> "3801",
                 ]);
             }
 
@@ -3029,6 +3057,10 @@ class ClotureJourneeCopy
                     'RefSousGroupe' => "3201",
                     'CodeMonnaie' =>  2,
                     'NumAdherant' => $refCompteMembre,
+                    'nature_compte'=>"ACTIF",
+                    'niveau'=>"5",
+                    'est_classe'=>null,
+                    'compte_parent'=> "3201",
                 ]);
             }
             //ON CREE LE COMPTE CREANCE LITIGIEUSE
@@ -3045,6 +3077,10 @@ class ClotureJourneeCopy
                     'RefSousGroupe' => "3901",
                     'CodeMonnaie' => 2,
                     'NumAdherant' => $refCompteMembre,
+                    'nature_compte'=>"ACTIF",
+                    'niveau'=>"5",
+                    'est_classe'=>null,
+                    'compte_parent'=>"3901",
                 ]);
             }
         } else if ($devise == 1) {
@@ -3085,6 +3121,10 @@ class ClotureJourneeCopy
                     'RefSousGroupe' => "3800",
                     'CodeMonnaie' => 1,
                     'NumAdherant' => $refCompteMembre,
+                    'nature_compte'=>"PASSIF",
+                    'niveau'=>"5",
+                    'est_classe'=>null,
+                    'compte_parent'=>"3800",
 
                 ]);
             }
@@ -3103,6 +3143,10 @@ class ClotureJourneeCopy
                     'RefSousGroupe' => "3900",
                     'CodeMonnaie' => 1,
                     'NumAdherant' => $refCompteMembre,
+                    'nature_compte'=>"ACTIF",
+                    'niveau'=>"5",
+                    'est_classe'=>null,
+                    'compte_parent'=>"3900",
 
                 ]);
             }
@@ -3120,6 +3164,10 @@ class ClotureJourneeCopy
                     'RefSousGroupe' => "3200",
                     'CodeMonnaie' =>  1,
                     'NumAdherant' => $refCompteMembre,
+                    'nature_compte'=>"ACTIF",
+                    'niveau'=>"5",
+                    'est_classe'=>null,
+                    'compte_parent'=>"3200",
                 ]);
             }
         }

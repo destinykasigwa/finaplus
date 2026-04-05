@@ -541,17 +541,24 @@ class ComptesParamController extends Controller
 
     public function getCreatedAccount()
     {
-        $data = Comptes::where("RefTypeCompte", "=", 6)
-            ->orWhere("RefTypeCompte", "=", 7)
-            ->orWhere("RefTypeCompte", "=", 4)
-            ->orWhere("RefTypeCompte", "=", 1)
-            ->orderByRaw("CASE 
-             WHEN RefTypeCompte = 7 THEN 1 
-             WHEN RefTypeCompte = 6 THEN 2 
-             ELSE 3 
-             END")
-            ->get();
-
+        $data = Comptes::whereIn('nature_compte', [
+        'ACTIF',
+        'PASSIF',
+        'PRODUIT',
+        'CHARGE',
+        'HORS BILAN'
+    ])
+    ->where('niveau', 5)
+    ->orderByRaw("CASE 
+        WHEN nature_compte = 'ACTIF' THEN 1
+        WHEN nature_compte = 'PASSIF' THEN 2
+        WHEN nature_compte = 'PRODUIT' THEN 3
+        WHEN nature_compte = 'CHARGE' THEN 4
+        WHEN nature_compte = 'HORS BILAN' THEN 5
+        ELSE 6
+    END")
+    ->orderBy('NumCompte')
+    ->get();
         return response()->json([
             "status" => 1,
             "data" => $data,
@@ -582,6 +589,7 @@ class ComptesParamController extends Controller
             ->join("adhesion_membres", "comptes.NumAdherant", "=", "adhesion_membres.compte_abrege")
             ->leftJoin("transactions", "comptes.NumCompte", "=", "transactions.NumCompte")
             ->where("comptes.RefCadre", 33)
+            ->whereRaw('LENGTH(comptes.NumCompte) = 13')  // 🔥 Exactement 13 caractères
             ->whereNotIn("comptes.NumCompte", [3300, 3301]) // Simplification des exclusions
             ->groupBy(
                 'comptes.NumCompte',

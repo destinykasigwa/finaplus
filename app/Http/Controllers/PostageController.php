@@ -172,41 +172,7 @@ class PostageController extends Controller
                 ->select(DB::raw('SUM(transactions.Debitfc) - SUM(transactions.Creditfc) as soldeCompteConsolideChargeCDF'))
                 ->first();
 
-            //RECUPERE D'ABORD LE SOLDE DU COMPTE 85 RESULTAT AVANT IMPOT 
-            // $soldeCompteAvantImpotCDF = Transactions::join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
-            //     ->where('comptes.RefCadre', 85)
-            //     ->where('transactions.CodeMonnaie', 2)
-            //     ->where('transactions.DateTransaction', "<=", $dataSystem->DateSystem)
-            //     //->where('transactions.extourner', "!=", 1)
-            //     ->select(DB::raw('SUM(transactions.Creditfc) - SUM(transactions.Debitfc) as soldeCompteCDF'))
-            //     ->first();
-
-            //RECUPERE D'ABORD LE SOLDE DU COMPTE  87 RESULTAT NET DE L'EXERCICE
-            // $soldeCompteResultatNetCDF = Transactions::join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
-            //     ->where('comptes.RefCadre', 87)
-            //     ->where('transactions.CodeMonnaie', 2)
-            //     ->where('transactions.DateTransaction', "<=", $dataSystem->DateSystem)
-            //     //->where('transactions.extourner', "!=", 1)
-            //     ->select(DB::raw('SUM(transactions.Creditfc) - SUM(transactions.Debitfc) as soldeCompteCDF'))
-            //     ->first();
-
-
-
-            //SOLDE D'ABORD CE COMPTE
-            // $this->InsertInTransaction($soldeCompteAvantImpotCDF->CodeAgence, "D", 851, "130202", $soldeCompteAvantImpotCDF->soldeCompteCDF, 2);
-
-
-            $resultatNetExerciceCDF = $soldeConsolideProduitCDF->soldeCompteProduitCDF - $soldeConsolideChargeCDF->soldeCompteConsolideChargeCDF;
-            //CREDITE LE COMPTE RESULTAT NET L'EXERCICE
-            $this->InsertInTransaction(20, "C", 871, "130202", $resultatNetExerciceCDF, 2);
-
-            //SOLDE LE COMPTE RESULTAT NET L'EXERCICE EN LE DEBUTANT
-            $resultatNetExerciceCDF = $soldeConsolideProduitCDF->soldeCompteProduitCDF - $soldeConsolideChargeCDF->soldeCompteConsolideChargeCDF;
-            $this->InsertInTransaction(20, "D", 871, "130202", $resultatNetExerciceCDF, 2);
-
-            //PUIS CREDITE LE COMPTE RESULTAT NET 
-            $this->InsertInTransaction(20, "C", "130202", 871, $soldeConsolideProduitCDF->soldeCompteProduitCDF - $soldeConsolideChargeCDF->soldeCompteConsolideChargeCDF, 2);
-
+    
             for ($i = 0; $i < sizeof($soldeCompteProduitCDF); $i++) {
                 if ($soldeCompteProduitCDF[$i]->soldeCompteProduitCDF > 0) {
                     //APRES CECI ON DEBITE LES COMPTE PRODUITS
@@ -261,38 +227,6 @@ class PostageController extends Controller
                 //->where('transactions.extourner', "!=", 1)
                 ->select(DB::raw('SUM(transactions.Debitusd) - SUM(transactions.Creditusd) as soldeCompteConsolideChargeUSD'))
                 ->first();
-
-
-
-            //RECUPERE D'ABORD LE SOLDE DU COMPTE 85 RESULTAT AVANT IMPOT 
-            // $soldeCompteAvantImpotUSD = Transactions::join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
-            //     ->where('comptes.RefCadre', 85)
-            //     ->where('transactions.CodeMonnaie', 1)
-            //     ->where('transactions.DateTransaction', "<=", $dataSystem->DateSystem)
-            //     //->where('transactions.extourner', "!=", 1)
-            //     ->select(DB::raw('SUM(transactions.Creditusd) - SUM(transactions.Debitusd) as soldeCompteUSD'))
-            //     ->first();
-
-            //RECUPERE D'ABORD LE SOLDE DU COMPTE  87 RESULTAT NET DE L'EXERCICE
-            // $soldeCompteResultatNetUSD = Transactions::join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
-            //     ->where('comptes.RefCadre', 87)
-            //     ->where('transactions.CodeMonnaie', 1)
-            //     //->where('transactions.extourner', "!=", 1)
-            //     ->select(DB::raw('SUM(transactions.Creditusd) - SUM(transactions.Debitusd) as soldeCompteUSD'))
-            //     ->first();
-
-
-            //SOLDE D'ABORD CE COMPTE RESULTAT AVANT IMPOT 
-            // $this->InsertInTransaction($soldeCompteAvantImpotUSD->CodeAgence, "D", 850, "130201", $soldeCompteAvantImpotUSD->soldeCompteUSD, 1);
-
-            $resultatNetExerciceUSD = $soldeConsolideProduitUSD->soldeCompteProduitUSD - $soldeConsolideChargeUSD->soldeCompteConsolideChargeUSD;
-            //CREDITE LE COMPTE RESULTAT NET L'EXERCICE 
-            $this->InsertInTransaction(20, "C", 870, "130201", $resultatNetExerciceUSD, 1);
-            //PUIS LE DEBITE 
-            $this->InsertInTransaction(20, "D", 870, "130201", $resultatNetExerciceUSD, 1);
-
-            //PUIS CREDITE LE COMPTE RESULTAT NET 
-            $this->InsertInTransaction(20, "C", "130201", 870, $soldeConsolideProduitUSD->soldeCompteProduitUSD - $soldeConsolideChargeUSD->soldeCompteConsolideChargeUSD, 1);
 
             for ($i = 0; $i < sizeof($soldeCompteProduitUSD); $i++) {
                 if ($soldeCompteProduitUSD[$i]->soldeCompteProduitUSD > 0) {

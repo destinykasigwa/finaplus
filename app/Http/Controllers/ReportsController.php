@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Auth, DB};
 use App\Models\{BilletageAppro_cdf, BilletageAppro_usd, BilletageCDF, BilletageUSD, CompanyModel, Comptes, Delestages, Echeancier, JourRetard, Portefeuille, TauxEtDateSystem, Transactions, User};
 use App\Services\ReportService;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportsController extends Controller
 {
@@ -991,106 +992,6 @@ if ($type_balance === 'consolide') {
 
     //GET BILAN DATA 
 
-    //  public function getBilanCompte(Request $request)
-    // {
-    //     $date1 = $request->date_debut_balance;
-    //     $date2 = $request->date_fin_balance;
-    //     $devise = $request->devise;
-
-    //     if (!$date1 || !$date2) {
-    //         return response()->json([
-    //             "status" => 0,
-    //             "msg" => "Veuillez fournir les dates de début et de fin"
-    //         ]);
-    //     }
-
-    //     $debitCol = $devise === 'USD' ? 't.Debitusd' : 't.Debitfc';
-    //     $creditCol = $devise === 'USD' ? 't.Creditusd' : 't.Creditfc';
-    //     $monnaieValue = $devise === 'USD' ? 1 : 0;
-
-    //     // ==================== ACTIF (GROUPÉ PAR SOUS-GROUPE) ====================
-    //     $actifData = DB::table('comptes as c')
-    //         ->leftJoin('transactions as t', function($join) use ($monnaieValue) {
-    //             $join->on('c.NumCompte', '=', 't.NumCompte')
-    //                  ->where('c.CodeMonnaie', '=', DB::raw('t.CodeMonnaie'))
-    //                  ->where('c.CodeMonnaie', '=', $monnaieValue);
-    //         })
-    //         ->select(
-    //             'c.RefTypeCompte',
-    //             'c.RefCadre',
-    //             'c.RefGroupe',
-    //             'c.RefSousGroupe',
-    //             DB::raw('MIN(c.NomCompte) as NomCompte'),  // Prend le premier nom du groupe
-    //             DB::raw('MIN(c.NumCompte) as NumCompte'),  // Prend le premier numéro du groupe
-    //             DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN $creditCol - $debitCol ELSE 0 END), 0) AS soldeDebut"),
-    //             DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN $creditCol - $debitCol ELSE 0 END), 0) AS soldeFin")
-    //         )
-    //         ->where('c.CodeMonnaie', $monnaieValue)
-    //         ->where(function($query) {
-    //             $query->whereIn('c.RefTypeCompte', ['1', '2', '3', '5'])
-    //                   ->orWhere(function($q) {
-    //                       $q->where('c.RefTypeCompte', '4')
-    //                         ->where('c.nature_compte', 'ACTIF');
-    //                   });
-    //         })
-    //         ->whereNotNull('c.NumCompte')
-    //         ->whereNotNull('c.NomCompte')
-    //         ->groupBy('c.RefTypeCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe')
-    //         ->orderBy('c.RefCadre')
-    //         ->orderBy('c.RefGroupe')
-    //         ->orderBy('c.RefSousGroupe')
-    //         ->get();
-
-    //     // ==================== PASSIF (GROUPÉ PAR SOUS-GROUPE) ====================
-    //     $passifData = DB::table('comptes as c')
-    //         ->leftJoin('transactions as t', function($join) use ($monnaieValue) {
-    //             $join->on('c.NumCompte', '=', 't.NumCompte')
-    //                  ->where('c.CodeMonnaie', '=', DB::raw('t.CodeMonnaie'))
-    //                  ->where('c.CodeMonnaie', '=', $monnaieValue);
-    //         })
-    //         ->select(
-    //             'c.RefTypeCompte',
-    //             'c.RefCadre',
-    //             'c.RefGroupe',
-    //             'c.RefSousGroupe',
-    //             DB::raw('MIN(c.NomCompte) as NomCompte'),
-    //             DB::raw('MIN(c.NumCompte) as NumCompte'),
-    //             DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN $creditCol - $debitCol ELSE 0 END), 0) AS soldeDebut"),
-    //             DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN $creditCol - $debitCol ELSE 0 END), 0) AS soldeFin")
-    //         )
-    //         ->where('c.CodeMonnaie', $monnaieValue)
-    //         ->where(function($query) {
-    //             $query->where('c.RefTypeCompte', '1')
-    //                   ->orWhere(function($q) {
-    //                       $q->where('c.RefTypeCompte', '4')
-    //                         ->where('c.nature_compte', 'PASSIF');
-    //                   });
-    //         })
-    //         ->whereNotNull('c.NumCompte')
-    //         ->whereNotNull('c.NomCompte')
-    //         ->groupBy('c.RefTypeCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe')
-    //         ->orderBy('c.RefCadre')
-    //         ->orderBy('c.RefGroupe')
-    //         ->orderBy('c.RefSousGroupe')
-    //         ->get();
-
-    //     // Calcul des totaux
-    //     $totalActif = $actifData->sum('soldeFin');
-    //     $totalPassif = $passifData->sum('soldeFin');
-
-    //     return response()->json([
-    //         "status" => 1,
-    //         "actif" => $actifData,
-    //         "passif" => $passifData,
-    //         "totaux" => [
-    //             "actif" => $totalActif,
-    //             "passif" => $totalPassif
-    //         ]
-    //     ]);
-    // }
-
-
-
     public function getBilanCompte(Request $request)
     {
         $date1 = $request->date_debut_balance;
@@ -1244,6 +1145,7 @@ if ($type_balance === 'consolide') {
 
         // dd($actifData);
 
+
         // ==================== PASSIF ====================
         $passifData = DB::table('comptes as c')
             ->leftJoin('comptes as c_individuel', 'c.NumCompte', '=', 'c_individuel.compte_parent')
@@ -1273,6 +1175,39 @@ if ($type_balance === 'consolide') {
             ->orderBy('c.RefSousGroupe')
             ->get();
 
+
+
+
+
+
+        // 🔥 NOUVEAU : CALCUL DYNAMIQUE DU RÉSULTAT (PRODUIT - CHARGE)
+$resultat = DB::table('transactions as t')
+    ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
+    ->where('t.CodeMonnaie', $monnaieValue)
+    ->where('t.DateTransaction', '<=', $date2)
+    ->select(DB::raw("
+        SUM(CASE WHEN c.nature_compte = 'PRODUIT' THEN t.$creditCol - t.$debitCol ELSE 0 END) -
+        SUM(CASE WHEN c.nature_compte = 'CHARGE' THEN t.$debitCol - t.$creditCol ELSE 0 END) 
+        as montant
+    "))
+    ->first();
+
+$soldeResultat = $resultat->montant ?? 0;
+
+
+
+    if ($soldeResultat != 0) {
+    $estBenefice = $soldeResultat > 0;
+    $passifData->push((object)[
+        'NumCompte'     => $estBenefice ? '131' : '139',
+        'NomCompte'     => $estBenefice ? 'RESULTAT NET : BENEFICE' : 'RESULTAT NET : PERTE',
+        'RefCadre'      => '13',
+        'nature_compte' => 'PASSIF',
+        'soldeFin'      => abs($soldeResultat), // On affiche la valeur absolue au Passif
+        // ... ajoute les autres colonnes vides si nécessaire (RefGroupe, etc.)
+    ]);
+}
+
            
 
         // Calcul des totaux
@@ -1294,161 +1229,6 @@ if ($type_balance === 'consolide') {
 
 
     //GRAND LIVRE 
-
- 
-//     public function getGrandLivre(Request $request)
-// {
-//     $date_debut = $request->date_debut;
-//     $date_fin   = $request->date_fin;
-//     $devise     = $request->devise;
-//     $compte_debut = $request->compte_debut;
-//     $compte_fin   = $request->compte_fin;
-
-//     $debitCol = $devise === 'USD' ? 'Debitusd' : 'Debitfc';
-//     $creditCol = $devise === 'USD' ? 'Creditusd' : 'Creditfc';
-//     $codeMonnaie = $devise === 'USD' ? 1 : 2;
-
-//     // Déterminer le champ de filtre
-//     if (strlen($compte_debut) == 2 && strlen($compte_fin) == 2) {
-//         $champRef = 'c.RefCadre';
-//     } elseif (strlen($compte_debut) == 3 && strlen($compte_fin) == 3) {
-//         $champRef = 'c.RefGroupe';
-//     } elseif (strlen($compte_debut) == 13 && strlen($compte_fin) == 13) {
-//         $champRef = 'c.NumCompte';
-//     } else {
-//         $champRef = 'c.RefTypeCompte';
-//     }
-
-//     // 🔥 Récupération UNIQUEMENT des comptes de niveau 5 (comptes individuels)
-//     $comptes = DB::table('comptes as c')
-//         ->whereBetween($champRef, [$compte_debut, $compte_fin])
-//         ->where('c.niveau', 5)          // niveau 5 = comptes individuels
-//         ->where('c.est_classe', 0)      // 0 = compte détail (pas de regroupement)
-//         ->where('c.CodeMonnaie', $codeMonnaie)   // ← Filtre devise
-//         ->orderBy('c.NumCompte')
-//         ->get();
-
-//     if ($comptes->isEmpty()) {
-//         return response()->json(['status' => 0, 'msg' => 'Aucun compte de niveau 5 trouvé pour cette plage']);
-//     }
-
-//     // Soldes initiaux (avant date_debut) pour ces comptes
-//     $soldesInitiaux = DB::table('transactions as t')
-//         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
-//         ->whereBetween($champRef, [$compte_debut, $compte_fin])
-//         ->where('c.niveau', 5)
-//         ->where('c.est_classe', 0)
-//         ->where('t.CodeMonnaie', $codeMonnaie)
-//         ->where('t.DateTransaction', '<', $date_debut)
-//         ->select(
-//             'c.NumCompte',
-//             DB::raw("
-//                 COALESCE(SUM(
-//                     CASE 
-//                         WHEN LEFT(c.NumCompte,1) IN ('1','2','3') THEN t.$debitCol - t.$creditCol
-//                         ELSE t.$creditCol - t.$debitCol
-//                     END
-//                 ), 0) as soldeInitial
-//             ")
-//         )
-//         ->groupBy('c.NumCompte')
-//         ->get()
-//         ->keyBy('NumCompte');
-
-//     // Écritures de la période (débit/crédit par compte)
-//     $transactions = DB::table('transactions as t')
-//         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
-//         ->whereBetween($champRef, [$compte_debut, $compte_fin])
-//         ->where('c.niveau', 5)
-//         ->where('c.est_classe', 0)
-//         ->whereBetween('t.DateTransaction', [$date_debut, $date_fin])
-//         ->where('t.CodeMonnaie', $codeMonnaie)
-//         ->select(
-//             't.DateTransaction',
-//             't.NumTransaction',
-//             't.Libelle',
-//             'c.NumCompte',
-//             'c.NomCompte',
-//             DB::raw("t.$debitCol as debit"),
-//             DB::raw("t.$creditCol as credit")
-//         )
-//         ->orderBy('c.NumCompte')
-//         ->orderBy('t.DateTransaction')
-//         ->orderBy('t.NumTransaction')
-//         ->get()
-//         ->groupBy('NumCompte');
-
-//     $result = [];
-
-//     foreach ($comptes as $compte) {
-//         $num = $compte->NumCompte;
-//         $nom = $compte->NomCompte;
-
-//         // Solde initial (positif, comme affiché)
-//         $solde = $soldesInitiaux[$num]->soldeInitial ?? 0;
-
-//         // Ligne d'en-tête du compte
-//         $result[] = [
-//             'type' => 'compte',
-//             'NumCompte' => $num,
-//             'NomCompte' => $nom
-//         ];
-
-//         // Ligne de solde initial
-//         $result[] = [
-//             'type' => 'solde_initial',
-//             'NumCompte' => $num,
-//             'libelle' => "Solde reporté au $date_debut",
-//             'debit' => 0,
-//             'credit' => 0,
-//             'solde' => abs($solde)
-//         ];
-
-//         $totalDebit = 0;
-//         $totalCredit = 0;
-
-//         if (isset($transactions[$num])) {
-//             foreach ($transactions[$num] as $t) {
-//                 // Calcul du solde courant selon nature du compte
-//                 if (in_array($num[0], ['1', '2', '3'])) { // compte actif
-//                     $solde += ($t->debit - $t->credit);
-//                 } else { // compte passif / produit / charge
-//                     $solde += ($t->credit - $t->debit);
-//                 }
-
-//                 $totalDebit += $t->debit;
-//                 $totalCredit += $t->credit;
-
-//                 $result[] = [
-//                     'type' => 'mouvement',
-//                     'date' => $t->DateTransaction,
-//                     'numPiece' => $t->NumTransaction,
-//                     'libelle' => $t->Libelle,
-//                     'debit' => $t->debit,
-//                     'credit' => $t->credit,
-//                     'solde' => abs($solde)
-//                 ];
-//             }
-//         }
-
-//         // Ligne de total
-//         $result[] = [
-//             'type' => 'total',
-//             'NumCompte' => $num,
-//             'libelle' => 'TOTAL',
-//             'debit' => $totalDebit,
-//             'credit' => $totalCredit,
-//             'solde' => abs($solde)
-//         ];
-//     }
-
-//     return response()->json([
-//         'status' => 1,
-//         'data' => $result
-//     ]);
-// }
-
-
 
 public function getGrandLivre(Request $request)
 {
@@ -2514,21 +2294,47 @@ public function getGrandLivre(Request $request)
 
     public function downloadReportCompteEpargne(Request $request)
     {
-        $fetchData = $request->input('fetchData');
-        $type = $request->input('type'); // Type du fichier (pdf ou excel)
+        
+        $fetchData = $request->input('fetchDataCompteEpargne');
+        $fetchDataCompteInterne=$request->input('fetchDataCompteInterne');
 
-        // Filtrer les colonnes que vous souhaitez pour Excel et remplacer les nulls par 0
+        
+        
+    $type = $request->input('type'); // Type du fichier (pdf ou excel)
+        
+         // 🔥 On récupère directement depuis la DB (MEILLEURE PRATIQUE)
+    $data = Comptes::whereIn('nature_compte', [
+            'ACTIF', 'PASSIF', 'PRODUIT', 'CHARGE', 'HORS BILAN'
+        ])
+        ->where('niveau', 5)
+        ->orderByRaw("CASE 
+            WHEN nature_compte = 'ACTIF' THEN 1
+            WHEN nature_compte = 'PASSIF' THEN 2
+            WHEN nature_compte = 'PRODUIT' THEN 3
+            WHEN nature_compte = 'CHARGE' THEN 4
+            WHEN nature_compte = 'HORS BILAN' THEN 5
+        END")
+        ->orderBy('NumCompte')
+        ->get();
 
+    // 🔥 Groupement par section
+   $groupedData = [];
+$sections = ['ACTIF', 'PASSIF', 'PRODUIT', 'CHARGE', 'HORS BILAN'];
+foreach ($sections as $section) {
+    $groupedData[$section] = [
+        'USD' => $data->where('nature_compte', $section)->where('CodeMonnaie', 1)->values(),
+        'CDF' => $data->where('nature_compte', $section)->where('CodeMonnaie', 2)->values(),
+    ];
+}
 
-        $view = 'reports.sommaire-compte'; // Vue Blade pour le PDF
-        $filename = 'sommaire_de_compte'; // Nom du fichier
+    if ($type === "pdf") {
 
-        // Générer le PDF si le type est pdf
-        if ($type === "pdf") {
-            $pdf = PDF::loadView('reports.liste-compte-pargne', compact('fetchData'));
-            ini_set('memory_limit', '1024M');
-            return $pdf->download('reports.liste-compte-pargne.pdf');
-        } else if ($type === 'excel') {
+        $pdf = Pdf::loadView('reports.liste-compte-pargne', [
+            'groupedData' => $groupedData
+        ]);
+
+        return $pdf->download('plan_comptable_interne.pdf');
+    }else if ($type === 'excel') {
             // Définir les colonnes à sélectionner
             $columnsToSelect = ['NumCompte', 'NomCompte', 'sexe', 'NumAdherant', 'solde', 'CodeMonnaie', 'derniere_date_transaction'];
 
@@ -2545,7 +2351,7 @@ public function getGrandLivre(Request $request)
                 $filteredRow['NomCompte'] = (isset($filteredRow['NomCompte'])) ? $filteredRow['NomCompte'] : '';
 
                 return $filteredRow;
-            }, $fetchData);
+            }, $fetchData?? $fetchDataCompteInterne);
 
             // En-têtes pour le fichier Excel
             $headers = ['NumCompte', 'NomCompte', 'Genre', 'NumAbregé', 'Solde', 'CodeMonnaie', 'DateDernièreTransaction'];
