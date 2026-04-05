@@ -78,7 +78,7 @@ const LoginForm = () => {
                 navigate(lastVisitedPage);
             } else {
                 // S'il n'y a pas de dernière page visitée, rediriger vers la page d'accueil
-                navigate("/gestion_credit/home");
+                navigate("/eco/home");
             }
             window.location.reload();
         } else if (res.data.status == 0) {

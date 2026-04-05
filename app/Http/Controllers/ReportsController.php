@@ -803,6 +803,7 @@ public function getBalanceCompte(Request $request)
     $comptes = DB::table('comptes as c')
         ->whereBetween($champRef, [$compte_debut, $compte_fin])
         ->where('c.est_classe', 0)
+         ->where('c.CodeMonnaie', $codeMonnaie)
         ->orderBy('c.NumCompte')
         ->get(['c.NumCompte', 'c.NomCompte', 'c.RefSousGroupe']);
 

@@ -34,6 +34,20 @@ const GrandLivre = () => {
         );
     }, []);
 
+
+     // Fonction utilitaire
+        const getPremierJourAnnee = (annee = null) => {
+            const anneeUtilisee = annee || new Date().getFullYear();
+            return `${anneeUtilisee}-01-01`;
+        };
+    
+        // Dans votre composant
+        useEffect(() => {
+            setDateDebut(getPremierJourAnnee()); // Année en cours
+            // ou
+            setDateDebut(getPremierJourAnnee()); // Année 2025 spécifique
+        }, []);
+
     const handleSearch = async (e) => {
         e.preventDefault();
 

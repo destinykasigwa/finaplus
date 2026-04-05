@@ -40,6 +40,20 @@ const Bilan = () => {
         setdate_debut_balance(`${year2}-${month2}-${day2}`);
     }, []);
 
+
+     // Fonction utilitaire
+    const getPremierJourAnnee = (annee = null) => {
+        const anneeUtilisee = annee || new Date().getFullYear();
+        return `${anneeUtilisee}-01-01`;
+    };
+
+    // Dans votre composant
+    useEffect(() => {
+        setdate_debut_balance(getPremierJourAnnee()); // Année en cours
+        // ou
+        setdate_debut_balance(getPremierJourAnnee()); // Année 2025 spécifique
+    }, []);
+
     const dateParser = (num) => {
         const options = { year: "numeric", month: "numeric", day: "numeric" };
         let timestamp = Date.parse(num);

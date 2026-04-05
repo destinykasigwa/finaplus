@@ -19,6 +19,9 @@ const Balance = () => {
     const [typeBalance, setTypeBalance] = useState("detail"); // "detail" ou "consolide"
     const itemsPerPage = 20;
 
+
+
+
     const buildHierarchy = (data) => {
         const result = [];
 
@@ -67,6 +70,20 @@ const Balance = () => {
             `${firstDayOfMonth.getFullYear()}-${String(firstDayOfMonth.getMonth() + 1).padStart(2, "0")}-${String(firstDayOfMonth.getDate()).padStart(2, "0")}`,
         );
     }, []);
+
+
+     // Fonction utilitaire
+        const getPremierJourAnnee = (annee = null) => {
+            const anneeUtilisee = annee || new Date().getFullYear();
+            return `${anneeUtilisee}-01-01`;
+        };
+    
+        // Dans votre composant
+        useEffect(() => {
+            setDateDebut(getPremierJourAnnee()); // Année en cours
+            // ou
+            setDateDebut(getPremierJourAnnee()); // Année 2025 spécifique
+        }, []);
 
     const handleSearch = async (e) => {
         e.preventDefault();
