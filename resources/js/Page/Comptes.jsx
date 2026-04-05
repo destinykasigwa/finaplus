@@ -1,5 +1,4 @@
 import styles from "../styles/Global.module.css";
-
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -768,7 +767,7 @@ const Comptes = () => {
 
     const saveNewCompte = async (e) => {
         e.preventDefault();
-
+    
         // 1. Vérification de la classe OHADA
         if (!RefTypeCompte) {
             Swal.fire({
@@ -842,7 +841,7 @@ const Comptes = () => {
         }
 
         setisloading4(true);
-
+        
         try {
             // Construction de l'objet à envoyer
             const compteData = {
@@ -6088,6 +6087,7 @@ const Comptes = () => {
                                                 type="text"
                                                 className="form-control"
                                                 style={{
+                                                    //   width: "100%",
                                                     borderRadius: "10px",
                                                     textTransform: "uppercase",
                                                 }}

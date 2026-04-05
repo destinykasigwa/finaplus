@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const LoginForm = () => {
-    const navigate = useNavigate();
+     const navigate = useNavigate();
     const location = useLocation();
     const [user, setUser] = useState({
         name: "",
@@ -19,176 +19,189 @@ const LoginForm = () => {
     const [SkipNow, setSkipNow] = useState();
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+     const [isSessionExpired, setSessionExpired] = useState(false);
+    
+
+    useEffect(() => {
+        const checkSessionExpiration = async () => {
+            try {
+                const res = await axios.get("/check-session-expiration");
+                if (res.data.sessionExpired) {
+                    console.log(res.data.requestedPageUrl);
+                    const lastVisitedUrl = res.data.requestedPageUrl;
+                    // La session de l'utilisateur a expiré
+                    setSessionExpired(true);
+                    // Stocker l'URL de la dernière page visitée dans le localStorage
+                    localStorage.setItem("lastVisitedPage", lastVisitedUrl);
+                    // console.log(window.location.pathname);
+                } else {
+                    // La session de l'utilisateur n'a pas expiré
+                    setSessionExpired(false);
+                }
+            } catch (error) {
+                console.error(
+                    "Erreur lors de la vérification de l'expiration de la session :",
+                    error,
+                );
+                // Gérer les erreurs de requête ici
+            }
+        };
+
+        // Appeler la fonction pour vérifier l'expiration de la session au chargement du composant
+        checkSessionExpiration();
+    }, []);
+
+    // useEffect(() => {
+    //     const storedRequestedPage = localStorage.getItem("lastVisitedPage");
+    //     if (storedRequestedPage && isSessionExpired) {
+    //         // La session de l'utilisateur a expiré et une page protégée a été demandée précédemment
+    //         navigate("/auth/login");
+    //     }
+    // }, [isSessionExpired]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setIsLoading(true);
-        
-        try {
-            const res = await axios.post("/auth/login", user);
-            if (res.data.status == 1) {
-                checkSessionExpiration();
-                Swal.fire({
-                    title: "Connexion réussie !",
-                    text: "Bienvenue dans l'espace de travail FinaPlus",
-                    icon: "success",
-                    timer: 2000,
-                    showConfirmButton: false,
-                }).then(() => {
-                    navigate("/eco/home");
-                    window.location.reload();
-                });
-            } else if (res.data.status == 0) {
-                Swal.fire({
-                    title: "Erreur de connexion",
-                    text: res.data.msg,
-                    icon: "error",
-                    confirmButtonText: "OK",
-                    confirmButtonColor: "#B58932",
-                });
-            } else if (res.data.status == "password_expired") {
-                Swal.fire({
-                    title: "Expiration du mot de passe",
-                    text: res.data.msg,
-                    icon: "warning",
-                    showDenyButton: true,
-                    showCancelButton: true,
-                    confirmButtonText: "Changer le mot de passe",
-                    denyButtonText: "Ignorer",
-                    confirmButtonColor: "#B58932",
-                    denyButtonColor: "#95a5a6",
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        setExpiredPassword(true);
-                    } else if (result.isDenied) {
-                        navigate("/auth/skip-change-password");
-                        window.location.reload();
-                    }
-                });
-            } else {
-                setError(res.data.validate_error);
-                Swal.fire({
-                    title: "Champs invalides",
-                    text: "Veuillez vérifier vos informations",
-                    icon: "error",
-                    timer: 3000,
-                    confirmButtonColor: "#B58932",
-                });
+        const res = await axios.post("/auth/login", user);
+        if (res.data.status == 1) {
+            console.log(res.data.data.reseted_password);
+            if (res.data.data.reseted_password == 1) {
+                // Rediriger immédiatement vers la page de réinitialisation
+                navigate("/auth/reset-password");
+                window.location.reload();
+                return;
+                // Arrêter l'exécution ici
             }
-        } catch (error) {
+            // Stocker l'URL de la page actuelle dans le localStorage
+            // localStorage.setItem("lastVisitedPage", window.location.pathname);
+            const lastVisitedPage = localStorage.getItem("lastVisitedPage");
+            if (lastVisitedPage && lastVisitedPage !== "null") {
+                navigate(lastVisitedPage);
+            } else {
+                // S'il n'y a pas de dernière page visitée, rediriger vers la page d'accueil
+                navigate("/gestion_credit/home");
+            }
+            window.location.reload();
+        } else if (res.data.status == 0) {
+            // Afficher un message d'erreur
             Swal.fire({
                 title: "Erreur",
-                text: "Une erreur est survenue. Veuillez réessayer.",
+                text: res.data.msg,
                 icon: "error",
-                confirmButtonColor: "#B58932",
+                timer: 10000,
+                confirmButtonText: "Okay",
             });
-        } finally {
-            setIsLoading(false);
+        } else if (res.data.status == "password_expired") {
+            // Gérer l'expiration du mot de passe
+            Swal.fire({
+                title: "Expiration du mot de passe",
+                text: res.data.msg,
+                showDenyButton: true,
+                showCancelButton: true,
+                confirmButtonText: "Changer le mot de passe",
+                denyButtonText: `Ignorer`,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Rediriger vers la page de changement de mot de passe
+                    setExpiredPassword(true);
+                } else if (result.isDenied) {
+                    // Ignorer la mise à jour du mot de passe et rediriger vers la page de connexion
+                    navigate("/auth/skip-change-password");
+                    window.location.reload();
+                }
+            });
+        } else {
+            setError(res.data.validate_error);
         }
     };
 
     const handleSubmitChangePassword = async (e) => {
         e.preventDefault();
-        setIsLoading(true);
-        
-        if (user.newPassword !== user.confirmNewPassword) {
+        const res = await axios.post("/auth/login/change-password", user);
+        if (res.data.status == 1) {
+            navigate("/eco/home");
+            window.location.reload();
+        } else if (res.data.status == 0) {
             Swal.fire({
                 title: "Erreur",
-                text: "Les mots de passe ne correspondent pas",
+                text: res.data.msg,
                 icon: "error",
-                confirmButtonColor: "#B58932",
+                timer: 10000,
+                // showCancelButton: true,
+                // cancelButtonColor: "#d33",
+                confirmButtonText: "Okay",
             });
-            setIsLoading(false);
-            return;
-        }
-        
-        try {
-            const res = await axios.post("/auth/login/change-password", user);
-            if (res.data.status == 1) {
-                Swal.fire({
-                    title: "Mot de passe modifié",
-                    text: "Votre mot de passe a été mis à jour avec succès",
-                    icon: "success",
-                    timer: 2000,
-                    showConfirmButton: false,
-                }).then(() => {
-                    navigate("/");
-                    window.location.reload();
-                });
-            } else if (res.data.status == 0) {
-                Swal.fire({
-                    title: "Erreur",
-                    text: res.data.msg,
-                    icon: "error",
-                    confirmButtonText: "OK",
-                    confirmButtonColor: "#B58932",
-                });
-            }
-        } catch (error) {
-            Swal.fire({
-                title: "Erreur",
-                text: "Une erreur est survenue. Veuillez réessayer.",
-                icon: "error",
-                confirmButtonColor: "#B58932",
-            });
-        } finally {
-            setIsLoading(false);
         }
     };
+    // useEffect(() => {
+    //     const storedRequestedPage = localStorage.getItem("lastVisitedPage");
+    //     if (storedRequestedPage && isSessionExpired) {
+    //         // La session de l'utilisateur a expiré et une page protégée a été demandée précédemment
+    //         navigate("/auth/login");
+    //     } else {
+    //         navigate(storedRequestedPage);
+    //         window.location.reload();
+    //     }
+    // }, [isSessionExpired]);
 
-    function checkSessionExpiration() {
-        axios
-            .get("/auth/check-session-expiration")
-            .then((response) => {
-                if (response.data.sessionExpired) {
-                    localStorage.setItem("lastVisitedRoute", location.pathname);
-                    const lastVisitedRoute = localStorage.getItem("lastVisitedRoute");
-                    if (lastVisitedRoute && lastVisitedRoute !== "/auth/login") {
-                        navigate.push(lastVisitedRoute);
-                    } else {
-                        navigate("/eco/home");
-                    }
-                    localStorage.removeItem("lastVisitedRoute");
-                }
-            })
-            .catch((error) => {
-                console.error(
-                    "Erreur lors de la vérification de l'expiration de la session :",
-                    error
-                );
-            });
-    }
+    // const handleSkipUpdatePassword = async (e) => {
+    //     e.preventDefault();
+    //     const res = await axios.post("/auth/login/change-password/skip", user);
+    //     if (res.data.status == 1) {
+    //         navigate("/");
+    //         window.location.reload();
+    //     } else if (res.data.status == 0) {
+    //         Swal.fire({
+    //             title: "Erreur",
+    //             text: res.data.msg,
+    //             icon: "error",
+    //             timer: 6000,
+    //             // showCancelButton: true,
+    //             // cancelButtonColor: "#d33",
+    //             confirmButtonText: "Okay",
+    //         });
+    //     }
+    // };
 
+    // Bouton désactivé si l'un des deux champs est vide
+    const isDisabled = user.name.trim() === "" || user.password.trim() === "";
     return (
         <div className="login-container">
             <div className="login-background">
                 <div className="login-overlay"></div>
             </div>
-            
+
             <div className="login-wrapper">
                 {expiredPassword == false ? (
                     <div className="login-card">
                         <div className="login-header">
                             <div className="logo-section">
-                                <img 
-                                    src="/images/logo/logo.png" 
-                                    alt="FinaPlus" 
+                                <img
+                                    src="/images/logo/logo.png"
+                                    alt="FinaPlus"
                                     className="login-logo"
-                                    style={{ borderRadius:"100px" }}
+                                    style={{ borderRadius: "100px" }}
                                 />
                             </div>
-                            <h2 className="login-title"> <strong   style={{
-    fontSize: "24px",
-    background: "linear-gradient(135deg, #20c997, #198764)",
-    WebkitBackgroundClip: "text",
-    backgroundClip: "text",
-    color: "transparent"
-  }}>
-                        FinaPlus
-                    </strong></h2>
-                            <p className="login-subtitle">Connectez-vous pour accéder au tableau de bord</p>
+                            {/* <h2 className="login-title">
+                                {" "}
+                                <strong
+                                    style={{
+                                        fontSize: "24px",
+                                        background:
+                                            "linear-gradient(135deg, #20c997, #198764)",
+                                        WebkitBackgroundClip: "text",
+                                        backgroundClip: "text",
+                                        color: "#024443 0%,#026d6c 50%",
+                                    }}    
+                                >
+                                    FinaPlus
+                                </strong>
+                            </h2> */}
+                            <p className="login-subtitle">
+                                Connectez-vous pour accéder au tableau de bord
+                            </p>
                         </div>
-                        
+
                         <form className="login-form" onSubmit={handleSubmit}>
                             <div className="form-group">
                                 <div className="input-icon">
@@ -196,7 +209,7 @@ const LoginForm = () => {
                                 </div>
                                 <input
                                     type="text"
-                                    className={`form-input ${error.name ? 'error' : ''}`}
+                                    className={`form-input ${error.name ? "error" : ""}`}
                                     name="name"
                                     value={user.name}
                                     onChange={(e) =>
@@ -207,7 +220,11 @@ const LoginForm = () => {
                                     }
                                     placeholder="Nom d'utilisateur"
                                 />
-                                {error.name && <span className="error-message">{error.name}</span>}
+                                {error.name && (
+                                    <span className="error-message">
+                                        {error.name}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="form-group">
@@ -216,7 +233,7 @@ const LoginForm = () => {
                                 </div>
                                 <input
                                     type={showPassword ? "text" : "password"}
-                                    className={`form-input ${error.password ? 'error' : ''}`}
+                                    className={`form-input ${error.password ? "error" : ""}`}
                                     name="password"
                                     value={user.password}
                                     onChange={(e) =>
@@ -230,18 +247,29 @@ const LoginForm = () => {
                                 <button
                                     type="button"
                                     className="password-toggle"
-                                    onClick={() => setShowPassword(!showPassword)}
+                                    onClick={() =>
+                                        setShowPassword(!showPassword)
+                                    }
                                 >
-                                    <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                    <i
+                                        className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}
+                                    ></i>
                                 </button>
-                                {error.password && <span className="error-message">{error.password}</span>}
+                                {error.password && (
+                                    <span className="error-message">
+                                        {error.password}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="form-options">
                                 <label className="checkbox-label">
                                     <input type="checkbox" /> Se souvenir de moi
                                 </label>
-                                <a href="/auth/forget-password" className="forgot-link">
+                                <a
+                                    href="/auth/forget-password"
+                                    className="forgot-link"
+                                >
                                     Mot de passe oublié ?
                                 </a>
                             </div>
@@ -253,11 +281,13 @@ const LoginForm = () => {
                             >
                                 {isLoading ? (
                                     <>
-                                        <i className="fas fa-spinner fa-spin"></i> Connexion en cours...
+                                        <i className="fas fa-spinner fa-spin"></i>{" "}
+                                        Connexion en cours...
                                     </>
                                 ) : (
                                     <>
-                                        <i className="fas fa-sign-in-alt"></i> Se connecter
+                                        <i className="fas fa-sign-in-alt"></i>{" "}
+                                        Se connecter
                                     </>
                                 )}
                             </button>
@@ -267,24 +297,32 @@ const LoginForm = () => {
                     <div className="login-card">
                         <div className="login-header">
                             <div className="logo-section">
-                                <img 
-                                    src="/images/logo/logo.png" 
-                                    alt="FinaPlus" 
+                                <img
+                                    src="/images/logo/logo.png"
+                                    alt="FinaPlus"
                                     className="login-logo"
                                 />
                             </div>
-                            <h2 className="login-title">Changement de mot de passe</h2>
-                            <p className="login-subtitle">Votre mot de passe a expiré, veuillez en définir un nouveau</p>
+                            <h2 className="login-title">
+                                Changement de mot de passe
+                            </h2>
+                            <p className="login-subtitle">
+                                Votre mot de passe a expiré, veuillez en définir
+                                un nouveau
+                            </p>
                         </div>
-                        
-                        <form className="login-form" onSubmit={handleSubmitChangePassword}>
+
+                        <form
+                            className="login-form"
+                            onSubmit={handleSubmitChangePassword}
+                        >
                             <div className="form-group">
                                 <div className="input-icon">
                                     <i className="fas fa-key"></i>
                                 </div>
                                 <input
                                     type="password"
-                                    className={`form-input ${error.Previouspassword ? 'error' : ''}`}
+                                    className={`form-input ${error.Previouspassword ? "error" : ""}`}
                                     name="Previouspassword"
                                     value={user.Previouspassword}
                                     onChange={(e) =>
@@ -295,7 +333,11 @@ const LoginForm = () => {
                                     }
                                     placeholder="Ancien mot de passe"
                                 />
-                                {error.Previouspassword && <span className="error-message">{error.Previouspassword}</span>}
+                                {error.Previouspassword && (
+                                    <span className="error-message">
+                                        {error.Previouspassword}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="form-group">
@@ -304,7 +346,7 @@ const LoginForm = () => {
                                 </div>
                                 <input
                                     type="password"
-                                    className={`form-input ${error.newPassword ? 'error' : ''}`}
+                                    className={`form-input ${error.newPassword ? "error" : ""}`}
                                     name="newPassword"
                                     value={user.newPassword}
                                     onChange={(e) =>
@@ -315,7 +357,11 @@ const LoginForm = () => {
                                     }
                                     placeholder="Nouveau mot de passe"
                                 />
-                                {error.newPassword && <span className="error-message">{error.newPassword}</span>}
+                                {error.newPassword && (
+                                    <span className="error-message">
+                                        {error.newPassword}
+                                    </span>
+                                )}
                             </div>
 
                             <div className="form-group">
@@ -324,7 +370,7 @@ const LoginForm = () => {
                                 </div>
                                 <input
                                     type="password"
-                                    className={`form-input ${error.confirmNewPassword ? 'error' : ''}`}
+                                    className={`form-input ${error.confirmNewPassword ? "error" : ""}`}
                                     name="confirmNewPassword"
                                     value={user.confirmNewPassword}
                                     onChange={(e) =>
@@ -335,7 +381,11 @@ const LoginForm = () => {
                                     }
                                     placeholder="Confirmer le mot de passe"
                                 />
-                                {error.confirmNewPassword && <span className="error-message">{error.confirmNewPassword}</span>}
+                                {error.confirmNewPassword && (
+                                    <span className="error-message">
+                                        {error.confirmNewPassword}
+                                    </span>
+                                )}
                             </div>
 
                             <button
@@ -345,17 +395,22 @@ const LoginForm = () => {
                             >
                                 {isLoading ? (
                                     <>
-                                        <i className="fas fa-spinner fa-spin"></i> Modification en cours...
+                                        <i className="fas fa-spinner fa-spin"></i>{" "}
+                                        Modification en cours...
                                     </>
                                 ) : (
                                     <>
-                                        <i className="fas fa-save"></i> Changer le mot de passe
+                                        <i className="fas fa-save"></i> Changer
+                                        le mot de passe
                                     </>
                                 )}
                             </button>
-                            
+
                             <div className="form-footer">
-                                <a href="/auth/forget-password" className="forgot-link">
+                                <a
+                                    href="/auth/forget-password"
+                                    className="forgot-link"
+                                >
                                     J'ai oublié mon mot de passe
                                 </a>
                             </div>
@@ -363,7 +418,7 @@ const LoginForm = () => {
                     </div>
                 )}
             </div>
-            
+
             <style jsx>{`
                 .login-container {
                     min-height: 100vh;
@@ -371,29 +426,39 @@ const LoginForm = () => {
                     align-items: center;
                     justify-content: center;
                     position: relative;
-                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                    font-family:
+                        "Inter",
+                        -apple-system,
+                        BlinkMacSystemFont,
+                        "Segoe UI",
+                        sans-serif;
                 }
-                
+
                 .login-background {
                     position: fixed;
                     top: 0;
                     left: 0;
                     right: 0;
                     bottom: 0;
-                    background: linear-gradient(135deg, #024443 0%, #026d6c 50%, #B58932 100%);
+                    background: linear-gradient(
+                        135deg,
+                        #024443 0%,
+                        #026d6c 50%,
+                        #b58932 100%
+                    );
                     z-index: 0;
                 }
-                
+
                 .login-overlay {
                     position: absolute;
                     top: 0;
                     left: 0;
                     right: 0;
                     bottom: 0;
-                    background: url('/images/bg-pattern.png') repeat;
+                    background: url("/images/bg-pattern.png") repeat;
                     opacity: 0.05;
                 }
-                
+
                 .login-wrapper {
                     position: relative;
                     z-index: 1;
@@ -401,36 +466,38 @@ const LoginForm = () => {
                     max-width: 480px;
                     padding: 20px;
                 }
-                
+
                 .login-card {
                     background: rgba(255, 255, 255, 0.98);
                     backdrop-filter: blur(10px);
                     border-radius: 32px;
                     padding: 40px 35px;
                     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    transition:
+                        transform 0.3s ease,
+                        box-shadow 0.3s ease;
                 }
-                
+
                 .login-card:hover {
                     transform: translateY(-5px);
                     box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.3);
                 }
-                
+
                 .login-header {
                     text-align: center;
                     margin-bottom: 35px;
                 }
-                
+
                 .logo-section {
                     margin-bottom: 20px;
                 }
-                
+
                 .login-logo {
                     height: 70px;
                     width: auto;
                     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
                 }
-                
+
                 .login-title {
                     font-size: 28px;
                     font-weight: 700;
@@ -438,33 +505,33 @@ const LoginForm = () => {
                     margin-bottom: 8px;
                     letter-spacing: -0.5px;
                 }
-                
+
                 .login-subtitle {
                     font-size: 14px;
                     color: #6c757d;
                     margin: 0;
                 }
-                
+
                 .login-form {
                     display: flex;
                     flex-direction: column;
                     gap: 20px;
                 }
-                
+
                 .form-group {
                     position: relative;
                 }
-                
+
                 .input-icon {
                     position: absolute;
                     left: 16px;
                     top: 50%;
                     transform: translateY(-50%);
-                    color: #B58932;
+                    color: #b58932;
                     font-size: 16px;
                     z-index: 1;
                 }
-                
+
                 .form-input {
                     width: 100%;
                     padding: 14px 45px 14px 45px;
@@ -475,17 +542,17 @@ const LoginForm = () => {
                     background: #fff;
                     font-family: inherit;
                 }
-                
+
                 .form-input:focus {
                     outline: none;
-                    border-color: #B58932;
+                    border-color: #b58932;
                     box-shadow: 0 0 0 4px rgba(181, 137, 50, 0.1);
                 }
-                
+
                 .form-input.error {
                     border-color: #dc3545;
                 }
-                
+
                 .error-message {
                     display: block;
                     color: #dc3545;
@@ -493,7 +560,7 @@ const LoginForm = () => {
                     margin-top: 5px;
                     margin-left: 5px;
                 }
-                
+
                 .password-toggle {
                     position: absolute;
                     right: 16px;
@@ -506,18 +573,18 @@ const LoginForm = () => {
                     font-size: 16px;
                     transition: color 0.3s;
                 }
-                
+
                 .password-toggle:hover {
-                    color: #B58932;
+                    color: #b58932;
                 }
-                
+
                 .form-options {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                     font-size: 14px;
                 }
-                
+
                 .checkbox-label {
                     display: flex;
                     align-items: center;
@@ -525,29 +592,33 @@ const LoginForm = () => {
                     color: #495057;
                     cursor: pointer;
                 }
-                
+
                 .checkbox-label input {
                     width: 16px;
                     height: 16px;
                     cursor: pointer;
-                    accent-color: #B58932;
+                    accent-color: #b58932;
                 }
-                
+
                 .forgot-link {
-                    color: #B58932;
+                    color: #b58932;
                     text-decoration: none;
                     font-size: 14px;
                     font-weight: 500;
                     transition: color 0.3s;
                 }
-                
+
                 .forgot-link:hover {
                     color: #024443;
                     text-decoration: underline;
                 }
-                
+
                 .login-button {
-                    background: linear-gradient(135deg, #B58932 0%, #d4a143 100%);
+                    background: linear-gradient(
+                        135deg,
+                        #b58932 0%,
+                        #d4a143 100%
+                    );
                     color: white;
                     border: none;
                     padding: 14px;
@@ -562,55 +633,59 @@ const LoginForm = () => {
                     gap: 10px;
                     margin-top: 10px;
                 }
-                
+
                 .login-button:hover:not(:disabled) {
                     transform: translateY(-2px);
                     box-shadow: 0 10px 20px rgba(181, 137, 50, 0.3);
-                    background: linear-gradient(135deg, #d4a143 0%, #B58932 100%);
+                    background: linear-gradient(
+                        135deg,
+                        #d4a143 0%,
+                        #b58932 100%
+                    );
                 }
-                
+
                 .login-button:disabled {
                     opacity: 0.7;
                     cursor: not-allowed;
                 }
-                
+
                 .form-footer {
                     text-align: center;
                     margin-top: 20px;
                     padding-top: 20px;
                     border-top: 1px solid #e9ecef;
                 }
-                
+
                 @media (max-width: 768px) {
                     .login-card {
                         padding: 30px 25px;
                     }
-                    
+
                     .login-title {
                         font-size: 24px;
                     }
-                    
+
                     .form-input {
                         padding: 12px 40px 12px 40px;
                     }
                 }
-                
+
                 @media (max-width: 480px) {
                     .login-card {
                         padding: 25px 20px;
                     }
-                    
+
                     .login-title {
                         font-size: 22px;
                     }
-                    
+
                     .form-options {
                         flex-direction: column;
                         gap: 10px;
                         align-items: flex-start;
                     }
                 }
-                
+
                 @keyframes fadeIn {
                     from {
                         opacity: 0;
@@ -621,7 +696,7 @@ const LoginForm = () => {
                         transform: translateY(0);
                     }
                 }
-                
+
                 .login-card {
                     animation: fadeIn 0.6s ease-out;
                 }
@@ -631,28 +706,6 @@ const LoginForm = () => {
 };
 
 export default LoginForm;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // import styles from "../styles/RegisterForm.module.css";
 // import { useState, useEffect } from "react";
@@ -1111,14 +1164,14 @@ export default LoginForm;
 //                             ></i>
 //                         </div>
 //                     </div>
-                    
+
 //                     <h2 className="text-white fw-bold mb-4" style={{ fontSize: "2rem" }}>
 //                         Gérez vos crédits<br />
 //                         en toute simplicité
 //                     </h2>
-                    
+
 //                     <p className="text-white-50 mb-5" style={{ lineHeight: "1.6" }}>
-//                         Accédez à votre tableau de bord pour suivre et gérer 
+//                         Accédez à votre tableau de bord pour suivre et gérer
 //                         efficacement l'ensemble de vos opérations de crédit.
 //                     </p>
 

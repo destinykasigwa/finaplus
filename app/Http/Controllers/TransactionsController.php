@@ -1993,7 +1993,7 @@ class TransactionsController extends Controller
             $item = $request->searched_account_by_name;
             $checkRowExist = Comptes::where("NomCompte", "LIKE", '%' . $item . '%')->get();
             if (count($checkRowExist) != 0) {
-                $data = Comptes::where("NomCompte", "LIKE", '%' . $item . '%')->get();
+                $data = Comptes::where("NomCompte", "LIKE", '%' . $item . '%')->where("niveau",5)->get();
                 return response()->json([
                     "status" => 1,
                     "data" => $data,

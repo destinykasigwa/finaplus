@@ -1121,6 +1121,7 @@ if ($type_balance === 'consolide') {
             ->leftJoin('transactions as t', function ($join) use ($monnaieValue) {
                 $join->on('c_individuel.NumCompte', '=', 't.NumCompte')
                     ->where('t.CodeMonnaie', '=', $monnaieValue);
+                    
             })
             ->select(
                 'c.NumCompte',
@@ -1249,6 +1250,7 @@ if ($type_balance === 'consolide') {
             ->leftJoin('transactions as t', function ($join) use ($monnaieValue) {
                 $join->on('c_individuel.NumCompte', '=', 't.NumCompte')
                     ->where('t.CodeMonnaie', '=', $monnaieValue);
+                    
             })
             ->select(
                 'c.NumCompte',
@@ -1271,10 +1273,12 @@ if ($type_balance === 'consolide') {
             ->orderBy('c.RefSousGroupe')
             ->get();
 
+           
+
         // Calcul des totaux
         $totalActif = $actifData->sum('soldeFin');
         $totalPassif = $passifData->sum('soldeFin');
-
+        
         return response()->json([
             "status" => 1,
             "actif" => $actifData,

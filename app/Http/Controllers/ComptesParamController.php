@@ -297,59 +297,60 @@ class ComptesParamController extends Controller
     // }
 
     public function saveNewAccount(Request $request)
-{
-    try {
-        DB::beginTransaction();
-        
-        $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
-        
-        if (!isset($request->IntituleCompteNew) || !isset($request->RefSousGroupe) || 
-            !isset($request->RefCadre) || !isset($request->RefTypeCompte) || !isset($request->RefGroupe)) {
+    {
+        try {
+            DB::beginTransaction();
+
+            $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
+
+            if (
+                !isset($request->IntituleCompteNew) || !isset($request->RefSousGroupe) ||
+                !isset($request->RefCadre) || !isset($request->RefTypeCompte) || !isset($request->RefGroupe)
+            ) {
+                return response()->json([
+                    "status" => 0,
+                    "msg" => "Veuillez compléter tous les champs obligatoires."
+                ]);
+            }
+
+            // Vérifier si le compte existe déjà
+            $checkCompteExist = Comptes::where("RefSousGroupe", $request->RefTypeCompte)
+                ->where("CodeMonnaie", 2)
+                ->first();
+
+            if ($checkCompteExist) {
+                return response()->json([
+                    "status" => 0,
+                    "msg" => "Ce compte existe déjà."
+                ]);
+            }
+
+            // Création des comptes de regroupement (hiérarchie)
+            $this->creerHierarchieComptes($request, $date);
+
+            // Création des comptes individuels
+            $this->creerComptesIndividuels($request, $date);
+
+            DB::commit();
+
             return response()->json([
-                "status" => 0, 
-                "msg" => "Veuillez compléter tous les champs obligatoires."
+                "status" => 1,
+                "msg" => "Comptes créés avec succès. Comptes individuels: " . $request->RefSousGroupe . "202 (CDF) et " . $request->RefSousGroupe . "201 (USD)"
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                "status" => 0,
+                "msg" => "Erreur lors de la création: " . $e->getMessage()
             ]);
         }
-        
-        // Vérifier si le compte existe déjà
-        $checkCompteExist = Comptes::where("RefSousGroupe", $request->RefTypeCompte)
-            ->where("CodeMonnaie", 2)
-            ->first();
-            
-        if ($checkCompteExist) {
-            return response()->json([
-                "status" => 0, 
-                "msg" => "Ce compte existe déjà."
-            ]);
-        }
-        
-        // Création des comptes de regroupement (hiérarchie)
-        $this->creerHierarchieComptes($request, $date);
-        
-        // Création des comptes individuels
-        $this->creerComptesIndividuels($request, $date);
-        
-        DB::commit();
-        
-        return response()->json([
-            "status" => 1, 
-            "msg" => "Comptes créés avec succès. Comptes individuels: " . $request->RefSousGroupe . "202 (CDF) et " . $request->RefSousGroupe . "201 (USD)"
-        ]);
-        
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return response()->json([
-            "status" => 0, 
-            "msg" => "Erreur lors de la création: " . $e->getMessage()
-        ]);
     }
-}
 
 
  // ============================================
     // FONCTIONS PRIVÉES UTILITAIRES
     // ============================================
-    
+
     /**
      * Retourne le nom de la classe OHADA en fonction du RefTypeCompte
      */
@@ -366,7 +367,7 @@ class ComptesParamController extends Controller
         ];
         return $classes[$refTypeCompte] ?? 'CLASSE ' . $refTypeCompte;
     }
-    
+
     /**
      * Retourne la nature du compte (ACTIF/PASSIF/RESULTAT) en fonction du RefTypeCompte
      */
@@ -384,121 +385,157 @@ class ComptesParamController extends Controller
         return $natures[$refTypeCompte] ?? null;
     }
 
-private function creerHierarchieComptes($request, $date)
-{
-    // Niveau 1: Classe
-    if (!Comptes::where('NumCompte', $request->RefTypeCompte)->exists()) {
-        Comptes::create([
-            "NumCompte" => $request->RefTypeCompte,
-            "NomCompte" => $this->getNomClasse($request->RefTypeCompte),
-            "RefTypeCompte" => $request->RefTypeCompte,
-            "RefCadre" => null,
-            "RefGroupe" => null,
-            "RefSousGroupe" => null,
-            "CodeMonnaie" => null,
-            "DateOuverture" => $date,
-            "NumAdherant" => $request->RefTypeCompte,
-            "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
-            "niveau" => 1,
-            "est_classe" => 1,
-            "compte_parent" => null
-        ]);
+    private function creerHierarchieComptes($request, $date)
+    {
+        // Niveau 1: Classe
+        if (!Comptes::where('NumCompte', $request->RefTypeCompte)->exists()) {
+            Comptes::create([
+                "NumCompte" => $request->RefTypeCompte,
+                "NomCompte" => $this->getNomClasse($request->RefTypeCompte),
+                "RefTypeCompte" => $request->RefTypeCompte,
+                "RefCadre" => null,
+                "RefGroupe" => null,
+                "RefSousGroupe" => null,
+                "CodeMonnaie" => null,
+                "DateOuverture" => $date,
+                "NumAdherant" => $request->RefTypeCompte,
+                // "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
+                // "nature_compte" => $request->nature_compte ?? $this->getNatureClasse($request->RefTypeCompte),
+                "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
+                    7 => "PRODUIT",
+                    6 => "CHARGE",
+                    default => $this->getNatureClasse($request->RefTypeCompte)
+                },
+                "niveau" => 1,
+                "est_classe" => 1,
+                "compte_parent" => null
+            ]);
+        }
+
+        // Niveau 2: Cadre
+        if (!Comptes::where('NumCompte', $request->RefCadre)->exists()) {
+            Comptes::create([
+                "NumCompte" => $request->RefCadre,
+                "NomCompte" => $request->IntituleCompteNew,
+                "RefTypeCompte" => $request->RefTypeCompte,
+                "RefCadre" => $request->RefCadre,
+                "RefGroupe" => null,
+                "RefSousGroupe" => null,
+                "CodeMonnaie" => null,
+                "DateOuverture" => $date,
+                "NumAdherant" => $request->RefCadre,
+                // "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
+                // "nature_compte" => $request->nature_compte ?? $this->getNatureClasse($request->RefTypeCompte),
+                "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
+                    7 => "PRODUIT",
+                    6 => "CHARGE",
+                    default => $this->getNatureClasse($request->RefTypeCompte)
+                },
+                "niveau" => 2,
+                "est_classe" => 1,
+                "compte_parent" => $request->RefTypeCompte
+            ]);
+        }
+
+        // Niveau 3: Groupe
+        if (!Comptes::where('NumCompte', $request->RefGroupe)->exists()) {
+            Comptes::create([
+                "NumCompte" => $request->RefGroupe,
+                "NomCompte" => $request->IntituleCompteNew,
+                "RefTypeCompte" => $request->RefTypeCompte,
+                "RefCadre" => $request->RefCadre,
+                "RefGroupe" => $request->RefGroupe,
+                "RefSousGroupe" => null,
+                "CodeMonnaie" => null,
+                "DateOuverture" => $date,
+                "NumAdherant" => $request->RefGroupe,
+                // "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
+                // "nature_compte" => $request->nature_compte ?? $this->getNatureClasse($request->RefTypeCompte),
+                "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
+                    7 => "PRODUIT",
+                    6 => "CHARGE",
+                    default => $this->getNatureClasse($request->RefTypeCompte)
+                },
+                "niveau" => 3,
+                "est_classe" => 1,
+                "compte_parent" => $request->RefCadre
+            ]);
+        }
+
+        // Niveau 4: Sous-groupe
+        if (!Comptes::where('NumCompte', $request->RefSousGroupe)->exists()) {
+            Comptes::create([
+                "NumCompte" => $request->RefSousGroupe,
+                "NomCompte" => $request->IntituleCompteNew,
+                "RefTypeCompte" => $request->RefTypeCompte,
+                "RefCadre" => $request->RefCadre,
+                "RefGroupe" => $request->RefGroupe,
+                "RefSousGroupe" => $request->RefSousGroupe,
+                "CodeMonnaie" => null,
+                "DateOuverture" => $date,
+                "NumAdherant" => $request->RefSousGroupe,
+                // "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
+                // "nature_compte" => $request->nature_compte ?? $this->getNatureClasse($request->RefTypeCompte),
+                "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
+                    7 => "PRODUIT",
+                    6 => "CHARGE",
+                    default => $this->getNatureClasse($request->RefTypeCompte)
+                },
+                "niveau" => 4,
+                "est_classe" => 1,
+                "compte_parent" => $request->RefGroupe
+            ]);
+        }
     }
-    
-    // Niveau 2: Cadre
-    if (!Comptes::where('NumCompte', $request->RefCadre)->exists()) {
+
+    private function creerComptesIndividuels($request, $date)
+    {
+        // Compte CDF (202)
         Comptes::create([
-            "NumCompte" => $request->RefCadre,
-            "NomCompte" => $request->IntituleCompteNew,
-            "RefTypeCompte" => $request->RefTypeCompte,
-            "RefCadre" => $request->RefCadre,
-            "RefGroupe" => null,
-            "RefSousGroupe" => null,
-            "CodeMonnaie" => null,
-            "DateOuverture" => $date,
-            "NumAdherant" => $request->RefCadre,
-            "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
-            "niveau" => 2,
-            "est_classe" => 1,
-            "compte_parent" => $request->RefTypeCompte
-        ]);
-    }
-    
-    // Niveau 3: Groupe
-    if (!Comptes::where('NumCompte', $request->RefGroupe)->exists()) {
-        Comptes::create([
-            "NumCompte" => $request->RefGroupe,
-            "NomCompte" => $request->IntituleCompteNew,
-            "RefTypeCompte" => $request->RefTypeCompte,
-            "RefCadre" => $request->RefCadre,
-            "RefGroupe" => $request->RefGroupe,
-            "RefSousGroupe" => null,
-            "CodeMonnaie" => null,
-            "DateOuverture" => $date,
-            "NumAdherant" => $request->RefGroupe,
-            "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
-            "niveau" => 3,
-            "est_classe" => 1,
-            "compte_parent" => $request->RefCadre
-        ]);
-    }
-    
-    // Niveau 4: Sous-groupe
-    if (!Comptes::where('NumCompte', $request->RefSousGroupe)->exists()) {
-        Comptes::create([
-            "NumCompte" => $request->RefSousGroupe,
+            "NumCompte" => $request->RefSousGroupe . "202",
             "NomCompte" => $request->IntituleCompteNew,
             "RefTypeCompte" => $request->RefTypeCompte,
             "RefCadre" => $request->RefCadre,
             "RefGroupe" => $request->RefGroupe,
             "RefSousGroupe" => $request->RefSousGroupe,
-            "CodeMonnaie" => null,
+            "CodeMonnaie" => 2,
             "DateOuverture" => $date,
-            "NumAdherant" => $request->RefSousGroupe,
-            "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
-            "niveau" => 4,
-            "est_classe" => 1,
-            "compte_parent" => $request->RefGroupe
+            "NumAdherant" => $request->RefSousGroupe . "202",
+            // "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
+            // "nature_compte" => $request->nature_compte ?? $this->getNatureClasse($request->RefTypeCompte),
+            "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
+                7 => "PRODUIT",
+                6 => "CHARGE",
+                default => $this->getNatureClasse($request->RefTypeCompte)
+            },
+            "niveau" => 5,
+            "est_classe" => 0,
+            "compte_parent" => $request->RefSousGroupe
+        ]);
+
+        // Compte USD (201)
+        Comptes::create([
+            "NumCompte" => $request->RefSousGroupe . "201",
+            "NomCompte" => $request->IntituleCompteNew,
+            "RefTypeCompte" => $request->RefTypeCompte,
+            "RefCadre" => $request->RefCadre,
+            "RefGroupe" => $request->RefGroupe,
+            "RefSousGroupe" => $request->RefSousGroupe,
+            "CodeMonnaie" => 1,
+            "DateOuverture" => $date,
+            "NumAdherant" => $request->RefSousGroupe . "201",
+            // "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
+            // "nature_compte" => $request->nature_compte ?? $this->getNatureClasse($request->RefTypeCompte),
+            "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
+                7 => "PRODUIT",
+                6 => "CHARGE",
+                default => $this->getNatureClasse($request->RefTypeCompte)
+            },
+            "niveau" => 5,
+            "est_classe" => 0,
+            "compte_parent" => $request->RefSousGroupe
         ]);
     }
-}
-
-private function creerComptesIndividuels($request, $date)
-{
-    // Compte CDF (202)
-    Comptes::create([
-        "NumCompte" => $request->RefSousGroupe . "202",
-        "NomCompte" => $request->IntituleCompteNew,
-        "RefTypeCompte" => $request->RefTypeCompte,
-        "RefCadre" => $request->RefCadre,
-        "RefGroupe" => $request->RefGroupe,
-        "RefSousGroupe" => $request->RefSousGroupe,
-        "CodeMonnaie" => 2,
-        "DateOuverture" => $date,
-        "NumAdherant" => $request->RefSousGroupe . "202",
-        "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
-        "niveau" => 5,
-        "est_classe" => 0,
-        "compte_parent" => $request->RefSousGroupe
-    ]);
-    
-    // Compte USD (201)
-    Comptes::create([
-        "NumCompte" => $request->RefSousGroupe . "201",
-        "NomCompte" => $request->IntituleCompteNew,
-        "RefTypeCompte" => $request->RefTypeCompte,
-        "RefCadre" => $request->RefCadre,
-        "RefGroupe" => $request->RefGroupe,
-        "RefSousGroupe" => $request->RefSousGroupe,
-        "CodeMonnaie" => 1,
-        "DateOuverture" => $date,
-        "NumAdherant" => $request->RefSousGroupe . "201",
-        "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
-        "niveau" => 5,
-        "est_classe" => 0,
-        "compte_parent" => $request->RefSousGroupe
-    ]);
-}
 
     //RECUPERER LA LISTE DE COMPTE INTERNE
 
