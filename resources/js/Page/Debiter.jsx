@@ -32,90 +32,109 @@ const Debiter = () => {
             [name]: checked,
         }));
     };
-    const saveOperation = async (e) => {
-        e.preventDefault();
-        setloading(true);
-        setchargement(true);
+   const saveOperation = async (e) => {
+    e.preventDefault();
+    setloading(true);
+    setchargement(true);
 
-        let confirmation;
-        // Afficher une boîte de dialogue de confirmation
-        console.log(checkboxValues.isVirement);
-        if (checkboxValues.isVirement === true) {
-            confirmation = await Swal.fire({
-                title: "Êtes-vous sûr?",
-                text: "Il semble que l'opération que vous voulez enregistrer est une operation de virement voulez vous continuer ?",
-                icon: "question",
-                showCancelButton: true,
-                confirmButtonText: "Oui",
-                cancelButtonText: "Non",
+    let confirmation;
+    console.log(checkboxValues.isVirement);
+    
+    if (checkboxValues.isVirement === true) {
+        confirmation = await Swal.fire({
+            title: "Êtes-vous sûr?",
+            text: "Il semble que l'opération que vous voulez enregistrer est une operation de virement voulez vous continuer ?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        });
+    } else {
+        confirmation = await Swal.fire({
+            title: "Êtes-vous sûr?",
+            text: "Vous êtes sur le point de valider cette opération voulez vous continuer ?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        });
+    }
+
+    // Si l'utilisateur confirme
+    if (confirmation.isConfirmed) {
+        
+        // 🔥 ========== AJOUTEZ CE CONTRÔLE ICI ==========
+        // Vérifie que les deux comptes ont la même devise
+        if (FetchDataDebit && FetchDataCredit && 
+            FetchDataDebit.CodeMonnaie !== FetchDataCredit.CodeMonnaie) {
+            setchargement(false);
+            setloading(false);
+            Swal.fire({
+                title: "Erreur de devise",
+                text: `Les deux comptes doivent avoir la même devise. 
+                       Compte à débiter: ${FetchDataDebit.NumCompte} | 
+                       Compte à créditer: ${FetchDataCredit.NumCompte}`,
+                icon: "error",
+                confirmButtonText: "Okay",
             });
-        } else {
-            confirmation = await Swal.fire({
-                title: "Êtes-vous sûr?",
-                text: "Vous êtes sur le point de valider cette opération voulez vous continuer ?",
-                icon: "question",
-                showCancelButton: true,
-                confirmButtonText: "Oui",
-                cancelButtonText: "Non",
-            });
+            return; // Arrête l'exécution
         }
+        // ========== FIN DU CONTRÔLE ==========
+        
+        try {
+            const res = await axios.post(
+                "/eco/page/transaction/debiter/save",
+                {
+                    compte_a_debiter: compte_a_debiter,
+                    compte_a_crediter: compte_a_crediter,
+                    Montant,
+                    devise: FetchDataDebit.CodeMonnaie,
+                    Libelle: Libelle,
+                    isVirement: checkboxValues.isVirement,
+                },
+            );
 
-        // Si l'utilisateur confirme
-        if (confirmation.isConfirmed) {
-            try {
-                const res = await axios.post(
-                    "/eco/page/transaction/debiter/save",
-                    {
-                        compte_a_debiter: compte_a_debiter,
-                        compte_a_crediter: compte_a_crediter,
-                        Montant,
-                        devise: FetchDataDebit.CodeMonnaie,
-                        Libelle: Libelle,
-                        isVirement: checkboxValues.isVirement,
-                    },
-                );
-
-                if (res.data.status === 1) {
-                    setchargement(false);
-                    setloading(false);
-                    Swal.fire({
-                        title: "Succès",
-                        text: res.data.msg,
-                        icon: "success",
-                        timer: 8000,
-                        confirmButtonText: "Okay",
-                    });
-                    setMontant("");
-                    setLibelle("");
-                    getDayOperation();
-                } else if (res.data.status === 0) {
-                    setchargement(false);
-                    setloading(false);
-                    Swal.fire({
-                        title: "Erreur",
-                        text: res.data.msg,
-                        icon: "error",
-                        timer: 8000,
-                        confirmButtonText: "Okay",
-                    });
-                } else {
-                    setError(res.data.validate_error);
-                }
-            } catch (error) {
+            if (res.data.status === 1) {
+                setchargement(false);
+                setloading(false);
+                Swal.fire({
+                    title: "Succès",
+                    text: res.data.msg,
+                    icon: "success",
+                    timer: 8000,
+                    confirmButtonText: "Okay",
+                });
+                setMontant("");
+                setLibelle("");
+                getDayOperation();
+            } else if (res.data.status === 0) {
                 setchargement(false);
                 setloading(false);
                 Swal.fire({
                     title: "Erreur",
-                    text: "Une erreur s'est produite lors de l'enregistrement de l'opération.",
+                    text: res.data.msg,
                     icon: "error",
+                    timer: 8000,
                     confirmButtonText: "Okay",
                 });
+            } else {
+                setError(res.data.validate_error);
             }
-        } else {
-            setloading(false);
+        } catch (error) {
             setchargement(false);
+            setloading(false);
+            Swal.fire({
+                title: "Erreur",
+                text: "Une erreur s'est produite lors de l'enregistrement de l'opération.",
+                icon: "error",
+                confirmButtonText: "Okay",
+            });
         }
-    };
+    } else {
+        setloading(false);
+        setchargement(false);
+    }
+};
 
     const getSeachedDataDebit = async (e) => {
         e.preventDefault();

@@ -204,7 +204,7 @@ class SendNotification
                         ->first();
 
                     $data = ($getMembreInfo2->sexe == "Homme" ? " Bonjour Monsieur " : ($getMembreInfo2->sexe == "Femme" ? " Bonjour Madame " : " Bonjour ")) .
-                        $getMembreInfo2->NomCompte . " Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " dépot ") . " de " . $montant . " sur votre compte CDF-" . $NumCompte . "  Votre nouveau solde est de " . $soldeMembreCDF->soldeMembreCDF . " CDF";
+                        $getMembreInfo2->NomCompte . " Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " depot ") . " de " . $montant . " sur votre compte CDF-" . $NumCompte . "  Votre nouveau solde est de " . $soldeMembreCDF->soldeMembreCDF . " CDF";
                     Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                     // return view('emails.test');
                 } else if ($devise == "USD") {
