@@ -297,8 +297,14 @@ const MontageCredit = () => {
             });
         }
     };
+  // 🔥 Fonction utilitaire pour nettoyer avant envoi
+const nettoyerMontant = (montantFormate) => {
+    return montantFormate.replace(/\s/g, ""); // "200 000" → "200000"
+};
+
 
     const saveEcheancier = async (e) => {
+         const montantAccorde = nettoyerMontant(MontantAccorde); // ← Nettoie ici
         e.preventDefault();
         const res = await axios.post(
             "/eco/page/montage-credit/save-echeancier",
@@ -309,7 +315,7 @@ const MontageCredit = () => {
                 DateOctroi,
                 dateEcheance,
                 DateTombeEcheance,
-                MontantAccorde,
+                MontantAccorde:montantAccorde,
                 garantie,
                 hypotheque_name,
                 reechelonne: ReechelonnerCheckboxValues.Reechelonner,
@@ -532,6 +538,26 @@ const MontageCredit = () => {
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
         return parts.join(".");
     }
+
+
+    // Fonction de formatage
+const formatMontant = (valeur) => {
+    // Enlève tous les caractères non numériques
+    let nombre = valeur.toString().replace(/\D/g, "");
+    // Convertit en nombre puis formate avec espaces
+    return nombre.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+};
+
+// Fonction pour gérer le changement
+const handleMontantChange = (e) => {
+    let valeur = e.target.value;
+    // Nettoie et formate
+    let nombreBrut = valeur.replace(/\s/g, "");
+    let nombreFormatte = formatMontant(nombreBrut);
+    setMontantAccorde(nombreFormatte);
+    setmontant_demande(nombreFormatte)
+};
+
     return (
         <div
             className="container-fluid"
@@ -573,7 +599,7 @@ const MontageCredit = () => {
                             className="card-body p-3"
                             style={{
                                 background:
-                                    "linear-gradient(135deg, #20c997 0%, #198764 100%)",
+                                    "#138496",
                                 borderRadius: "12px",
                             }}
                         >
@@ -932,18 +958,20 @@ const MontageCredit = () => {
                                                             fontWeight: "500",
                                                         }}
                                                     >
-                                                        Montant demandé
+                                                        Mont. demandé
                                                     </label>
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
+                                                        style={{fontSize:"20px" }}
                                                         className={`form-control form-control-sm ${error.montant_demande ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             setmontant_demande(
                                                                 e.target.value,
                                                             )
                                                         }
+                                                        value={montant_demande}
                                                     />
                                                     {error.montant_demande && (
                                                         <small className="text-danger">
@@ -1040,7 +1068,7 @@ const MontageCredit = () => {
                                                             fontWeight: "500",
                                                         }}
                                                     >
-                                                        Nombre échéances
+                                                        Nbr échnces
                                                     </label>
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
@@ -1105,7 +1133,7 @@ const MontageCredit = () => {
                                                             fontWeight: "500",
                                                         }}
                                                     >
-                                                        Durée (mois)
+                                                        Durée (jrs)
                                                     </label>
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
@@ -1153,7 +1181,7 @@ const MontageCredit = () => {
                                                     )}
                                                 </td>
                                             </tr>
-                                            <tr>
+                                            {/* <tr>
                                                 <td style={{ padding: "8px" }}>
                                                     <label
                                                         style={{
@@ -1173,9 +1201,10 @@ const MontageCredit = () => {
                                                                 e.target.value,
                                                             )
                                                         }
+                                                        disabled
                                                     />
                                                 </td>
-                                            </tr>
+                                            </tr> */}
                                         </tbody>
                                     </table>
                                 </form>
@@ -1240,7 +1269,7 @@ const MontageCredit = () => {
                                                             fontWeight: "500",
                                                         }}
                                                     >
-                                                        Numéro compte épargne
+                                                        Cpte épargne
                                                     </label>
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
@@ -1264,7 +1293,7 @@ const MontageCredit = () => {
                                                             fontWeight: "500",
                                                         }}
                                                     >
-                                                        Numéro compte crédit
+                                                        Cpte crédit
                                                     </label>
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
@@ -1287,7 +1316,7 @@ const MontageCredit = () => {
                                                             fontWeight: "500",
                                                         }}
                                                     >
-                                                        Epargne garantie
+                                                        E. garantie
                                                     </label>
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
@@ -1454,7 +1483,7 @@ const MontageCredit = () => {
                                                     )}
                                                 </td>
                                             </tr>
-                                            <tr>
+                                            {/* <tr>
                                                 <td style={{ padding: "8px" }}>
                                                     <label
                                                         style={{
@@ -1474,10 +1503,11 @@ const MontageCredit = () => {
                                                                 e.target.value,
                                                             )
                                                         }
+                                                        disabled
                                                     />
                                                 </td>
-                                            </tr>
-                                            <tr>
+                                            </tr> */}
+                                            {/* <tr>
                                                 <td style={{ padding: "8px" }}>
                                                     <label
                                                         style={{
@@ -1497,10 +1527,11 @@ const MontageCredit = () => {
                                                                 e.target.value,
                                                             )
                                                         }
+                                                        disabled
                                                     />
                                                 </td>
-                                            </tr>
-                                            <tr>
+                                            </tr> */}
+                                            {/* <tr>
                                                 <td style={{ padding: "8px" }}>
                                                     <label
                                                         style={{
@@ -1518,7 +1549,7 @@ const MontageCredit = () => {
                                                         disabled
                                                     />
                                                 </td>
-                                            </tr>
+                                            </tr> */}
                                         </tbody>
                                     </table>
                                 </form>
@@ -1901,7 +1932,7 @@ const MontageCredit = () => {
                                                     />
                                                 </td>
                                             </tr>
-                                            <tr>
+                                            {/* <tr>
                                                 <td style={{ padding: "8px" }}>
                                                     <label
                                                         style={{
@@ -1924,7 +1955,7 @@ const MontageCredit = () => {
                                                         value={periode_grace_up}
                                                     />
                                                 </td>
-                                            </tr>
+                                            </tr> */}
                                         </tbody>
                                     </table>
                                 </form>
@@ -1985,7 +2016,7 @@ const MontageCredit = () => {
                                                             fontWeight: "500",
                                                         }}
                                                     >
-                                                        Numéro compte épargne
+                                                        Cpte Epargne
                                                     </label>
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
@@ -2007,7 +2038,7 @@ const MontageCredit = () => {
                                                             fontWeight: "500",
                                                         }}
                                                     >
-                                                        Numéro compte crédit
+                                                        Cpte crédit
                                                     </label>
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
@@ -2027,7 +2058,7 @@ const MontageCredit = () => {
                                                             fontWeight: "500",
                                                         }}
                                                     >
-                                                        Epargne garantie
+                                                        E. garantie
                                                     </label>
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
@@ -2195,7 +2226,7 @@ const MontageCredit = () => {
                                                     />
                                                 </td>
                                             </tr>
-                                            <tr>
+                                            {/* <tr>
                                                 <td style={{ padding: "8px" }}>
                                                     <label
                                                         style={{
@@ -2220,8 +2251,8 @@ const MontageCredit = () => {
                                                         }
                                                     />
                                                 </td>
-                                            </tr>
-                                            <tr>
+                                            </tr> */}
+                                            {/* <tr>
                                                 <td style={{ padding: "8px" }}>
                                                     <label
                                                         style={{
@@ -2240,7 +2271,7 @@ const MontageCredit = () => {
                                                         disabled
                                                     />
                                                 </td>
-                                            </tr>
+                                            </tr> */}
                                         </tbody>
                                     </table>
                                 </form>
@@ -2878,28 +2909,18 @@ const MontageCredit = () => {
                                                                                     "8px",
                                                                             }}
                                                                         >
-                                                                            <input
-                                                                                type="text"
-                                                                                className={`form-control form-control-sm ${error?.MontantAccorde ? "is-invalid" : ""}`}
-                                                                                style={{
-                                                                                    background:
-                                                                                        error?.MontantAccorde
-                                                                                            ? "#dc3545"
-                                                                                            : "#20c997",
-                                                                                    color: "white",
-                                                                                    fontWeight:
-                                                                                        "bold",
-                                                                                }}
-                                                                                onChange={(
-                                                                                    e,
-                                                                                ) =>
-                                                                                    setMontantAccorde(
-                                                                                        e
-                                                                                            .target
-                                                                                            .value,
-                                                                                    )
-                                                                                }
-                                                                            />
+                                                                           <input
+    type="text"
+    className={`form-control form-control-sm ${error?.MontantAccorde ? "is-invalid" : ""}`}
+    style={{
+        background: error?.MontantAccorde ? "#dc3545" : "#20c997",
+        color: "white",
+        fontWeight: "bold",
+        fontSize: "20px"
+    }}
+    value={MontantAccorde}
+    onChange={handleMontantChange}
+/>
                                                                             {error?.MontantAccorde && (
                                                                                 <small className="text-danger">
                                                                                     {

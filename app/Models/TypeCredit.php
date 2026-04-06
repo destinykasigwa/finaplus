@@ -22,5 +22,6 @@ class TypeCredit extends Model
         "frais_dossier",
         "commission",
         "compte_commission",
+        "state"
     ];
 }

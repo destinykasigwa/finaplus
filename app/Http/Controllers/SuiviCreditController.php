@@ -173,7 +173,7 @@ class SuiviCreditController extends Controller
 
     public function getDataToDisplayOnFormLoadMontageCredit()
     {
-        $type_credit = TypeCredit::get();
+        $type_credit = TypeCredit::where("state","on")->get();
         $objet_credit = ObjetCredit::get();
         $agent_credit = User::get();
         $frequenceRemboursement = FrequenceRemboursement::get();
