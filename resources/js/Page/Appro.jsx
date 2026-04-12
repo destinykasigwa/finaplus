@@ -157,6 +157,7 @@ const Appro = () => {
             //     window.location.reload();
             // }, 2000);
             getLastestOperation();
+            GetUserInformation();
         } else {
             Swal.fire({
                 title: "Erreur",

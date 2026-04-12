@@ -232,8 +232,8 @@ class AdhesionController extends Controller
                         'NumAdherant' => $data->compte_abrege,
                         'nature_compte'=>"PASSIF",
                         'niveau'=>"5",
-                        'est_classe'=>null,
-                        'compte_parent'=> "3301",
+                        'est_classe'=>0,
+                        'compte_parent'=> "3300",
                     ]);
                     return response()->json(["status" => 1, "msg" => "Compte bien crée"]);
                 } else {
@@ -267,7 +267,7 @@ class AdhesionController extends Controller
                         'NumAdherant' => $data->compte_abrege,
                         'nature_compte'=>"PASSIF",
                         'niveau'=>"5",
-                        'est_classe'=>null,
+                        'est_classe'=>0,
                         'compte_parent'=> "3300",
                     ]);
                     return response()->json(["status" => 1, "msg" => "Compte bien crée"]);

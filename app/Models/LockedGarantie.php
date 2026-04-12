@@ -10,6 +10,7 @@ class LockedGarantie extends Model
     use HasFactory;
     protected $fillable = [
         "NumCompte",
+        "EpargneGarantie",
         "NumAbrege",
         "Montant",
         "Devise",

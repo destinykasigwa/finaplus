@@ -651,13 +651,13 @@ const SommaireCompte = () => {
                         <label className="form-check-label" style={{ color: "steelblue" }}>Non Converti</label>
                     </div>
                     <div className="form-check mb-2">
-                        <input type="radio" className="form-check-input" id="balance_convertie_cdf" name="balance_convertie_cdf"
+                        <input type="radio" disabled className="form-check-input" id="balance_convertie_cdf" name="balance_convertie_cdf"
                             value="balance_convertie_cdf" checked={radioValue === "balance_convertie_cdf"}
                             onChange={handleRadioChange} />
                         <label className="form-check-label" style={{ color: "steelblue" }}>Converti en CDF</label>
                     </div>
                     <div className="form-check mb-2">
-                        <input type="radio" className="form-check-input" id="balance_convertie_usd" name="balance_convertie_usd"
+                        <input type="radio" disabled className="form-check-input" id="balance_convertie_usd" name="balance_convertie_usd"
                             value="balance_convertie_usd" checked={radioValue === "balance_convertie_usd"}
                             onChange={handleRadioChange} />
                         <label className="form-check-label" style={{ color: "steelblue" }}>Converti en USD</label>

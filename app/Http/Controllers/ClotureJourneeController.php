@@ -21,10 +21,16 @@ class ClotureJourneeController extends Controller
                 "msg" => "Clôture de la journée réussie !",
             ]);
         } catch (\Exception $e) {
-            // Gérer les erreurs
+            // // Gérer les erreurs
+            // return response()->json([
+            //     "status" => 0,
+            //     "msg" => "Erreur lors de la clôture : " . $e->getMessage(),
+            // ], 500);
             return response()->json([
-                "status" => 0,
-                "msg" => "Erreur lors de la clôture : " . $e->getMessage(),
+                'success' => false,
+                'error' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'message' => 'Une erreur critique a arrêté le processus'
             ], 500);
         }
     }

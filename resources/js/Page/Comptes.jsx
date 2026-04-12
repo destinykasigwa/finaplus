@@ -850,7 +850,7 @@ const Comptes = () => {
                 RefSousGroupe: RefSousGroupe,
                 RefCadre: RefCadre || null,
                 RefTypeCompte: RefTypeCompte,
-                nature_compte: RefTypeCompte === "4" ? nature_compte : null,
+                nature_compte: RefTypeCompte === "4" ? nature_compte : nature_compte,
             };
 
             const res = await axios.post(

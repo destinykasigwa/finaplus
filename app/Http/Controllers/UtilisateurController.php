@@ -192,7 +192,11 @@ class UtilisateurController extends Controller
                 'CodeMonnaie' => 1,
                 'NumAdherant' => "5700" . $request->userId . "201",
                 'isCaissier' => 1,
-                'caissierId' => $request->userId
+                'caissierId' => $request->userId,
+                'nature_compte' => "ACTIF",
+                'niveau' => "5",
+                'est_classe' => 0,
+                'compte_parent' => "5710",
             ]);
             //CREATE CDF ACCOUNT
             Comptes::create([
@@ -206,7 +210,11 @@ class UtilisateurController extends Controller
                 'CodeMonnaie' => 2,
                 'NumAdherant' => "5700" . $request->userId . "202",
                 'isCaissier' => 1,
-                'caissierId' => $request->userId
+                'caissierId' => $request->userId,
+                'nature_compte' => "ACTIF",
+                'niveau' => "5",
+                'est_classe' => 0,
+                'compte_parent' => "5710",
 
             ]);
             return response()->json(["status" => 1, "msg" => "Compte caisse bien crée pour l'utilsateur " . $userData->name]);

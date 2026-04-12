@@ -337,7 +337,7 @@ const Journal = () => {
                     </div>
                     <div>
                         <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Utilisateur</label>
-                        <select className="form-control" style={{ borderRadius: "8px", borderColor: "#20c997" }}
+                        <select className="form-control w-50" style={{ borderRadius: "8px", borderColor: "#20c997" }}
                             id="user" onChange={(e) => setUserName(e.target.value)}>
                             <option value="">Tous les utilisateurs</option>
                             {getAllUsers && getAllUsers.map((res, index) => (
@@ -377,7 +377,7 @@ const Journal = () => {
                         <input type="checkbox" className="form-check-input" id="GivenJ" name="GivenJournal"
                             checked={checkboxValues.GivenJournal} onChange={handleCheckboxChange} />
                         <label className="form-check-label" style={{ color: "steelblue" }}>D'un journal donné</label>
-                        <select className="form-select d-inline-block w-auto ms-2" style={{ borderRadius: "6px", borderColor: "#20c997" }}
+                        <select className="form-select d-inline-block w-50 ms-2" style={{ borderRadius: "6px", borderColor: "#20c997"}}
                             onChange={(e) => setJournalDonne(e.target.value)}>
                             {getTypeJournal !== undefined && getTypeJournal.map((res, index) => (
                                 <option key={index} value={res.code_journal}>{res.nom_journal}</option>

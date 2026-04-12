@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Services\AfricaTalkingService;
 use Illuminate\Support\Facades\Validator;
+use App\CustomTasks\ClotureJourneeCopy;
 
 class TransactionsController extends Controller
 {
@@ -122,12 +123,13 @@ class TransactionsController extends Controller
 
     public function GetAccount(Request $request)
     {
+
+
         if (isset($request->NumCompte)) {
             $data = Comptes::where("NumCompte", $request->NumCompte)->first();
             //RECUPERE LES DATES PAR DEFAUT   
             $NewDate1  = date('Y') . '-01-01';
             $NewDate2 = date("Y-m-d");
-
             if ($data->CodeMonnaie == 2) {
                 //RECUPERE LE SOLDE DU COMPTE CDF
                 $soldeMembre = Transactions::select(
@@ -175,14 +177,19 @@ class TransactionsController extends Controller
             if ($request->devise == "CDF") {
 
                 //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
-                $dataCompte = Comptes::where("NumAdherant", $request->NumAbrege)->orWhere("NumCompte", $request->NumAbrege)
-                    ->where("CodeMonnaie", 2)->first();
+                $dataCompte = Comptes::where(function ($query) use ($request) {
+                    $query->where("NumAdherant", $request->NumAbrege)
+                        ->orWhere("NumCompte", $request->NumAbrege);
+                })
+                    ->where("CodeMonnaie", 2)
+                    ->first();
 
                 $NumCompte = $request->getNumCompte;
                 if ($NumCompte) {
+
                     $numCompteCaissierCDF = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "2")->first();
                     $CompteCaissierCDF = $numCompteCaissierCDF->NumCompte;
-
+                    // dd($numCompteCaissierCDF);
                     $codeAgenceCaissier = $numCompteCaissierCDF->CodeAgence;
 
                     $NomCaissier = $numCompteCaissierCDF->NomCompte;
@@ -350,10 +357,13 @@ class TransactionsController extends Controller
                 }
             } else if ($request->devise == "USD") {
 
-
                 //RECUPERE LE COMPTE DU CAISSIER CONCERNE USD
-                $dataCompte = Comptes::where("NumAdherant", $request->NumAbrege)->orWhere("NumCompte", $request->NumAbrege)
-                    ->where("CodeMonnaie", 1)->first();
+                $dataCompte = Comptes::where(function ($query) use ($request) {
+                    $query->where("NumAdherant", $request->NumAbrege)
+                        ->orWhere("NumCompte", $request->NumAbrege);
+                })
+                    ->where("CodeMonnaie", 1)
+                    ->first();
                 $NumCompte = $request->getNumCompte;
                 if ($NumCompte) {
                     $numCompteCaissierUSD = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "1")->first();
@@ -549,7 +559,6 @@ class TransactionsController extends Controller
                     'validate_error' => $validator->messages()
                 ]);
             }
-
 
             //VERIFIE SI LE COMPTE NE PAS PROTEGE
             $getCompteMembre = Comptes::where("NumAdherant", "=", $request->refCompte)->first();
@@ -3088,6 +3097,20 @@ class TransactionsController extends Controller
 
     public function extourneOperation($reference)
     {
+
+      if (strpos($reference, 'AT') === 0) {
+        try {
+            $cloture = new ClotureJourneeCopy(new \Illuminate\Http\Request());
+            $result = $cloture->annulerRemboursementParReference($reference);
+            if ($result) {
+                return response()->json(["status" => 1, "msg" => "Remboursement annulé avec succès."]);
+            } else {
+                return response()->json(["status" => 0, "msg" => "Échec de l'annulation du remboursement."]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(["status" => 0, "msg" => $e->getMessage()]);
+        }
+    }
         $data = Transactions::where("NumTransaction", "=", $reference)->first();
         $dataRefCompteClient = Transactions::where("NumTransaction", $reference)
             ->where("NumCompte", "like", "33%")

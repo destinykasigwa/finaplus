@@ -24,16 +24,16 @@ use Illuminate\Support\Facades\Validator;
 
 class SuiviCreditController extends Controller
 {
-    public $compteCreditAuxMembreCDF;
-    public $compteCreditAuxMembreUSD;
+    // public $compteCreditAuxMembreCDF;
+    // public $compteCreditAuxMembreUSD;
     protected $sendNotification;
 
     //
     public function __construct()
     {
         $this->middleware("auth");
-        $this->compteCreditAuxMembreCDF = "3210000000202";
-        $this->compteCreditAuxMembreUSD = "3210000000201";
+        // $this->compteCreditAuxMembreCDF = "3210000000202";
+        // $this->compteCreditAuxMembreUSD = "3210000000201";
         $this->sendNotification = app(SendNotification::class);
     }
 
@@ -119,7 +119,7 @@ class SuiviCreditController extends Controller
 
     public function getTypeCredit()
     {
-        $data = TypeCredit::get();
+        $data = TypeCredit::where("state","on")->get();
         return response()->json([
             "status" => 1,
             "data" => $data
@@ -239,8 +239,6 @@ class SuiviCreditController extends Controller
                 "SourceFinancement" => $request->source_fond,
                 "Gestionnaire" => $request->gestionnaire,
                 "numAdherant" => $request->NumAdherant,
-                "CompteCreditComptable" => $request->monnaie == "CDF" ? $this->compteCreditAuxMembreCDF :  $this->compteCreditAuxMembreUSD,
-
             ]);
             CompteurDossierCredit::create([
                 "0000",
@@ -282,13 +280,13 @@ class SuiviCreditController extends Controller
                         $epargneCautionCDF = "3341000" . $data->NumAdherant . "202";
                         $compteCreditEnFranc = "3201000" . $data->NumAdherant . "202";
                     } else if ($data->NumAdherant >= 1000 && $data->NumAdherant < 10000) {
-                        $epargneCautionCDF = "3341000" . $data->NumAdherant . "202";
+                        $epargneCautionCDF = "334100" . $data->NumAdherant . "202";
                         $compteCreditEnFranc = "320100" . $data->NumAdherant . "202";
                     } else if ($data->NumAdherant >= 10000 && $data->NumAdherant < 100000) {
                         $epargneCautionCDF = "33410" . $data->NumAdherant . "201";
                         $compteCreditEnFranc = "32010" . $data->NumAdherant . "201";
                     } else if ($data->NumAdherant >= 100000 && $data->NumAdherant < 1000000) {
-                        $epargneCautionCDF = "33410" . $data->NumAdherant . "202";
+                        $epargneCautionCDF = "3341" . $data->NumAdherant . "202";
                         $compteCreditEnFranc = "3201" . $data->NumAdherant . "202";
                     }
                 } else if ($data->CodeMonnaie == 1) {
@@ -302,13 +300,13 @@ class SuiviCreditController extends Controller
                         $epargneCautionUSD = "3340000" . $data->NumAdherant . "201";
                         $compteCreditEnUSD = "3200000" . $data->NumAdherant . "201";
                     } else if ($data->NumAdherant >= 1000 && $data->NumAdherant < 10000) {
-                        $epargneCautionUSD = "3340000" . $data->NumAdherant . "201";
+                        $epargneCautionUSD = "334000" . $data->NumAdherant . "201";
                         $compteCreditEnUSD = "320000" . $data->NumAdherant . "201";
                     } else if ($data->NumAdherant >= 10000 && $data->NumAdherant < 100000) {
                         $epargneCautionUSD = "33400" . $data->NumAdherant . "201";
                         $compteCreditEnUSD = "32000" . $data->NumAdherant . "201";
                     } else if ($data->NumAdherant >= 100000 && $data->NumAdherant < 1000000) {
-                        $epargneCautionUSD = "33400" . $data->NumAdherant . "201";
+                        $epargneCautionUSD = "3340" . $data->NumAdherant . "201";
                         $compteCreditEnUSD = "3200" . $data->NumAdherant . "201";
                     }
                 }
@@ -772,9 +770,10 @@ class SuiviCreditController extends Controller
                     $NumCompteEpargne = $getDossier->NumCompteEpargne;
                     $CompteInteret = $getDossier->compte_interet;
                     $compteEpargneCaution = $getDossier->NumCompteEpargneGarantie;
+                    //dd($compteEpargneCaution);
                     $NumCompteCredit = $getDossier->NumCompteCredit;
                     //VERIFIE SI LE COMPTE N PAS ENCORE CREE
-                    $checkCompteEpargne = Comptes::where("NumCompte", $NumCompteEpargne)->first();
+                    $checkCompteEpargne = Comptes::where("NumCompte", $compteEpargneCaution)->first();
                     if (!$checkCompteEpargne) {
                         //ON CREE SON COMPTE EPARGNE GARANTIE 
                         Comptes::create([
@@ -784,9 +783,13 @@ class SuiviCreditController extends Controller
                             'RefTypeCompte' => "3",
                             'RefCadre' => "33",
                             'RefGroupe' => "334",
-                            'RefSousGroupe' => $getDossier->CodeMonnaie == "CDF" ? "3301" : "3300",
+                            'RefSousGroupe' => "3340",
                             'CodeMonnaie' => $getDossier->CodeMonnaie == "CDF" ? 2 : 1,
                             'NumAdherant' => $getDossier->numAdherant,
+                             'nature_compte'=>"PASSIF",
+                             'niveau'=>"5",
+                             'est_classe'=>0,
+                             'compte_parent'=> "3340",
                         ]);
                     }
                     $checkCompteCredit = Comptes::where("NumCompte", $NumCompteCredit)->first();
@@ -798,17 +801,21 @@ class SuiviCreditController extends Controller
                             'NomCompte' => $getDossier->NomCompte,
                             'RefTypeCompte' => "3",
                             'RefCadre' => "32",
-                            'RefGroupe' => "320",
-                            'RefSousGroupe' => $getDossier->CodeMonnaie == "CDF" ? "3201" : "3200",
+                            'RefGroupe' => "321",
+                            'RefSousGroupe' => "3210",
                             'CodeMonnaie' => $getDossier->CodeMonnaie == "CDF" ? 2 : 1,
                             'NumAdherant' => $getDossier->numAdherant,
+                             'nature_compte'=>"ACTIF",
+                             'niveau'=>"5",
+                             'est_classe'=>0,
+                             'compte_parent'=> "3210",
                         ]);
                     }
 
                     //RECUPERE LE SOLDE SI C'EST UN CREDIT EN CDF
                     //RECUPERE LES NUMERO DE COMPTE
-                    $compteEpargneGarantieCDF = "3340000000202";
-                    $compteEpargneGarantieUSD = "3340000000201";
+                    // $compteEpargneGarantieCDF = "3340000000202";
+                    // $compteEpargneGarantieUSD = "3340000000201";
                     if ($getDossier->CodeMonnaie == "CDF") {
                         $soldeMembreCDF = Transactions::select(
                             DB::raw("SUM(Creditfc)-SUM(Debitfc) as soldeCDF"),
@@ -841,7 +848,7 @@ class SuiviCreditController extends Controller
                                 "NumDossier" => "DOS00" . $numOperation->id,
                                 "NumDemande" => "V00" . $numOperation->id,
                                 "NumCompte" => $NumCompteEpargne,
-                                "NumComptecp" => $compteEpargneGarantieCDF,
+                                "NumComptecp" => $compteEpargneCaution,
                                 "Debit"  => $garantieCredit,
                                 "Debitusd"  => $garantieCredit / $tauxDuJour,
                                 "Debitfc" => $garantieCredit,
@@ -850,23 +857,23 @@ class SuiviCreditController extends Controller
                             ]);
 
                             //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LA COMPBALITE
-                            Transactions::create([
-                                "NumTransaction" => $NumTransaction,
-                                "DateTransaction" => $getDossier->DateOctroi,
-                                "DateSaisie" => $dateSaisie,
-                                "TypeTransaction" => "C",
-                                "CodeMonnaie" => 2,
-                                "CodeAgence" => $getDossier->CodeAgence,
-                                "NumDossier" => "DOS00" . $numOperation->id,
-                                "NumDemande" => "V00" . $numOperation->id,
-                                "NumCompte" => $compteEpargneGarantieCDF,
-                                "NumComptecp" => $NumCompteEpargne,
-                                "Credit"  => $garantieCredit,
-                                "Creditusd"  => $garantieCredit / $tauxDuJour,
-                                "Creditfc" => $garantieCredit,
-                                "NomUtilisateur" => Auth::user()->name,
-                                "Libelle" => "MISE EN PLACE  DE  L'EPARGNE GARANTIE DU CREDIT OCRTROYE A " . $getDossier->NomCompte . " NUMERO DE COMPTE " . $NumCompteEpargne,
-                            ]);
+                            // Transactions::create([
+                            //     "NumTransaction" => $NumTransaction,
+                            //     "DateTransaction" => $getDossier->DateOctroi,
+                            //     "DateSaisie" => $dateSaisie,
+                            //     "TypeTransaction" => "C",
+                            //     "CodeMonnaie" => 2,
+                            //     "CodeAgence" => $getDossier->CodeAgence,
+                            //     "NumDossier" => "DOS00" . $numOperation->id,
+                            //     "NumDemande" => "V00" . $numOperation->id,
+                            //     "NumCompte" => $compteEpargneGarantieCDF,
+                            //     "NumComptecp" => $NumCompteEpargne,
+                            //     "Credit"  => $garantieCredit,
+                            //     "Creditusd"  => $garantieCredit / $tauxDuJour,
+                            //     "Creditfc" => $garantieCredit,
+                            //     "NomUtilisateur" => Auth::user()->name,
+                            //     "Libelle" => "MISE EN PLACE  DE  L'EPARGNE GARANTIE DU CREDIT OCRTROYE A " . $getDossier->NomCompte . " NUMERO DE COMPTE " . $NumCompteEpargne,
+                            // ]);
                             //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LE CLIENT
                             Transactions::create([
                                 "NumTransaction" => $NumTransaction,
@@ -890,6 +897,7 @@ class SuiviCreditController extends Controller
 
                             LockedGarantie::create([
                                 "NumCompte" => $NumCompteEpargne,
+                                "EpargneGarantie" =>$compteEpargneCaution,
                                 "NumAbrege" => $getDossier->numAdherant,
                                 "Montant" => $garantieCredit,
                                 "Devise" => "CDF",
@@ -956,7 +964,7 @@ class SuiviCreditController extends Controller
                                 "NumDossier" => "DOS00" . $numOperation->id,
                                 "NumDemande" => "V00" . $numOperation->id,
                                 "NumCompte" => $NumCompteEpargne,
-                                "NumComptecp" => $compteEpargneGarantieUSD,
+                                "NumComptecp" =>  $compteEpargneCaution,
                                 "Debit"  => $garantieCredit,
                                 "Debitusd"  => $garantieCredit,
                                 "Debitfc" => $garantieCredit * $tauxDuJour,
@@ -965,23 +973,23 @@ class SuiviCreditController extends Controller
                             ]);
 
                             //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LA COMPBALITE
-                            Transactions::create([
-                                "NumTransaction" => $NumTransaction,
-                                "DateTransaction" => $getDossier->DateOctroi,
-                                "DateSaisie" => $dateSaisie,
-                                "TypeTransaction" => "C",
-                                "CodeMonnaie" => 1,
-                                "CodeAgence" => $getDossier->CodeAgence,
-                                "NumDossier" => "DOS00" . $numOperation->id,
-                                "NumDemande" => "V00" . $numOperation->id,
-                                "NumCompte" => $compteEpargneGarantieUSD,
-                                "NumComptecp" => $NumCompteEpargne,
-                                "Credit"  => $garantieCredit,
-                                "Creditusd"  => $garantieCredit,
-                                "Creditfc" => $garantieCredit * $tauxDuJour,
-                                "NomUtilisateur" => Auth::user()->name,
-                                "Libelle" => "MISE EN PLACE  DE  L'EPARGNE GARANTIE DU CREDIT OCRTROYE A " . $getDossier->NomCompte . " NUMERO DE COMPTE " . $NumCompteEpargne,
-                            ]);
+                            // Transactions::create([
+                            //     "NumTransaction" => $NumTransaction,
+                            //     "DateTransaction" => $getDossier->DateOctroi,
+                            //     "DateSaisie" => $dateSaisie,
+                            //     "TypeTransaction" => "C",
+                            //     "CodeMonnaie" => 1,
+                            //     "CodeAgence" => $getDossier->CodeAgence,
+                            //     "NumDossier" => "DOS00" . $numOperation->id,
+                            //     "NumDemande" => "V00" . $numOperation->id,
+                            //     "NumCompte" => $compteEpargneGarantieUSD,
+                            //     "NumComptecp" => $NumCompteEpargne,
+                            //     "Credit"  => $garantieCredit,
+                            //     "Creditusd"  => $garantieCredit,
+                            //     "Creditfc" => $garantieCredit * $tauxDuJour,
+                            //     "NomUtilisateur" => Auth::user()->name,
+                            //     "Libelle" => "MISE EN PLACE  DE  L'EPARGNE GARANTIE DU CREDIT OCRTROYE A " . $getDossier->NomCompte . " NUMERO DE COMPTE " . $NumCompteEpargne,
+                            // ]);
 
                             //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LE CLIENT
                             Transactions::create([
@@ -1008,6 +1016,7 @@ class SuiviCreditController extends Controller
 
                             LockedGarantie::create([
                                 "NumCompte" => $NumCompteEpargne,
+                                "EpargneGarantie" =>$compteEpargneCaution,
                                 "NumAbrege" => $getDossier->numAdherant,
                                 "Montant" => $garantieCredit,
                                 "Devise" => "USD",
@@ -1070,8 +1079,8 @@ class SuiviCreditController extends Controller
         if (isset($request->NumDossier)) {
 
             //REMET L'EPARGNE GARANTIE A LA PERSONNE
-            $compteEpargneGarantieCDF = "3340000000202";
-            $compteEpargneGarantieUSD = "3340000000201";
+            // $compteEpargneGarantieCDF = "3340000000202";
+            // $compteEpargneGarantieUSD = "3340000000201";
             //CREE UN NUMERO DE TRANSACTION
             CompteurTransaction::create([
                 'fakevalue' => "0000",
@@ -1100,7 +1109,7 @@ class SuiviCreditController extends Controller
                         "CodeAgence" => "20",
                         "NumDossier" => "DOS00" . $numOperation->id,
                         "NumDemande" => "V00" . $numOperation->id,
-                        "NumCompte" => $compteEpargneGarantieCDF,
+                        "NumCompte" => $getData->EpargneGarantie,
                         "NumComptecp" => $NumCompte,
                         "Debit"  => $getData->Montant,
                         "Debitusd"  => $getData->Montant / $tauxDuJour,
@@ -1121,7 +1130,7 @@ class SuiviCreditController extends Controller
                         "NumDossier" => "DOS00" . $numOperation->id,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $NumCompte,
-                        "NumComptecp" => $compteEpargneGarantieCDF,
+                        "NumComptecp" => $getData->EpargneGarantie,
                         "Credit"  => $getData->Montant,
                         "Creditusd"  => $getData->Montant / $tauxDuJour,
                         "Creditfc" => $getData->Montant,
@@ -1152,7 +1161,7 @@ class SuiviCreditController extends Controller
                         "CodeAgence" => "20",
                         "NumDossier" => "DOS00" . $numOperation->id,
                         "NumDemande" => "V00" . $numOperation->id,
-                        "NumCompte" => $compteEpargneGarantieUSD,
+                        "NumCompte" => $getData->EpargneGarantie,
                         "NumComptecp" => $NumCompte,
                         "Debit"  => $getData->Montant,
                         "Debitusd"  => $getData->Montant,
@@ -1173,7 +1182,7 @@ class SuiviCreditController extends Controller
                         "NumDossier" => "DOS00" . $numOperation->id,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $NumCompte,
-                        "NumComptecp" => $compteEpargneGarantieUSD,
+                        "NumComptecp" => $getData->EpargneGarantie,
                         "Credit"  => $getData->Montant,
                         "Creditusd"  => $getData->Montant,
                         "Creditfc" => $getData->Montant * $tauxDuJour,
@@ -1219,7 +1228,6 @@ class SuiviCreditController extends Controller
                 $dataSystem = TauxEtDateSystem::latest()->first();
                 $tauxDuJour = $dataSystem->TauxEnFc;
                 $dateSystem = $dataSystem->DateSystem;
-
                 $dateSaisie = date("Y-m-d");
                 if ($dataCredit->CodeMonnaie == "CDF") {
                     CompteurTransaction::create([
@@ -1229,8 +1237,6 @@ class SuiviCreditController extends Controller
                     $numOperation = CompteurTransaction::latest()->first();
                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "R00" . $numOperation->id;
                     //DEBITE LE COMPTE CREDIT
-                    $compteCreditAuxMembreCDF = "3210000000202";
-
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
                         "DateTransaction" => $dateSystem,
@@ -1238,9 +1244,9 @@ class SuiviCreditController extends Controller
                         "TypeTransaction" => "D",
                         "CodeMonnaie" => 2,
                         "CodeAgence" => "20",
-                        "NumDossier" => "DOS00" . $numOperation->id,
+                        "NumDossier" => $request->NumDossier,
                         "NumDemande" => "V00" . $numOperation->id,
-                        "NumCompte" => $compteCreditAuxMembreCDF,
+                        "NumCompte" => $dataCredit->NumCompteCredit,
                         "NumComptecp" => $dataCredit->NumCompteEpargne,
                         "Debit" => $dataCredit->MontantAccorde,
                         "Operant" =>  $dataCredit->Gestionnaire,
@@ -1248,30 +1254,29 @@ class SuiviCreditController extends Controller
                         "Debitfc" => $dataCredit->MontantAccorde,
                         "NomUtilisateur" => Auth::user()->name,
                         "Libelle" => "Crédit à court terme octroyé à " . $dataCredit->NomCompte . " en date du " . $dateSystem . " Numéro dossier " . $dataCredit->NumDossier,
-                        "refCompteMembre" => $compteCreditAuxMembreCDF,
+                        "refCompteMembre" => $dataCredit->numAdherant,
                     ]);
                     //PUIS ON DEBITE LE COMPTE CREDIT DU MEMBRE
 
-
-                    Transactions::create([
-                        "NumTransaction" => $NumTransaction,
-                        "DateTransaction" => $dateSystem,
-                        "DateSaisie" => $dateSaisie,
-                        "TypeTransaction" => "D",
-                        "CodeMonnaie" => 2,
-                        "CodeAgence" => "20",
-                        "NumDossier" => "DOS00" . $numOperation->id,
-                        "NumDemande" => "V00" . $numOperation->id,
-                        "NumCompte" => $dataCredit->NumCompteCredit,
-                        "NumComptecp" =>  $dataCredit->NumCompteEpargne,
-                        "Debit" => $dataCredit->MontantAccorde,
-                        "Operant" =>  $dataCredit->Gestionnaire,
-                        "Debitusd" => $dataCredit->MontantAccorde / $tauxDuJour,
-                        "Debitfc" => $dataCredit->MontantAccorde,
-                        "NomUtilisateur" => Auth::user()->name,
-                        "Libelle" => "Crédit à court terme octroyé à " . $dataCredit->NomCompte . " en date du " . $dateSystem . " Numéro dossier " . $dataCredit->NumDossier,
-                        "refCompteMembre" => $dataCredit->NumCompteCredit,
-                    ]);
+                    // Transactions::create([
+                    //     "NumTransaction" => $NumTransaction,
+                    //     "DateTransaction" => $dateSystem,
+                    //     "DateSaisie" => $dateSaisie,
+                    //     "TypeTransaction" => "D",
+                    //     "CodeMonnaie" => 2,
+                    //     "CodeAgence" => "20",
+                    //     "NumDossier" => "DOS00" . $numOperation->id,
+                    //     "NumDemande" => "V00" . $numOperation->id,
+                    //     "NumCompte" => $dataCredit->NumCompteCredit,
+                    //     "NumComptecp" =>  $dataCredit->NumCompteEpargne,
+                    //     "Debit" => $dataCredit->MontantAccorde,
+                    //     "Operant" =>  $dataCredit->Gestionnaire,
+                    //     "Debitusd" => $dataCredit->MontantAccorde / $tauxDuJour,
+                    //     "Debitfc" => $dataCredit->MontantAccorde,
+                    //     "NomUtilisateur" => Auth::user()->name,
+                    //     "Libelle" => "Crédit à court terme octroyé à " . $dataCredit->NomCompte . " en date du " . $dateSystem . " Numéro dossier " . $dataCredit->NumDossier,
+                    //     "refCompteMembre" => $dataCredit->NumCompteCredit,
+                    // ]);
 
                     //APRES CETTE OPERATION ON CREDITE SON COMPTE EPARGNE
 
@@ -1283,7 +1288,7 @@ class SuiviCreditController extends Controller
                         "TypeTransaction" => "C",
                         "CodeMonnaie" => 2,
                         "CodeAgence" => "20",
-                        "NumDossier" => "DOS00" . $numOperation->id,
+                        "NumDossier" => $request->NumDossier,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $dataCredit->NumCompteEpargne,
                         "NumComptecp" =>  $dataCredit->NumCompteCredit,
@@ -1293,7 +1298,7 @@ class SuiviCreditController extends Controller
                         "Creditfc" => $dataCredit->MontantAccorde,
                         "NomUtilisateur" => Auth::user()->name,
                         "Libelle" => "Votre crédit à court terme octroyé en date du " . $dateSystem . " Numéro dossier " . $dataCredit->NumDossier,
-                        "refCompteMembre" => $dataCredit->NumCompteEpargne,
+                        "refCompteMembre" => $dataCredit->numAdherant,
                     ]);
                 } else if ($dataCredit->CodeMonnaie == "USD") {
 
@@ -1307,8 +1312,28 @@ class SuiviCreditController extends Controller
                     $numOperation = CompteurTransaction::latest()->first();
                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "R00" . $numOperation->id;
 
-                    $compteCreditAuxMembreUSD = "3210000000201";
+                    // $compteCreditAuxMembreUSD = "3210000000201";
                     //DEBITE LE COMPTE CREDIT USD
+                    // Transactions::create([
+                    //     "NumTransaction" => $NumTransaction,
+                    //     "DateTransaction" => $dateSystem,
+                    //     "DateSaisie" => $dateSaisie,
+                    //     "TypeTransaction" => "D",
+                    //     "CodeMonnaie" => 1,
+                    //     "CodeAgence" => "20",
+                    //     "NumDossier" => "DOS00" . $numOperation->id,
+                    //     "NumDemande" => "V00" . $numOperation->id,
+                    //     "NumCompte" => $compteCreditAuxMembreUSD,
+                    //     "NumComptecp" => $dataCredit->NumCompteEpargne,
+                    //     "Debit" => $dataCredit->MontantAccorde,
+                    //     "Operant" =>  $dataCredit->Gestionnaire,
+                    //     "Debitusd" => $dataCredit->MontantAccorde,
+                    //     "Debitfc" => $dataCredit->MontantAccorde * $tauxDuJour,
+                    //     "NomUtilisateur" => Auth::user()->name,
+                    //     "Libelle" => "Crédit à court terme octroyé à " . $dataCredit->NomCompte . " en date du " . $dateSystem . " Numéro dossier " . $dataCredit->NumDossier,
+                    //     "refCompteMembre" => $compteCreditAuxMembreUSD,
+                    // ]);
+                    // DEBITE LE COMPTE CREDIT DU MEMBRE
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
                         "DateTransaction" => $dateSystem,
@@ -1316,29 +1341,7 @@ class SuiviCreditController extends Controller
                         "TypeTransaction" => "D",
                         "CodeMonnaie" => 1,
                         "CodeAgence" => "20",
-                        "NumDossier" => "DOS00" . $numOperation->id,
-                        "NumDemande" => "V00" . $numOperation->id,
-                        "NumCompte" => $compteCreditAuxMembreUSD,
-                        "NumComptecp" => $dataCredit->NumCompteEpargne,
-                        "Debit" => $dataCredit->MontantAccorde,
-                        "Operant" =>  $dataCredit->Gestionnaire,
-                        "Debitusd" => $dataCredit->MontantAccorde,
-                        "Debitfc" => $dataCredit->MontantAccorde * $tauxDuJour,
-                        "NomUtilisateur" => Auth::user()->name,
-                        "Libelle" => "Crédit à court terme octroyé à " . $dataCredit->NomCompte . " en date du " . $dateSystem . " Numéro dossier " . $dataCredit->NumDossier,
-                        "refCompteMembre" => $compteCreditAuxMembreUSD,
-                    ]);
-                    //PUIS ON DEBITE LE COMPTE CREDIT DU MEMBRE
-
-
-                    Transactions::create([
-                        "NumTransaction" => $NumTransaction,
-                        "DateTransaction" => $dateSystem,
-                        "DateSaisie" => $dateSaisie,
-                        "TypeTransaction" => "D",
-                        "CodeMonnaie" => 1,
-                        "CodeAgence" => "20",
-                        "NumDossier" => "DOS00" . $numOperation->id,
+                        "NumDossier" => $request->NumDossier,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $dataCredit->NumCompteCredit,
                         "NumComptecp" =>  $dataCredit->NumCompteEpargne,
@@ -1348,7 +1351,7 @@ class SuiviCreditController extends Controller
                         "Debitfc" => $dataCredit->MontantAccorde * $tauxDuJour,
                         "NomUtilisateur" => Auth::user()->name,
                         "Libelle" => "Crédit à court terme octroyé à " . $dataCredit->NomCompte . " en date du " . $dateSaisie . " Numéro dossier " . $dataCredit->NumDossier,
-                        "refCompteMembre" => $dataCredit->NumCompteCredit,
+                        "refCompteMembre" => $dataCredit->numAdherant,
                     ]);
 
                     //APRES CETTE OPERATION ON CREDITE SON COMPTE EPARGNE
@@ -1361,7 +1364,7 @@ class SuiviCreditController extends Controller
                         "TypeTransaction" => "C",
                         "CodeMonnaie" => 1,
                         "CodeAgence" => "20",
-                        "NumDossier" => "DOS00" . $numOperation->id,
+                        "NumDossier" => $request->NumDossier,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $dataCredit->NumCompteEpargne,
                         "NumComptecp" =>  $dataCredit->NumCompteCredit,
@@ -1371,7 +1374,7 @@ class SuiviCreditController extends Controller
                         "Creditfc" => $dataCredit->MontantAccorde * $tauxDuJour,
                         "NomUtilisateur" => Auth::user()->name,
                         "Libelle" => "Votre crédit à court terme octroyé en date du " . $dateSystem . " Numéro dossier " . $dataCredit->NumDossier . " Compte crédit " . $dataCredit->NumCompteCredit,
-                        "refCompteMembre" => $dataCredit->NumCompteEpargne,
+                        "refCompteMembre" => $dataCredit->numAdherant,
                     ]);
                 }
                 //ENVOIE UNE NOTIFICATION
@@ -1381,6 +1384,7 @@ class SuiviCreditController extends Controller
             } else {
                 return response()->json(["status" => 0, "msg" => "Le crédit ne pas encore accordé merci."]);
             }
+            
         } else {
             return response()->json(["status" => 0, "msg" => "Aucun numéro de dossier trouvé."]);
         }

@@ -62,9 +62,10 @@ const Delestage = () => {
                             timer: 8000,
                             confirmButtonText: "Okay",
                         });
-                        setTimeout(function () {
-                            window.location.reload();
-                        }, 2000);
+                        // setTimeout(function () {
+                        //     window.location.reload();
+                        // }, 2000);
+                        getLastestOperation();
                     } else {
                         setloading(false);
                         Swal.fire({

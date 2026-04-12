@@ -58,7 +58,8 @@ Route::middleware(['web'])->group(function () {
     Route::get('/eco/pages/visa', [TransactionsController::class, 'getVisaHomePage'])->name('eco.pages.visa');
     Route::get('/eco/pages/retrait-espece', [TransactionsController::class, 'getRetraitHomePage'])->name('eco.pages.retrait-espece');
     Route::get('/eco/pages/delestage', [TransactionsController::class, 'getDelestageHomePage'])->name('eco.pages.delestage');
-    Route::get('/eco/pages/appro', [TransactionsController::class, 'getApproHomePage'])->middleware('checkRole:isChefCaisse')->name('eco.pages.appro');
+    // Route::get('/eco/pages/appro', [TransactionsController::class, 'getApproHomePage'])->middleware('checkRole:isChefCaisse')->name('eco.pages.appro');
+     Route::get('/eco/pages/appro', [TransactionsController::class, 'getApproHomePage'])->name('eco.pages.appro');
     Route::get('/eco/pages/entreeT', [TransactionsController::class, 'getEntreeTHomePage'])->name('eco.pages.entreeT');
     Route::get('/eco/pages/releve', [TransactionsController::class, 'getReleveHomePage'])->name('eco.pages.releve');
     Route::get('/eco/pages/journal', [ReportsController::class, 'getJournalHomePage'])->name('eco.pages.journal');
