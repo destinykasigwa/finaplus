@@ -169,6 +169,8 @@ $userInfo = DB::select('SELECT * FROM users WHERE id="' . Auth::user()->id . '"'
   }
 </style>
 
+
+
 <!-- jQuery footer-section -->
 <script src="{{ asset('template/plugins/jquery/jquery.min.js') }}"></script>
 <!-- jQuery UI 1.11.4 -->

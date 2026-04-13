@@ -592,6 +592,7 @@ class ClotureJourneeCopy
         $NumCompte = $creditRet->NumCompteEpargne;
         $CodeMonnaie = $creditRet->CodeMonnaie == "USD" ? 1 : 2;
         $soldeMembre = $this->checkSoldeMembrePASSIF($CodeMonnaie, $NumCompte);
+
         // $CapAmmorti = $creditRet->CapAmmorti;
         // $interetApayer = $creditRet->Interet;
         // $CapDejaPaye = $creditRet->CapitalPaye;
@@ -906,45 +907,45 @@ class ClotureJourneeCopy
      * @param object $creditRet L'échéancier du crédit
      * @param float $montantRembourse Le montant à rembourser (capital)
      */
-    protected function remboursementPartielPremierRetard($creditRet, $montantRembourse)
-    {
-        // 1. Débit du compte épargne du client et crédit du compte crédit (32)
-        $libelle = "Remboursement partiel capital (premier retard) du crédit de "
-            . $creditRet->MontantAccorde . " pour la "
-            . $creditRet->NbreJour . "e tranche du "
-            . $creditRet->DateTranch . " dossier " . $creditRet->NumDossier;
-        return $this->insertInTransactionCapital(
-            $montantRembourse,
-            $creditRet->CodeMonnaie,
-            $this->dateSystem,
-            $creditRet->CodeAgence,
-            $creditRet->NumCompteEpargne,
-            $creditRet->NumCompteCredit, // Compte 32
-            $this->tauxDuJour,
-            $creditRet->numAdherant,
-            $libelle,
-            $creditRet->Gestionnaire,
-            $creditRet->NumDossier
-        );
+    // protected function remboursementPartielPremierRetard($creditRet, $montantRembourse)
+    // {
+    //     // 1. Débit du compte épargne du client et crédit du compte crédit (32)
+    //     $libelle = "Remboursement partiel capital (premier retard) du crédit de "
+    //         . $creditRet->MontantAccorde . " pour la "
+    //         . $creditRet->NbreJour . "e tranche du "
+    //         . $creditRet->DateTranch . " dossier " . $creditRet->NumDossier;
+    //     return $this->insertInTransactionCapital(
+    //         $montantRembourse,
+    //         $creditRet->CodeMonnaie,
+    //         $this->dateSystem,
+    //         $creditRet->CodeAgence,
+    //         $creditRet->NumCompteEpargne,
+    //         $creditRet->NumCompteCredit, // Compte 32
+    //         $this->tauxDuJour,
+    //         $creditRet->numAdherant,
+    //         $libelle,
+    //         $creditRet->Gestionnaire,
+    //         $creditRet->NumDossier
+    //     );
 
-        // 2. Mise à jour de la table remboursementcredit (capital payé partiel)
-        // $this->RenseignePayementPourPaiementQuiEtaitEnMoitieCapital(
-        //     $creditRet->ReferenceEch,
-        //     $creditRet->NumCompteEpargne,
-        //     $creditRet->NumCompteCredit,
-        //     $creditRet->NumDossier,
-        //     $creditRet->RefTypeCredit,
-        //     $creditRet->NomCompte,
-        //     $creditRet->DateTranch,
-        //     $montantRembourse, // capital payé cumulé
-        //     $creditRet->CodeAgence,
-        //     $creditRet->numAdherant,
-        //     $numTransaction
-        // );
+    //     // 2. Mise à jour de la table remboursementcredit (capital payé partiel)
+    //     // $this->RenseignePayementPourPaiementQuiEtaitEnMoitieCapital(
+    //     //     $creditRet->ReferenceEch,
+    //     //     $creditRet->NumCompteEpargne,
+    //     //     $creditRet->NumCompteCredit,
+    //     //     $creditRet->NumDossier,
+    //     //     $creditRet->RefTypeCredit,
+    //     //     $creditRet->NomCompte,
+    //     //     $creditRet->DateTranch,
+    //     //     $montantRembourse, // capital payé cumulé
+    //     //     $creditRet->CodeAgence,
+    //     //     $creditRet->numAdherant,
+    //     //     $numTransaction
+    //     // );
 
-        // 3. Ne pas fermer la tranche (remboursement partiel)
-        // 4. La provision sera recalculée plus tard par gererProvisions()
-    }
+    //     // 3. Ne pas fermer la tranche (remboursement partiel)
+    //     // 4. La provision sera recalculée plus tard par gererProvisions()
+    // }
 
 
     //PERMET DE FAIRE LE REMBOURSEMENT DE CAPITAL EN RETARD
@@ -1012,7 +1013,7 @@ class ClotureJourneeCopy
                         $numTransaction = null;
 
                         if ($isFirstDelay && $typeRemboursement == "partiel") {
-                            $numTransaction = $this->remboursementPartielPremierRetard($creditRet, $montantRembourse);
+                            // $numTransaction = $this->remboursementPartielPremierRetard($creditRet, $montantRembourse);
                             $this->gererProvisions();
                             $this->IncrementerJourRetard(
                                 $creditRet->NumDossier,
@@ -1020,37 +1021,45 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteEpargne,
                                 $creditRet->NumCompteCredit
                             );
-                            
-                            $this->insertInTransactionRepriseProvision(
-                                round($soldeMembre, 2),
-                                $creditRet->CodeMonnaie,
-                                $this->dateSystem,
-                                $creditRet->CodeAgence,
-                                $this->tauxDuJour,
-                                $typeRemboursement,
-                                $creditRet->NumCompteEpargne,
-                                $creditRet->NbreJour,
-                                $creditRet->DateTranch,
-                                $creditRet->MontantAccorde,
-                                $creditRet->NumDossier,
-                                $creditRet->Gestionnaire,
-                            );
+
+                            if ($montantRembourse > 0) {
+                                try {
+                                    $this->insertInTransactionRepriseProvision(
+                                        round($soldeMembre, 2),
+                                        $creditRet->CodeMonnaie,
+                                        $this->dateSystem,
+                                        $creditRet->CodeAgence,
+                                        $this->tauxDuJour,
+                                        $typeRemboursement,
+                                        $creditRet->NumCompteEpargne,
+                                        $creditRet->NbreJour,
+                                        $creditRet->DateTranch,
+                                        $creditRet->MontantAccorde,
+                                        $creditRet->NumDossier,
+                                        $creditRet->Gestionnaire,
+                                    );
+                                } catch (\Exception $e) {
+                                    Log::warning("Insertion ignorée", ['msg' => $e->getMessage()]);
+                                }
+                            }
                         } else {
                             $this->gererProvisions();
-                            $numTransaction = $this->insertInTransactionRepriseProvision(
-                                round($montantRembourse, 2),
-                                $creditRet->CodeMonnaie,
-                                $this->dateSystem,
-                                $creditRet->CodeAgence,
-                                $this->tauxDuJour,
-                                $typeRemboursement,
-                                $creditRet->NumCompteEpargne,
-                                $creditRet->NbreJour,
-                                $creditRet->DateTranch,
-                                $creditRet->MontantAccorde,
-                                $creditRet->NumDossier,
-                                $creditRet->Gestionnaire
-                            );
+                           
+                                    $this->insertInTransactionRepriseProvision(
+                                        round($soldeMembre, 2),
+                                        $creditRet->CodeMonnaie,
+                                        $this->dateSystem,
+                                        $creditRet->CodeAgence,
+                                        $this->tauxDuJour,
+                                        $typeRemboursement,
+                                        $creditRet->NumCompteEpargne,
+                                        $creditRet->NbreJour,
+                                        $creditRet->DateTranch,
+                                        $creditRet->MontantAccorde,
+                                        $creditRet->NumDossier,
+                                        $creditRet->Gestionnaire,
+                                    );
+                             
                         }
 
                         $this->RenseignePayementPourPaiementQuiEtaitEnMoitieCapital(
@@ -1080,7 +1089,7 @@ class ClotureJourneeCopy
                         $numTransaction = null;
 
                         if ($isFirstDelay && $typeRemboursement == "partiel") {
-                            $numTransaction = $this->remboursementPartielPremierRetard($creditRet, $montantRembourse);
+                            // $numTransaction = $this->remboursementPartielPremierRetard($creditRet, $montantRembourse);
                             $this->gererProvisions();
                             $this->IncrementerJourRetard(
                                 $creditRet->NumDossier,
@@ -1088,37 +1097,41 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteEpargne,
                                 $creditRet->NumCompteCredit
                             );
-                            
-                            $this->insertInTransactionRepriseProvision(
-                                round($soldeMembre, 2),
-                                $creditRet->CodeMonnaie,
-                                $this->dateSystem,
-                                $creditRet->CodeAgence,
-                                $this->tauxDuJour,
-                                $typeRemboursement,
-                                $creditRet->NumCompteEpargne,
-                                $creditRet->NbreJour,
-                                $creditRet->DateTranch,
-                                $creditRet->MontantAccorde,
-                                $creditRet->NumDossier,
-                                $creditRet->Gestionnaire,
-                            );
+
+                          
+                                    $this->insertInTransactionRepriseProvision(
+                                        round($soldeMembre, 2),
+                                        $creditRet->CodeMonnaie,
+                                        $this->dateSystem,
+                                        $creditRet->CodeAgence,
+                                        $this->tauxDuJour,
+                                        $typeRemboursement,
+                                        $creditRet->NumCompteEpargne,
+                                        $creditRet->NbreJour,
+                                        $creditRet->DateTranch,
+                                        $creditRet->MontantAccorde,
+                                        $creditRet->NumDossier,
+                                        $creditRet->Gestionnaire,
+                                    );
+                             
                         } else {
                             $this->gererProvisions();
-                            $numTransaction = $this->insertInTransactionRepriseProvision(
-                                round($montantRembourse, 2),
-                                $creditRet->CodeMonnaie,
-                                $this->dateSystem,
-                                $creditRet->CodeAgence,
-                                $this->tauxDuJour,
-                                $typeRemboursement,
-                                $creditRet->NumCompteEpargne,
-                                $creditRet->NbreJour,
-                                $creditRet->DateTranch,
-                                $creditRet->MontantAccorde,
-                                $creditRet->NumDossier,
-                                $creditRet->Gestionnaire
-                            );
+                          
+                                    $this->insertInTransactionRepriseProvision(
+                                        round($soldeMembre, 2),
+                                        $creditRet->CodeMonnaie,
+                                        $this->dateSystem,
+                                        $creditRet->CodeAgence,
+                                        $this->tauxDuJour,
+                                        $typeRemboursement,
+                                        $creditRet->NumCompteEpargne,
+                                        $creditRet->NbreJour,
+                                        $creditRet->DateTranch,
+                                        $creditRet->MontantAccorde,
+                                        $creditRet->NumDossier,
+                                        $creditRet->Gestionnaire,
+                                    );
+                               
                         }
 
                         $this->RenseignePayementPourPaiementQuiEtaitEnMoitieCapital(
@@ -1146,9 +1159,9 @@ class ClotureJourneeCopy
                     } elseif ($soldeMembre < $CapitalRestant) {
                         $montantRembourse = $soldeMembre;
                         $numTransaction = null;
-
+                      
                         if ($isFirstDelay && $typeRemboursement == "partiel") {
-                            $numTransaction = $this->remboursementPartielPremierRetard($creditRet, $montantRembourse);
+                            // $numTransaction = $this->remboursementPartielPremierRetard($creditRet, $montantRembourse);
                             $this->gererProvisions();
                             $this->IncrementerJourRetard(
                                 $creditRet->NumDossier,
@@ -1156,21 +1169,23 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteEpargne,
                                 $creditRet->NumCompteCredit
                             );
-                            
-                            $this->insertInTransactionRepriseProvision(
-                                round($soldeMembre, 2),
-                                $creditRet->CodeMonnaie,
-                                $this->dateSystem,
-                                $creditRet->CodeAgence,
-                                $this->tauxDuJour,
-                                $typeRemboursement,
-                                $creditRet->NumCompteEpargne,
-                                $creditRet->NbreJour,
-                                $creditRet->DateTranch,
-                                $creditRet->MontantAccorde,
-                                $creditRet->NumDossier,
-                                $creditRet->Gestionnaire,
-                            );
+
+                           
+                                    $this->insertInTransactionRepriseProvision(
+                                        round($soldeMembre, 2),
+                                        $creditRet->CodeMonnaie,
+                                        $this->dateSystem,
+                                        $creditRet->CodeAgence,
+                                        $this->tauxDuJour,
+                                        $typeRemboursement,
+                                        $creditRet->NumCompteEpargne,
+                                        $creditRet->NbreJour,
+                                        $creditRet->DateTranch,
+                                        $creditRet->MontantAccorde,
+                                        $creditRet->NumDossier,
+                                        $creditRet->Gestionnaire,
+                                    );
+                          
                         } else {
                             $this->gererProvisions();
                             $numTransaction = $this->insertInTransactionRepriseProvision(
@@ -1216,6 +1231,7 @@ class ClotureJourneeCopy
                     $capitalApayer = $creditRet->CapAmmorti;
                     if ($soldeMembre > $capitalApayer) {
                         $montantRembourse = $capitalApayer;
+                      
                         $libelle = "Remboursement capital du crédit de " . $creditRet->MontantAccorde . " pour la "
                             . $creditRet->NbreJour . "e tranche du " . $creditRet->DateTranch . " dossier " . $creditRet->NumDossier;
 
@@ -1233,19 +1249,22 @@ class ClotureJourneeCopy
                             $creditRet->NumDossier
                         );
 
-                        $this->RenseignePayementPourPaiementQuiEtaitEnMoitieCapital(
-                            $creditRet->ReferenceEch,
-                            $creditRet->NumCompteEpargne,
-                            $creditRet->NumCompteCredit,
-                            $creditRet->NumDossier,
-                            $creditRet->RefTypeCredit,
-                            $creditRet->NomCompte,
-                            $creditRet->DateTranch,
-                            round($creditEnRetard->CapitalPaye + $montantRembourse, 2),
-                            $creditRet->CodeAgence,
-                            $creditRet->numAdherant,
-                            $numTransaction
-                        );
+                      
+                                $this->insertInTransactionRepriseProvision(
+                                    round($soldeMembre, 2),
+                                    $creditRet->CodeMonnaie,
+                                    $this->dateSystem,
+                                    $creditRet->CodeAgence,
+                                    $this->tauxDuJour,
+                                    $typeRemboursement,
+                                    $creditRet->NumCompteEpargne,
+                                    $creditRet->NbreJour,
+                                    $creditRet->DateTranch,
+                                    $creditRet->MontantAccorde,
+                                    $creditRet->NumDossier,
+                                    $creditRet->Gestionnaire,
+                                );
+                        
 
                         if ($isFirstDelay && $typeRemboursement == "partiel") {
                             $this->gererProvisions();
@@ -1255,36 +1274,40 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteEpargne,
                                 $creditRet->NumCompteCredit
                             );
-                            
-                            $this->insertInTransactionRepriseProvision(
-                                round($soldeMembre, 2),
-                                $creditRet->CodeMonnaie,
-                                $this->dateSystem,
-                                $creditRet->CodeAgence,
-                                $this->tauxDuJour,
-                                $typeRemboursement,
-                                $creditRet->NumCompteEpargne,
-                                $creditRet->NbreJour,
-                                $creditRet->DateTranch,
-                                $creditRet->MontantAccorde,
-                                $creditRet->NumDossier,
-                                $creditRet->Gestionnaire,
-                            );
+
+                          
+                                    $this->insertInTransactionRepriseProvision(
+                                        round($soldeMembre, 2),
+                                        $creditRet->CodeMonnaie,
+                                        $this->dateSystem,
+                                        $creditRet->CodeAgence,
+                                        $this->tauxDuJour,
+                                        $typeRemboursement,
+                                        $creditRet->NumCompteEpargne,
+                                        $creditRet->NbreJour,
+                                        $creditRet->DateTranch,
+                                        $creditRet->MontantAccorde,
+                                        $creditRet->NumDossier,
+                                        $creditRet->Gestionnaire,
+                                    );
+                           
                         } else {
-                            $this->insertInTransactionRepriseProvision(
-                                round($montantRembourse, 2),
-                                $creditRet->CodeMonnaie,
-                                $this->dateSystem,
-                                $creditRet->CodeAgence,
-                                $this->tauxDuJour,
-                                $typeRemboursement,
-                                $creditRet->NumCompteEpargne,
-                                $creditRet->NbreJour,
-                                $creditRet->DateTranch,
-                                $creditRet->MontantAccorde,
-                                $creditRet->NumDossier,
-                                $creditRet->Gestionnaire
-                            );
+                           
+                                    $this->insertInTransactionRepriseProvision(
+                                        round($soldeMembre, 2),
+                                        $creditRet->CodeMonnaie,
+                                        $this->dateSystem,
+                                        $creditRet->CodeAgence,
+                                        $this->tauxDuJour,
+                                        $typeRemboursement,
+                                        $creditRet->NumCompteEpargne,
+                                        $creditRet->NbreJour,
+                                        $creditRet->DateTranch,
+                                        $creditRet->MontantAccorde,
+                                        $creditRet->NumDossier,
+                                        $creditRet->Gestionnaire,
+                                    );
+                           
                         }
                         $this->ClotureTranche($creditRet->ReferenceEch);
                         $this->sendNotification->sendNotificationRemboursementCredit(
@@ -1296,6 +1319,7 @@ class ClotureJourneeCopy
                         );
                     } elseif ($soldeMembre == $capitalApayer) {
                         $montantRembourse = $capitalApayer;
+                       
                         $libelle = "Remboursement capital du crédit de " . $creditRet->MontantAccorde . " pour la "
                             . $creditRet->NbreJour . "e tranche du " . $creditRet->DateTranch . " dossier " . $creditRet->NumDossier;
 
@@ -1335,37 +1359,40 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteEpargne,
                                 $creditRet->NumCompteCredit
                             );
-                            
-                            $this->insertInTransactionRepriseProvision(
-                                round($soldeMembre, 2),
-                                $creditRet->CodeMonnaie,
-                                $this->dateSystem,
-                                $creditRet->CodeAgence,
-                                $this->tauxDuJour,
-                                $typeRemboursement,
-                                $creditRet->NumCompteEpargne,
-                                $creditRet->NbreJour,
-                                $creditRet->DateTranch,
-                                $creditRet->MontantAccorde,
-                                $creditRet->NumDossier,
-                                $creditRet->Gestionnaire,
-                            );
+
+                                    $this->insertInTransactionRepriseProvision(
+                                        round($soldeMembre, 2),
+                                        $creditRet->CodeMonnaie,
+                                        $this->dateSystem,
+                                        $creditRet->CodeAgence,
+                                        $this->tauxDuJour,
+                                        $typeRemboursement,
+                                        $creditRet->NumCompteEpargne,
+                                        $creditRet->NbreJour,
+                                        $creditRet->DateTranch,
+                                        $creditRet->MontantAccorde,
+                                        $creditRet->NumDossier,
+                                        $creditRet->Gestionnaire,
+                                    );
+                              
                         } else {
                             $this->gererProvisions();
-                            $this->insertInTransactionRepriseProvision(
-                                round($montantRembourse, 2),
-                                $creditRet->CodeMonnaie,
-                                $this->dateSystem,
-                                $creditRet->CodeAgence,
-                                $this->tauxDuJour,
-                                $typeRemboursement,
-                                $creditRet->NumCompteEpargne,
-                                $creditRet->NbreJour,
-                                $creditRet->DateTranch,
-                                $creditRet->MontantAccorde,
-                                $creditRet->NumDossier,
-                                $creditRet->Gestionnaire
-                            );
+                          
+                                    $this->insertInTransactionRepriseProvision(
+                                        round($soldeMembre, 2),
+                                        $creditRet->CodeMonnaie,
+                                        $this->dateSystem,
+                                        $creditRet->CodeAgence,
+                                        $this->tauxDuJour,
+                                        $typeRemboursement,
+                                        $creditRet->NumCompteEpargne,
+                                        $creditRet->NbreJour,
+                                        $creditRet->DateTranch,
+                                        $creditRet->MontantAccorde,
+                                        $creditRet->NumDossier,
+                                        $creditRet->Gestionnaire,
+                                    );
+                               
                         }
                         $this->ClotureTranche($creditRet->ReferenceEch);
                         $this->sendNotification->sendNotificationRemboursementCredit(
@@ -1377,12 +1404,14 @@ class ClotureJourneeCopy
                         );
                     } elseif ($soldeMembre > 0 && $soldeMembre < $capitalApayer) {
                         $montantRembourse = $soldeMembre;
+
+                      
                         $libelle = "Remboursement partiel capital du crédit de " . $creditRet->MontantAccorde . " pour la "
                             . $creditRet->NbreJour . "e tranche du " . $creditRet->DateTranch . " dossier " . $creditRet->NumDossier;
 
                         $numTransaction = null;
                         if ($isFirstDelay && $typeRemboursement == "partiel") {
-                            $numTransaction = $this->remboursementPartielPremierRetard($creditRet, $montantRembourse);
+                            // $numTransaction = $this->remboursementPartielPremierRetard($creditRet, $montantRembourse);
                             $this->gererProvisions();
                             $this->IncrementerJourRetard(
                                 $creditRet->NumDossier,
@@ -1390,21 +1419,23 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteEpargne,
                                 $creditRet->NumCompteCredit
                             );
-                            
-                            $this->insertInTransactionRepriseProvision(
-                                round($soldeMembre, 2),
-                                $creditRet->CodeMonnaie,
-                                $this->dateSystem,
-                                $creditRet->CodeAgence,
-                                $this->tauxDuJour,
-                                $typeRemboursement,
-                                $creditRet->NumCompteEpargne,
-                                $creditRet->NbreJour,
-                                $creditRet->DateTranch,
-                                $creditRet->MontantAccorde,
-                                $creditRet->NumDossier,
-                                $creditRet->Gestionnaire,
-                            );
+
+                          
+                                    $this->insertInTransactionRepriseProvision(
+                                        round($soldeMembre, 2),
+                                        $creditRet->CodeMonnaie,
+                                        $this->dateSystem,
+                                        $creditRet->CodeAgence,
+                                        $this->tauxDuJour,
+                                        $typeRemboursement,
+                                        $creditRet->NumCompteEpargne,
+                                        $creditRet->NbreJour,
+                                        $creditRet->DateTranch,
+                                        $creditRet->MontantAccorde,
+                                        $creditRet->NumDossier,
+                                        $creditRet->Gestionnaire,
+                                    );
+                               
                         } else {
                             $numTransaction = $this->insertInTransactionCapital(
                                 round($montantRembourse, 2),
@@ -1420,20 +1451,23 @@ class ClotureJourneeCopy
                                 $creditRet->NumDossier
                             );
                             $this->gererProvisions();
-                            $this->insertInTransactionRepriseProvision(
-                                round($montantRembourse, 2),
-                                $creditRet->CodeMonnaie,
-                                $this->dateSystem,
-                                $creditRet->CodeAgence,
-                                $this->tauxDuJour,
-                                $typeRemboursement,
-                                $creditRet->NumCompteEpargne,
-                                $creditRet->NbreJour,
-                                $creditRet->DateTranch,
-                                $creditRet->MontantAccorde,
-                                $creditRet->NumDossier,
-                                $creditRet->Gestionnaire
-                            );
+                          
+                                    $this->insertInTransactionRepriseProvision(
+                                        round($soldeMembre, 2),
+                                        $creditRet->CodeMonnaie,
+                                        $this->dateSystem,
+                                        $creditRet->CodeAgence,
+                                        $this->tauxDuJour,
+                                        $typeRemboursement,
+                                        $creditRet->NumCompteEpargne,
+                                        $creditRet->NbreJour,
+                                        $creditRet->DateTranch,
+                                        $creditRet->MontantAccorde,
+                                        $creditRet->NumDossier,
+                                        $creditRet->Gestionnaire,
+                                    );
+                               
+                            
                         }
 
                         $this->RenseignePayementPourPaiementQuiEtaitEnMoitieCapital(
@@ -1545,6 +1579,8 @@ class ClotureJourneeCopy
         //     ->first();
         // $SoldeCreditRestant = $soldeRestant->soldeRestant;
         $SoldeCreditRestant = $soldeRestant;
+      
+
         $capitaRetard =  Echeancier::selectRaw('
         echeanciers.NumDossier,
        SUM(echeanciers.Interet) - SUM(COALESCE(remboursementcredits.InteretPaye, 0)) AS sommeInteretRetard,
@@ -1584,6 +1620,7 @@ class ClotureJourneeCopy
         $capitalApayer = $capitaRetard->sommeCapitalRetard;
         if ($creditProv->NbrJrRetard <= 30 and $creditProv->provision1 == 0) {
             //
+
             $this->insertInTransactionProvision(
                 abs($sommeCapitalDejaPaye),
                 $creditProv->CodeMonnaie,
@@ -1801,6 +1838,13 @@ class ClotureJourneeCopy
         $Libelle,
         $Gestionnaire,
     ) {
+
+
+      $montant = round($montantInteret, 2);
+
+        if ($montant <= 0) {
+            return null;
+        }
         //GENERE LE NUMERO AUTOMATIQUE DE L'OPERATION
         $NumTransaction = $this->generateTransactionNumber();
         info("code monnaie " . $codeMonnaie);
@@ -1871,6 +1915,14 @@ class ClotureJourneeCopy
         $Gestionnaire,
         $NumDossier
     ) {
+
+
+
+        $montant = round($montantCapital, 2);
+
+        if ($montant <= 0) {
+            return null;
+        }
         //GENERE LE NUMERO AUTOMATIQUE DE L'OPERATION
         $NumTransaction = $this->generateTransactionNumber();
         if ($codeMonnaie == "USD") {
@@ -2001,6 +2053,12 @@ class ClotureJourneeCopy
         $provisionRang,
         $Gestionnaire,
     ) {
+
+
+
+        if ($capitalApayer <= 0) {
+            return null; // 🔴 bloque ici une fois pour toutes
+        }
         if ($codeMonnaie == "USD") {
             $devise = 1; //USD
         } else if ($codeMonnaie == "CDF") {
@@ -2393,8 +2451,12 @@ class ClotureJourneeCopy
         $ProvisionDuree,
         $Gestionnaire,
         $NumcompteCredit
+
     ) {
 
+
+
+    
         if ($provisionTranche == 1) {
             $montantProvision = $SoldeCreditRestant * 5 / 100;
         } else if ($provisionTranche == 2) {
@@ -2532,6 +2594,12 @@ class ClotureJourneeCopy
         $Gestionnaire,
     ) {
 
+
+        $montant = round($capitalPaye, 2);
+
+        if ($montant <= 0) {
+            return null; // 🔴 bloque définitivement ici
+        }
 
         // Initialisation
         $NumTransaction = null;
@@ -3090,6 +3158,12 @@ class ClotureJourneeCopy
                 ->groupBy("NumCompte")
                 ->first();
 
+                
+        // ✅ Protection : si aucun résultat, retourner 0
+        if (!$soldeMembre) {
+            return 0;
+        }
+
             $this->checkAndStopOnError(
                 !$soldeMembre,
                 "Impossible de récupérer les transactions pour le compte {$NumCompte}",
@@ -3113,6 +3187,7 @@ class ClotureJourneeCopy
     //CETE FONCTION VA PERMETTRE A SELECTIONNEE LE SOLDE DU MEMBRE
     public function checkSoldeMembreACTIF($codeMonnaie, $NumCompte, $NumDossier)
     {
+         try {
         // Si le montant manuel est défini et supérieur à 0, on l'utilise
         if (!is_null($this->montantRemboursementManuel) && $this->montantRemboursementManuel > 0 && !$this->remboursAnticipe) {
             return $this->montantRemboursementManuel;
@@ -3126,6 +3201,16 @@ class ClotureJourneeCopy
             ->where("NumDossier", '=', $NumDossier)
             ->groupBy("NumCompte")
             ->first();
+
+        // ✅ Protection : si aucun résultat, retourner 0
+        if (!$soldeMembre) {
+            return 0;
+        }
+          $this->checkAndStopOnError(
+                !$soldeMembre,
+                "Impossible de récupérer les transactions pour le compte {$NumCompte}",
+                "ERR_TRANSACTIONS_001"
+            );
         if ($codeMonnaie == 1) {
             info("soldeUSD: " . $soldeMembre->soldeMembreUSD);
             $solde = $soldeMembre->soldeMembreUSD;
@@ -3134,6 +3219,9 @@ class ClotureJourneeCopy
             $solde = $soldeMembre->soldeMembreCDF;
             info("soldeCDF: " . $soldeMembre->soldeMembreCDF);
             return $solde;
+        }
+         } catch (\Exception $e) {
+            $this->checkAndStopOnError(true, "Erreur dans checkSoldeMembrePASSIF: " . $e->getMessage(), "ERR_SOLDE_003");
         }
     }
 
@@ -3735,6 +3823,8 @@ class ClotureJourneeCopy
                         }
                         return 25;
                     }
+
+                    
                     return 10;
                 }
                 return 5;

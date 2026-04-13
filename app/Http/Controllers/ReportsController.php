@@ -559,6 +559,7 @@ class ReportsController extends Controller
         } else if (isset($request->radioValue) and $request->radioValue == "balance_agee") {
             //
             if (isset($request->devise) and isset($request->selectedDate)) {
+                $agentCreditName = $request->agent_credit_name;
 
                 if ($request->devise == "CDF") {
                     // $dataBalanceAgee = Portefeuille::where("portefeuilles.CodeMonnaie", "=", $request->devise)
@@ -616,51 +617,54 @@ class ReportsController extends Controller
 
                     //     $getSoldeEncoursCreditCDF = DB::select('SELECT SUM(transactions.Debitfc)-SUM(transactions.Creditfc) As SoldeEncoursCDF FROM  transactions
                     //  WHERE transactions.CodeMonnaie=2 AND Libelle NOT LIKE "%Imputation%" AND transactions.NumCompte="' . $comptePretAuMembreCDF . '" ')[0];
+                    // Pour le solde des crédits normaux (groupe 320)
+                    $query = DB::table('transactions')
+                        ->join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
+                        ->where('comptes.RefSousGroupe', 3210)
+                        ->where('comptes.CodeMonnaie', 2)
+                        ->selectRaw('
+        SUM(transactions.Debitfc - transactions.Creditfc) AS SoldeEncoursCDF_brut,
+        SUM(CASE WHEN transactions.Libelle NOT LIKE "%Imputation%" 
+                 THEN transactions.Debitfc - transactions.Creditfc 
+                 ELSE 0 END) AS SoldeEncoursCDF_sans_imputation
+    ');
 
-                    $getSoldeEncoursCreditCDF = DB::table('transactions')
-                        ->selectRaw('SUM(transactions.Debitfc) - SUM(transactions.Creditfc) AS SoldeEncoursCDF')
-                        ->where('transactions.CodeMonnaie', 2) // Filtre sur la devise (CDF)
-                        ->where('transactions.NumCompte', $this->comptePretAuMembreCDF) // Filtre sur le compte spécifique
-                        ->where('transactions.Libelle', 'NOT LIKE', '%Imputation%') // Filtre excluant les libellés contenant "Imputation"
-                        ->when(!empty($request->agent_credit_name), function ($query) use ($request) {
-                            $query->where('transactions.Operant', $request->agent_credit_name); // Filtre optionnel
-                        })
-                        ->first();
-                    $getEncoursBrutCreditCDF = DB::table('transactions')
-                        ->selectRaw('SUM(transactions.Debitfc) - SUM(transactions.Creditfc) AS SoldeEncoursCDF')
-                        ->where('transactions.CodeMonnaie', 2) // Filtre sur la devise (CDF)
-                        ->where('transactions.NumCompte', $this->comptePretAuMembreCDF) // Filtre sur le compte spécifique
-                        ->when(!empty($request->agent_credit_name), function ($query) use ($request) {
-                            $query->where('transactions.Operant', $request->agent_credit_name); // Filtre optionnel
-                        })
-                        ->first();
+                    if (!empty($agentCreditName)) {
+                        $query->where('transactions.Operant', $agentCreditName);
+                    }
 
-                    // RECUPERE LA SOMME DE CAPITAL EN RETARD
-                    //     $getSoldeCapRetardCDF = DB::select('SELECT SUM(transactions.Debitfc)-SUM(transactions.Creditfc)  As TotRetard FROM  transactions
-                    // WHERE transactions.CodeMonnaie=2 AND transactions.NumCompte="' . $compteRetardCDF . '"')[0];
-                    $getSoldeCapRetardCDF = DB::table('transactions')
+                    $result = $query->first();
+
+                    $soldeBrut = $result->SoldeEncoursCDF_brut;
+                    $soldeSansImputation = $result->SoldeEncoursCDF_sans_imputation;
+
+                    // Pour le solde des crédits en retard (groupe 390)
+                    $queryCreditRetard = DB::table('transactions')
+                        ->join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
                         ->selectRaw('SUM(transactions.Debitfc) - SUM(transactions.Creditfc) AS TotRetard')
-                        ->where('transactions.CodeMonnaie', 2) // Filtre sur la devise (CDF)
-                        ->where('transactions.NumCompte', $this->compteRetardCDF) // Filtre sur le compte spécifique
-                        ->when(!empty($request->agent_credit_name), function ($query) use ($request) {
-                            $query->where('transactions.Operant', $request->agent_credit_name); // Filtre optionnel sur le gestionnaire
-                        })
-                        ->first(); // Récupère le solde total
+                        ->where('comptes.RefSousGroupe', 3900)
+                        ->where('comptes.CodeMonnaie', 2);
+
+                    if (!empty($agentCreditName)) {
+                        $queryCreditRetard->where('transactions.Operant', $agentCreditName);
+                    }
+
+                    $soldeCreditRetard = $queryCreditRetard->first();
 
                     // $PAR = ($getSoldeCapRetardCDF->TotRetard) / ($getSoldeEncoursCreditCDF->SoldeEncoursCDF + $getSoldeCapRetardCDF->TotRetard) * 100;
 
-                    $denominator = $getSoldeEncoursCreditCDF->SoldeEncoursCDF + $getSoldeCapRetardCDF->TotRetard;
+                    $denominator = $soldeBrut + $soldeCreditRetard->TotRetard;
 
                     if ($denominator != 0) {
-                        $PAR = ($getSoldeCapRetardCDF->TotRetard / $denominator) * 100;
+                        $PAR = ($soldeCreditRetard->TotRetard / $denominator) * 100;
                     } else {
                         $PAR = 0; // Ou une valeur par défaut
                     }
-
+                    
                     return response()->json([
                         "status" => 1,
                         "data_balance_agee" => $dataBalanceAgee,
-                        "soldeEncourCDF" => $getEncoursBrutCreditCDF,
+                        "soldeEncourCDF" => $soldeSansImputation,
                         "totRetardCDF" => $PAR
                     ]);
                 } else if ($request->devise == "USD") {
@@ -716,54 +720,58 @@ class ReportsController extends Controller
                     //         $getSoldeEncoursCreditUSD = DB::select('SELECT SUM(transactions.Debitusd)-SUM(transactions.Creditusd) As SoldeEncoursUSD FROM  transactions
                     //  WHERE transactions.CodeMonnaie=1 AND Libelle NOT LIKE "%Imputation%" AND transactions.NumCompte="' . $comptePretAuMembreUSD . '"')[0];
 
-                    $getSoldeEncoursCreditUSD = DB::table('transactions')
-                        ->selectRaw('SUM(transactions.Debitusd) - SUM(transactions.Creditusd) AS SoldeEncoursUSD')
-                        ->where('transactions.CodeMonnaie', 1)
-                        ->where('transactions.NumCompte', $this->comptePretAuMembreUSD)
-                        ->when(!empty($request->agent_credit_name), function ($query) use ($request) {
-                            $query->where('transactions.Operant', $request->agent_credit_name);
-                        })
-                        ->first();
+                    // Pour le solde des crédits normaux (groupe 320)
+                    $query = DB::table('transactions')
+                        ->join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
+                        ->where('comptes.RefSousGroupe', 3210)
+                        ->where('comptes.CodeMonnaie', 1)
+                        ->selectRaw('
+        SUM(transactions.Debitusd - transactions.Creditusd) AS SoldeEncoursUSD_brut,
+        SUM(CASE WHEN transactions.Libelle NOT LIKE "%Imputation%" 
+                 THEN transactions.Debitusd - transactions.Creditusd 
+                 ELSE 0 END) AS SoldeEncoursUSD_sans_imputation
+    ');
 
-                    $getEncourBrutCreditUSD = DB::table('transactions')
-                        ->selectRaw('SUM(transactions.Debitusd) - SUM(transactions.Creditusd) AS SoldeEncoursUSD')
-                        ->where('transactions.CodeMonnaie', 1)
-                        ->where('transactions.NumCompte', $this->comptePretAuMembreUSD)
-                        ->where('transactions.Libelle', 'NOT LIKE', '%Imputation%')
-                        ->when(!empty($request->agent_credit_name), function ($query) use ($request) {
-                            $query->where('transactions.Operant', $request->agent_credit_name);
-                        })
-                        ->first();
+                    if (!empty($agentCreditName)) {
+                        $query->where('transactions.Operant', $agentCreditName);
+                    }
+
+                    $result = $query->first();
+                    $soldeBrut = $result->SoldeEncoursUSD_brut;
+                    $soldeSansImputation = $result->SoldeEncoursUSD_sans_imputation;
 
 
-                    // RECUPERE LA SOMME DE CAPITAL EN RETARD
 
-                    //         $getSoldeCapRetardUSD = DB::select('SELECT SUM(transactions.Debitusd)-SUM(transactions.Creditusd)  As TotRetard FROM  transactions
-                    // WHERE transactions.CodeMonnaie=1 AND transactions.NumCompte="' . $compteRetardUSD . '"')[0];
-
-                    $getSoldeCapRetardUSD = DB::table('transactions')
+                    // Pour le solde des crédits en retard (groupe 390)
+                    $queryCreditRetard = DB::table('transactions')
+                        ->join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
                         ->selectRaw('SUM(transactions.Debitusd) - SUM(transactions.Creditusd) AS TotRetard')
-                        ->where('transactions.CodeMonnaie', 1) // Filtre sur la devise (USD)
-                        ->where('transactions.NumCompte', $this->compteRetardUSD) // Filtre sur le compte spécifique
-                        ->when(!empty($request->agent_credit_name), function ($query) use ($request) {
-                            $query->where('transactions.Operant', $request->agent_credit_name); // Filtre optionnel
-                        })
-                        ->first(); // Récupère le total
+                        ->where('comptes.RefSousGroupe', 3900)
+                        ->where('comptes.CodeMonnaie', 1);
 
-                    // dd($getSoldeEncoursCreditUSD->SoldeEncoursUSD . " " . $getSoldeCapRetardUSD->TotRetard);
-                    $denominator = $getSoldeEncoursCreditUSD->SoldeEncoursUSD + $getSoldeCapRetardUSD->TotRetard;
+                    if (!empty($agentCreditName)) {
+                        $queryCreditRetard->where('transactions.Operant', $agentCreditName);
+                    }
+
+                    $soldeCreditRetard = $queryCreditRetard->first();
+
+
+                    // $PAR = ($getSoldeCapRetardCDF->TotRetard) / ($getSoldeEncoursCreditCDF->SoldeEncoursCDF + $getSoldeCapRetardCDF->TotRetard) * 100;
+
+                    $denominator = $soldeBrut + $soldeCreditRetard->TotRetard;
 
                     if ($denominator != 0) {
-                        $PAR = ($getSoldeCapRetardUSD->TotRetard / $denominator) * 100;
+                        $PAR = ($soldeCreditRetard->TotRetard / $denominator) * 100;
                     } else {
                         $PAR = 0; // Ou une valeur par défaut
                     }
-                    // $PAR = ($getSoldeCapRetardUSD->TotRetard) / ($getSoldeEncoursCreditUSD->SoldeEncoursUSD + $getSoldeCapRetardUSD->TotRetard) * 100;
+
+
 
                     return response()->json([
                         "status" => 1,
                         "data_balance_agee" => $dataBalanceAgee,
-                        "soldeEncourUSD" => $getEncourBrutCreditUSD,
+                        "soldeEncourUSD" => $soldeSansImputation,
                         "totRetardUSD" => $PAR
                     ]);
                 }

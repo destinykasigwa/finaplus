@@ -30,7 +30,7 @@ const Echeancier = () => {
     const [fetchInteretRembourse, setfetchInteretRembourse] = useState();
     const [fetchInteretRestant, setfetchInteretRestant] = useState();
     const [radioValue, setRadioValue] = useState("");
-    const [selectedDate, setSelectedDate] = useState("");
+    const [selectedDate, setSelectedDate] =useState(new Date().toISOString().split('T')[0]);
     const [devise, setdevise] = useState();
     const [fetchAgentCredit, setFetchAgentCredit] = useState();
     const [agent_credit_name, setagent_credit_name] = useState();
@@ -85,13 +85,14 @@ const Echeancier = () => {
             setfetchInteretRestant(res.data.interetRestant);
 
             //BALANCE AGEE
-
+           
             setfetchBalanceAgee(res.data.data_balance_agee);
             setfetchSoldeEncourCDF(res.data.soldeEncourCDF);
             setfetchSoldeEncourUSD(res.data.soldeEncourUSD);
             setfetchTotCapRetardCDF(res.data.totRetardCDF);
             setfetchTotCapRetardUSD(res.data.totRetardUSD);
-            //console.log(fetchSoldeEncourUSD.SoldeEncoursUSD);
+            console.log(fetchSoldeEncourUSD);
+            console.log(fetchSoldeEncourCDF);
         } else {
             setloading(false);
             Swal.fire({
@@ -468,7 +469,13 @@ const Echeancier = () => {
                                 <div className="col-md-3">
                                     <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Date</label>
                                     <input type="date" className="form-control" style={{ borderRadius: "8px", borderColor: "#20c997" }}
-                                        onChange={(e) => setdate_balance_agee(e.target.value)} value={selectedDate} />
+                                        value={selectedDate}
+                                        onChange={(e) => {
+  setSelectedDate(e.target.value);
+  setdate_balance_agee(e.target.value);
+}}
+                                        
+                                        />
                                 </div>
                                 <div className="col-md-3">
                                     <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Devise</label>
@@ -854,12 +861,12 @@ const Echeancier = () => {
                         <div className="col-md-6">
                             {devise == "CDF" && (
                                 <div className="alert alert-success">
-                                    <strong>Encours global de crédit CDF :</strong> {numberWithSpaces(fetchSoldeEncourCDF?.SoldeEncoursCDF?.toFixed(2))}
+                                    <strong>Encours global de crédit CDF :</strong> {numberWithSpaces(fetchSoldeEncourCDF&&fetchSoldeEncourCDF.toFixed(2))}
                                 </div>
                             )}
                             {devise == "USD" && (
                                 <div className="alert alert-success">
-                                    <strong>Encours global de crédit USD :</strong> {numberWithSpaces(fetchSoldeEncourUSD?.SoldeEncoursUSD?.toFixed(2))}
+                                    <strong>Encours global de crédit USD :</strong> {numberWithSpaces(fetchSoldeEncourUSD&&fetchSoldeEncourUSD.toFixed(2))}
                                 </div>
                             )}
                         </div>
@@ -869,7 +876,7 @@ const Echeancier = () => {
                     {devise === "CDF" && (
                         <div className="row mt-3 p-3" style={{ background: "#e6f2f9", borderRadius: "12px" }}>
                             <div className="col-md-12">
-                                <h5>Taux déliquence (PAR) = <span className="fw-bold">{numberWithSpaces(fetchTotCapRetardCDF)} %</span></h5>
+                                <h5>Taux déliquence (PAR) = <span className="fw-bold">{numberWithSpaces(fetchTotCapRetardCDF&&fetchTotCapRetardCDF.toFixed(2))} %</span></h5>
                                 <hr />
                                 <small className="text-muted">Restant dû de crédit avec au moins un remboursement en retard / (Crédit sain + Restant dû de crédit avec retard) × 100 (≤5%)</small>
                             </div>
@@ -878,7 +885,7 @@ const Echeancier = () => {
                     {devise == "USD" && (
                         <div className="row mt-3 p-3" style={{ background: "#e6f2f9", borderRadius: "12px" }}>
                             <div className="col-md-12">
-                                <h5>Taux déliquence (PAR) = <span className="fw-bold">{numberWithSpaces(fetchTotCapRetardUSD)} %</span></h5>
+                                <h5>Taux déliquence (PAR) = <span className="fw-bold">{numberWithSpaces(fetchTotCapRetardUSD&&fetchTotCapRetardUSD.toFixed(2))} %</span></h5>
                                 <hr />
                                 <small className="text-muted">Restant dû de crédit avec au moins un remboursement en retard / (Crédit sain + Restant dû de crédit avec retard) × 100 (≤5%)</small>
                             </div>

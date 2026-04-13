@@ -363,6 +363,199 @@ html, body {
     background-color: white;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ========== SIDEBAR MODERNISÉ ========== */
+.main-sidebar {
+    --sidebar-bg: linear-gradient(145deg, #0a0a0a 0%, #111111 100%);
+    --sidebar-hover: rgba(32, 201, 151, 0.12);
+    --sidebar-active: linear-gradient(90deg, rgba(32, 201, 151, 0.2), transparent);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-sidebar .sidebar {
+    padding: 0 12px;
+}
+
+/* Logo & branding amélioré */
+.user-panel {
+    position: relative;
+    padding: 1.5rem 0 !important;
+    margin-bottom: 1rem !important;
+    border-bottom: 1px solid rgba(32, 201, 151, 0.2) !important;
+}
+
+.user-panel::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 15%;
+    width: 70%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #20c997, #198764, transparent);
+    border-radius: 2px;
+}
+
+/* Liens de navigation */
+.nav-sidebar .nav-link {
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.3rem;
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.25s ease;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.nav-sidebar .nav-link:hover {
+    background: var(--sidebar-hover);
+    color: #20c997;
+    transform: translateX(4px);
+}
+
+.nav-sidebar .nav-link.active {
+    background: var(--sidebar-active);
+    color: #20c997;
+    border-left: 3px solid #20c997;
+}
+
+/* Icônes */
+.nav-sidebar .nav-link i {
+    width: 28px;
+    text-align: center;
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+
+.nav-sidebar .nav-link:hover i {
+    transform: scale(1.05);
+}
+
+/* Flèches des sous-menus */
+.nav-sidebar .nav-link .right {
+    transition: transform 0.3s ease;
+}
+
+.nav-sidebar .nav-item.menu-open .nav-link .right {
+    transform: rotate(90deg);
+}
+
+/* Sous-menus (treeview) */
+.nav-treeview {
+    padding-left: 1.2rem;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.nav-treeview .nav-link {
+    padding: 0.5rem 0.5rem 0.5rem 2.2rem;
+    font-size: 0.85rem;
+    border-radius: 10px;
+}
+
+.nav-treeview .nav-link i {
+    font-size: 0.7rem;
+    opacity: 0.8;
+}
+
+/* Animation d'ouverture des sous-menus */
+.nav-treeview {
+    display: none;
+    animation: fadeSlideDown 0.25s ease-out;
+}
+
+.nav-item.menu-open .nav-treeview {
+    display: block;
+}
+
+@keyframes fadeSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Séparateur */
+.nav-header {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.35);
+    margin: 1rem 0 0.5rem;
+    padding-left: 0.5rem;
+}
+
+/* Scrollbar personnalisée (optionnel) */
+.sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: #20c997;
+    border-radius: 10px;
+}
+
+/* ========== RESPONSIVE : SIDEBAR MOBILE ========== */
+@media (max-width: 767.98px) {
+    .main-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+        box-shadow: none;
+        z-index: 1050;
+    }
+
+    .main-sidebar.sidebar-open {
+        transform: translateX(0);
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Overlay sombre quand sidebar ouvert */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1040;
+        backdrop-filter: blur(3px);
+    }
+
+    .sidebar-overlay.active {
+        display: block;
+    }
+
+    /* Ajustement du contenu principal */
+    .content-wrapper,
+    .main-footer {
+        margin-left: 0 !important;
+    }
+
+    /* Bouton toggle personnalisé (optionnel) */
+    .nav-link[data-widget="pushmenu"] {
+        position: relative;
+        z-index: 1060;
+    }
+}
     
 
 
