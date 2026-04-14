@@ -71,7 +71,10 @@ class TransactionsController extends Controller
             $checkRowExist = Comptes::where("NumCompte", $request->searched_account)->orWhere("NumAdherant", $request->searched_account)->first();
             $numDocument = CompteurDocument::latest()->first();
             if ($checkRowExist) {
-                $data = Comptes::where("NumCompte", $request->searched_account)->orWhere("NumAdherant", $request->searched_account)->get();
+                $data = Comptes::where(function ($query) use ($request) {
+    $query->where('NumCompte', $request->searched_account)
+          ->orWhere('NumAdherant', $request->searched_account);
+})->where('niveau', 5)->get();
                 $membreSignature =  AdhesionMembre::where("compte_abrege", $request->searched_account)->first();
                 $madantairedata = Mandataires::where("refCompte", $request->searched_account)->get();
                 // CompteurDocument::create([
@@ -98,7 +101,10 @@ class TransactionsController extends Controller
             $checkRowExist = Comptes::where("NumCompte", $request->searched_account)->orWhere("NumAdherant", $request->searched_account)->first();
             $numDocument = CompteurDocument::latest()->first();
             if ($checkRowExist) {
-                $data = Comptes::where("NumCompte", $request->searched_account)->orWhere("NumAdherant", $request->searched_account)->where("RefGroupe", 330)->get();
+                $data = Comptes::where(function ($query) use ($request) {
+    $query->where('NumCompte', $request->searched_account)
+          ->orWhere('NumAdherant', $request->searched_account);
+})->where('niveau', 5)->get();
                 $membreSignature =  AdhesionMembre::where("compte_abrege", $request->searched_account)->first();
                 $madantairedata = Mandataires::where("refCompte", $request->searched_account)->get();
                 // CompteurDocument::create([

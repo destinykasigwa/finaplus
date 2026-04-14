@@ -753,9 +753,9 @@ class SendNotification
         // Date du jour
         // $dateDuJour = TauxEtDateSystem::latest()->first()->DateSystem;
         $dateDuJour = date("Y-m-d");
-        $dateDuJour = Carbon::createFromFormat('Y-m-d', $dateDuJour)->startOfDay();;
-        $dateRemboursement = $dateDuJour->copy()->addDays(3)->startOfDay();;
-        $dateCible = $dateRemboursement->copy()->subDays(3)->startOfDay();;
+        $dateDuJour = Carbon::createFromFormat('Y-m-d', $dateDuJour)->startOfDay();
+        $dateRemboursement = $dateDuJour->copy()->addDays(3)->startOfDay();
+        $dateCible = $dateRemboursement->copy()->subDays(3)->startOfDay();
         // Logs pour vérification
         info("Date du jour : " . $dateDuJour);
         info("Date de remboursement : " . $dateRemboursement);

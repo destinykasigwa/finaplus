@@ -234,7 +234,7 @@ const Delestage = () => {
                             {devise == "USD" ? (
                                 getBilletageUSD && (
                                     <div className="table-responsive">
-                                        <table className="table table-bordered">
+                                        <table className="table table-bordered table-sm">
                                             <thead style={{ backgroundColor: "#e6f2f9" }}>
                                                 <tr style={{ color: "steelblue" }}>
                                                     <th>Coupure</th>
@@ -273,7 +273,7 @@ const Delestage = () => {
                             ) : (
                                 getBilletageCDF && (
                                     <div className="table-responsive">
-                                        <table className="table table-bordered">
+                                        <table className="table table-bordered table-sm">
                                             <thead style={{ backgroundColor: "#e6f2f9" }}>
                                                 <tr style={{ color: "steelblue" }}>
                                                     <th>Coupure</th>

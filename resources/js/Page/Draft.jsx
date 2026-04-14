@@ -1,2783 +1,450 @@
+// import React from "react";
 // import { useState, useEffect } from "react";
 // import axios from "axios";
 // import Swal from "sweetalert2";
 // import { EnteteRapport } from "./HeaderReport";
 // import * as XLSX from "xlsx";
 // import { jsPDF } from "jspdf";
+// import * as FileSaver from "file-saver";
 // import html2canvas from "html2canvas";
-// import { Bars } from "react-loader-spinner";
 
-// const GrandLivre = () => {
-//     const [loading, setLoading] = useState(false);
-//     const [date_debut, setDateDebut] = useState("");
-//     const [date_fin, setDateFin] = useState("");
-//     const [devise, setDevise] = useState("CDF");
-//     const [compteDebut, setCompteDebut] = useState("");
-//     const [compteFin, setCompteFin] = useState("");
-//     const [rawData, setRawData] = useState([]);
-//     const [currentPage, setCurrentPage] = useState(1);
-//     const itemsPerPage = 50;
+// const Echeancier = () => {
+//     const [loading, setloading] = useState(false);
+//     const [error, setError] = useState([]);
+//     const [fetchEcheancier, setfetchEcheancier] = useState();
+//     const [fetchTableauAmortiss, setfetchTableauAmortiss] = useState();
+//     const [fetchSommeInteret, setfetchSommeInteret] = useState();
+//     const [fetchSommeInteretAmmo, setfetchSommeInteretAmmo] = useState();
+//     const [fetchSoldeEncourCDF, setfetchSoldeEncourCDF] = useState();
+//     const [fetchSoldeEncourUSD, setfetchSoldeEncourUSD] = useState();
+//     const [fetchTotCapRetardCDF, setfetchTotCapRetardCDF] = useState();
+//     const [fetchTotCapRetardUSD, setfetchTotCapRetardUSD] = useState();
+//     const [fetchBalanceAgee, setfetchBalanceAgee] = useState();
+//     const [searched_num_dossier, setsearched_num_dossier] = useState();
+
+//     const [accountName, setAccountName] = useState();
+//     const [fetchCapitalRestant, setfetchCapitalRestant] = useState();
+//     const [fetchCapitalRetard, setfetchCapitalRetard] = useState();
+//     const [fetchInteretRetard, setfetchInteretRetard] = useState();
+//     const [fetchCapitalRembourse, setfetchCapitalRembourse] = useState();
+//     const [fetchInteretRembourse, setfetchInteretRembourse] = useState();
+//     const [fetchInteretRestant, setfetchInteretRestant] = useState();
+//     const [radioValue, setRadioValue] = useState("");
+//     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+//     const [devise, setdevise] = useState();
+//     const [fetchAgentCredit, setFetchAgentCredit] = useState();
+//     const [agent_credit_name, setagent_credit_name] = useState();
+
+//     // AJOUT PAR - États spécifiques
+//     const [fetchGestionnaires, setFetchGestionnaires] = useState([]);
+//     const [gestionnaire, setGestionnaire] = useState("");
+//     const [parCategory, setParCategory] = useState("");
+//     const [fetchParData, setFetchParData] = useState(null);
+//     const [datePar, setDatePar] = useState(new Date().toISOString().split('T')[0]);
 
 //     useEffect(() => {
 //         const today = new Date();
 //         const year = today.getFullYear();
 //         const month = String(today.getMonth() + 1).padStart(2, "0");
 //         const day = String(today.getDate()).padStart(2, "0");
-//         setDateFin(`${year}-${month}-${day}`);
-//         const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-//         setDateDebut(
-//             `${firstDayOfMonth.getFullYear()}-${String(firstDayOfMonth.getMonth() + 1).padStart(2, "0")}-${String(firstDayOfMonth.getDate()).padStart(2, "0")}`
-//         );
+//         setSelectedDate(`${year}-${month}-${day}`);
+//         setDatePar(`${year}-${month}-${day}`);
+//         setTimeout(() => {
+//             getAgentCredit();
+//             getGestionnaires(); // AJOUT PAR - charger liste gestionnaires
+//         }, 2000);
 //     }, []);
 
-//     const handleSearch = async (e) => {
-//         e.preventDefault();
-//         if (!compteDebut || !compteFin) {
-//             Swal.fire("Attention", "Veuillez saisir une plage de comptes", "warning");
-//             return;
+//     const getAgentCredit = async () => {
+//         const res = await axios.get("/eco/page/rapport/get-echeancier/agent-credit");
+//         if (res.data.status == 1) {
+//             setFetchAgentCredit(res.data.get_agent_credit);
 //         }
-//         setLoading(true);
-//         try {
-//             const res = await axios.post("/eco/pages/rapport/grand-livre", {
-//                 date_debut,
-//                 date_fin,
-//                 devise,
-//                 compte_debut: compteDebut,
-//                 compte_fin: compteFin,
+//     };
+
+//     // AJOUT PAR - récupération de la liste des gestionnaires
+//     const getGestionnaires = async () => {
+//         const res = await axios.get("/eco/page/rapport/get-echeancier/agent-credit");
+//         if (res.data.status == 1) {
+//             setFetchGestionnaires(res.data.gestionnaires);
+//         }
+//     };
+
+//     const getSeachedData = async (e) => {
+//         e.preventDefault();
+//         setloading(true);
+//         let url = "/eco/page/montage-credit/get-echeancier";
+//         let params = {
+//             searched_num_dossier: searched_num_dossier,
+//             radioValue,
+//             selectedDate,
+//             devise,
+//             agent_credit_name,
+//         };
+//         // AJOUT PAR - ajouter les paramètres spécifiques au PAR
+//         if (radioValue === "par") {
+//             params = {
+//                 ...params,
+//                 date_par: datePar,
+//                 devise_par: devise,
+//                 gestionnaire_par: gestionnaire,
+//                 par_category: parCategory,
+//             };
+//         }
+//         const res = await axios.post(url, params);
+//         if (res.data.status == 1) {
+//             setloading(false);
+//             if (radioValue === "echeancier") {
+//                 setfetchEcheancier(res.data.data);
+//                 setfetchSommeInteret(res.data.sommeInteret);
+//                 setAccountName(res.data.NomCompte);
+//                 // ... autres setters existants
+//             } else if (radioValue === "tableau_ammortiss") {
+//                 setfetchTableauAmortiss(res.data.data_ammortissement);
+//                 setfetchSommeInteretAmmo(res.data.sommeInteret_ammort);
+//                 setAccountName(res.data.NomCompte);
+//                 setfetchCapitalRestant(res.data.soldeRestant);
+//                 setfetchCapitalRetard(res.data.soldeEnRetard);
+//                 setfetchInteretRetard(res.data.soldeEnRetard);
+//                 setfetchCapitalRembourse(res.data.capitalRembourse);
+//                 setfetchInteretRembourse(res.data.interetRembourse);
+//                 setfetchInteretRestant(res.data.interetRestant);
+//             } else if (radioValue === "balance_agee") {
+//                 setfetchBalanceAgee(res.data.data_balance_agee);
+//                 setfetchSoldeEncourCDF(res.data.soldeEncourCDF);
+//                 setfetchSoldeEncourUSD(res.data.soldeEncourUSD);
+//                 setfetchTotCapRetardCDF(res.data.totRetardCDF);
+//                 setfetchTotCapRetardUSD(res.data.totRetardUSD);
+//             } 
+//             // AJOUT PAR - traitement des données PAR
+//             else if (radioValue === "par") {
+//                 setFetchParData(res.data.par_data); // attendre { par_data: [], totaux, etc. }
+//             }
+//         } else {
+//             setloading(false);
+//             Swal.fire({
+//                 title: "Erreur",
+//                 text: res.data.msg,
+//                 icon: "error",
+//                 timer: 8000,
+//                 confirmButtonText: "Okay",
 //             });
-//             if (res.data.status === 1) {
-//                 setRawData(res.data.data);
-//                 setCurrentPage(1);
-//             } else {
-//                 Swal.fire("Erreur", "Aucune donnée trouvée", "error");
-//             }
-//         } catch (error) {
-//             console.error(error);
-//             Swal.fire("Erreur", "Erreur serveur", "error");
-//         } finally {
-//             setLoading(false);
 //         }
 //     };
 
-//     const numberWithSpaces = (x) => {
-//         if (x === null || x === undefined) return "0,00";
-//         return Number(x).toLocaleString("fr-FR", {
-//             minimumFractionDigits: 2,
-//             maximumFractionDigits: 2,
-//         });
+//     const handleRadioChange = (event) => {
+//         setRadioValue(event.target.value);
+//         // Réinitialiser les données affichées pour éviter les mélanges
+//         if (event.target.value !== "par") setFetchParData(null);
+//         if (event.target.value !== "balance_agee") setfetchBalanceAgee(null);
+//         if (event.target.value !== "echeancier") setfetchEcheancier(null);
+//         if (event.target.value !== "tableau_ammortiss") setfetchTableauAmortiss(null);
 //     };
 
-//     const dateParser = (num) => {
-//         if (!num) return "";
-//         return new Date(num).toLocaleDateString("fr-FR");
-//     };
-
-//     const comptes = rawData.filter((l) => l.type === "compte");
-//     const currentCompte = comptes[currentPage - 1] || null;
-
-//     let toutesLesLignes = [];
-//     if (currentCompte) {
-//         let started = false;
-//         for (let ligne of rawData) {
-//             if (ligne.type === "compte") {
-//                 started = ligne.NumCompte === currentCompte.NumCompte;
-//             }
-//             if (started) {
-//                 toutesLesLignes.push(ligne);
-//             }
-//         }
-//     }
-
-//     const totalPages = Math.ceil(rawData.length / itemsPerPage);
-//     const lignesAffichees = rawData.slice(
-//         (currentPage - 1) * itemsPerPage,
-//         currentPage * itemsPerPage
-//     );
-
-//     const exportToExcel = () => {
-//         const allRows = [];
-//         comptes.forEach((compte) => {
-//             const lignes = rawData.filter((l) => l.NumCompte === compte.NumCompte);
-//             lignes.forEach((l) => {
-//                 allRows.push({
-//                     Compte: compte.NumCompte,
-//                     "Libellé compte": compte.NomCompte,
-//                     Date: l.date ? dateParser(l.date) : "",
-//                     "N° Pièce": l.numPiece || "",
-//                     Libellé: l.libelle,
-//                     Débit: l.debit,
-//                     Crédit: l.credit,
-//                     Solde: Math.abs(l.solde),
-//                 });
-//             });
-//             allRows.push({});
-//         });
-//         const ws = XLSX.utils.json_to_sheet(allRows);
-//         const wb = XLSX.utils.book_new();
-//         XLSX.utils.book_append_sheet(wb, ws, "Grand Livre");
-//         XLSX.writeFile(wb, `grand_livre_${date_debut}_${date_fin}.xlsx`);
-//     };
-
-//     const exportToPDF = () => {
-//         const element = document.getElementById("grand-livre-content");
-//         if (!element) return;
-//         html2canvas(element, { scale: 2 }).then((canvas) => {
+//     // Fonctions d'export existantes (inchangées)
+//     const exportTableData = (tableId) => { /* ... */ };
+//     const exportToPDFEcheancier = () => { /* ... */ };
+//     const exportToPDFBalanceAgee = () => { /* ... */ };
+//     const exportToPDFAmmortiss = () => { /* ... */ };
+//     // AJOUT PAR - export PDF pour PAR
+//     const exportToPDFPar = () => {
+//         const content = document.getElementById("content-to-download-par");
+//         if (!content) return;
+//         html2canvas(content, { scale: 3 }).then((canvas) => {
+//             const padding = 50;
+//             const canvasWidth = canvas.width + padding * 2;
+//             const canvasHeight = canvas.height + padding * 2;
+//             const newCanvas = document.createElement("canvas");
+//             newCanvas.width = canvasWidth;
+//             newCanvas.height = canvasHeight;
+//             const ctx = newCanvas.getContext("2d");
+//             ctx.fillStyle = "#ffffff";
+//             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+//             ctx.drawImage(canvas, padding, padding);
 //             const pdf = new jsPDF("p", "mm", "a4");
-//             const imgData = canvas.toDataURL("image/png");
+//             const imgData = newCanvas.toDataURL("image/png");
 //             const imgProps = pdf.getImageProperties(imgData);
 //             const pdfWidth = pdf.internal.pageSize.getWidth();
 //             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 //             pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-//             pdf.save(`grand_livre_${date_debut}_${date_fin}.pdf`);
+//             pdf.autoPrint();
+//             window.open(pdf.output("bloburl"), "_blank");
 //         });
 //     };
 
-//     const PaginationModerne = ({ currentPage, totalPages, onPageChange }) => {
-//         const maxPagesToShow = 5;
-//         let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
-//         let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-//         if (endPage - startPage + 1 < maxPagesToShow) {
-//             startPage = Math.max(1, endPage - maxPagesToShow + 1);
-//         }
-//         const pages = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
-//         return (
-//             <div className="pagination-modern">
-//                 <button className="page-nav" onClick={() => onPageChange(currentPage - 1)} disabled={currentPage === 1}>
-//                     <i className="fas fa-chevron-left"></i>
-//                 </button>
-//                 {startPage > 1 && (
-//                     <>
-//                         <button className="page-number" onClick={() => onPageChange(1)}>1</button>
-//                         {startPage > 2 && <span className="page-dots">...</span>}
-//                     </>
-//                 )}
-//                 {pages.map((page) => (
-//                     <button key={page} className={`page-number ${page === currentPage ? "active" : ""}`} onClick={() => onPageChange(page)}>
-//                         {page}
-//                     </button>
-//                 ))}
-//                 {endPage < totalPages && (
-//                     <>
-//                         {endPage < totalPages - 1 && <span className="page-dots">...</span>}
-//                         <button className="page-number" onClick={() => onPageChange(totalPages)}>{totalPages}</button>
-//                     </>
-//                 )}
-//                 <button className="page-nav" onClick={() => onPageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-//                     <i className="fas fa-chevron-right"></i>
-//                 </button>
-//                 <div className="page-info">Page {currentPage} sur {totalPages}</div>
-//             </div>
-//         );
-//     };
+//     const numberWithSpaces = (x = 0) => { /* ... existant ... */ };
+//     const dateParser = (num) => { /* ... existant ... */ };
+//     const numberFormat = (number) => { /* ... existant ... */ };
+//     const groupByTranches = (data) => { /* ... existant ... */ };
+//     const groupedData = groupByTranches(fetchBalanceAgee);
 
 //     return (
-//         <div className="grand-livre-container">
-//             {loading && (
-//                 <div className="loader-overlay">
-//                     <div className="loader-card">
-//                         <Bars height="70" width="70" color="#10b981" />
-//                         <h5>Chargement du grand livre...</h5>
-//                     </div>
-//                 </div>
-//             )}
-
-//             {/* Header moderne */}
-//             <div className="gl-header">
-//                 <div className="gl-header-content">
-//                     <div className="gl-header-icon">
-//                         <i className="fas fa-book-open"></i>
-//                     </div>
-//                     <div>
-//                         <h1>Grand Livre Comptable</h1>
-//                         <p>Historique des mouvements par compte</p>
-//                     </div>
-//                 </div>
-//             </div>
-
-//             {/* Filtres */}
-//             <div className="gl-filters">
-//                 <div className="filter-card">
-//                     <div className="filter-header">
-//                         <i className="fas fa-calendar-alt"></i> Période
-//                     </div>
-//                     <div className="filter-body">
-//                         <label>Date début</label>
-//                         <input type="date" className="modern-input" value={date_debut} onChange={(e) => setDateDebut(e.target.value)} />
-//                         <label>Date fin</label>
-//                         <input type="date" className="modern-input" value={date_fin} onChange={(e) => setDateFin(e.target.value)} />
-//                     </div>
-//                 </div>
-//                 <div className="filter-card">
-//                     <div className="filter-header">
-//                         <i className="fas fa-exchange-alt"></i> Devise
-//                     </div>
-//                     <div className="filter-body">
-//                         <select className="modern-select" value={devise} onChange={(e) => setDevise(e.target.value)}>
-//                             <option value="CDF">CDF (Franc Congolais)</option>
-//                             <option value="USD">USD (Dollar US)</option>
-//                         </select>
-//                     </div>
-//                 </div>
-//                 <div className="filter-card">
-//                     <div className="filter-header">
-//                         <i className="fas fa-filter"></i> Portée comptes
-//                     </div>
-//                     <div className="filter-body">
-//                         <label>Compte début</label>
-//                         <input type="text" className="modern-input" placeholder="ex: 1" value={compteDebut} onChange={(e) => setCompteDebut(e.target.value)} />
-//                         <label>Compte fin</label>
-//                         <input type="text" className="modern-input" placeholder="ex: 3" value={compteFin} onChange={(e) => setCompteFin(e.target.value)} />
-//                     </div>
-//                 </div>
-//                 <div className="filter-card action-card">
-//                     <button className="btn-primary-gradient" onClick={handleSearch}>
-//                         {loading ? <span className="spinner-border spinner-border-sm"></span> : <i className="fas fa-chart-line"></i>}
-//                         Afficher le grand livre
-//                     </button>
-//                 </div>
-//             </div>
-
-//             {/* Contenu principal */}
-//             {rawData.length > 0 && currentCompte && (
-//                 <div id="grand-livre-content">
-//                     <div className="gl-report-card">
-//                         <div className="gl-report-header">
-//                             <EnteteRapport />
-//                             <h2>GRAND LIVRE</h2>
-//                             <p>Du {dateParser(date_debut)} au {dateParser(date_fin)} | Devise : {devise} | Comptes de {compteDebut} à {compteFin}</p>
-//                             <div className="current-compte">
-//                                 <i className="fas fa-tag"></i> {currentCompte.NumCompte} - {currentCompte.NomCompte}
-//                             </div>
-//                         </div>
-//                         <div className="table-responsive">
-//                             <table className="gl-table">
-//                                 <thead>
-//                                     <tr>
-//                                         <th>Date</th>
-//                                         <th>N° Pièce</th>
-//                                         <th>Libellé</th>
-//                                         <th className="text-end">Débit</th>
-//                                         <th className="text-end">Crédit</th>
-//                                         <th className="text-end">Solde</th>
-//                                     </tr>
-//                                 </thead>
-//                                 <tbody>
-//                                     {lignesAffichees.map((ligne, idx) => {
-//                                         if (ligne.type === "compte") {
-//                                             return (
-//                                                 <tr key={idx} className="gl-row-compte">
-//                                                     <td colSpan="6">{ligne.NumCompte} - {ligne.NomCompte}</td>
-//                                                 </tr>
-//                                             );
-//                                         }
-//                                         if (ligne.type === "solde_initial") {
-//                                             return (
-//                                                 <tr key={idx} className="gl-row-solde-initial">
-//                                                     <td colSpan="3">{ligne.libelle}</td>
-//                                                     <td className="text-end">-</td>
-//                                                     <td className="text-end">-</td>
-//                                                     <td className="text-end fw-bold">{numberWithSpaces(Math.abs(Number(ligne.solde)))}</td>
-//                                                 </tr>
-//                                             );
-//                                         }
-//                                         if (ligne.type === "total") {
-//                                             return (
-//                                                 <tr key={idx} className="gl-row-total">
-//                                                     <td colSpan="3">{ligne.libelle}</td>
-//                                                     <td className="text-end text-success">{numberWithSpaces(ligne.debit)}</td>
-//                                                     <td className="text-end text-danger">{numberWithSpaces(ligne.credit)}</td>
-//                                                     <td className="text-end fw-bold">{numberWithSpaces(Math.abs(Number(ligne.solde)))}</td>
-//                                                 </tr>
-//                                             );
-//                                         }
-//                                         return (
-//                                             <tr key={idx} className="gl-row-mouvement">
-//                                                 <td>{dateParser(ligne.date)}</td>
-//                                                 <td>{ligne.numPiece}</td>
-//                                                 <td>{ligne.libelle}</td>
-//                                                 <td className="text-end text-success">{numberWithSpaces(ligne.debit)}</td>
-//                                                 <td className="text-end text-danger">{numberWithSpaces(ligne.credit)}</td>
-//                                                 <td className="text-end fw-medium">{numberWithSpaces(Math.abs(Number(ligne.solde)))}</td>
-//                                             </tr>
-//                                         );
-//                                     })}
-//                                 </tbody>
-//                             </table>
-//                         </div>
-//                         {totalPages > 1 && <PaginationModerne currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />}
-//                     </div>
-//                     <div className="gl-export-buttons">
-//                         <button className="btn-excel" onClick={exportToExcel}><i className="fas fa-file-excel"></i> Excel</button>
-//                         <button className="btn-pdf" onClick={exportToPDF}><i className="fas fa-file-pdf"></i> PDF</button>
-//                     </div>
-//                 </div>
-//             )}
-
-//             {rawData.length === 0 && !loading && (
-//                 <div className="gl-empty">
-//                     <i className="fas fa-book-open"></i>
-//                     <p>Aucune écriture trouvée pour la période et la plage de comptes sélectionnées.</p>
-//                     <span>Modifiez les filtres et réessayez.</span>
-//                 </div>
-//             )}
-
-//             <style jsx>{`
-//                 .grand-livre-container {
-//                     background: #f4f7fc;
-//                     min-height: 100vh;
-//                     padding: 20px 24px;
-//                     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-//                 }
-//                 /* Loader */
-//                 .loader-overlay {
-//                     position: fixed;
-//                     top: 0;
-//                     left: 0;
-//                     width: 100%;
-//                     height: 100%;
-//                     background: rgba(0,0,0,0.6);
-//                     backdrop-filter: blur(4px);
-//                     display: flex;
-//                     justify-content: center;
-//                     align-items: center;
-//                     z-index: 1050;
-//                 }
-//                 .loader-card {
-//                     background: white;
-//                     border-radius: 28px;
-//                     padding: 30px 40px;
-//                     text-align: center;
-//                     box-shadow: 0 20px 35px -10px rgba(0,0,0,0.2);
-//                 }
-//                 /* Header */
-//                 .gl-header {
-//                     background: linear-gradient(135deg, #0f766e, #14b8a6);
-//                     border-radius: 28px;
-//                     padding: 20px 28px;
-//                     margin-bottom: 32px;
-//                     box-shadow: 0 12px 24px -8px rgba(0,0,0,0.1);
-//                 }
-//                 .gl-header-content {
-//                     display: flex;
-//                     align-items: center;
-//                     gap: 20px;
-//                     color: white;
-//                 }
-//                 .gl-header-icon {
-//                     background: rgba(255,255,255,0.2);
-//                     width: 60px;
-//                     height: 60px;
-//                     border-radius: 20px;
-//                     display: flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                     font-size: 28px;
-//                 }
-//                 .gl-header h1 {
-//                     margin: 0;
-//                     font-size: 1.8rem;
-//                     font-weight: 700;
-//                     letter-spacing: -0.3px;
-//                 }
-//                 .gl-header p {
-//                     margin: 4px 0 0;
-//                     opacity: 0.85;
-//                     font-size: 0.9rem;
-//                 }
-//                 /* Filtres */
-//                 .gl-filters {
-//                     display: grid;
-//                     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-//                     gap: 20px;
-//                     margin-bottom: 40px;
-//                 }
-//                 .filter-card {
-//                     background: white;
-//                     border-radius: 24px;
-//                     padding: 0;
-//                     box-shadow: 0 6px 14px rgba(0,0,0,0.05);
-//                     transition: transform 0.2s, box-shadow 0.2s;
-//                     overflow: hidden;
-//                 }
-//                 .filter-card:hover {
-//                     transform: translateY(-4px);
-//                     box-shadow: 0 16px 28px -8px rgba(0,0,0,0.12);
-//                 }
-//                 .filter-header {
-//                     background: #f8fafc;
-//                     padding: 14px 20px;
-//                     font-weight: 600;
-//                     color: #1e293b;
-//                     border-bottom: 1px solid #eef2ff;
-//                     font-size: 0.9rem;
-//                 }
-//                 .filter-header i {
-//                     color: #6366f1;
-//                     margin-right: 8px;
-//                 }
-//                 .filter-body {
-//                     padding: 20px;
-//                     display: flex;
-//                     flex-direction: column;
-//                     gap: 14px;
-//                 }
-//                 .filter-body label {
-//                     font-size: 0.7rem;
-//                     font-weight: 700;
-//                     text-transform: uppercase;
-//                     letter-spacing: 0.5px;
-//                     color: #475569;
-//                 }
-//                 .modern-input, .modern-select {
-//                     border: 1px solid #e2e8f0;
-//                     border-radius: 16px;
-//                     padding: 12px 16px;
-//                     font-size: 0.9rem;
-//                     transition: all 0.2s;
-//                     background: white;
-//                     width: 100%;
-//                 }
-//                 .modern-input:focus, .modern-select:focus {
-//                     border-color: #6366f1;
-//                     box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
-//                     outline: none;
-//                 }
-//                 .action-card {
-//                     background: transparent;
-//                     box-shadow: none;
-//                     display: flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                 }
-//                 .btn-primary-gradient {
-//                     background: linear-gradient(105deg, #10b981, #059669);
-//                     border: none;
-//                     border-radius: 40px;
-//                     padding: 14px 20px;
-//                     width: 100%;
-//                     color: white;
-//                     font-weight: 700;
-//                     font-size: 0.95rem;
-//                     display: flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                     gap: 10px;
-//                     transition: all 0.25s;
-//                     cursor: pointer;
-//                 }
-//                 .btn-primary-gradient:hover {
-//                     transform: scale(1.02);
-//                     background: linear-gradient(105deg, #059669, #047857);
-//                     box-shadow: 0 10px 20px rgba(16,185,129,0.3);
-//                 }
-//                 /* Rapport */
-//                 .gl-report-card {
-//                     background: white;
-//                     border-radius: 28px;
-//                     box-shadow: 0 12px 28px rgba(0,0,0,0.08);
-//                     overflow: hidden;
-//                     margin-bottom: 24px;
-//                 }
-//                 .gl-report-header {
-//                     text-align: center;
-//                     padding: 24px 20px 16px;
-//                     border-bottom: 1px solid #edf2f7;
-//                 }
-//                 .gl-report-header h2 {
-//                     margin: 12px 0 4px;
-//                     font-size: 1.4rem;
-//                     font-weight: 700;
-//                     color: #0f172a;
-//                 }
-//                 .gl-report-header p {
-//                     color: #475569;
-//                     font-size: 0.85rem;
-//                 }
-//                 .current-compte {
-//                     display: inline-block;
-//                     background: #eef2ff;
-//                     padding: 8px 20px;
-//                     border-radius: 40px;
-//                     font-weight: 600;
-//                     color: #4338ca;
-//                     margin-top: 12px;
-//                     font-size: 0.9rem;
-//                 }
-//                 /* Table */
-//                 .gl-table {
-//                     width: 100%;
-//                     border-collapse: collapse;
-//                     font-size: 0.85rem;
-//                 }
-//                 .gl-table thead th {
-//                     background: #f1f5f9;
-//                     padding: 14px 12px;
-//                     font-weight: 600;
-//                     color: #1e293b;
-//                     border-bottom: 1px solid #e2e8f0;
-//                 }
-//                 .gl-table tbody td {
-//                     padding: 10px 12px;
-//                     border-bottom: 1px solid #f0f2f5;
-//                 }
-//                 .gl-row-compte {
-//                     background: #f1f5f9;
-//                     font-weight: 700;
-//                 }
-//                 .gl-row-compte td {
-//                     padding: 8px 16px;
-//                     font-size: 0.9rem;
-//                 }
-//                 .gl-row-solde-initial {
-//                     background: #fefce8;
-//                     font-style: italic;
-//                 }
-//                 .gl-row-total {
-//                     background: #f8fafc;
-//                     font-weight: 700;
-//                 }
-//                 .gl-row-mouvement:hover {
-//                     background: #fafcff;
-//                     transition: 0.1s;
-//                 }
-//                 .text-end {
-//                     text-align: right;
-//                 }
-//                 .text-success {
-//                     color: #10b981;
-//                     font-weight: 500;
-//                 }
-//                 .text-danger {
-//                     color: #ef4444;
-//                     font-weight: 500;
-//                 }
-//                 .fw-bold {
-//                     font-weight: 700;
-//                 }
-//                 .fw-medium {
-//                     font-weight: 500;
-//                 }
-//                 /* Pagination (déjà stylée, on garde) */
-//                 .pagination-modern {
-//                     display: flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                     gap: 0.5rem;
-//                     flex-wrap: wrap;
-//                     margin-top: 1.5rem;
-//                     padding-bottom: 20px;
-//                 }
-//                 .page-number, .page-nav {
-//                     min-width: 40px;
-//                     height: 40px;
-//                     display: inline-flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                     border: none;
-//                     background: white;
-//                     border-radius: 14px;
-//                     font-weight: 500;
-//                     font-size: 0.9rem;
-//                     color: #1e293b;
-//                     cursor: pointer;
-//                     transition: all 0.2s ease;
-//                     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-//                     padding: 0 0.75rem;
-//                 }
-//                 .page-number {
-//                     background: #f8fafc;
-//                     border: 1px solid #e2e8f0;
-//                 }
-//                 .page-number:hover {
-//                     background: #eef2ff;
-//                     border-color: #6366f1;
-//                     transform: translateY(-2px);
-//                     box-shadow: 0 4px 8px rgba(99,102,241,0.15);
-//                 }
-//                 .page-number.active {
-//                     background: linear-gradient(135deg, #6366f1, #8b5cf6);
-//                     border-color: transparent;
-//                     color: white;
-//                     box-shadow: 0 4px 12px rgba(99,102,241,0.3);
-//                 }
-//                 .page-nav {
-//                     background: #f1f5f9;
-//                     border: 1px solid #e2e8f0;
-//                 }
-//                 .page-nav:hover:not(:disabled) {
-//                     background: #eef2ff;
-//                     border-color: #6366f1;
-//                     transform: translateY(-2px);
-//                 }
-//                 .page-nav:disabled {
-//                     opacity: 0.4;
-//                     cursor: not-allowed;
-//                     transform: none;
-//                 }
-//                 .page-dots {
-//                     color: #94a3b8;
-//                     font-weight: 600;
-//                     margin: 0 0.25rem;
-//                 }
-//                 .page-info {
-//                     margin-left: 1rem;
-//                     font-size: 0.8rem;
-//                     color: #475569;
-//                     background: #f1f5f9;
-//                     padding: 0.3rem 0.8rem;
-//                     border-radius: 30px;
-//                     font-weight: 500;
-//                 }
-//                 /* Boutons export */
-//                 .gl-export-buttons {
-//                     display: flex;
-//                     justify-content: flex-end;
-//                     gap: 16px;
-//                     margin-bottom: 20px;
-//                 }
-//                 .btn-excel, .btn-pdf {
-//                     border: none;
-//                     border-radius: 40px;
-//                     padding: 10px 24px;
-//                     font-weight: 600;
-//                     font-size: 0.85rem;
-//                     display: inline-flex;
-//                     align-items: center;
-//                     gap: 8px;
-//                     transition: all 0.2s;
-//                     cursor: pointer;
-//                 }
-//                 .btn-excel {
-//                     background: #10b981;
-//                     color: white;
-//                 }
-//                 .btn-excel:hover {
-//                     background: #059669;
-//                     transform: translateY(-2px);
-//                     box-shadow: 0 6px 12px rgba(16,185,129,0.3);
-//                 }
-//                 .btn-pdf {
-//                     background: #ef4444;
-//                     color: white;
-//                 }
-//                 .btn-pdf:hover {
-//                     background: #dc2626;
-//                     transform: translateY(-2px);
-//                     box-shadow: 0 6px 12px rgba(239,68,68,0.3);
-//                 }
-//                 /* Empty state */
-//                 .gl-empty {
-//                     text-align: center;
-//                     background: white;
-//                     border-radius: 32px;
-//                     padding: 60px 20px;
-//                     margin-top: 20px;
-//                     box-shadow: 0 6px 14px rgba(0,0,0,0.05);
-//                 }
-//                 .gl-empty i {
-//                     font-size: 48px;
-//                     color: #cbd5e1;
-//                     margin-bottom: 16px;
-//                 }
-//                 .gl-empty p {
-//                     color: #475569;
-//                     font-size: 1rem;
-//                     margin-bottom: 8px;
-//                 }
-//                 .gl-empty span {
-//                     color: #94a3b8;
-//                     font-size: 0.85rem;
-//                 }
-//                 /* Responsive */
-//                 @media (max-width: 768px) {
-//                     .grand-livre-container {
-//                         padding: 12px;
-//                     }
-//                     .gl-header h1 {
-//                         font-size: 1.4rem;
-//                     }
-//                     .gl-filters {
-//                         grid-template-columns: 1fr;
-//                     }
-//                 }
-//             `}</style>
-//         </div>
-//     );
-// };
-
-// export default GrandLivre;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import React, { useState, useEffect } from "react";
-// import axios from "axios";
-// import Swal from "sweetalert2";
-// import { EnteteRapport } from "./HeaderReport";
-// import * as XLSX from "xlsx";
-// import { jsPDF } from "jspdf";
-// import html2canvas from "html2canvas";
-// import { Bars } from "react-loader-spinner";
-
-// const Balance = () => {
-//     const [loading, setLoading] = useState(false);
-//     const [date_debut, setDateDebut] = useState("");
-//     const [date_fin, setDateFin] = useState("");
-//     const [devise, setDevise] = useState("CDF");
-//     const [compteDebut, setCompteDebut] = useState("");
-//     const [compteFin, setCompteFin] = useState("");
-//     const [balanceData, setBalanceData] = useState([]);
-//     const [currentPage, setCurrentPage] = useState(1);
-//     const [typeBalance, setTypeBalance] = useState("detail"); // "detail" ou "consolide"
-//     const itemsPerPage = 20;
- 
-
-
-//      const buildHierarchy = (data) => {
-//     const result = [];
-
-//     const classes = {};
-
-//     data.forEach((item) => {
-//         const classe = item.compte.substring(0, 1);
-//         const sousGroupe = item.compte.substring(0, 2);
-
-//         if (!classes[classe]) {
-//             classes[classe] = {
-//                 type: "classe",
-//                 code: classe,
-//                 items: {},
-//             };
-//         }
-
-//         if (!classes[classe].items[sousGroupe]) {
-//             classes[classe].items[sousGroupe] = {
-//                 type: "sous_groupe",
-//                 code: sousGroupe,
-//                 comptes: [],
-//             };
-//         }
-
-//         classes[classe].items[sousGroupe].comptes.push({
-//             ...item,
-//             type: "compte",
-//         });
-//     });
-
-//     return classes;
-// }; 
-//     useEffect(() => {
-//         const today = new Date();
-//         const year = today.getFullYear();
-//         const month = String(today.getMonth() + 1).padStart(2, "0");
-//         const day = String(today.getDate()).padStart(2, "0");
-//         setDateFin(`${year}-${month}-${day}`);
-//         const firstDayOfMonth = new Date(
-//             today.getFullYear(),
-//             today.getMonth(),
-//             1,
-//         );
-//         setDateDebut(
-//             `${firstDayOfMonth.getFullYear()}-${String(firstDayOfMonth.getMonth() + 1).padStart(2, "0")}-${String(firstDayOfMonth.getDate()).padStart(2, "0")}`,
-//         );
-//     }, []);
-
-//     const handleSearch = async (e) => {
-//         e.preventDefault();
-//         if (!compteDebut || !compteFin) {
-//             Swal.fire(
-//                 "Attention",
-//                 "Veuillez saisir une plage de comptes",
-//                 "warning",
-//             );
-//             return;
-//         }
-//         setLoading(true);
-//         try {
-//             const res = await axios.post(
-//                 "eco/pages/rapport/etat-financier/balance",
-//                 {
-//                     date_debut,
-//                     date_fin,
-//                     devise,
-//                     compte_debut: compteDebut,
-//                     compte_fin: compteFin,
-//                     type_balance: typeBalance,
-//                 },
-//             );
-//             if (res.data.status === 1) {
-//                 setBalanceData(res.data.data);
-//                 setCurrentPage(1);
-//             } else {
-//                 Swal.fire(
-//                     "Erreur",
-//                     res.data.msg || "Aucune donnée trouvée",
-//                     "error",
-//                 );
-//             }
-//         } catch (error) {
-//             console.error(error);
-//             Swal.fire("Erreur", "Erreur serveur", "error");
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     const numberWithSpaces = (x) => {
-//         if (x === null || x === undefined) return "0,00";
-//         return Number(x).toLocaleString("fr-FR", {
-//             minimumFractionDigits: 2,
-//             maximumFractionDigits: 2,
-//         });
-//     };
-
-//     const dateParser = (num) => {
-//         if (!num) return "";
-//         return new Date(num).toLocaleDateString("fr-FR");
-//     };
-
-//     // Pagination
-//     const totalPages = Math.ceil(balanceData.length / itemsPerPage);
-//     const startIdx = (currentPage - 1) * itemsPerPage;
-//     const currentItems = balanceData.slice(startIdx, startIdx + itemsPerPage);
-
-//     // PaginationModerne (identique à celle du Grand Livre)
-//     const PaginationModerne = ({ currentPage, totalPages, onPageChange }) => {
-//         const maxPagesToShow = 5;
-//         let startPage = Math.max(
-//             1,
-//             currentPage - Math.floor(maxPagesToShow / 2),
-//         );
-//         let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-//         if (endPage - startPage + 1 < maxPagesToShow) {
-//             startPage = Math.max(1, endPage - maxPagesToShow + 1);
-//         }
-//         const pages = Array.from(
-//             { length: endPage - startPage + 1 },
-//             (_, i) => startPage + i,
-//         );
-//         return (
-//             <div className="pagination-modern">
-//                 <button
-//                     className="page-nav"
-//                     onClick={() => onPageChange(currentPage - 1)}
-//                     disabled={currentPage === 1}
-//                 >
-//                     <i className="fas fa-chevron-left"></i>
-//                 </button>
-//                 {startPage > 1 && (
-//                     <>
-//                         <button
-//                             className="page-number"
-//                             onClick={() => onPageChange(1)}
-//                         >
-//                             1
-//                         </button>
-//                         {startPage > 2 && (
-//                             <span className="page-dots">...</span>
-//                         )}
-//                     </>
-//                 )}
-//                 {pages.map((page) => (
-//                     <button
-//                         key={page}
-//                         className={`page-number ${page === currentPage ? "active" : ""}`}
-//                         onClick={() => onPageChange(page)}
-//                     >
-//                         {page}
-//                     </button>
-//                 ))}
-//                 {endPage < totalPages && (
-//                     <>
-//                         {endPage < totalPages - 1 && (
-//                             <span className="page-dots">...</span>
-//                         )}
-//                         <button
-//                             className="page-number"
-//                             onClick={() => onPageChange(totalPages)}
-//                         >
-//                             {totalPages}
-//                         </button>
-//                     </>
-//                 )}
-//                 <button
-//                     className="page-nav"
-//                     onClick={() => onPageChange(currentPage + 1)}
-//                     disabled={currentPage === totalPages}
-//                 >
-//                     <i className="fas fa-chevron-right"></i>
-//                 </button>
-//                 <div className="page-info">
-//                     Page {currentPage} sur {totalPages}
-//                 </div>
-//             </div>
-//         );
-//     };
-
-//     // Export Excel
-//     const exportToExcel = () => {
-//         const wsData = balanceData.map((item) => {
-//             const base = {
-//                 "Report Débit": item.report_debit,
-//                 "Report Crédit": item.report_credit,
-//                 "Mvt Débit": item.mvt_debit,
-//                 "Mvt Crédit": item.mvt_credit,
-//                 "Total Débit": item.total_debit,
-//                 "Total Crédit": item.total_credit,
-//                 "Solde Débiteur": item.solde_debiteur,
-//                 "Solde Créditeur": item.solde_crediteur,
-//             };
-//             if (typeBalance === "detail") {
-//                 return { Compte: item.compte, Libellé: item.libelle, ...base };
-//             } else {
-//                 return { "Compte (sous-groupe)": item.compte, ...base };
-//             }
-//         });
-//         const ws = XLSX.utils.json_to_sheet(wsData);
-//         const wb = XLSX.utils.book_new();
-//         XLSX.utils.book_append_sheet(wb, ws, "Balance");
-//         XLSX.writeFile(wb, `balance_${date_debut}_${date_fin}.xlsx`);
-//     };
-
-//     const exportToPDF = () => {
-//         const element = document.getElementById("balance-content");
-//         if (!element) return;
-//         html2canvas(element, { scale: 2 }).then((canvas) => {
-//             const pdf = new jsPDF("p", "mm", "a4");
-//             const imgData = canvas.toDataURL("image/png");
-//             const imgProps = pdf.getImageProperties(imgData);
-//             const pdfWidth = pdf.internal.pageSize.getWidth();
-//             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-//             pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-//             pdf.save(`balance_${date_debut}_${date_fin}.pdf`);
-//         });
-//     };
-
-
-
-   
-//     return (
-//         <div className="balance-container">
-//             {loading && (
-//                 <div className="loader-overlay">
-//                     <div className="loader-card">
-//                         <Bars height="70" width="70" color="#10b981" />
-//                         <h5>Chargement de la balance...</h5>
-//                     </div>
-//                 </div>
-//             )}
-
-//             {/* Header */}
-//             <div className="balance-header">
-//                 <div className="balance-header-content">
-//                     <div className="balance-header-icon">
-//                         <i className="fas fa-scale-balanced"></i>
-//                     </div>
-//                     <div>
-//                         <h1>Balance des comptes</h1>
-//                         <p>Synthèse des soldes et mouvements</p>
-//                     </div>
-//                 </div>
-//             </div>
-
-//             {/* Filtres */}
-//             <div className="balance-filters">
-//                 <div className="filter-card">
-//                     <div className="filter-header">
-//                         <i className="fas fa-calendar-alt"></i> Période
-//                     </div>
-//                     <div className="filter-body">
-//                         <label>Date début</label>
-//                         <input
-//                             type="date"
-//                             className="modern-input"
-//                             value={date_debut}
-//                             onChange={(e) => setDateDebut(e.target.value)}
-//                         />
-//                         <label>Date fin</label>
-//                         <input
-//                             type="date"
-//                             className="modern-input"
-//                             value={date_fin}
-//                             onChange={(e) => setDateFin(e.target.value)}
-//                         />
-//                     </div>
-//                 </div>
-//                 <div className="filter-card">
-//                     <div className="filter-header">
-//                         <i className="fas fa-exchange-alt"></i> Devise
-//                     </div>
-//                     <div className="filter-body">
-//                         <select
-//                             className="modern-select"
-//                             value={devise}
-//                             onChange={(e) => setDevise(e.target.value)}
-//                         >
-//                             <option value="CDF">CDF (Franc Congolais)</option>
-//                             <option value="USD">USD (Dollar US)</option>
-//                         </select>
-//                     </div>
-//                 </div>
-//                 <div className="filter-card">
-//                     <div className="filter-header">
-//                         <i className="fas fa-filter"></i> Portée comptes
-//                     </div>
-//                     <div className="filter-body">
-//                         <label>Compte début</label>
-//                         <input
-//                             type="text"
-//                             className="modern-input"
-//                             placeholder="ex: 1"
-//                             value={compteDebut}
-//                             onChange={(e) => setCompteDebut(e.target.value)}
-//                         />
-//                         <label>Compte fin</label>
-//                         <input
-//                             type="text"
-//                             className="modern-input"
-//                             placeholder="ex: 3"
-//                             value={compteFin}
-//                             onChange={(e) => setCompteFin(e.target.value)}
-//                         />
-//                     </div>
-//                 </div>
-//                 <div className="filter-card">
-//                     <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-//                         <div className="card-header bg-transparent border-0 pt-3 pb-0">
-//                             <h6 className="section-title">
-//                                 <i
-//                                     className="fas fa-chart-pie me-2"
-//                                     style={{ color: "#6366f1" }}
-//                                 ></i>
-//                                 Type balance
-//                             </h6>
-//                         </div>
-//                         <div className="card-body pt-2">
-//                             <div className="form-check mb-2">
-//                                 <input
-//                                     type="radio"
-//                                     className="form-check-input modern-radio"
-//                                     id="balance_detail"
-//                                     value="detail"
-//                                     checked={typeBalance === "detail"}
-//                                     onChange={(e) =>
-//                                         setTypeBalance(e.target.value)
-//                                     }
-//                                 />
-//                                 <label
-//                                     className="form-check-label text-secondary"
-//                                     htmlFor="balance_detail"
-//                                 >
-//                                     Balance semi‑détaillée
-//                                 </label>
-//                             </div>
-//                             <div className="form-check">
-//                                 <input
-//                                     type="radio"
-//                                     className="form-check-input modern-radio"
-//                                     id="balance_consolide"
-//                                     value="consolide"
-//                                     checked={typeBalance === "consolide"}
-//                                     onChange={(e) =>
-//                                         setTypeBalance(e.target.value)
-//                                     }
-//                                 />
-//                                 <label
-//                                     className="form-check-label text-secondary"
-//                                     htmlFor="balance_consolide"
-//                                 >
-//                                     Balance consolidée
-//                                 </label>
+//         <div className="container-fluid" style={{ marginTop: "10px", padding: "0 15px" }}>
+//             {/* En-tête (inchangé) */}
+//             <div className="row mb-4">
+//                 <div className="col-12">
+//                     <div className="card border-0 shadow-sm rounded-3">
+//                         <div className="card-body p-3" style={{ background: "#138496", borderRadius: "12px" }}>
+//                             <div className="d-flex align-items-center">
+//                                 <div className="me-3"><i className="fas fa-chart-line" style={{ fontSize: "28px", color: "white" }}></i></div>
+//                                 <div><h5 className="text-white fw-bold mb-0">Rapports de Crédit</h5><small className="text-white-50">Échéancier, Amortissement, Balance âgée, PAR</small></div>
 //                             </div>
 //                         </div>
 //                     </div>
 //                 </div>
-//                 <div className="filter-card action-card">
-//                     <button
-//                         className="btn-primary-gradient"
-//                         onClick={handleSearch}
-//                     >
-//                         {loading ? (
-//                             <span className="spinner-border spinner-border-sm"></span>
-//                         ) : (
-//                             <i className="fas fa-chart-line"></i>
-//                         )}
-//                         Afficher la balance
-//                     </button>
-//                 </div>
 //             </div>
 
-//             {/* Résultats */}
-//             {balanceData.length > 0 && (
-//                 <div id="balance-content">
-//                     <div className="balance-report-card">
-//                        <div className="balance-report-header text-center">
-//     <EnteteRapport />
-
-//     <h3 className="fw-bold">
-//         BALANCE GENERALE DES COMPTES
-//     </h3>
-
-//     <p>
-//         DU {dateParser(date_debut)} AU {dateParser(date_fin)}
-//     </p>
-
-//     <p>
-//         Devise : <strong>{devise}</strong> | 
-//         Comptes : <strong>{compteDebut}</strong> à <strong>{compteFin}</strong>
-//     </p>
-// </div>
-//                         <div className="table-responsive">
-//                             <table className="balance-table">
-//                                <thead>
-//     <tr className="text-center">
-//         <th rowSpan="2">Compte</th>
-//         {typeBalance === "detail" && <th rowSpan="2">Libellé</th>}
-
-//         <th colSpan="2">REPORT</th>
-//         <th colSpan="2">MOUVEMENTS</th>
-//         <th colSpan="2">TOTAUX</th>
-//         <th colSpan="2">SOLDE</th>
-//     </tr>
-
-//     <tr className="text-center">
-//         <th>D</th>
-//         <th>C</th>
-
-//         <th>D</th>
-//         <th>C</th>
-
-//         <th>D</th>
-//         <th>C</th>
-
-//         <th>D</th>
-//         <th>C</th>
-//     </tr>
-// </thead>
-//                              <tbody>
-//     {Object.values(buildHierarchy(balanceData)).map((classe, i) => (
-//         <React.Fragment key={i}>
-            
-//             {/* ===== CLASSE ===== */}
-//             <tr className="classe-row">
-//                 <td colSpan={10}>
-//                     <strong>CLASSE {classe.code}</strong>
-//                 </td>
-//             </tr>
-
-//             {Object.values(classe.items).map((sg, j) => {
-//                 // Calcul total sous-groupe
-//                 const totalSG = sg.comptes.reduce(
-//                     (acc, c) => ({
-//                         report_debit: acc.report_debit + c.report_debit,
-//                         report_credit: acc.report_credit + c.report_credit,
-//                         mvt_debit: acc.mvt_debit + c.mvt_debit,
-//                         mvt_credit: acc.mvt_credit + c.mvt_credit,
-//                         total_debit: acc.total_debit + c.total_debit,
-//                         total_credit: acc.total_credit + c.total_credit,
-//                         solde_debiteur: acc.solde_debiteur + c.solde_debiteur,
-//                         solde_crediteur: acc.solde_crediteur + c.solde_crediteur,
-//                     }),
-//                     {
-//                         report_debit: 0,
-//                         report_credit: 0,
-//                         mvt_debit: 0,
-//                         mvt_credit: 0,
-//                         total_debit: 0,
-//                         total_credit: 0,
-//                         solde_debiteur: 0,
-//                         solde_crediteur: 0,
-//                     }
-//                 );
-
-//                 return (
-//                     <React.Fragment key={j}>
-                        
-//                         {/* ===== SOUS GROUPE ===== */}
-//                         <tr className="sous-groupe-row">
-//                             <td colSpan={10}>
-//                                 <strong>Sous-groupe {sg.code}</strong>
-//                             </td>
-//                         </tr>
-
-//                         {/* ===== COMPTES ===== */}
-//                         {sg.comptes.map((c, k) => (
-//                             <tr key={k}>
-//                                 <td>{c.compte}</td>
-//                                 {typeBalance === "detail" && <td>{c.libelle}</td>}
-
-//                                 <td>{numberWithSpaces(c.report_debit)}</td>
-//                                 <td>{numberWithSpaces(c.report_credit)}</td>
-//                                 <td>{numberWithSpaces(c.mvt_debit)}</td>
-//                                 <td>{numberWithSpaces(c.mvt_credit)}</td>
-//                                 <td>{numberWithSpaces(c.total_debit)}</td>
-//                                 <td>{numberWithSpaces(c.total_credit)}</td>
-//                                 <td>{numberWithSpaces(c.solde_debiteur)}</td>
-//                                 <td>{numberWithSpaces(c.solde_crediteur)}</td>
-//                             </tr>
-//                         ))}
-
-//                         {/* ===== TOTAL SOUS GROUPE ===== */}
-//                         <tr className="total-sg">
-//                             <td colSpan={typeBalance === "detail" ? 2 : 1}>
-//                                 TOTAL {sg.code}
-//                             </td>
-
-//                             <td>{numberWithSpaces(totalSG.report_debit)}</td>
-//                             <td>{numberWithSpaces(totalSG.report_credit)}</td>
-//                             <td>{numberWithSpaces(totalSG.mvt_debit)}</td>
-//                             <td>{numberWithSpaces(totalSG.mvt_credit)}</td>
-//                             <td>{numberWithSpaces(totalSG.total_debit)}</td>
-//                             <td>{numberWithSpaces(totalSG.total_credit)}</td>
-//                             <td>{numberWithSpaces(totalSG.solde_debiteur)}</td>
-//                             <td>{numberWithSpaces(totalSG.solde_crediteur)}</td>
-//                         </tr>
-//                     </React.Fragment>
-//                 );
-//             })}
-//         </React.Fragment>
-//     ))}
-// </tbody>
-//                                 <tfoot className="balance-footer">
-//                                     <tr>
-//                                         <td
-//                                             colSpan={
-//                                                 typeBalance === "detail" ? 2 : 1
-//                                             }
-//                                             className="fw-bold"
-//                                         >
-//                                             TOTAUX
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.report_debit,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.report_credit,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.mvt_debit,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.mvt_credit,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.total_debit,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.total_credit,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.solde_debiteur,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.solde_crediteur,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                     </tr>
-//                                 </tfoot>
-//                             </table>
+//             {/* Formulaire de recherche */}
+//             <div className="row g-3 mb-4">
+//                 <div className="col-md-8">
+//                     <div className="card border-0 shadow-sm rounded-3">
+//                         <div className="card-header bg-white border-0 pt-3">
+//                             <h6 className="fw-bold" style={{ color: "steelblue" }}><i className="fas fa-search me-2"></i>Type de rapport</h6>
 //                         </div>
-//                         {totalPages > 1 && (
-//                             <PaginationModerne
-//                                 currentPage={currentPage}
-//                                 totalPages={totalPages}
-//                                 onPageChange={setCurrentPage}
-//                             />
-//                         )}
-//                     </div>
-//                     <div className="balance-export-buttons">
-//                         <button className="btn-excel" onClick={exportToExcel}>
-//                             <i className="fas fa-file-excel"></i> Excel
-//                         </button>
-//                         <button className="btn-pdf" onClick={exportToPDF}>
-//                             <i className="fas fa-file-pdf"></i> PDF
-//                         </button>
-//                     </div>
-//                 </div>
-//             )}
-
-//             {balanceData.length === 0 && !loading && (
-//                 <div className="balance-empty">
-//                     <i className="fas fa-scale-balanced"></i>
-//                     <p>
-//                         Aucune donnée trouvée pour la période et la plage de
-//                         comptes sélectionnées.
-//                     </p>
-//                     <span>Modifiez les filtres et réessayez.</span>
-//                 </div>
-//             )}
-
-//             <style jsx>{`
-//                 .balance-container {
-//                     background: #f4f7fc;
-//                     min-height: 100vh;
-//                     padding: 20px 24px;
-//                     font-family: "Inter", system-ui, sans-serif;
-//                 }
-//                 .loader-overlay {
-//                     position: fixed;
-//                     top: 0;
-//                     left: 0;
-//                     width: 100%;
-//                     height: 100%;
-//                     background: rgba(0, 0, 0, 0.6);
-//                     backdrop-filter: blur(4px);
-//                     display: flex;
-//                     justify-content: center;
-//                     align-items: center;
-//                     z-index: 1050;
-//                 }
-//                 .loader-card {
-//                     background: white;
-//                     border-radius: 28px;
-//                     padding: 30px 40px;
-//                     text-align: center;
-//                     box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
-//                 }
-//                 .balance-header {
-//                     background: linear-gradient(135deg, #0f766e, #14b8a6);
-//                     border-radius: 28px;
-//                     padding: 20px 28px;
-//                     margin-bottom: 32px;
-//                     box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
-//                 }
-//                 .balance-header-content {
-//                     display: flex;
-//                     align-items: center;
-//                     gap: 20px;
-//                     color: white;
-//                 }
-//                 .balance-header-icon {
-//                     background: rgba(255, 255, 255, 0.2);
-//                     width: 60px;
-//                     height: 60px;
-//                     border-radius: 20px;
-//                     display: flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                     font-size: 28px;
-//                 }
-//                 .balance-header h1 {
-//                     margin: 0;
-//                     font-size: 1.8rem;
-//                     font-weight: 700;
-//                 }
-//                 .balance-header p {
-//                     margin: 4px 0 0;
-//                     opacity: 0.85;
-//                 }
-//                 .balance-filters {
-//                     display: grid;
-//                     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-//                     gap: 20px;
-//                     margin-bottom: 40px;
-//                 }
-//                 .filter-card {
-//                     background: white;
-//                     border-radius: 24px;
-//                     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
-//                     transition:
-//                         transform 0.2s,
-//                         box-shadow 0.2s;
-//                     overflow: hidden;
-//                 }
-//                 .filter-card:hover {
-//                     transform: translateY(-4px);
-//                     box-shadow: 0 16px 28px -8px rgba(0, 0, 0, 0.12);
-//                 }
-//                 .filter-header {
-//                     background: #f8fafc;
-//                     padding: 14px 20px;
-//                     font-weight: 600;
-//                     color: #1e293b;
-//                     border-bottom: 1px solid #eef2ff;
-//                 }
-//                 .filter-header i {
-//                     color: #6366f1;
-//                     margin-right: 8px;
-//                 }
-//                 .filter-body {
-//                     padding: 20px;
-//                     display: flex;
-//                     flex-direction: column;
-//                     gap: 14px;
-//                 }
-//                 .filter-body label {
-//                     font-size: 0.7rem;
-//                     font-weight: 700;
-//                     text-transform: uppercase;
-//                     letter-spacing: 0.5px;
-//                     color: #475569;
-//                 }
-//                 .modern-input,
-//                 .modern-select {
-//                     border: 1px solid #e2e8f0;
-//                     border-radius: 16px;
-//                     padding: 12px 16px;
-//                     font-size: 0.9rem;
-//                     transition: all 0.2s;
-//                     background: white;
-//                     width: 100%;
-//                 }
-//                 .modern-input:focus,
-//                 .modern-select:focus {
-//                     border-color: #6366f1;
-//                     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-//                     outline: none;
-//                 }
-//                 .action-card {
-//                     background: transparent;
-//                     box-shadow: none;
-//                     display: flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                 }
-//                 .btn-primary-gradient {
-//                     background: linear-gradient(105deg, #10b981, #059669);
-//                     border: none;
-//                     border-radius: 40px;
-//                     padding: 14px 20px;
-//                     width: 100%;
-//                     color: white;
-//                     font-weight: 700;
-//                     font-size: 0.95rem;
-//                     display: flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                     gap: 10px;
-//                     transition: all 0.25s;
-//                     cursor: pointer;
-//                 }
-//                 .btn-primary-gradient:hover {
-//                     transform: scale(1.02);
-//                     background: linear-gradient(105deg, #059669, #047857);
-//                     box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
-//                 }
-//                 .balance-report-card {
-//                     background: white;
-//                     border-radius: 28px;
-//                     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
-//                     overflow: hidden;
-//                     margin-bottom: 24px;
-//                 }
-//                 .balance-report-header {
-//                     text-align: center;
-//                     padding: 24px 20px 16px;
-//                     border-bottom: 1px solid #edf2f7;
-//                 }
-//                 .balance-report-header h2 {
-//                     margin: 12px 0 4px;
-//                     font-size: 1.4rem;
-//                     font-weight: 700;
-//                     color: #0f172a;
-//                 }
-//                 .balance-table {
-//                     width: 100%;
-//                     border-collapse: collapse;
-//                     font-size: 0.85rem;
-//                 }
-//                 .balance-table thead th {
-//                     background: #f1f5f9;
-//                     padding: 14px 12px;
-//                     font-weight: 600;
-//                     color: #1e293b;
-//                     border-bottom: 1px solid #e2e8f0;
-//                     position: sticky;
-//                     top: 0;
-//                 }
-//                 .balance-table tbody td {
-//                     padding: 10px 12px;
-//                     border-bottom: 1px solid #f0f2f5;
-//                 }
-//                 .balance-table tbody tr:hover {
-//                     background: #fafcff;
-//                 }
-//                 .balance-footer {
-//                     background: #f8fafc;
-//                     font-weight: 700;
-//                     border-top: 2px solid #e2e8f0;
-//                 }
-//                 .text-end {
-//                     text-align: right;
-//                 }
-//                 .text-success {
-//                     color: #10b981;
-//                 }
-//                 .text-danger {
-//                     color: #ef4444;
-//                 }
-//                 .fw-bold {
-//                     font-weight: 700;
-//                 }
-//                 .balance-export-buttons {
-//                     display: flex;
-//                     justify-content: flex-end;
-//                     gap: 16px;
-//                     margin-bottom: 20px;
-//                 }
-//                 .btn-excel,
-//                 .btn-pdf {
-//                     border: none;
-//                     border-radius: 40px;
-//                     padding: 10px 24px;
-//                     font-weight: 600;
-//                     font-size: 0.85rem;
-//                     display: inline-flex;
-//                     align-items: center;
-//                     gap: 8px;
-//                     transition: all 0.2s;
-//                     cursor: pointer;
-//                 }
-//                 .btn-excel {
-//                     background: #10b981;
-//                     color: white;
-//                 }
-//                 .btn-excel:hover {
-//                     background: #059669;
-//                     transform: translateY(-2px);
-//                     box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
-//                 }
-//                 .btn-pdf {
-//                     background: #ef4444;
-//                     color: white;
-//                 }
-//                 .btn-pdf:hover {
-//                     background: #dc2626;
-//                     transform: translateY(-2px);
-//                     box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
-//                 }
-//                 .balance-empty {
-//                     text-align: center;
-//                     background: white;
-//                     border-radius: 32px;
-//                     padding: 60px 20px;
-//                     margin-top: 20px;
-//                     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
-//                 }
-//                 .balance-empty i {
-//                     font-size: 48px;
-//                     color: #cbd5e1;
-//                     margin-bottom: 16px;
-//                 }
-//                 .pagination-modern {
-//                     display: flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                     gap: 0.5rem;
-//                     flex-wrap: wrap;
-//                     margin-top: 1.5rem;
-//                     padding-bottom: 20px;
-//                 }
-//                 .page-number,
-//                 .page-nav {
-//                     min-width: 40px;
-//                     height: 40px;
-//                     display: inline-flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                     border: none;
-//                     background: white;
-//                     border-radius: 14px;
-//                     font-weight: 500;
-//                     font-size: 0.9rem;
-//                     color: #1e293b;
-//                     cursor: pointer;
-//                     transition: all 0.2s ease;
-//                     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-//                     padding: 0 0.75rem;
-//                 }
-//                 .page-number {
-//                     background: #f8fafc;
-//                     border: 1px solid #e2e8f0;
-//                 }
-//                 .page-number.active {
-//                     background: linear-gradient(135deg, #6366f1, #8b5cf6);
-//                     border-color: transparent;
-//                     color: white;
-//                     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-//                 }
-//                 .page-nav {
-//                     background: #f1f5f9;
-//                     border: 1px solid #e2e8f0;
-//                 }
-//                 .page-nav:disabled {
-//                     opacity: 0.4;
-//                     cursor: not-allowed;
-//                 }
-//                 .page-info {
-//                     margin-left: 1rem;
-//                     font-size: 0.8rem;
-//                     color: #475569;
-//                     background: #f1f5f9;
-//                     padding: 0.3rem 0.8rem;
-//                     border-radius: 30px;
-//                 }
-//                 @media (max-width: 768px) {
-//                     .balance-container {
-//                         padding: 12px;
-//                     }
-//                     .balance-header h1 {
-//                         font-size: 1.4rem;
-//                     }
-//                     .balance-filters {
-//                         grid-template-columns: 1fr;
-//                     }
-//                     .balance-table {
-//                         font-size: 0.75rem;
-//                     }
-//                 }
-
-
-//                 .balance-table {
-//     width: 100%;
-//     border-collapse: collapse;
-//     font-size: 13px;
-// }
-
-// .balance-table th,
-// .balance-table td {
-//     border: 1px solid #ddd;
-//     padding: 6px;
-// }
-
-// .balance-table thead {
-//     background: #f5f7fa;
-//     font-weight: bold;
-// }
-
-// .balance-table thead tr:first-child {
-//     background: #e9ecef;
-//     font-size: 14px;
-// }
-
-// .balance-table tbody tr:hover {
-//     background: #f9f9f9;
-// }
-
-// .balance-table td {
-//     text-align: right;
-// }
-
-// .balance-table td:first-child,
-// .balance-table td:nth-child(2) {
-//     text-align: left;
-// }
-
-// .balance-footer {
-//     background: #e9ecef;
-//     font-weight: bold;
-// }
-
-// .text-success {
-//     color: #198754;
-// }
-
-// .text-danger {
-//     color: #dc3545;
-// }
-
-
-
-// .balance-table td:nth-child(3),
-// .balance-table th:nth-child(3),
-// .balance-table td:nth-child(5),
-// .balance-table th:nth-child(5),
-// .balance-table td:nth-child(7),
-// .balance-table th:nth-child(7),
-// .balance-table td:nth-child(9),
-// .balance-table th:nth-child(9) {
-//     border-left: 2px solid #000;
-// }
-
-
-// .classe-row {
-//     background: #dfe6e9;
-//     font-size: 14px;
-// }
-
-// .sous-groupe-row {
-//     background: #f1f3f5;
-// }
-
-// .total-sg {
-//     background: #e9ecef;
-//     font-weight: bold;
-//     border-top: 2px solid black;
-// }
-//             `}</style>
-//         </div>
-//     );
-// };
-
-// export default Balance;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import { useState, useEffect } from "react";
-// import axios from "axios";
-// import Swal from "sweetalert2";
-// import { EnteteRapport } from "./HeaderReport";
-// import * as XLSX from "xlsx";
-// import { jsPDF } from "jspdf";
-// import html2canvas from "html2canvas";
-// import { Bars } from "react-loader-spinner";
-
-// const Balance = () => {
-//     const [loading, setLoading] = useState(false);
-//     const [date_debut, setDateDebut] = useState("");
-//     const [date_fin, setDateFin] = useState("");
-//     const [devise, setDevise] = useState("CDF");
-//     const [compteDebut, setCompteDebut] = useState("");
-//     const [compteFin, setCompteFin] = useState("");
-//     const [balanceData, setBalanceData] = useState([]);
-//     const [currentPage, setCurrentPage] = useState(1);
-//     const [typeBalance, setTypeBalance] = useState("detail"); // "detail" ou "consolide"
-//     const itemsPerPage = 20;
-
-//     useEffect(() => {
-//         const today = new Date();
-//         const year = today.getFullYear();
-//         const month = String(today.getMonth() + 1).padStart(2, "0");
-//         const day = String(today.getDate()).padStart(2, "0");
-//         setDateFin(`${year}-${month}-${day}`);
-//         const firstDayOfMonth = new Date(
-//             today.getFullYear(),
-//             today.getMonth(),
-//             1,
-//         );
-//         setDateDebut(
-//             `${firstDayOfMonth.getFullYear()}-${String(firstDayOfMonth.getMonth() + 1).padStart(2, "0")}-${String(firstDayOfMonth.getDate()).padStart(2, "0")}`,
-//         );
-//     }, []);
-
-//     const handleSearch = async (e) => {
-//         e.preventDefault();
-//         if (!compteDebut || !compteFin) {
-//             Swal.fire(
-//                 "Attention",
-//                 "Veuillez saisir une plage de comptes",
-//                 "warning",
-//             );
-//             return;
-//         }
-//         setLoading(true);
-//         try {
-//             const res = await axios.post(
-//                 "eco/pages/rapport/etat-financier/balance",
-//                 {
-//                     date_debut,
-//                     date_fin,
-//                     devise,
-//                     compte_debut: compteDebut,
-//                     compte_fin: compteFin,
-//                     type_balance: typeBalance,
-//                 },
-//             );
-//             if (res.data.status === 1) {
-//                 setBalanceData(res.data.data);
-//                 setCurrentPage(1);
-//             } else {
-//                 Swal.fire(
-//                     "Erreur",
-//                     res.data.msg || "Aucune donnée trouvée",
-//                     "error",
-//                 );
-//             }
-//         } catch (error) {
-//             console.error(error);
-//             Swal.fire("Erreur", "Erreur serveur", "error");
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     const numberWithSpaces = (x) => {
-//         if (x === null || x === undefined) return "0,00";
-//         return Number(x).toLocaleString("fr-FR", {
-//             minimumFractionDigits: 2,
-//             maximumFractionDigits: 2,
-//         });
-//     };
-
-//     const dateParser = (num) => {
-//         if (!num) return "";
-//         return new Date(num).toLocaleDateString("fr-FR");
-//     };
-
-//     // Pagination
-//     const totalPages = Math.ceil(balanceData.length / itemsPerPage);
-//     const startIdx = (currentPage - 1) * itemsPerPage;
-//     const currentItems = balanceData.slice(startIdx, startIdx + itemsPerPage);
-
-//     // PaginationModerne (identique à celle du Grand Livre)
-//     const PaginationModerne = ({ currentPage, totalPages, onPageChange }) => {
-//         const maxPagesToShow = 5;
-//         let startPage = Math.max(
-//             1,
-//             currentPage - Math.floor(maxPagesToShow / 2),
-//         );
-//         let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
-//         if (endPage - startPage + 1 < maxPagesToShow) {
-//             startPage = Math.max(1, endPage - maxPagesToShow + 1);
-//         }
-//         const pages = Array.from(
-//             { length: endPage - startPage + 1 },
-//             (_, i) => startPage + i,
-//         );
-//         return (
-//             <div className="pagination-modern">
-//                 <button
-//                     className="page-nav"
-//                     onClick={() => onPageChange(currentPage - 1)}
-//                     disabled={currentPage === 1}
-//                 >
-//                     <i className="fas fa-chevron-left"></i>
-//                 </button>
-//                 {startPage > 1 && (
-//                     <>
-//                         <button
-//                             className="page-number"
-//                             onClick={() => onPageChange(1)}
-//                         >
-//                             1
-//                         </button>
-//                         {startPage > 2 && (
-//                             <span className="page-dots">...</span>
-//                         )}
-//                     </>
-//                 )}
-//                 {pages.map((page) => (
-//                     <button
-//                         key={page}
-//                         className={`page-number ${page === currentPage ? "active" : ""}`}
-//                         onClick={() => onPageChange(page)}
-//                     >
-//                         {page}
-//                     </button>
-//                 ))}
-//                 {endPage < totalPages && (
-//                     <>
-//                         {endPage < totalPages - 1 && (
-//                             <span className="page-dots">...</span>
-//                         )}
-//                         <button
-//                             className="page-number"
-//                             onClick={() => onPageChange(totalPages)}
-//                         >
-//                             {totalPages}
-//                         </button>
-//                     </>
-//                 )}
-//                 <button
-//                     className="page-nav"
-//                     onClick={() => onPageChange(currentPage + 1)}
-//                     disabled={currentPage === totalPages}
-//                 >
-//                     <i className="fas fa-chevron-right"></i>
-//                 </button>
-//                 <div className="page-info">
-//                     Page {currentPage} sur {totalPages}
-//                 </div>
-//             </div>
-//         );
-//     };
-
-//     // Export Excel
-//     const exportToExcel = () => {
-//         const wsData = balanceData.map((item) => {
-//             const base = {
-//                 "Report Débit": item.report_debit,
-//                 "Report Crédit": item.report_credit,
-//                 "Mvt Débit": item.mvt_debit,
-//                 "Mvt Crédit": item.mvt_credit,
-//                 "Total Débit": item.total_debit,
-//                 "Total Crédit": item.total_credit,
-//                 "Solde Débiteur": item.solde_debiteur,
-//                 "Solde Créditeur": item.solde_crediteur,
-//             };
-//             if (typeBalance === "detail") {
-//                 return { Compte: item.compte, Libellé: item.libelle, ...base };
-//             } else {
-//                 return { "Compte (sous-groupe)": item.compte, ...base };
-//             }
-//         });
-//         const ws = XLSX.utils.json_to_sheet(wsData);
-//         const wb = XLSX.utils.book_new();
-//         XLSX.utils.book_append_sheet(wb, ws, "Balance");
-//         XLSX.writeFile(wb, `balance_${date_debut}_${date_fin}.xlsx`);
-//     };
-
-//     const exportToPDF = () => {
-//         const element = document.getElementById("balance-content");
-//         if (!element) return;
-//         html2canvas(element, { scale: 2 }).then((canvas) => {
-//             const pdf = new jsPDF("p", "mm", "a4");
-//             const imgData = canvas.toDataURL("image/png");
-//             const imgProps = pdf.getImageProperties(imgData);
-//             const pdfWidth = pdf.internal.pageSize.getWidth();
-//             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-//             pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-//             pdf.save(`balance_${date_debut}_${date_fin}.pdf`);
-//         });
-//     };
-
-//     return (
-//         <div className="balance-container">
-//             {loading && (
-//                 <div className="loader-overlay">
-//                     <div className="loader-card">
-//                         <Bars height="70" width="70" color="#10b981" />
-//                         <h5>Chargement de la balance...</h5>
-//                     </div>
-//                 </div>
-//             )}
-
-//             {/* Header */}
-//             <div className="balance-header">
-//                 <div className="balance-header-content">
-//                     <div className="balance-header-icon">
-//                         <i className="fas fa-scale-balanced"></i>
-//                     </div>
-//                     <div>
-//                         <h1>Balance des comptes</h1>
-//                         <p>Synthèse des soldes et mouvements</p>
-//                     </div>
-//                 </div>
-//             </div>
-
-//             {/* Filtres */}
-//             <div className="balance-filters">
-//                 <div className="filter-card">
-//                     <div className="filter-header">
-//                         <i className="fas fa-calendar-alt"></i> Période
-//                     </div>
-//                     <div className="filter-body">
-//                         <label>Date début</label>
-//                         <input
-//                             type="date"
-//                             className="modern-input"
-//                             value={date_debut}
-//                             onChange={(e) => setDateDebut(e.target.value)}
-//                         />
-//                         <label>Date fin</label>
-//                         <input
-//                             type="date"
-//                             className="modern-input"
-//                             value={date_fin}
-//                             onChange={(e) => setDateFin(e.target.value)}
-//                         />
-//                     </div>
-//                 </div>
-//                 <div className="filter-card">
-//                     <div className="filter-header">
-//                         <i className="fas fa-exchange-alt"></i> Devise
-//                     </div>
-//                     <div className="filter-body">
-//                         <select
-//                             className="modern-select"
-//                             value={devise}
-//                             onChange={(e) => setDevise(e.target.value)}
-//                         >
-//                             <option value="CDF">CDF (Franc Congolais)</option>
-//                             <option value="USD">USD (Dollar US)</option>
-//                         </select>
-//                     </div>
-//                 </div>
-//                 <div className="filter-card">
-//                     <div className="filter-header">
-//                         <i className="fas fa-filter"></i> Portée comptes
-//                     </div>
-//                     <div className="filter-body">
-//                         <label>Compte début</label>
-//                         <input
-//                             type="text"
-//                             className="modern-input"
-//                             placeholder="ex: 1"
-//                             value={compteDebut}
-//                             onChange={(e) => setCompteDebut(e.target.value)}
-//                         />
-//                         <label>Compte fin</label>
-//                         <input
-//                             type="text"
-//                             className="modern-input"
-//                             placeholder="ex: 3"
-//                             value={compteFin}
-//                             onChange={(e) => setCompteFin(e.target.value)}
-//                         />
-//                     </div>
-//                 </div>
-//                 <div className="filter-card">
-//                     <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-//                         <div className="card-header bg-transparent border-0 pt-3 pb-0">
-//                             <h6 className="section-title">
-//                                 <i
-//                                     className="fas fa-chart-pie me-2"
-//                                     style={{ color: "#6366f1" }}
-//                                 ></i>
-//                                 Type balance
-//                             </h6>
+//                         <div className="card-body">
+//                             <form>
+//                                 <div className="row g-3">
+//                                     <div className="col-md-4">
+//                                         <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Numéro dossier</label>
+//                                         <input type="text" className="form-control" placeholder="Num Dossier" style={{ borderRadius: "8px", borderColor: "#20c997" }} onChange={(e) => setsearched_num_dossier(e.target.value)} />
+//                                     </div>
+//                                     <div className="col-md-8">
+//                                         <div className="d-flex flex-wrap gap-4">
+//                                             <div className="form-check">
+//                                                 <input type="radio" className="form-check-input" id="echeancier_" name="reportType" value="echeancier" checked={radioValue === "echeancier"} onChange={handleRadioChange} />
+//                                                 <label className="form-check-label" style={{ color: "steelblue", fontWeight: "500" }} htmlFor="echeancier_"><i className="fas fa-calendar-alt me-1"></i>Échéancier</label>
+//                                             </div>
+//                                             <div className="form-check">
+//                                                 <input type="radio" className="form-check-input" id="tableau_ammortiss" name="reportType" value="tableau_ammortiss" checked={radioValue === "tableau_ammortiss"} onChange={handleRadioChange} />
+//                                                 <label className="form-check-label" style={{ color: "steelblue", fontWeight: "500" }} htmlFor="tableau_ammortiss"><i className="fas fa-table me-1"></i>Tableau d'amortissement</label>
+//                                             </div>
+//                                             <div className="form-check">
+//                                                 <input type="radio" className="form-check-input" id="balance_agee" name="reportType" value="balance_agee" checked={radioValue === "balance_agee"} onChange={handleRadioChange} />
+//                                                 <label className="form-check-label" style={{ color: "steelblue", fontWeight: "500" }} htmlFor="balance_agee"><i className="fas fa-balance-scale me-1"></i>Balance âgée</label>
+//                                             </div>
+//                                             {/* AJOUT PAR - nouveau bouton radio */}
+//                                             <div className="form-check">
+//                                                 <input type="radio" className="form-check-input" id="par_report" name="reportType" value="par" checked={radioValue === "par"} onChange={handleRadioChange} />
+//                                                 <label className="form-check-label" style={{ color: "steelblue", fontWeight: "500" }} htmlFor="par_report"><i className="fas fa-chart-pie me-1"></i>PAR</label>
+//                                             </div>
+//                                         </div>
+//                                     </div>
+//                                 </div>
+
+//                                 {/* Formulaire pour Balance âgée (existant) */}
+//                                 {radioValue === "balance_agee" && (
+//                                     <div className="row g-3 mt-3">
+//                                         <div className="col-md-3">
+//                                             <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Date</label>
+//                                             <input type="date" className="form-control" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} />
+//                                         </div>
+//                                         <div className="col-md-3">
+//                                             <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Devise</label>
+//                                             <select className="form-control" onChange={(e) => setdevise(e.target.value)}>
+//                                                 <option value="">Dévise</option><option value="CDF">CDF</option><option value="USD">USD</option>
+//                                             </select>
+//                                         </div>
+//                                         <div className="col-md-3">
+//                                             <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Agent de crédit</label>
+//                                             <select className="form-control" onChange={(e) => setagent_credit_name(e.target.value)}>
+//                                                 <option value="">Tous</option>
+//                                                 {fetchAgentCredit && fetchAgentCredit.map((res, idx) => <option key={idx} value={res.name}>{res.name}</option>)}
+//                                             </select>
+//                                         </div>
+//                                         <div className="col-md-3 d-flex align-items-end">
+//                                             <button className="btn w-100" style={{ background: "linear-gradient(135deg, #20c997, #198764)", color: "white", borderRadius: "8px" }} onClick={getSeachedData}>
+//                                                 <i className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-desktop me-2"}`}></i>Afficher
+//                                             </button>
+//                                         </div>
+//                                     </div>
+//                                 )}
+
+//                                 {/* AJOUT PAR - Formulaire pour le rapport PAR */}
+//                                 {radioValue === "par" && (
+//                                     <div className="row g-3 mt-3">
+//                                         <div className="col-md-3">
+//                                             <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Date de référence</label>
+//                                             <input type="date" className="form-control" value={datePar} onChange={(e) => setDatePar(e.target.value)} />
+//                                         </div>
+//                                         <div className="col-md-3">
+//                                             <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Devise</label>
+//                                             <select className="form-control" onChange={(e) => setdevise(e.target.value)}>
+//                                                 <option value="">Toutes</option><option value="CDF">CDF</option><option value="USD">USD</option>
+//                                             </select>
+//                                         </div>
+//                                         <div className="col-md-3">
+//                                             <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Gestionnaire</label>
+//                                             <select className="form-control" onChange={(e) => setGestionnaire(e.target.value)}>
+//                                                 <option value="">Tous</option>
+//                                                 {fetchGestionnaires.map((g, idx) => <option key={idx} value={g}>{g}</option>)}
+//                                             </select>
+//                                         </div>
+//                                         <div className="col-md-3">
+//                                             <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Catégorie PAR</label>
+//                                             <select className="form-control" onChange={(e) => setParCategory(e.target.value)}>
+//                                                 <option value="">Toutes</option>
+//                                                 <option value="PAR30">PAR30 (1-30 jours)</option>
+//                                                 <option value="PAR60">PAR60 (31-60 jours)</option>
+//                                                 <option value="PAR90">PAR90 (61-90 jours)</option>
+//                                                 <option value="PAR180">PAR180 (>90 jours)</option>
+//                                             </select>
+//                                         </div>
+//                                         <div className="col-md-3 d-flex align-items-end">
+//                                             <button className="btn w-100" style={{ background: "linear-gradient(135deg, #20c997, #198764)", color: "white", borderRadius: "8px" }} onClick={getSeachedData}>
+//                                                 <i className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-desktop me-2"}`}></i>Afficher
+//                                             </button>
+//                                         </div>
+//                                     </div>
+//                                 )}
+
+//                                 {/* Bouton Afficher pour les autres cas (inchangé) */}
+//                                 {radioValue && radioValue !== "balance_agee" && radioValue !== "par" && (
+//                                     <div className="row mt-3">
+//                                         <div className="col-md-3">
+//                                             <button className="btn w-100" style={{ background: "linear-gradient(135deg, #20c997, #198764)", color: "white", borderRadius: "8px" }} onClick={getSeachedData}>
+//                                                 <i className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-desktop me-2"}`}></i>Afficher
+//                                             </button>
+//                                         </div>
+//                                     </div>
+//                                 )}
+//                             </form>
 //                         </div>
-//                         <div className="card-body pt-2">
-//                             <div className="form-check mb-2">
-//                                 <input
-//                                     type="radio"
-//                                     className="form-check-input modern-radio"
-//                                     id="balance_detail"
-//                                     value="detail"
-//                                     checked={typeBalance === "detail"}
-//                                     onChange={(e) =>
-//                                         setTypeBalance(e.target.value)
-//                                     }
-//                                 />
-//                                 <label
-//                                     className="form-check-label text-secondary"
-//                                     htmlFor="balance_detail"
-//                                 >
-//                                     Balance semi‑détaillée
-//                                 </label>
+//                     </div>
+//                 </div>
+//             </div>
+
+//             <div className="position-relative my-4"><hr className="border-2" style={{ borderColor: "#e9ecef" }} /><span className="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small"><i className="fas fa-chart-bar me-1"></i> Résultats</span></div>
+
+//             {/* Échéancier (inchangé) */}
+//             {fetchEcheancier && radioValue === "echeancier" && fetchEcheancier.length !== 0 && ( /* ... contenu existant ... */ )}
+
+//             {/* Tableau amortissement (inchangé) */}
+//             {fetchTableauAmortiss && radioValue === "tableau_ammortiss" && fetchTableauAmortiss.length !== 0 && ( 
+
+
+//              )}
+
+//             {/* Balance âgée (inchangé) */}
+//             {fetchBalanceAgee && fetchBalanceAgee.length !== 0 && radioValue === "balance_agee" && ( 
+//                 <div className="card border-0 shadow-sm rounded-3 mb-4">
+//                             <div className="card-body p-4">
+//                                 <div id="content-to-download-balance_agee">
+//                                     {/* En-tête */}
+//                                     <div className="text-center mb-4"><EnteteRapport /></div>
+                
+//                                     {/* Titre */}
+//                                     <div className="text-center mb-4">
+//                                         <h4 style={{ background: "#1a2632", padding: "10px", color: "#fff", borderRadius: "8px", display: "inline-block" }}>
+//                                             <i className="fas fa-balance-scale me-2"></i>BALANCE AGÉE EN {devise} - {dateParser(new Date())}
+//                                         </h4>
+//                                     </div>
+//                                     <div className="table-responsive">
+//                                      <table className="table table-bordered" style={{ fontSize: "12px" }}>
+//                                          <thead style={{ backgroundColor: "#1a2632", color: "white" }}>
+//                                              <tr>
+//                                                  <th rowSpan="2">N°</th><th rowSpan="2">NumDossier</th><th rowSpan="2">Num</th><th rowSpan="2">NomCompte</th>
+//                                                  <th rowSpan="2">Durée</th><th rowSpan="2">DateOctroi</th><th rowSpan="2">Échéance</th><th rowSpan="2">Accordé</th>
+//                                                  <th colSpan="2">Remboursé</th><th colSpan="2">Restant dû</th>
+//                                                  <th colSpan="5">En retard En Jours</th><th rowSpan="2">Jour de Retard</th>
+//                                              </tr>
+//                                              <tr><th>Capital</th><th>Intérêt</th><th>Capital</th><th>Intérêt</th>
+//                                                  <th>1 à 30</th><th>31 à 60</th><th>61 à 90</th><th>91 à 180</th><th>Plus de 180</th></tr>
+//                                          </thead>
+//                                          <tbody>
+//                                              {Object.entries(groupedData).map(([tranche, items]) => (
+//                                                  <React.Fragment key={tranche}>
+//                                                      {items.length > 0 && (
+//                                                          <>
+//                                                              <tr style={{ backgroundColor: "#444", color: "white" }}>
+//                                                                  <td colSpan="20"><strong>{tranche}</strong></td>
+//                                                              </tr>
+//                                                              {items.map((res, idx) => (
+//                                                                  <tr key={idx}>
+//                                                                      <td>{idx + 1}</td>
+//                                                                      <td>{res.NumDossier}</td>
+//                                                                      <td>{res.NumCompteCredit}</td>
+//                                                                      <td>{res.NomCompte}</td>
+//                                                                      <td>{res.Duree}</td>
+//                                                                      <td>{dateParser(res.DateOctroi)}</td>
+//                                                                      <td>{dateParser(res.DateEcheance)}</td>
+//                                                                      <td>{numberWithSpaces(res.MontantAccorde)}</td>
+//                                                                      <td>{numberWithSpaces(res.TotalCapitalRembourse?.toFixed(2))}</td>
+//                                                                      <td>{numberWithSpaces(res.TotalInteretRembourse?.toFixed(2))}</td>
+//                                                                      <td>{numberWithSpaces(res.CapitalRestant?.toFixed(2))}</td>
+//                                                                      <td>{numberWithSpaces(res.InteretRestant?.toFixed(2))}</td>
+//                                                                      <td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>
+//                                                                      <td>{res.NbrJrRetard}</td>
+//                                                                  </tr>
+//                                                              ))}
+//                                                          </>
+//                                                      )}
+//                                                  </React.Fragment>
+//                                              ))}
+//                                          </tbody>
+//                                      </table>
+//                                  </div>
+//                                </div>
+//                                </div>
+//                                </div>
+
+//              )}
+
+//             {/* AJOUT PAR - Affichage du rapport PAR */}
+//             {fetchParData && radioValue === "par" && fetchParData.length !== 0 && (
+//                 <div className="card border-0 shadow-sm rounded-3 mb-4">
+//                     <div className="card-body p-4">
+//                         <div id="content-to-download-par">
+//                             <div className="text-center mb-4"><EnteteRapport /></div>
+//                             <div className="text-center mb-4">
+//                                 <h4 style={{ background: "#1a2632", padding: "10px", color: "#fff", borderRadius: "8px", display: "inline-block" }}>
+//                                     <i className="fas fa-chart-pie me-2"></i>PORTEFEUILLE À RISQUE (PAR) - {devise || "Toutes devises"} au {dateParser(datePar)}
+//                                 </h4>
 //                             </div>
-//                             <div className="form-check">
-//                                 <input
-//                                     type="radio"
-//                                     className="form-check-input modern-radio"
-//                                     id="balance_consolide"
-//                                     value="consolide"
-//                                     checked={typeBalance === "consolide"}
-//                                     onChange={(e) =>
-//                                         setTypeBalance(e.target.value)
-//                                     }
-//                                 />
-//                                 <label
-//                                     className="form-check-label text-secondary"
-//                                     htmlFor="balance_consolide"
-//                                 >
-//                                     Balance consolidée
-//                                 </label>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//                 <div className="filter-card action-card">
-//                     <button
-//                         className="btn-primary-gradient"
-//                         onClick={handleSearch}
-//                     >
-//                         {loading ? (
-//                             <span className="spinner-border spinner-border-sm"></span>
-//                         ) : (
-//                             <i className="fas fa-chart-line"></i>
-//                         )}
-//                         Afficher la balance
-//                     </button>
-//                 </div>
-//             </div>
-
-//             {/* Résultats */}
-//             {balanceData.length > 0 && (
-//                 <div id="balance-content">
-//                     <div className="balance-report-card">
-//                        <div className="balance-report-header text-center">
-//     <EnteteRapport />
-
-//     <h3 className="fw-bold">
-//         BALANCE GENERALE DES COMPTES
-//     </h3>
-
-//     <p>
-//         DU {dateParser(date_debut)} AU {dateParser(date_fin)}
-//     </p>
-
-//     <p>
-//         Devise : <strong>{devise}</strong> | 
-//         Comptes : <strong>{compteDebut}</strong> à <strong>{compteFin}</strong>
-//     </p>
-// </div>
-//                         <div className="table-responsive">
-//                             <table className="balance-table">
-//                                <thead>
-//     <tr className="text-center">
-//         <th rowSpan="2">Compte</th>
-//         {typeBalance === "detail" && <th rowSpan="2">Libellé</th>}
-
-//         <th colSpan="2">REPORT</th>
-//         <th colSpan="2">MOUVEMENTS</th>
-//         <th colSpan="2">TOTAUX</th>
-//         <th colSpan="2">SOLDE</th>
-//     </tr>
-
-//     <tr className="text-center">
-//         <th>D</th>
-//         <th>C</th>
-
-//         <th>D</th>
-//         <th>C</th>
-
-//         <th>D</th>
-//         <th>C</th>
-
-//         <th>D</th>
-//         <th>C</th>
-//     </tr>
-// </thead>
-//                                 <tbody>
-//                                     {currentItems.map((item, idx) => (
-//                                         <tr key={idx}>
-//                                             <td>{item.compte || "---"}</td>
-//                                             {typeBalance === "detail" && (
-//                                                 <td>{item.libelle || ""}</td>
-//                                             )}
-//                                             <td className="text-end text-success">
-//                                                 {numberWithSpaces(
-//                                                     item.report_debit,
-//                                                 )}
-//                                             </td>
-//                                             <td className="text-end text-danger">
-//                                                 {numberWithSpaces(
-//                                                     item.report_credit,
-//                                                 )}
-//                                             </td>
-//                                             <td className="text-end text-success">
-//                                                 {numberWithSpaces(
-//                                                     item.mvt_debit,
-//                                                 )}
-//                                             </td>
-//                                             <td className="text-end text-danger">
-//                                                 {numberWithSpaces(
-//                                                     item.mvt_credit,
-//                                                 )}
-//                                             </td>
-//                                             <td className="text-end fw-bold">
-//                                                 {numberWithSpaces(
-//                                                     item.total_debit,
-//                                                 )}
-//                                             </td>
-//                                             <td className="text-end fw-bold">
-//                                                 {numberWithSpaces(
-//                                                     item.total_credit,
-//                                                 )}
-//                                             </td>
-//                                             <td className="text-end text-success">
-//                                                 {numberWithSpaces(
-//                                                     item.solde_debiteur,
-//                                                 )}
-//                                             </td>
-//                                             <td className="text-end text-danger">
-//                                                 {numberWithSpaces(
-//                                                     item.solde_crediteur,
-//                                                 )}
-//                                             </td>
+//                             <div className="table-responsive">
+//                                 <table className="table table-bordered table-striped" style={{ fontSize: "13px" }} id="par-table">
+//                                     <thead style={{ backgroundColor: "#1a2632", color: "white" }}>
+//                                         <tr>
+//                                             <th>N° Dossier</th><th>Référence Échéance</th><th>Capital à amortir</th><th>Date échéance</th>
+//                                             <th>Capital payé</th><th>Reste à payer</th><th>Jours de retard</th><th>Catégorie PAR</th><th>Gestionnaire</th>
 //                                         </tr>
-//                                     ))}
-//                                 </tbody>
-//                                 <tfoot className="balance-footer">
-//                                     <tr>
-//                                         <td
-//                                             colSpan={
-//                                                 typeBalance === "detail" ? 2 : 1
-//                                             }
-//                                             className="fw-bold"
-//                                         >
-//                                             TOTAUX
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.report_debit,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.report_credit,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.mvt_debit,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.mvt_credit,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.total_debit,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.total_credit,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.solde_debiteur,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                         <td className="text-end fw-bold">
-//                                             {numberWithSpaces(
-//                                                 balanceData.reduce(
-//                                                     (sum, i) =>
-//                                                         sum + i.solde_crediteur,
-//                                                     0,
-//                                                 ),
-//                                             )}
-//                                         </td>
-//                                     </tr>
-//                                 </tfoot>
-//                             </table>
+//                                     </thead>
+//                                     <tbody>
+//                                         {fetchParData.map((item, idx) => (
+//                                             <tr key={idx}>
+//                                                 <td>{item.NumDossier}</td>
+//                                                 <td>{item.ReferenceEch}</td>
+//                                                 <td className="text-end">{numberWithSpaces(item.CapAmmorti)}</td>
+//                                                 <td>{dateParser(item.DateTranch)}</td>
+//                                                 <td className="text-end">{numberWithSpaces(item.CapitalPaye)}</td>
+//                                                 <td className="text-end fw-bold text-danger">{numberWithSpaces(item.ResteAPayer)}</td>
+//                                                 <td>{item.JoursRetard}</td>
+//                                                 <td><span className={`badge ${item.PAR_Category === 'OK' ? 'bg-success' : 'bg-warning text-dark'}`}>{item.PAR_Category}</span></td>
+//                                                 <td>{item.Gestionnaire}</td>
+//                                             </tr>
+//                                         ))}
+//                                     </tbody>
+//                                 </table>
+//                             </div>
 //                         </div>
-//                         {totalPages > 1 && (
-//                             <PaginationModerne
-//                                 currentPage={currentPage}
-//                                 totalPages={totalPages}
-//                                 onPageChange={setCurrentPage}
-//                             />
-//                         )}
-//                     </div>
-//                     <div className="balance-export-buttons">
-//                         <button className="btn-excel" onClick={exportToExcel}>
-//                             <i className="fas fa-file-excel"></i> Excel
-//                         </button>
-//                         <button className="btn-pdf" onClick={exportToPDF}>
-//                             <i className="fas fa-file-pdf"></i> PDF
-//                         </button>
+//                         <div className="d-flex justify-content-end gap-2 mt-4">
+//                             <button onClick={() => exportTableData("par-table")} className="btn" style={{ background: "#28a745", color: "white", borderRadius: "8px" }}>
+//                                 <i className="fas fa-file-excel me-2"></i>Exporter Excel
+//                             </button>
+//                             <button onClick={exportToPDFPar} className="btn" style={{ background: "#dc3545", color: "white", borderRadius: "8px" }}>
+//                                 <i className="fas fa-file-pdf me-2"></i>Exporter PDF
+//                             </button>
+//                         </div>
 //                     </div>
 //                 </div>
 //             )}
 
-//             {balanceData.length === 0 && !loading && (
-//                 <div className="balance-empty">
-//                     <i className="fas fa-scale-balanced"></i>
-//                     <p>
-//                         Aucune donnée trouvée pour la période et la plage de
-//                         comptes sélectionnées.
-//                     </p>
-//                     <span>Modifiez les filtres et réessayez.</span>
-//                 </div>
+//             {/* Message aucun résultat (adapté) */}
+//             {radioValue && !fetchEcheancier && !fetchTableauAmortiss && !fetchBalanceAgee && !fetchParData && (
+//                 <div className="text-center py-5"><i className="fas fa-inbox fa-4x mb-3 text-muted"></i><p className="text-muted">Aucune donnée à afficher.</p></div>
 //             )}
-
-//             <style jsx>{`
-//                 .balance-container {
-//                     background: #f4f7fc;
-//                     min-height: 100vh;
-//                     padding: 20px 24px;
-//                     font-family: "Inter", system-ui, sans-serif;
-//                 }
-//                 .loader-overlay {
-//                     position: fixed;
-//                     top: 0;
-//                     left: 0;
-//                     width: 100%;
-//                     height: 100%;
-//                     background: rgba(0, 0, 0, 0.6);
-//                     backdrop-filter: blur(4px);
-//                     display: flex;
-//                     justify-content: center;
-//                     align-items: center;
-//                     z-index: 1050;
-//                 }
-//                 .loader-card {
-//                     background: white;
-//                     border-radius: 28px;
-//                     padding: 30px 40px;
-//                     text-align: center;
-//                     box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
-//                 }
-//                 .balance-header {
-//                     background: linear-gradient(135deg, #0f766e, #14b8a6);
-//                     border-radius: 28px;
-//                     padding: 20px 28px;
-//                     margin-bottom: 32px;
-//                     box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
-//                 }
-//                 .balance-header-content {
-//                     display: flex;
-//                     align-items: center;
-//                     gap: 20px;
-//                     color: white;
-//                 }
-//                 .balance-header-icon {
-//                     background: rgba(255, 255, 255, 0.2);
-//                     width: 60px;
-//                     height: 60px;
-//                     border-radius: 20px;
-//                     display: flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                     font-size: 28px;
-//                 }
-//                 .balance-header h1 {
-//                     margin: 0;
-//                     font-size: 1.8rem;
-//                     font-weight: 700;
-//                 }
-//                 .balance-header p {
-//                     margin: 4px 0 0;
-//                     opacity: 0.85;
-//                 }
-//                 .balance-filters {
-//                     display: grid;
-//                     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-//                     gap: 20px;
-//                     margin-bottom: 40px;
-//                 }
-//                 .filter-card {
-//                     background: white;
-//                     border-radius: 24px;
-//                     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
-//                     transition:
-//                         transform 0.2s,
-//                         box-shadow 0.2s;
-//                     overflow: hidden;
-//                 }
-//                 .filter-card:hover {
-//                     transform: translateY(-4px);
-//                     box-shadow: 0 16px 28px -8px rgba(0, 0, 0, 0.12);
-//                 }
-//                 .filter-header {
-//                     background: #f8fafc;
-//                     padding: 14px 20px;
-//                     font-weight: 600;
-//                     color: #1e293b;
-//                     border-bottom: 1px solid #eef2ff;
-//                 }
-//                 .filter-header i {
-//                     color: #6366f1;
-//                     margin-right: 8px;
-//                 }
-//                 .filter-body {
-//                     padding: 20px;
-//                     display: flex;
-//                     flex-direction: column;
-//                     gap: 14px;
-//                 }
-//                 .filter-body label {
-//                     font-size: 0.7rem;
-//                     font-weight: 700;
-//                     text-transform: uppercase;
-//                     letter-spacing: 0.5px;
-//                     color: #475569;
-//                 }
-//                 .modern-input,
-//                 .modern-select {
-//                     border: 1px solid #e2e8f0;
-//                     border-radius: 16px;
-//                     padding: 12px 16px;
-//                     font-size: 0.9rem;
-//                     transition: all 0.2s;
-//                     background: white;
-//                     width: 100%;
-//                 }
-//                 .modern-input:focus,
-//                 .modern-select:focus {
-//                     border-color: #6366f1;
-//                     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-//                     outline: none;
-//                 }
-//                 .action-card {
-//                     background: transparent;
-//                     box-shadow: none;
-//                     display: flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                 }
-//                 .btn-primary-gradient {
-//                     background: linear-gradient(105deg, #10b981, #059669);
-//                     border: none;
-//                     border-radius: 40px;
-//                     padding: 14px 20px;
-//                     width: 100%;
-//                     color: white;
-//                     font-weight: 700;
-//                     font-size: 0.95rem;
-//                     display: flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                     gap: 10px;
-//                     transition: all 0.25s;
-//                     cursor: pointer;
-//                 }
-//                 .btn-primary-gradient:hover {
-//                     transform: scale(1.02);
-//                     background: linear-gradient(105deg, #059669, #047857);
-//                     box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
-//                 }
-//                 .balance-report-card {
-//                     background: white;
-//                     border-radius: 28px;
-//                     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
-//                     overflow: hidden;
-//                     margin-bottom: 24px;
-//                 }
-//                 .balance-report-header {
-//                     text-align: center;
-//                     padding: 24px 20px 16px;
-//                     border-bottom: 1px solid #edf2f7;
-//                 }
-//                 .balance-report-header h2 {
-//                     margin: 12px 0 4px;
-//                     font-size: 1.4rem;
-//                     font-weight: 700;
-//                     color: #0f172a;
-//                 }
-//                 .balance-table {
-//                     width: 100%;
-//                     border-collapse: collapse;
-//                     font-size: 0.85rem;
-//                 }
-//                 .balance-table thead th {
-//                     background: #f1f5f9;
-//                     padding: 14px 12px;
-//                     font-weight: 600;
-//                     color: #1e293b;
-//                     border-bottom: 1px solid #e2e8f0;
-//                     position: sticky;
-//                     top: 0;
-//                 }
-//                 .balance-table tbody td {
-//                     padding: 10px 12px;
-//                     border-bottom: 1px solid #f0f2f5;
-//                 }
-//                 .balance-table tbody tr:hover {
-//                     background: #fafcff;
-//                 }
-//                 .balance-footer {
-//                     background: #f8fafc;
-//                     font-weight: 700;
-//                     border-top: 2px solid #e2e8f0;
-//                 }
-//                 .text-end {
-//                     text-align: right;
-//                 }
-//                 .text-success {
-//                     color: #10b981;
-//                 }
-//                 .text-danger {
-//                     color: #ef4444;
-//                 }
-//                 .fw-bold {
-//                     font-weight: 700;
-//                 }
-//                 .balance-export-buttons {
-//                     display: flex;
-//                     justify-content: flex-end;
-//                     gap: 16px;
-//                     margin-bottom: 20px;
-//                 }
-//                 .btn-excel,
-//                 .btn-pdf {
-//                     border: none;
-//                     border-radius: 40px;
-//                     padding: 10px 24px;
-//                     font-weight: 600;
-//                     font-size: 0.85rem;
-//                     display: inline-flex;
-//                     align-items: center;
-//                     gap: 8px;
-//                     transition: all 0.2s;
-//                     cursor: pointer;
-//                 }
-//                 .btn-excel {
-//                     background: #10b981;
-//                     color: white;
-//                 }
-//                 .btn-excel:hover {
-//                     background: #059669;
-//                     transform: translateY(-2px);
-//                     box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
-//                 }
-//                 .btn-pdf {
-//                     background: #ef4444;
-//                     color: white;
-//                 }
-//                 .btn-pdf:hover {
-//                     background: #dc2626;
-//                     transform: translateY(-2px);
-//                     box-shadow: 0 6px 12px rgba(239, 68, 68, 0.3);
-//                 }
-//                 .balance-empty {
-//                     text-align: center;
-//                     background: white;
-//                     border-radius: 32px;
-//                     padding: 60px 20px;
-//                     margin-top: 20px;
-//                     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.05);
-//                 }
-//                 .balance-empty i {
-//                     font-size: 48px;
-//                     color: #cbd5e1;
-//                     margin-bottom: 16px;
-//                 }
-//                 .pagination-modern {
-//                     display: flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                     gap: 0.5rem;
-//                     flex-wrap: wrap;
-//                     margin-top: 1.5rem;
-//                     padding-bottom: 20px;
-//                 }
-//                 .page-number,
-//                 .page-nav {
-//                     min-width: 40px;
-//                     height: 40px;
-//                     display: inline-flex;
-//                     align-items: center;
-//                     justify-content: center;
-//                     border: none;
-//                     background: white;
-//                     border-radius: 14px;
-//                     font-weight: 500;
-//                     font-size: 0.9rem;
-//                     color: #1e293b;
-//                     cursor: pointer;
-//                     transition: all 0.2s ease;
-//                     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-//                     padding: 0 0.75rem;
-//                 }
-//                 .page-number {
-//                     background: #f8fafc;
-//                     border: 1px solid #e2e8f0;
-//                 }
-//                 .page-number.active {
-//                     background: linear-gradient(135deg, #6366f1, #8b5cf6);
-//                     border-color: transparent;
-//                     color: white;
-//                     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-//                 }
-//                 .page-nav {
-//                     background: #f1f5f9;
-//                     border: 1px solid #e2e8f0;
-//                 }
-//                 .page-nav:disabled {
-//                     opacity: 0.4;
-//                     cursor: not-allowed;
-//                 }
-//                 .page-info {
-//                     margin-left: 1rem;
-//                     font-size: 0.8rem;
-//                     color: #475569;
-//                     background: #f1f5f9;
-//                     padding: 0.3rem 0.8rem;
-//                     border-radius: 30px;
-//                 }
-//                 @media (max-width: 768px) {
-//                     .balance-container {
-//                         padding: 12px;
-//                     }
-//                     .balance-header h1 {
-//                         font-size: 1.4rem;
-//                     }
-//                     .balance-filters {
-//                         grid-template-columns: 1fr;
-//                     }
-//                     .balance-table {
-//                         font-size: 0.75rem;
-//                     }
-//                 }
-
-
-//                 .balance-table {
-//     width: 100%;
-//     border-collapse: collapse;
-//     font-size: 13px;
-// }
-
-// .balance-table th,
-// .balance-table td {
-//     border: 1px solid #ddd;
-//     padding: 6px;
-// }
-
-// .balance-table thead {
-//     background: #f5f7fa;
-//     font-weight: bold;
-// }
-
-// .balance-table thead tr:first-child {
-//     background: #e9ecef;
-//     font-size: 14px;
-// }
-
-// .balance-table tbody tr:hover {
-//     background: #f9f9f9;
-// }
-
-// .balance-table td {
-//     text-align: right;
-// }
-
-// .balance-table td:first-child,
-// .balance-table td:nth-child(2) {
-//     text-align: left;
-// }
-
-// .balance-footer {
-//     background: #e9ecef;
-//     font-weight: bold;
-// }
-
-// .text-success {
-//     color: #198754;
-// }
-
-// .text-danger {
-//     color: #dc3545;
-// }
-
-
-
-// .balance-table td:nth-child(3),
-// .balance-table th:nth-child(3),
-// .balance-table td:nth-child(5),
-// .balance-table th:nth-child(5),
-// .balance-table td:nth-child(7),
-// .balance-table th:nth-child(7),
-// .balance-table td:nth-child(9),
-// .balance-table th:nth-child(9) {
-//     border-left: 2px solid #000;
-// }
-//             `}</style>
+//             <div style={{ height: "30px" }}></div>
 //         </div>
 //     );
 // };
 
-// export default Balance;
-
+// export default Echeancier;

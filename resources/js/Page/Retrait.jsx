@@ -40,6 +40,12 @@ const RetraitEspece = () => {
     const [getBilletageUSD, setGetBilletageUSD] = useState();
     const [selectedData, setSelectedData] = useState(null);
     const [isLoadingBar, setIsLoadingBar] = useState();
+    const [fetchInfo, setFetchInfo] = useState(false);
+
+      const [fetchBilletageCDF,setFetchBilletageCDF]=useState();
+      const [fetchBilletageUSD,setFetchBilletageUSD]=useState();
+
+    
     //GET SEACHED DATA
     const getSeachedData = async (e) => {
         e.preventDefault();
@@ -63,6 +69,7 @@ const RetraitEspece = () => {
     useEffect(() => {
         getCommissionConfig();
         getBilletage();
+        GetInformation();
     }, []);
 
     const getBilletage = async () => {
@@ -70,6 +77,18 @@ const RetraitEspece = () => {
         if (res.data.status == 1) {
             setGetBilletageCDF(res.data.dataCDF);
             setGetBilletageUSD(res.data.dataUSD);
+        }
+    };
+
+
+      const GetInformation = async () => {
+        const res = await axios.get(
+            "/eco/page/delestage/get-billetage-caissier"
+        );
+        if (res.data.status == 1) {
+            setFetchBilletageCDF(res.data.billetageCDF[0]);
+            setFetchBilletageUSD(res.data.billetageUSD[0]);
+            setFetchInfo(true);
         }
     };
 
@@ -135,6 +154,7 @@ const RetraitEspece = () => {
                 confirmButtonText: "Okay",
             });
             getBilletage();
+            GetInformation();
         } else if (res.data.status == 0) {
             setloading(false);
             setIsLoadingBar(false);
@@ -155,6 +175,16 @@ const RetraitEspece = () => {
     const handlePrintClick = (data) => {
         setSelectedData(data);
     };
+
+
+      function numberWithSpaces(x) {
+        if (x === null || x === undefined) {
+            return "0.00"; // ou une autre valeur par défaut appropriée
+        }
+        var parts = x.toString().split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        return parts.join(".");
+    }
 
     return (
     <div className="container-fluid" style={{ marginTop: "10px", padding: "0 15px" }}>
@@ -294,6 +324,119 @@ const RetraitEspece = () => {
                 </div>
             </div>
         </div>
+         {/* Billetage Disponible */}
+       
+
+                 {fetchInfo &&
+                <div className="col-md-4">
+                    <div className="card border-0 shadow-sm rounded-3 h-100">
+                        <div className="card-header bg-white border-0 pt-3">
+                            <h6 className="fw-bold" style={{ color: "steelblue" }}>
+                                <i className="fas fa-money-bill me-2"></i>Billetage Disponible en CDF
+                            </h6>
+                        </div>
+                        <div className="card-body" style={{ maxHeight: "450px", overflowY: "auto" }}>
+                            {
+                                 fetchBilletageCDF && (
+                                    <div className="table-responsive">
+                                        <table className="table table-bordered table-sm">
+                                            <thead style={{ backgroundColor: "#e6f2f9" }}>
+                                                <tr style={{ color: "steelblue" }}>
+                                                    <th>Coupure</th>
+                                                    <th>Nbr Billets</th>
+                                                    <th>Montant</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {[
+                                                    { label: "20 000", value: fetchBilletageCDF.vightMilleFranc, multiplier: 20000 },
+                                                    { label: "10 000", value: fetchBilletageCDF.dixMilleFranc, multiplier: 10000 },
+                                                    { label: "5 000", value: fetchBilletageCDF.cinqMilleFranc, multiplier: 5000 },
+                                                    { label: "1 000", value: fetchBilletageCDF.milleFranc, multiplier: 1000 },
+                                                    { label: "500", value: fetchBilletageCDF.cinqCentFranc, multiplier: 500 },
+                                                    { label: "200", value: fetchBilletageCDF.deuxCentFranc, multiplier: 200 },
+                                                    { label: "100", value: fetchBilletageCDF.centFranc, multiplier: 100 },
+                                                    { label: "50", value: fetchBilletageCDF.cinquanteFanc, multiplier: 50 }
+                                                ].map((item, idx) => (
+                                                    <tr key={idx}>
+                                                        <td className="fw-semibold">{item.label} X</td>
+                                                        <td>{parseInt(item.value) || 0}</td>
+                                                        <td className="text-success">{(parseInt(item.value) * item.multiplier).toLocaleString()}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr style={{ backgroundColor: "#6c757d", color: "white" }}>
+                                                    <th colSpan="2">Total</th>
+                                                    <th className="fw-bold">
+                                                        {fetchBilletageCDF.sommeMontantCDF !== undefined && 
+                                                            numberWithSpaces(parseInt(fetchBilletageCDF.sommeMontantCDF))}
+                                                    </th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                )
+                            }
+                        </div>
+                    </div>
+                </div>
+                }
+
+                  {fetchInfo &&
+                <div className="col-md-4">
+                    <div className="card border-0 shadow-sm rounded-3 h-100">
+                        <div className="card-header bg-white border-0 pt-3">
+                            <h6 className="fw-bold" style={{ color: "steelblue" }}>
+                                <i className="fas fa-money-bill me-2"></i>Billetage Disponible en USD
+                            </h6>
+                        </div>
+                        <div className="card-body" style={{ maxHeight: "450px", overflowY: "auto" }}>
+                           {
+                            fetchBilletageUSD && (
+                                    <div className="table-responsive">
+                                        <table className="table table-bordered table-sm">
+                                            <thead style={{ backgroundColor: "#e6f2f9" }}>
+                                                <tr style={{ color: "steelblue" }}>
+                                                    <th>Coupure</th>
+                                                    <th>Nbr Billets</th>
+                                                    <th>Montant</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {[
+                                                    { label: "100", value: fetchBilletageUSD.centDollars, multiplier: 100 },
+                                                    { label: "50", value: fetchBilletageUSD.cinquanteDollars, multiplier: 50 },
+                                                    { label: "20", value: fetchBilletageUSD.vightDollars, multiplier: 20 },
+                                                    { label: "10", value: fetchBilletageUSD.dixDollars, multiplier: 10 },
+                                                    { label: "5", value: fetchBilletageUSD.cinqDollars, multiplier: 5 },
+                                                    { label: "1", value: fetchBilletageUSD.unDollars, multiplier: 1 }
+                                                ].map((item, idx) => (
+                                                    <tr key={idx}>
+                                                        <td className="fw-semibold">{item.label} X</td>
+                                                        <td>{parseInt(item.value) || 0}</td>
+                                                        <td className="text-success">{(parseInt(item.value) * item.multiplier).toLocaleString()}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr style={{ backgroundColor: "#6c757d", color: "white" }}>
+                                                    <th colSpan="2">Total</th>
+                                                    <th className="fw-bold">
+                                                        {fetchBilletageUSD.sommeMontantUSD !== undefined && 
+                                                            numberWithSpaces(parseInt(fetchBilletageUSD.sommeMontantUSD))}
+                                                    </th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                )
+                           }
+                        </div>
+                    </div>
+                </div>
+                }
+
     </div>
 
     {/* Séparateur décoratif */}
