@@ -4,11 +4,17 @@ namespace App\Http\Controllers;
 
 use Exception;
 use App\Models\Comptes;
+use App\Models\CompteurTransaction;
+use App\Models\EpargneAdhesionModel;
+use App\Models\SendedSMS;
 use App\Models\SMSBanking;
 use App\Models\TauxEtDateSystem;
+use App\Models\Transactions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 
 class SMSBankingController extends Controller
 {
@@ -85,7 +91,7 @@ class SMSBankingController extends Controller
 
     public function getLastestSMSBankingUsers()
     {
-        $data = DB::select('SELECT * FROM s_m_s_bankings ORDER BY id  DESC LIMIT 8');
+        $data = DB::select('SELECT * FROM s_m_s_bankings ORDER BY id  DESC LIMIT 100');
         return response()->json(["success" => 1, "data" => $data]);
     }
 
@@ -193,4 +199,199 @@ class SMSBankingController extends Controller
             //return redirect('/home');
         }
     }
+
+
+
+
+
+
+ public function prelevementFraisSMS(Request $request)
+{
+    try {
+        DB::beginTransaction();
+
+        $dateDebut = Carbon::parse($request->dateDebut)->startOfDay();
+        $dateFin   = Carbon::parse($request->dateFin)->endOfDay();
+        $exonere   = $request->input('exonere', []);
+
+        // $ref = 'SMS_' . $dateDebut->format('Ym');
+        // if (Transactions::where('reference', $ref)->exists()) {
+        //     return response()->json(['success' => false, 'message' => 'Prélèvement déjà effectué pour cette période.'], 400);
+        // }
+
+
+        // Option 1 : suppression pure et simple (déconseillé si le processus est critique)
+// Option 2 : vérifier s'il y a encore des messages à facturer, sinon ignorer
+$remaining = SendedSMS::whereBetween('dateEnvoie', [$dateDebut, $dateFin])
+    ->where('messageStatus', 1)
+    ->where('paidStatus', 0)
+    ->count();
+
+if ($remaining == 0) {
+    return response()->json(['success' => false, 'message' => 'Aucun message à prélever pour cette période.'], 400);
+}
+
+        $taux = TauxEtDateSystem::orderBy('id', 'desc')->first();
+        $tauxFc = $taux ? $taux->TauxEnFc : 1;
+        // Récupération de la date système (à adapter selon votre table)
+        $dataSystem = TauxEtDateSystem::latest()->first();; 
+        $dateSysteme = $dataSystem ? $dataSystem->DateSystem : now();
+        $codeAgence = Auth::user()->codeAgence ?? '20'; // à adapter
+
+        // Requête des messages éligibles
+        $query = SendedSMS::whereBetween('dateEnvoie', [$dateDebut, $dateFin])
+            ->where('messageStatus', 1)
+            ->where('paidStatus', 0);
+
+        if (!empty($exonere)) {
+            $query->whereNotIn('statut', $exonere);
+        }
+
+        $messages = $query->get();
+
+        if ($messages->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'Aucun message éligible non exonéré trouvé.']);
+        }
+
+        // Grouper par compte et devise
+        $grouped = $messages->groupBy(function($item) {
+            return $item->NumCompte . '_' . $item->CodeMonnaie;
+        });
+
+        $now = now();
+        $comptesInsuffisants = [];
+        $idsTraites = []; // IDs des messages effectivement prélevés
+
+        foreach ($grouped as $key => $msgs) {
+            [$compte, $devise] = explode('_', $key);
+            $nb = $msgs->count();
+           $getFraisSms = EpargneAdhesionModel::first();
+           $fraisSMS = $getFraisSms ? $getFraisSms->fraisSMS : 0;
+            $montant = $devise == 1 ? $nb * $fraisSMS : $nb * $fraisSMS * $tauxFc;
+
+            // Vérification du solde du compte
+            if ($devise == 1) {
+                $solde = Transactions::select(DB::raw("SUM(Creditusd) - SUM(Debitusd) as solde"))
+                    ->where('NumCompte', $compte)
+                    ->where('CodeMonnaie', 1)
+                    ->first();
+                $soldeActuel = $solde ? $solde->solde : 0;
+            } else {
+                $solde = Transactions::select(DB::raw("SUM(Creditfc) - SUM(Debitfc) as solde"))
+                    ->where('NumCompte', $compte)
+                    ->where('CodeMonnaie', 2)
+                    ->first();
+                $soldeActuel = $solde ? $solde->solde : 0;
+            }
+
+            if ($soldeActuel < $montant) {
+                $comptesInsuffisants[] = [
+                    'compte' => $compte,
+                    'devise' => $devise == 1 ? 'USD' : 'FC',
+                    'solde' => $soldeActuel,
+                    'montantRequis' => $montant
+                ];
+                continue;
+            }
+
+            // ---- Génération du NumTransaction pour le débit ----
+            $compteur = CompteurTransaction::create(['fakevalue' => '0000']);
+            $numOperation = CompteurTransaction::latest()->first();
+            $NumTransaction = substr(Auth::user()->name, 0, 2) . "00" . $numOperation->id;
+            $numDossier = "DOS0" . $numOperation->id;
+            $numDemande = "SMS0" . $numOperation->id;
+
+            // Préparer les montants en USD/FC
+            $debitUsd = ($devise == 1) ? $montant : 0;
+            $debitFc  = ($devise == 2) ? $montant : 0;
+
+            // Écriture : Débit du compte client
+            Transactions::create([
+                'NumTransaction'   => $NumTransaction,
+                'DateTransaction'  => $dateSysteme,
+                'DateSaisie'       => $dateSysteme,
+                'Taux'             => $tauxFc,
+                'TypeTransaction'  => 'D', // Débit
+                'CodeMonnaie'      => $devise,
+                'CodeAgence'       => $codeAgence,
+                'NumDossier'       => $numDossier,
+                'NumDemande'       => $numDemande,
+                'NumCompte'        => $compte,
+                'Debit'            => $montant,
+                'Debitusd'         => $debitUsd,
+                'Debitfc'          => $debitFc,
+                'Credit'           => 0,
+                'Creditusd'        => 0,
+                'Creditfc'         => 0,
+                'NomUtilisateur'   => Auth::user()->name,
+                'Libelle'          => "Frais SMS pour {$nb} messages du {$dateDebut->toDateString()} au {$dateFin->toDateString()}",
+            ]);
+
+            // ---- Génération d'un second numéro pour le crédit (compte produit) ----
+            $compteurProd = CompteurTransaction::create(['fakevalue' => '0000']);
+            $numOperationProd = CompteurTransaction::latest()->first();
+            $NumTransactionProd = substr(Auth::user()->name, 0, 2) . "00" . $numOperationProd->id;
+            $numDossierProd = "DOS0" . $numOperationProd->id;
+            $numDemandeProd = "SMS0" . $numOperationProd->id;
+
+            $compteProduit = ($devise == 1) ? '7000201' : '7000202';
+            $creditUsd = ($devise == 1) ? $montant : 0;
+            $creditFc  = ($devise == 2) ? $montant : 0;
+
+            // Écriture : Crédit du compte produit
+            Transactions::create([
+                'NumTransaction'   => $NumTransactionProd,
+                'DateTransaction'  => $dateSysteme,
+                'DateSaisie'       => $dateSysteme,
+                'Taux'             => $tauxFc,
+                'TypeTransaction'  => 'C', // Crédit
+                'CodeMonnaie'      => $devise,
+                'CodeAgence'       => $codeAgence,
+                'NumDossier'       => $numDossierProd,
+                'NumDemande'       => $numDemandeProd,
+                'NumCompte'        => $compteProduit,
+                'Debit'            => 0,
+                'Debitusd'         => 0,
+                'Debitfc'          => 0,
+                'Credit'           => $montant,
+                'Creditusd'        => $creditUsd,
+                'Creditfc'         => $creditFc,
+                'NomUtilisateur'   => Auth::user()->name,
+                'Libelle'          => "Produit frais SMS - période {$dateDebut->toDateString()} au {$dateFin->toDateString()}",
+            ]);
+
+            // Mémoriser les IDs des messages de ce compte pour les marquer comme prélevés
+            foreach ($msgs as $msg) {
+                $idsTraites[] = $msg->id;
+            }
+        }
+
+        // Mettre à jour le statut paidStatus des messages effectivement facturés
+        if (!empty($idsTraites)) {
+            SendedSMS::whereIn('id', $idsTraites)->update(['paidStatus' => 1]);
+        }
+
+        DB::commit();
+
+        // Construction du message de retour
+        $message = "Prélèvement effectué. " . count($idsTraites) . " message(s) facturé(s).";
+        if (!empty($comptesInsuffisants)) {
+            $message .= " Solde insuffisant pour les comptes : ";
+            foreach ($comptesInsuffisants as $ins) {
+                $message .= "{$ins['compte']} ({$ins['devise']}) , ";
+            }
+            $message = rtrim($message, ', ');
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'insuffisants' => $comptesInsuffisants // facultatif
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json(['success' => false, 'message' => 'Erreur : ' . $e->getMessage()], 500);
+    }
+}
 }

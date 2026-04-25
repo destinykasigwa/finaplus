@@ -205,6 +205,7 @@ class ComptesParamController extends Controller
     //UPDATE THE DAYS OF USERS PASSWORD EXPIRATION
     public function UpdateExpirateDateConfig(Request $request)
     {
+        
         if (isset($request->password_expired_days_user_id)) {
             ExpirateDateConfig::where("id", $request->password_expired_days_user_id)->update([
                 "password_expired_days" => $request->password_expired_days,
@@ -215,7 +216,9 @@ class ComptesParamController extends Controller
             ]);
             $id = EpargneAdhesionModel::first()->id;
             EpargneAdhesionModel::where("id", $id)->update([
-                "show_commission_pannel" => $request->showCommissionPanel == true ? 1 : 0
+                "show_commission_pannel" => $request->showCommissionPanel == true ? 1 : 0,
+                "type_recu"=>$request->typeRecu,
+                "fraisSMS" =>$request->FraisSMS
             ]);
 
             return response()->json(["status" => 1, "msg" => "Mise à jour réussie."]);
@@ -543,11 +546,11 @@ class ComptesParamController extends Controller
     public function getCreatedAccount()
     {
         $data = Comptes::whereIn('nature_compte', [
-        'ACTIF',
-        'PASSIF',
+        // 'ACTIF',
+        // 'PASSIF',
         'PRODUIT',
         'CHARGE',
-        'HORS BILAN'
+        // 'HORS BILAN'
     ])
     ->where('niveau', 5)
     ->orderByRaw("CASE 

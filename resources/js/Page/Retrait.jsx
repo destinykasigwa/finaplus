@@ -4,6 +4,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import RecuDepot from "./Modals/RecuDepot";
 import { Bars } from "react-loader-spinner";
+import RecuDepotA5 from "./Modals/RecuDepotA5";
 // import { useNavigate } from "react-router-dom";
 
 const RetraitEspece = () => {
@@ -36,6 +37,7 @@ const RetraitEspece = () => {
     const [error, setError] = useState([]);
     const [Commission, setCommission] = useState(0);
     const [GetCommissionConfig, setGetCommissionConfig] = useState("");
+    const [GetRecuConfig, setGetRecuConfig] = useState("");
     const [getBilletageCDF, setGetBilletageCDF] = useState();
     const [getBilletageUSD, setGetBilletageUSD] = useState();
     const [selectedData, setSelectedData] = useState(null);
@@ -44,6 +46,7 @@ const RetraitEspece = () => {
 
       const [fetchBilletageCDF,setFetchBilletageCDF]=useState();
       const [fetchBilletageUSD,setFetchBilletageUSD]=useState();
+      
 
     
     //GET SEACHED DATA
@@ -97,6 +100,7 @@ const RetraitEspece = () => {
         if (res.data.status == 1) {
             console.log(res.data.data);
             setGetCommissionConfig(res.data.data);
+            setGetRecuConfig(res.data.type_recu);
         }
     };
     const saveOperation = async (e) => {
@@ -339,7 +343,7 @@ const RetraitEspece = () => {
                             {
                                  fetchBilletageCDF && (
                                     <div className="table-responsive">
-                                        <table className="table table-bordered table-sm">
+                                        <table className="table table-bordered table-sm table-ultra-compact" style={{ fontSize: "12px", whiteSpace: "nowrap" }}>
                                             <thead style={{ backgroundColor: "#e6f2f9" }}>
                                                 <tr style={{ color: "steelblue" }}>
                                                     <th>Coupure</th>
@@ -395,7 +399,7 @@ const RetraitEspece = () => {
                            {
                             fetchBilletageUSD && (
                                     <div className="table-responsive">
-                                        <table className="table table-bordered table-sm">
+                                        <table className="table table-bordered table-sm table-ultra-compact">
                                             <thead style={{ backgroundColor: "#e6f2f9" }}>
                                                 <tr style={{ color: "steelblue" }}>
                                                     <th>Coupure</th>
@@ -733,7 +737,7 @@ const RetraitEspece = () => {
                                 <small className="fw-bold" style={{ color: "steelblue" }}>CDF</small>
                             </div>
                             <div className="table-responsive">
-                                <table className="table table-sm table-hover mb-3">
+                                <table className="table table-sm table-hover mb-3 table-ultra-compact">
                                     <thead>
                                         <tr style={{ color: "steelblue" }}>
                                             <th>Réf.</th>
@@ -773,7 +777,7 @@ const RetraitEspece = () => {
                                 <small className="fw-bold" style={{ color: "steelblue" }}>USD</small>
                             </div>
                             <div className="table-responsive">
-                                <table className="table table-sm table-hover">
+                                <table className="table table-sm table-hover table-ultra-compact">
                                     <thead>
                                         <tr style={{ color: "steelblue" }}>
                                             <th>Réf.</th>
@@ -820,7 +824,27 @@ const RetraitEspece = () => {
     </div>
 
     {/* Modal d'impression */}
-    {selectedData && <RecuDepot data={selectedData} />}
+     {selectedData &&
+                            (GetRecuConfig === "Thermique" ? (
+                                <RecuDepot data={selectedData} />
+                            ) : GetRecuConfig === "A5" ? (
+                                <RecuDepotA5 data={selectedData} />
+                            ) : null)}
+    <style>
+        {`
+        /* Styles personnalisés pour un tableau ultra compact */
+.table-ultra-compact {
+    border-collapse: collapse;
+}
+
+.table-ultra-compact th,
+.table-ultra-compact td {
+    padding: 0.2rem 0.35rem; /* Réduction drastique du padding */
+    line-height: 1.2;
+    font-size: 0.8rem; /* Optionnel : légère réduction de la police */
+}
+        `}
+    </style>
 </div>
     );
 };

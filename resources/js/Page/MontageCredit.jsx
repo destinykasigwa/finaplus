@@ -2464,71 +2464,25 @@ const handleMontantChange = (e) => {
             <div className="row mt-4">
                 <div className="col-12">
                     <div className="card border-0 shadow-sm rounded-3">
-                        <ul
-                            className="nav nav-tabs"
-                            id="creditTabs"
-                            role="tablist"
-                            style={{
-                                background: "#f8f9fa",
-                                borderRadius: "12px 12px 0 0",
-                                borderBottom: "none",
-                                padding: "0 15px",
-                            }}
-                        >
-                            <li className="nav-item">
-                                <a
-                                    className="nav-link active"
-                                    id="echeancier-tab"
-                                    data-toggle="pill"
-                                    href="#echeancier"
-                                    role="tab"
-                                    style={{
-                                        color: "#20c997",
-                                        fontWeight: "bold",
-                                        border: "none",
-                                        padding: "12px 20px",
-                                    }}
-                                >
-                                    <i className="fas fa-calendar-alt me-2"></i>
-                                    Échéancier
-                                </a>
-                            </li>
-                            <li className="nav-item">
-                                <a
-                                    className="nav-link"
-                                    id="remboursement-tab"
-                                    data-toggle="pill"
-                                    href="#remboursement"
-                                    role="tab"
-                                    style={{
-                                        color: "#6c757d",
-                                        fontWeight: "bold",
-                                        border: "none",
-                                        padding: "12px 20px",
-                                    }}
-                                >
-                                    <i className="fas fa-hand-holding-usd me-2"></i>
-                                    Remboursement Manuel
-                                </a>
-                            </li>
-                            <li className="nav-item">
-                                <a
-                                    className="nav-link"
-                                    id="action-tab"
-                                    data-toggle="pill"
-                                    href="#action"
-                                    role="tab"
-                                    style={{
-                                        color: "#6c757d",
-                                        fontWeight: "bold",
-                                        border: "none",
-                                        padding: "12px 20px",
-                                    }}
-                                >
-                                    <i className="fas fa-cog me-2"></i>Action
-                                </a>
-                            </li>
-                        </ul>
+                       <ul className="nav nav-tabs tabs-credit" id="creditTabs" role="tablist">
+  <li className="nav-item">
+    <a className="nav-link active" id="echeancier-tab" data-toggle="pill" href="#echeancier" role="tab">
+      <i className="fas fa-calendar-alt me-2"></i>
+      Échéancier
+    </a>
+  </li>
+  <li className="nav-item">
+    <a className="nav-link" id="remboursement-tab" data-toggle="pill" href="#remboursement" role="tab">
+      <i className="fas fa-hand-holding-usd me-2"></i>
+      Remboursement Manuel
+    </a>
+  </li>
+  <li className="nav-item">
+    <a className="nav-link" id="action-tab" data-toggle="pill" href="#action" role="tab">
+      <i className="fas fa-cog me-2"></i>Action
+    </a>
+  </li>
+</ul>
 
                         <div className="card-body">
                             <div className="tab-content">
@@ -3352,6 +3306,88 @@ const handleMontantChange = (e) => {
                     </div>
                 </div>
             </div>
+
+            <style>
+                {
+                    `
+                    /* Onglets crédit - version moderne */
+.tabs-credit {
+  display: flex;
+  gap: 0.25rem;
+  background: transparent;
+  border-bottom: 1px solid #eef2f6;
+  padding: 0;
+  margin-bottom: 1.5rem;
+}
+
+.tabs-credit .nav-item {
+  list-style: none;
+  margin-bottom: -1px;
+}
+
+.tabs-credit .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #5f7d9c;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 8px 8px 0 0;
+  transition: all 0.2s ease-in-out;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tabs-credit .nav-link i {
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+/* Effet hover */
+.tabs-credit .nav-link:hover {
+  color: #20c997;  /* couleur principale du thème crédit */
+  border-bottom-color: #b9f5e2;
+  background: #fafffd;
+}
+
+/* Onglet actif */
+.tabs-credit .nav-link.active {
+  color: #20c997;
+  border-bottom-color: #20c997;
+  background: white;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.02);
+}
+
+/* Animation icône au hover */
+.tabs-credit .nav-link:hover i {
+  transform: translateY(-1px);
+}
+
+/* Responsive mobile */
+@media (max-width: 640px) {
+  .tabs-credit {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    border-bottom: none;
+  }
+  .tabs-credit .nav-link {
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+  }
+  .tabs-credit .nav-link.active {
+    border-bottom-color: #20c997;
+    background: #e6faf4;
+  }
+}
+                    
+                    `
+                }
+            </style>
         </div>
     );
 };

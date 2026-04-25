@@ -41,6 +41,8 @@ class EpargneAdhesionModel extends Model
         "engagement_sur_eparg_fc",
         "rec_sur_epargne_radie_usd",
         "rec_sur_epargne_radie_fc",
-        "show_commission_pannel"
+        "show_commission_pannel",
+        "type_recu",
+        "fraisSMS"
     ];
 }

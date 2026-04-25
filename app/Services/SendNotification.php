@@ -28,11 +28,13 @@ class SendNotification
     //PERMET D'ENVOYER DES NOTIFICATION
     public function sendNotification($NumCompte, $devise, $montant, $typeTransaction, $operant)
     {
-        // if ($codeMonnaie == 1) {
-        //     $devise = "USD"; //USD
-        // } else if ($codeMonnaie == 2) {
-        //     $devise = "CDF"; //CDF
-        // }
+        if ($devise == 1) {
+            $devise = "USD"; //USD
+        } else if ($devise == 2) {
+            $devise = "CDF"; //CDF
+        }else{
+            $devise;
+        }
 
         //RECUPERE LES INFORMATIONS DE LA PERSONNE QUI VENAIT D'EFFECTUER UN MOUVEMENT
         $getMembreInfo = SMSBanking::where("NumAbrege", "=", $NumCompte)->orWhere("NumCompte", $NumCompte)->first();
@@ -49,7 +51,7 @@ class SendNotification
                         ->first();
 
                     $data = ($getMembreInfo2->sexe == "Homme" ? " Bonjour Monsieur " : ($getMembreInfo2->sexe == "Femme" ? " Bonjour Madame " : " Bonjour ")) .
-                        $getMembreInfo2->NomCompte . " Votre compte CDF-" . $NumCompte . ($typeTransaction == "C" ? " est crédité " : "debité ") . " de " . $montant . " CDF  Votre nouveau solde est de " . $soldeMembreCDF->soldeMembreCDF . " CDF";
+                        $getMembreInfo2->NomCompte . " Votre compte CDF-" . $NumCompte . ($typeTransaction == "C" ? " est crédité " : "debité ") . " de " . $montant . " CDF  Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
                     Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                     // return view('emails.test');
                 } else if ($devise == "USD") {
@@ -77,7 +79,7 @@ class SendNotification
                         . " Votre compte USD-" . $NumCompte .
                         ($typeTransaction == "C" ? " est crédité " : "debité " .
                             " est crédité de ") . $montant
-                        . " USD. Votre nouveau solde est de " . $soldeMembreUSD->soldeMembreUSD . " USD.";
+                        . " USD. Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD.";
 
                     Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                 }
@@ -104,26 +106,34 @@ class SendNotification
                         $message = $getMembreInfo2->NomCompte . ", Votre compte CDF-" . $NumCompte .
                             ($typeTransaction == "C" ? " est credite " : " est debite ") .
                             "de " . $montant .
-                            ($typeTransaction == "C" ? " depot de " : " retrait de ") . $operant . " Votre nouveau solde est de " . $soldeMembreCDF->soldeMembreCDF . " CDF";
+                            ($typeTransaction == "C" ? " depot de " : " retrait de ") . $operant . " Votre nouveau solde est de " . number_format($soldeMembreCDF->soldeMembreCDF, 2, ',', ' ') . " CDF";
 
                         $receiver_number = $getMembreInfo->Telephone;
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
                         //Log::info(json_encode($response));
                         if ($response['status'] == 'success') {
                             // Traiter le succès, par exemple, loguer ou notifier l'utilisateur
+                            $CodeMonnaie= 2;
                             SendedSMS::create([
                                 "numPhone" => $receiver_number,
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                 "NumCompte"=>$NumCompteCDF,
+                                "CodeMonnaie"=>$CodeMonnaie,
+                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
+                            $CodeMonnaie= 2;
                             SendedSMS::create([
                                 "numPhone" => $receiver_number,
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                 "NumCompte"=>$NumCompteCDF,
+                                "CodeMonnaie"=>$CodeMonnaie,
+                                 "statut"=>$typeTransaction == "C"?"depot":"retrait"
                             ]);
                         }
                     } catch (\Throwable $th) {
@@ -149,7 +159,7 @@ class SendNotification
 
                         $message = $getMembreInfo2->NomCompte . " Votre compte USD-" . $NumCompte .
                             ($typeTransaction == "C" ? " est credite " : " est debite ") .
-                            "de " . $montant . ($typeTransaction == "C" ? " depot de " : " retrait de ") . $operant . ". Votre nouveau solde est de " . $soldeMembreUSD->soldeMembreUSD . " USD";
+                            "de " . $montant . ($typeTransaction == "C" ? " depot de " : " retrait de ") . $operant . ". Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
 
                         $receiver_number = $getMembreInfo->Telephone;
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
@@ -161,6 +171,9 @@ class SendNotification
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                "NumCompte"=>$NumCompteUSD,
+                                "CodeMonnaie"=>1,
+                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
@@ -169,6 +182,9 @@ class SendNotification
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                 "NumCompte"=>$NumCompteUSD,
+                                "CodeMonnaie"=>1,
+                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
                             ]);
                         }
                     } catch (\Throwable $th) {
@@ -204,7 +220,7 @@ class SendNotification
                         ->first();
 
                     $data = ($getMembreInfo2->sexe == "Homme" ? " Bonjour Monsieur " : ($getMembreInfo2->sexe == "Femme" ? " Bonjour Madame " : " Bonjour ")) .
-                        $getMembreInfo2->NomCompte . " Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " depot ") . " de " . $montant . " sur votre compte CDF-" . $NumCompte . "  Votre nouveau solde est de " . $soldeMembreCDF->soldeMembreCDF . " CDF";
+                        $getMembreInfo2->NomCompte . " Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " depot ") . " de " . $montant . " sur votre compte CDF-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
                     Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                     // return view('emails.test');
                 } else if ($devise == "USD") {
@@ -228,7 +244,7 @@ class SendNotification
                         : ($getMembreInfo2->sexe == "Femme"
                             ? "Bonjour Madame"
                             : "Bonjour"))
-                        . " " .  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " dépot ") . " de " . $montant . " sur votre compte USD-" . $NumCompte . "  Votre nouveau solde est de " . $soldeMembreUSD->soldeMembreCDF . " USD";
+                        . " " .  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " dépot ") . " de " . $montant . " sur votre compte USD-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreCDF) . " USD";
 
                     Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                 }
@@ -252,7 +268,7 @@ class SendNotification
                         //         ? "Bonjour Madame "
                         //         : "Bonjour ");
 
-                        $message =  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " dépot ") . " de " . $montant . " sur votre compte CDF-" . $NumCompte . "  Votre nouveau solde est de " . $soldeMembreCDF->soldeMembreCDF . " CDF";
+                        $message =  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " dépot ") . " de " . $montant . " sur votre compte CDF-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
 
                         $receiver_number = $getMembreInfo->Telephone;
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
@@ -264,6 +280,9 @@ class SendNotification
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                 "NumCompte"=>$NumCompteCDF,
+                                "CodeMonnaie"=>2,
+                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
@@ -272,6 +291,9 @@ class SendNotification
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                  "NumCompte"=>$NumCompteCDF,
+                                "CodeMonnaie"=>2,
+                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
                             ]);
                         }
                     } catch (\Throwable $th) {
@@ -295,7 +317,7 @@ class SendNotification
                         //         ? "Bonjour Madame "
                         //         : "Bonjour ");
 
-                        $message =  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " dépot ") . " de " . $montant . " sur votre compte USD-" . $NumCompte . "  Votre nouveau solde est de " . $soldeMembreUSD->soldeMembreUSD . " USD";
+                        $message =  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " dépot ") . " de " . $montant . " sur votre compte USD-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD). " USD";
                         $receiver_number = $getMembreInfo->Telephone;
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
 
@@ -306,6 +328,9 @@ class SendNotification
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                  "NumCompte"=>$NumCompteUSD,
+                                "CodeMonnaie"=>1,
+                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
@@ -314,6 +339,9 @@ class SendNotification
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                  "NumCompte"=>$NumCompteUSD,
+                                "CodeMonnaie"=>1,
+                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
                             ]);
                         }
                     } catch (\Throwable $th) {
@@ -347,7 +375,7 @@ class SendNotification
                         ->first();
 
                     $data = ($getMembreInfo2->sexe == "Homme" ? " Bonjour Monsieur " : ($getMembreInfo2->sexe == "Femme" ? " Bonjour Madame " : " Bonjour ")) .
-                        $getMembreInfo2->NomCompte . " Votre compte CDF-" . $NumCompte . ($typeTransaction == "C" ? " est crédité " : "debité ") . " de " . $montant . " " . $libelle . "  Votre nouveau solde est de " . $soldeMembreCDF->soldeMembreCDF . " CDF";
+                        $getMembreInfo2->NomCompte . " Votre compte CDF-" . $NumCompte . ($typeTransaction == "C" ? " est crédité " : "debité ") . " de " . $montant . " " . $libelle . "  Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
                     Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                     // return view('emails.test');
                 } else if ($devise == "USD") {
@@ -367,7 +395,7 @@ class SendNotification
 
 
                     $data = ($getMembreInfo2->sexe == "Homme" ? " Bonjour Monsieur " : ($getMembreInfo2->sexe == "Femme" ? " Bonjour Madame " : " Bonjour ")) .
-                        $getMembreInfo2->NomCompte . " Votre compte USD-" . $NumCompte . ($typeTransaction == "C" ? " est crédité " : "debité ") . " de " . $montant . " " . $libelle . "  Votre nouveau solde est de " . $soldeMembreUSD->soldeMembreUSD . " USD";
+                        $getMembreInfo2->NomCompte . " Votre compte USD-" . $NumCompte . ($typeTransaction == "C" ? " est crédité " : "debité ") . " de " . $montant . " " . $libelle . "  Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
 
                     Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                 }
@@ -390,7 +418,7 @@ class SendNotification
                         //     : (($getMembreInfo2->sexe == "Femme")
                         //         ? "Bonjour Madame "
                         //         : "Bonjour ");
-                        $message =   $getMembreInfo2->NomCompte . " Votre compte CDF-" . $NumCompte . ($typeTransaction == "C" ? " est credite " : "debite ") . " de " . $montant . " " . $libelle . "  Votre nouveau solde est de " . $soldeMembreCDF->soldeMembreCDF . " CDF";
+                        $message =   $getMembreInfo2->NomCompte . " Votre compte CDF-" . $NumCompte . ($typeTransaction == "C" ? " est credite " : "debite ") . " de " . $montant . " " . $libelle . "  Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
                         $receiver_number = $getMembreInfo->Telephone;
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
                         //Log::info(json_encode($response));
@@ -401,6 +429,9 @@ class SendNotification
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                  "NumCompte"=>$NumCompteCDF,
+                                "CodeMonnaie"=>2,
+                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
@@ -409,6 +440,9 @@ class SendNotification
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                  "NumCompte"=>$NumCompteCDF,
+                                "CodeMonnaie"=>2,
+                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
                             ]);
                         }
                     } catch (\Throwable $th) {
@@ -432,7 +466,7 @@ class SendNotification
                         //         ? "Bonjour Madame "
                         //         : "Bonjour ");
 
-                        $message =   $getMembreInfo2->NomCompte . ", Votre compte USD-" . $NumCompte . ($typeTransaction == "C" ? " est credite" : "debite ") . " de " . $montant . " " . $libelle . "  Votre nouveau solde est de " . $soldeMembreUSD->soldeMembreUSD . " USD";
+                        $message =   $getMembreInfo2->NomCompte . ", Votre compte USD-" . $NumCompte . ($typeTransaction == "C" ? " est credite" : "debite ") . " de " . $montant . " " . $libelle . "  Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
                         $receiver_number = $getMembreInfo->Telephone;
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
 
@@ -443,6 +477,9 @@ class SendNotification
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                  "NumCompte"=>$NumCompteUSD,
+                                "CodeMonnaie"=>1,
+                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
@@ -451,6 +488,9 @@ class SendNotification
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                  "NumCompte"=>$NumCompteUSD,
+                                "CodeMonnaie"=>1,
+                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
                             ]);
                         }
                     } catch (\Throwable $th) {
@@ -486,7 +526,7 @@ class SendNotification
                                 : "Bonjour ");
 
                         $data .= $getMembreInfo2->NomCompte . " Votre compte CDF-" . $NumCompte .
-                            " est debité de " . $montant . " capital ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " . $soldeMembreCDF->soldeMembreCDF . " CDF";
+                            " est debité de " . $montant . " capital ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
                         Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                         // return view('emails.test');
                     } else if ($devise == "USD") {
@@ -512,7 +552,7 @@ class SendNotification
                                 : "Bonjour ");
 
                         $data .= $getMembreInfo2->NomCompte . " Votre compte USD-" . $NumCompte .
-                            " est debite de " . $montant . " capital ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " . $soldeMembreUSD->soldeMembreUSD . " USD";
+                            " est debite de " . $montant . " capital ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
 
                         Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                     }
@@ -537,7 +577,7 @@ class SendNotification
                             //         : "Bonjour ");
 
                             $message = $getMembreInfo2->NomCompte . ", Votre compte CDF-" . $NumCompte .
-                                " est debite de " . $montant . " interet ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " . $soldeMembreCDF->soldeMembreCDF . " CDF";
+                                " est debite de " . $montant . " interet ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
 
                             $receiver_number = $getMembreInfo->Telephone;
                             $response = $this->africaTalking->sendSms($receiver_number, $message);
@@ -549,6 +589,9 @@ class SendNotification
                                     "messageStatus" => 1,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
+                                      "NumCompte"=>$NumCompteCDF,
+                                "CodeMonnaie"=>2,
+                                "statut"=>"remboursement"
                                 ]);
                             } else {
                                 // Traiter l'échec, par exemple, loguer l'erreur
@@ -557,6 +600,9 @@ class SendNotification
                                     "messageStatus" => 0,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
+                                      "NumCompte"=>$NumCompteCDF,
+                                "CodeMonnaie"=>2,
+                               "statut"=>"remboursement"
                                 ]);
                             }
                         } catch (\Throwable $th) {
@@ -581,7 +627,7 @@ class SendNotification
                             //         : "Bonjour ");
 
                             $message = $getMembreInfo2->NomCompte . ", Votre compte USD-" . $NumCompte .
-                                " est debite de " . $montant . " interet ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " . $soldeMembreUSD->soldeMembreUSD . " USD";
+                                " est debite de " . $montant . " interet ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
 
                             $receiver_number = $getMembreInfo->Telephone;
                             $response = $this->africaTalking->sendSms($receiver_number, $message);
@@ -593,6 +639,10 @@ class SendNotification
                                     "messageStatus" => 1,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
+                                     "NumCompte"=>$NumCompteUSD,
+                                "CodeMonnaie"=>1,
+                               "statut"=>"remboursement"
+                                    
                                 ]);
                             } else {
                                 // Traiter l'échec, par exemple, loguer l'erreur
@@ -601,6 +651,9 @@ class SendNotification
                                     "messageStatus" => 0,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
+                                     "NumCompte"=>$NumCompteUSD,
+                                "CodeMonnaie"=>1,
+                               "statut"=>"remboursement"
                                 ]);
                             }
                         } catch (\Throwable $th) {
@@ -631,7 +684,7 @@ class SendNotification
                                 : "Bonjour ");
 
                         $data .= $getMembreInfo2->NomCompte . " Votre compte CDF-" . $NumCompte .
-                            " est debité de " . $montant . " capital ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " . $soldeMembreCDF->soldeMembreCDF . " CDF";
+                            " est debité de " . $montant . " capital ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
                         Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                         // return view('emails.test');
                     } else if ($devise == "USD") {
@@ -652,7 +705,7 @@ class SendNotification
                                 : "Bonjour ");
 
                         $data .= $getMembreInfo2->NomCompte . " Votre compte USD-" . $NumCompte .
-                            " est debité de " . $montant . " capital ordinaire du credit" . $isPartielOrComplete . " Votre nouveau solde est de " . $soldeMembreUSD->soldeMembreUSD . " USD";
+                            " est debité de " . $montant . " capital ordinaire du credit" . $isPartielOrComplete . " Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
 
                         Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                     }
@@ -671,7 +724,7 @@ class SendNotification
                                 ->first();
 
                             $message = $getMembreInfo2->NomCompte . ", Votre compte CDF-" . $NumCompte .
-                                " est debite de " . $montant . " capital ordinaire du credit" . $isPartielOrComplete . " Votre nouveau solde est de " . $soldeMembreCDF->soldeMembreCDF . " CDF";
+                                " est debite de " . $montant . " capital ordinaire du credit" . $isPartielOrComplete . " Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
 
                             $receiver_number = $getMembreInfo->Telephone;
                             $response = $this->africaTalking->sendSms($receiver_number, $message);
@@ -683,6 +736,9 @@ class SendNotification
                                     "messageStatus" => 1,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
+                                     "NumCompte"=>$NumCompteCDF,
+                                "CodeMonnaie"=>2,
+                               "statut"=>"remboursement"
                                 ]);
                             } else {
                                 // Traiter l'échec, par exemple, loguer l'erreur
@@ -691,6 +747,9 @@ class SendNotification
                                     "messageStatus" => 0,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
+                                     "NumCompte"=>$NumCompteCDF,
+                                "CodeMonnaie"=>2,
+                               "statut"=>"remboursement"
                                 ]);
                             }
                         } catch (\Throwable $th) {
@@ -715,7 +774,7 @@ class SendNotification
                             //         : "Bonjour ");
 
                             $message = $getMembreInfo2->NomCompte . ", Votre compte USD-" . $NumCompte .
-                                " est debite de " . $montant . " capital ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " . $soldeMembreUSD->soldeMembreUSD . " USD";
+                                " est debite de " . $montant . " capital ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
 
                             $receiver_number = $getMembreInfo->Telephone;
                             $response = $this->africaTalking->sendSms($receiver_number, $message);
@@ -727,6 +786,9 @@ class SendNotification
                                     "messageStatus" => 1,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
+                                     "NumCompte"=>$NumCompteUSD,
+                                "CodeMonnaie"=>1,
+                               "statut"=>"remboursement"
                                 ]);
                             } else {
                                 // Traiter l'échec, par exemple, loguer l'erreur
@@ -735,6 +797,9 @@ class SendNotification
                                     "messageStatus" => 0,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
+                                     "NumCompte"=>$NumCompteUSD,
+                                "CodeMonnaie"=>1,
+                               "statut"=>"remboursement"
                                 ]);
                             }
                         } catch (\Throwable $th) {
@@ -796,19 +861,27 @@ class SendNotification
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
                         if ($response['status'] == 'success') {
                             // Traiter le succès, par exemple, loguer ou notifier l'utilisateur
+                             $CodeMonnaie= $getPorteFeuille[$i]->CodeMonnaie=="CDF"?2:1;
                             SendedSMS::create([
                                 "numPhone" => $receiver_number,
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                 "NumCompte"=>$getPorteFeuille[$i]->NumCompteEpargne,
+                                "CodeMonnaie"=>$CodeMonnaie,
+                                "statut"=>"rappel_remboursement"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
+                           $CodeMonnaie= $getPorteFeuille[$i]->CodeMonnaie=="CDF"?2:1;
                             SendedSMS::create([
                                 "numPhone" => $receiver_number,
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
+                                "NumCompte"=>$getPorteFeuille[$i]->NumCompteEpargne,
+                                "CodeMonnaie"=>$CodeMonnaie,
+                                "statut"=>"rappel_remboursement"
                             ]);
                         }
                     }

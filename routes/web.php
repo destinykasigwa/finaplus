@@ -342,6 +342,8 @@ eco/page/report/get-searched-repertoire', [ReportsController::class, 'getSearche
     //PERMET DE CLOTURER LE CREDIT 
     Route::post('eco/page/montage-credit/cloture-credit', [SuiviCreditController::class, 'ClotureCredit']);
 
+    
+
     //PERMET DE DECAISSER UN CREDIT 
     Route::post('eco/page/montage-credit/decaissement-credit', [SuiviCreditController::class, 'DecaissementCredit']);
 
@@ -456,6 +458,11 @@ eco/page/report/get-searched-repertoire', [ReportsController::class, 'getSearche
         [PostageController::class, "openNewday"]
     );
 
+
+
+
+    
+
     //PERMET DE DEFINIR LA DATE DU SYSTEME
     Route::post(
         "
@@ -475,6 +482,11 @@ eco/page/report/get-searched-repertoire', [ReportsController::class, 'getSearche
     Route::get('/sms-banking', [SMSbankingController::class, 'smsBankingHomepage'])->name("sms.banking");
 
 
+     //PERMET DE PASSER LES ECRITIRE DE FRAIS DES SMS 
+ Route::post(
+        "eco/pages/prelevement-sms/executer",
+        [SMSBankingController::class, "prelevementFraisSMS"]
+    );
 
 
     //ADD NEW CUSTOMER ON SMS BANKING QUESTION

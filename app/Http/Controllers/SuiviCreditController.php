@@ -119,7 +119,7 @@ class SuiviCreditController extends Controller
 
     public function getTypeCredit()
     {
-        $data = TypeCredit::where("state","on")->get();
+       $data = TypeCredit::where("state", "on")->orderBy('type_credit','desc')->get();
         return response()->json([
             "status" => 1,
             "data" => $data
@@ -173,7 +173,7 @@ class SuiviCreditController extends Controller
 
     public function getDataToDisplayOnFormLoadMontageCredit()
     {
-        $type_credit = TypeCredit::where("state","on")->get();
+        $type_credit = TypeCredit::where("state", "on")->orderBy('type_credit','desc')->get();
         $objet_credit = ObjetCredit::get();
         $agent_credit = User::get();
         $frequenceRemboursement = FrequenceRemboursement::get();
@@ -626,8 +626,9 @@ class SuiviCreditController extends Controller
                     $interet = $TauxInteret;
                     $interetApayer = $MontantAccorde * $TauxInteret / 100;
                     $capitalAmorti = $capital / $data->NbrTranche;
-                    $epargneObligatoire = ($capitalAmorti * 5) / 100;
-                    $totalAp = $interetApayer + $capitalAmorti +  $epargneObligatoire;
+                    // $epargneObligatoire = ($capitalAmorti * 5) / 100;
+                    // $totalAp = $interetApayer + $capitalAmorti +  $epargneObligatoire;
+                     $totalAp = $interetApayer + $capitalAmorti;
                     $lastRowData  = Echeancier::orderBy('ReferenceEch', 'desc')->first();
                     Echeancier::create([
                         "NumDossier" => $NumDossier,
@@ -642,7 +643,7 @@ class SuiviCreditController extends Controller
                         "DateTranch" =>  $dt,
                         "DateDebut" => $DateTranche,
                         "InteretPrev" => $interetApayer,
-                        "Epargne" => $epargneObligatoire
+                        // "Epargne" => $epargneObligatoire
                         // "CumulCapital" => $lastRowData->Capital - $capitalAmorti,
                     ]);
 
@@ -801,14 +802,14 @@ class SuiviCreditController extends Controller
                             'NomCompte' => $getDossier->NomCompte,
                             'RefTypeCompte' => "3",
                             'RefCadre' => "32",
-                            'RefGroupe' => "321",
-                            'RefSousGroupe' => "3210",
+                            'RefGroupe' => $getDossier->CodeMonnaie == "CDF" ? "321" : "320",
+                            'RefSousGroupe' => $getDossier->CodeMonnaie == "CDF" ? "3210" : "3210",
                             'CodeMonnaie' => $getDossier->CodeMonnaie == "CDF" ? 2 : 1,
                             'NumAdherant' => $getDossier->numAdherant,
                              'nature_compte'=>"ACTIF",
                              'niveau'=>"5",
                              'est_classe'=>0,
-                             'compte_parent'=> "3210",
+                             'compte_parent'=> "3200",
                         ]);
                     }
 
@@ -823,11 +824,11 @@ class SuiviCreditController extends Controller
                             ->groupBy("NumCompte")
                             ->first();
                         $montantAccorde = $getDossier->MontantAccorde;
-                        $garantieCredit = ($montantAccorde * 30) / 100;
-
+                            $garantieCredit = ($montantAccorde * 15) / 100;
+                        
                         if ($soldeMembreCDF->soldeCDF >= $garantieCredit) {
                             //ON RECUPERE LE 30% SUR LE COMPTE DE LA PERSONNE CONCERNEE POUR L'EPARGNE GARANTIE
-                            //CREE UN NUMERO DE TRANSACTION
+                                //CREE UN NUMERO DE TRANSACTION
                             CompteurTransaction::create([
                                 'fakevalue' => "0000",
                             ]);
@@ -940,7 +941,7 @@ class SuiviCreditController extends Controller
                             ->groupBy("NumCompte")
                             ->first();
                         $montantAccorde = $getDossier->MontantAccorde;
-                        $garantieCredit = ($montantAccorde * 30) / 100;
+                        $garantieCredit = ($montantAccorde * 15) / 100;
                         if ($soldeMembreUSD->soldeUSD >= $garantieCredit) {
                             //ON RECUPERE LE 30% SUR LE COMPTE DE LA PERSONNE CONCERNEE POUR L'EPARGNE GARANTIE
                             //CREE UN NUMERO DE TRANSACTION

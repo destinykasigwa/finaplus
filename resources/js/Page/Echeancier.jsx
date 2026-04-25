@@ -162,7 +162,7 @@ const Echeancier = () => {
         if (event.target.value !== "tableau_ammortiss")
             setfetchTableauAmortiss(null);
     };
-    let compteur = 0;
+   
     const dateParser = (num) => {
         const options = {
             // weekday: "long",
@@ -253,48 +253,65 @@ const Echeancier = () => {
         );
     };
 
-    const exportToPDFEcheancier = () => {
-        const content = document.getElementById(
-            "content-to-download-echeancier",
-        );
+    const exportToPDFEcheancier = async () => {
+    const content = document.getElementById("content-to-download-echeancier");
+    if (!content) {
+        console.error("Element not found!");
+        return;
+    }
 
-        if (!content) {
-            console.error("Element not found!");
-            return;
+    // Paramètres (en mm pour le PDF)
+    const marginTop = 10;
+    const marginBottom = 10;
+    const marginLeft = 10;
+    const marginRight = 10;
+
+    // Capture du contenu avec html2canvas
+    const canvas = await html2canvas(content, { scale: 3 });
+    const imgData = canvas.toDataURL("image/png");
+
+    // Création du PDF au format A4
+    const pdf = new jsPDF("p", "mm", "a4");
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    // Dimensions utiles du contenu dans le PDF (largeur et hauteur disponibles)
+    const contentWidthMM = pdfWidth - marginLeft - marginRight;
+    const contentHeightMM = (canvas.height * contentWidthMM) / canvas.width;
+
+    // Hauteur disponible par page (en mm)
+    const pageContentHeight = pdfHeight - marginTop - marginBottom;
+
+    // Nombre de pages nécessaires
+    const totalPages = Math.ceil(contentHeightMM / pageContentHeight);
+
+    // Ajout de chaque page
+    for (let page = 0; page < totalPages; page++) {
+        if (page !== 0) {
+            pdf.addPage();
         }
 
-        html2canvas(content, { scale: 3 }).then((canvas) => {
-            const paddingTop = 50;
-            const paddingRight = 50;
-            const paddingBottom = 50;
-            const paddingLeft = 50;
+        // Décalage vertical de l'image (en mm) pour la page courante
+        const yOffsetMM = page * pageContentHeight;
 
-            const canvasWidth = canvas.width + paddingLeft + paddingRight;
-            const canvasHeight = canvas.height + paddingTop + paddingBottom;
+        // Ajout de l'image (elle est plus haute que la page, on la décale vers le haut)
+        // L'image occupe toute la largeur utile et toute sa hauteur réelle.
+        // Le paramètre 'y' est négatif pour montrer la portion correspondant au décalage.
+        pdf.addImage(
+            imgData,
+            "PNG",
+            marginLeft,
+            marginTop - yOffsetMM,
+            contentWidthMM,
+            contentHeightMM
+        );
+    }
 
-            const newCanvas = document.createElement("canvas");
-            newCanvas.width = canvasWidth;
-            newCanvas.height = canvasHeight;
-            const ctx = newCanvas.getContext("2d");
-
-            if (ctx) {
-                ctx.fillStyle = "#ffffff"; // Background color
-                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-                ctx.drawImage(canvas, paddingLeft, paddingTop);
-            }
-
-            const pdf = new jsPDF("p", "mm", "a4");
-            const imgData = newCanvas.toDataURL("image/png");
-            const imgProps = pdf.getImageProperties(imgData);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-            pdf.autoPrint();
-            window.open(pdf.output("bloburl"), "_blank");
-            // pdf.save("releve-de-compte.pdf");
-        });
-    };
+    // Affichage ou sauvegarde
+    pdf.autoPrint();
+    window.open(pdf.output("bloburl"), "_blank");
+    // pdf.save("echeancier.pdf");
+};
 
     const exportToPDFBalanceAgee = () => {
         const content = document.getElementById(
@@ -1097,7 +1114,7 @@ const Echeancier = () => {
                                             </thead>
                                             <tbody>
                                                 {(() => {
-                                                    let compteur = 1;
+                                                    let compteur = 0;
                                                     return fetchEcheancier.map(
                                                         (res, index) => (
                                                             <tr key={index}>

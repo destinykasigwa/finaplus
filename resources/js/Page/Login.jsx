@@ -200,6 +200,7 @@ const LoginForm = () => {
                             <p className="login-subtitle">
                                 Connectez-vous pour accéder au tableau de bord
                             </p>
+                          
                         </div>
 
                         <form className="login-form" onSubmit={handleSubmit}>

@@ -8,9 +8,10 @@ import html2canvas from "html2canvas";
 import { EnteteBordereau } from "../EnteteBordereau";
 import JsBarcode from "jsbarcode";
 import Barcode from "./Barcode";
+
 //import "../../styles/style.css";
 
-const RecuDepot = ({ data }) => {
+const RecuDepotA5 = ({ data }) => {
     function Unite(nombre) {
         var unite;
         switch (nombre) {
@@ -358,139 +359,92 @@ const RecuDepot = ({ data }) => {
         return date.toString();
     };
 
-  
     const exportToPDF = () => {
         const content = document.getElementById("modal-to-print");
-
-        if (!content) {
-            console.error("Element not found!");
-            return;
-        }
+        if (!content) return;
 
         const printWindow = window.open("", "_blank");
-
         printWindow.document.write(`
+        <!DOCTYPE html>
         <html>
-           <head>
-                <title>Reçu</title>
-                 <meta charset="UTF-8">
-                 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-                <style>
-                    @media print {
-                        @page {
-                            size: 80mm auto;
-                            margin: 0;
-                        }
-                        
-                        html, body {
-                            width: 80mm;
-                            margin: 0 auto !important;
-                            padding: 0;
-                            background: white;
-                            font-size: 14px;
-                            text-align: center;
-                            display: flex;
-                            justify-content: center;
-                        }
+        <head>
+            <meta charset="UTF-8">
+            <title>Reçu A5</title>
+            <style>
+               @media print {
+    @page {
+        size: A5 landscape;
+        margin: 3mm;
+        /* Supprimer les numéros de page */
+        @bottom-right { content: none; }
+        @top-right { content: none; }
+    }
+    body {
+        margin: 0;
+        padding: 0;
+        background: white;
+        font-family: 'Courier New', monospace;
+    }
+    .a5-row {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        gap: 3mm;
+        width: 100%;
+        /* Éviter que le conteneur ne se coupe */
+        page-break-inside: avoid;
+    }
+    .print-pos {
+        width: 48%;
+        padding: 1mm;
+        border: 0px solid #aaa;
+        border-radius: 1mm;
+        background: white;
+        page-break-inside: avoid;  /* crucial : chaque reçu reste entier */
+        font-size: 7pt;
+        box-sizing: border-box;
+        /* PAS de height fixe */
+    }
+    /* Forcer la largeur complète des enfants */
+    .print-pos, .print-pos *,
+    #printme, .card, .row, .col-md-12, .modal-body {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    table {
+        width: 100% !important;
+        border-collapse: collapse;
+        font-size: 6pt;
+        table-layout: auto;
+    }
+    th, td {
+        padding: 0.5mm !important;
+        text-align: left;
+        border-bottom: 0.5px dashed #ccc;
+    }
+    td:last-child, th:last-child {
+        text-align: right;
+    }
+    h5 {
+        font-size: 8pt;
+        background: #eee;
+        padding: 0.5mm;
+        margin: 1mm 0;
+        text-align: center;
+    }
+   
 
-                        /* Forcer la taille */
-                        * {
-                            font-size: 14px !important;
-                        }
-                        
-                        .print-pos {
-                            width: 130mm;
-                            margin-left: -5mm;
-                            margin-right: 0;
-                            margin: 0 auto !important;
-                            padding: 2mm;
-                            font-family: 'Courier New', monospace;
-                            background: white;
-                            font-size: 12pt;
-                            border: 0px solid #444;  /* UNE SEULE bordure ici */
-                            border-radius: 3px;
-                        }
-                        
-                        
-                        /* Garder uniquement les lignes de séparation légères dans les tableaux */
-                        table {
-                            width: 100% !important;
-                            border-collapse: collapse;
-                            margin: 2px 0 !important;
-                         
-                        }
-                        
-                        td, th {
-                            padding: 4pt 2pt !important;
-                            font-size: 14pt !important;
-                       
-                            border-bottom: 1px dashed #aaa !important;  /* Seulement lignes horizontales */
-                        }
-                        
-                        tr:last-child td {
-                            border-bottom: none !important;  /* Pas de ligne après la dernière ligne */
-                        }
-                        
-                        td:last-child, th:last-child {
-                            text-align: right !important;
-                        }
-                        
-                        /* Style pour le titre */
-                        h5 {
-                            width: 100% !important;
-                            font-size: 14pt !important;
-                            margin: 3px 0 !important;
-                            padding: 3px !important;
-                            background: #eee !important;
-                            text-align: center !important;
-                
-                        }
-                        
-                        /* Style pour l'espace entre les reçus */
-                        .receipt-spacer {
-                            height: 20mm;
-                            width: 100%;
-                            display: flex;
-                            flex-direction: column;
-                            justify-content: center;
-                            align-items: center;
-                            page-break-inside: avoid;
-                            margin: 0;
-                            padding: 0;
-                        }
-                        
-                        .dashed-line {
-                            width: 80%;
-                            border-top: 1px dashed #444;
-                            margin: 2mm 0;
-                        }
-                        
-                        .cut-text {
-                            font-size: 10px;
-                            color: #444;
-                            text-transform: uppercase;
-                            letter-spacing: 1px;
-                            font-weight: bold;
-                        }
-                        
-                        /* Style pour la signature */
-                        table:last-of-type td {
-                            border: 1px solid #444 !important;
-                            background-color: #f9f9f9;
-                        }
-                        
-                        /* Supprimer les bordures des conteneurs internes */
-                        .ticket-header, .line, .separator {
-                            border: none !important;
-                        }
-                        
-                        /* Pour l'entête du reçu (si vous avez une classe entete-recu) */
-                        .entete-recu, [class*="entete"] {
-                            border: none !important;
-                            background: transparent !important;
-                        }
+    .print-pos {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
 
-                        .header-top {
+
+    .header-top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -519,32 +473,18 @@ svg {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
     }
-                    }
-                </style>
-            </head>
-            <body style="margin: 0 auto; text-align: center; display: flex; justify-content: center;">
-                <div style="text-align: left; width: fit-content;">
-                    <!-- Premier reçu -->
-                    <div class="print-pos">
-                        ${content.outerHTML}
-                    </div>
-                    
-                    <!-- Espace avec ligne COUPEZ ICI -->
-                    <div class="receipt-spacer">
-                        <div class="dashed-line"></div>
-                        <div class="cut-text">✂️ • • • • COUPEZ ICI • • • • ✂️</div>
-                        <div class="dashed-line"></div>
-                    </div>
-                    
-                    <!-- Second reçu -->
-                    <div class="print-pos">
-                        ${content.outerHTML}
-                    </div>
-                </div>
-            </body>
+   
+}
+            </style>
+        </head>
+        <body>
+            <div class="a5-row">
+                <div class="print-pos">${content.outerHTML}</div>
+                <div class="print-pos">${content.outerHTML}</div>
+            </div>
+        </body>
         </html>
     `);
-
         printWindow.document.close();
         printWindow.focus();
         printWindow.print();
@@ -618,9 +558,8 @@ svg {
                                                     width: "100%",
                                                     textAlign: "left",
                                                 }}
-                                            >
-                                                <br />
-                                                 <div className="header-top">
+                                                >
+                                                <div className="header-top">
                                                     <div className="left">
                                                         <EnteteBordereau />
                                                     </div>
@@ -812,7 +751,7 @@ svg {
                                                                     "#DCDCDC",
                                                                 padding: "5px",
                                                                 color: "#000",
-                                                                border: "1px solid #444",
+                                                                // border: "1px solid #444",
                                                                 borderRadius:
                                                                     "3px",
                                                                 margin: "5px 0",
@@ -1631,88 +1570,106 @@ svg {
                                                                 }
                                                             </div>
 
-                                                            {/* Signatures */}
+                                                            {/* Signatures - largeurs égales */}
                                                             <table
                                                                 style={{
                                                                     width: "100%",
                                                                     marginTop:
-                                                                        "5px",
-                                                                    fontSize:
-                                                                        "9px",
+                                                                        "3px",
+                                                                    borderCollapse:
+                                                                        "collapse",
+                                                                    tableLayout:
+                                                                        "fixed", // force les largeurs de colonnes
                                                                 }}
                                                             >
-                                                                <tr>
-                                                                    <td
-                                                                        style={{
-                                                                            border: "2px solid #000",
-                                                                            padding:
-                                                                                "20px 8px", // Encore plus d'espace
-                                                                            textAlign:
-                                                                                "center",
-                                                                            width: "50%",
-                                                                            fontSize:
-                                                                                "16px", // Police encore plus grande
-                                                                            fontWeight:
-                                                                                "bold",
-                                                                            backgroundColor:
-                                                                                "#f9f9f9",
-                                                                            lineHeight:
-                                                                                "1.5", // Hauteur de ligne augmentée
-                                                                        }}
-                                                                    >
-                                                                        <div>
-                                                                            Signature
-                                                                        </div>
-                                                                        <div
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td
                                                                             style={{
+                                                                                border: "1px solid #333",
+                                                                                padding:
+                                                                                    "4px 6px",
+                                                                                textAlign:
+                                                                                    "center",
+                                                                                width: "50%", // première moitié
                                                                                 fontSize:
-                                                                                    "18px",
-                                                                                marginTop:
-                                                                                    "5px",
+                                                                                    "8pt",
+                                                                                fontWeight:
+                                                                                    "bold",
+                                                                                backgroundColor:
+                                                                                    "#f9f9f9",
+                                                                                borderRadius:
+                                                                                    "2px",
                                                                             }}
                                                                         >
-                                                                            {
-                                                                                data.NomUtilisateur
-                                                                            }
-                                                                        </div>
-                                                                    </td>
-                                                                    <td
-                                                                        style={{
-                                                                            border: "2px solid #000",
-                                                                            padding:
-                                                                                "20px 8px",
-                                                                            textAlign:
-                                                                                "center",
-                                                                            width: "50%",
-                                                                            fontSize:
-                                                                                "16px",
-                                                                            fontWeight:
-                                                                                "bold",
-                                                                            backgroundColor:
-                                                                                "#f9f9f9",
-                                                                            lineHeight:
-                                                                                "1.5",
-                                                                        }}
-                                                                    >
-                                                                        <div>
-                                                                            Signature
-                                                                        </div>
-                                                                        <div
+                                                                            <div
+                                                                                style={{
+                                                                                    marginBottom:
+                                                                                        "2px",
+                                                                                }}
+                                                                            >
+                                                                                Signature
+                                                                            </div>
+                                                                            <div
+                                                                                style={{
+                                                                                    fontSize:
+                                                                                        "9pt",
+                                                                                    fontWeight:
+                                                                                        "normal",
+                                                                                    marginTop:
+                                                                                        "2px",
+                                                                                }}
+                                                                            >
+                                                                                {
+                                                                                    data.NomUtilisateur
+                                                                                }{" "}
+                                                                                {/* caissier */}
+                                                                            </div>
+                                                                        </td>
+                                                                        <td
                                                                             style={{
+                                                                                border: "1px solid #333",
+                                                                                padding:
+                                                                                    "4px 6px",
+                                                                                textAlign:
+                                                                                    "center",
+                                                                                width: "50%", // seconde moitié
                                                                                 fontSize:
-                                                                                    "18px",
-                                                                                marginTop:
-                                                                                    "5px",
+                                                                                    "8pt",
+                                                                                fontWeight:
+                                                                                    "bold",
+                                                                                backgroundColor:
+                                                                                    "#f9f9f9",
+                                                                                borderRadius:
+                                                                                    "2px",
                                                                             }}
                                                                         >
-                                                                            <i>
+                                                                            <div
+                                                                                style={{
+                                                                                    marginBottom:
+                                                                                        "2px",
+                                                                                }}
+                                                                            >
+                                                                                Signature
+                                                                            </div>
+                                                                            <div
+                                                                                style={{
+                                                                                    fontSize:
+                                                                                        "9pt",
+                                                                                    fontWeight:
+                                                                                        "normal",
+                                                                                    marginTop:
+                                                                                        "2px",
+                                                                                }}
+                                                                            >
                                                                                 {
                                                                                     data.Beneficiaire
-                                                                                }
-                                                                            </i>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
+                                                                                }{" "}
+                                                                                {/* client */}
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
                                                             </table>
                                                         </div>
                                                     </div>
@@ -1980,7 +1937,7 @@ svg {
                                                                     "#DCDCDC",
                                                                 padding: "5px",
                                                                 color: "#000",
-                                                                border: "1px solid #444",
+                                                                // border: "1px solid #444",
                                                                 borderRadius:
                                                                     "3px",
                                                                 margin: "5px 0",
@@ -2800,7 +2757,7 @@ svg {
                                                             </div>
 
                                                             {/* Signatures */}
-                                                            <table
+                                                            {/* <table
                                                                 style={{
                                                                     width: "100%",
                                                                     marginTop:
@@ -2881,6 +2838,108 @@ svg {
                                                                         </div>
                                                                     </td>
                                                                 </tr>
+                                                            </table> */}
+
+                                                             {/* Signatures - largeurs égales */}
+                                                            <table
+                                                                style={{
+                                                                    width: "100%",
+                                                                    marginTop:
+                                                                        "3px",
+                                                                    borderCollapse:
+                                                                        "collapse",
+                                                                    tableLayout:
+                                                                        "fixed", // force les largeurs de colonnes
+                                                                }}
+                                                            >
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td
+                                                                            style={{
+                                                                                border: "1px solid #333",
+                                                                                padding:
+                                                                                    "4px 6px",
+                                                                                textAlign:
+                                                                                    "center",
+                                                                                width: "50%", // première moitié
+                                                                                fontSize:
+                                                                                    "8pt",
+                                                                                fontWeight:
+                                                                                    "bold",
+                                                                                backgroundColor:
+                                                                                    "#f9f9f9",
+                                                                                borderRadius:
+                                                                                    "2px",
+                                                                            }}
+                                                                        >
+                                                                            <div
+                                                                                style={{
+                                                                                    marginBottom:
+                                                                                        "2px",
+                                                                                }}
+                                                                            >
+                                                                                Signature
+                                                                            </div>
+                                                                            <div
+                                                                                style={{
+                                                                                    fontSize:
+                                                                                        "9pt",
+                                                                                    fontWeight:
+                                                                                        "normal",
+                                                                                    marginTop:
+                                                                                        "2px",
+                                                                                }}
+                                                                            >
+                                                                                {
+                                                                                    data.NomUtilisateur
+                                                                                }{" "}
+                                                                                {/* caissier */}
+                                                                            </div>
+                                                                        </td>
+                                                                        <td
+                                                                            style={{
+                                                                                border: "1px solid #333",
+                                                                                padding:
+                                                                                    "4px 6px",
+                                                                                textAlign:
+                                                                                    "center",
+                                                                                width: "50%", // seconde moitié
+                                                                                fontSize:
+                                                                                    "8pt",
+                                                                                fontWeight:
+                                                                                    "bold",
+                                                                                backgroundColor:
+                                                                                    "#f9f9f9",
+                                                                                borderRadius:
+                                                                                    "2px",
+                                                                            }}
+                                                                        >
+                                                                            <div
+                                                                                style={{
+                                                                                    marginBottom:
+                                                                                        "2px",
+                                                                                }}
+                                                                            >
+                                                                                Signature
+                                                                            </div>
+                                                                            <div
+                                                                                style={{
+                                                                                    fontSize:
+                                                                                        "9pt",
+                                                                                    fontWeight:
+                                                                                        "normal",
+                                                                                    marginTop:
+                                                                                        "2px",
+                                                                                }}
+                                                                            >
+                                                                                {
+                                                                                    data.Beneficiaire
+                                                                                }{" "}
+                                                                                {/* client */}
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
                                                             </table>
                                                         </div>
                                                     </div>
@@ -2908,4 +2967,4 @@ svg {
         </>
     );
 };
-export default RecuDepot;
+export default RecuDepotA5;

@@ -208,6 +208,10 @@ const Comptes = () => {
 
     const [nature_compte, setNature_compte] = useState("");
     const [planComptable, setPlanComptable] = useState("OHADA"); // 'OHADA' ou 'PCCI'
+
+    const [typeRecu, setTypeRecu] = useState("A5");
+    const [FraisSMS, setFraisSMS] = useState();
+
     useEffect(() => {
         getCompanyData();
     }, []);
@@ -525,6 +529,11 @@ const Comptes = () => {
             setShowCommissionPanel(
                 res.data.adhesion_epargne_data.show_commission_pannel,
             );
+
+            setTypeRecu(res.data.adhesion_epargne_data.type_recu)
+
+              setFraisSMS(res.data.adhesion_epargne_data.fraisSMS)
+
             console.log(login_attempt);
         }
     };
@@ -751,6 +760,8 @@ const Comptes = () => {
                 password_expired_days,
                 login_attempt,
                 showCommissionPanel,
+                typeRecu,
+                FraisSMS,
             },
         );
         if (res.data.status == 1) {
@@ -767,7 +778,7 @@ const Comptes = () => {
 
     const saveNewCompte = async (e) => {
         e.preventDefault();
-    
+
         // 1. Vérification de la classe OHADA
         if (!RefTypeCompte) {
             Swal.fire({
@@ -841,7 +852,7 @@ const Comptes = () => {
         }
 
         setisloading4(true);
-        
+
         try {
             // Construction de l'objet à envoyer
             const compteData = {
@@ -850,7 +861,8 @@ const Comptes = () => {
                 RefSousGroupe: RefSousGroupe,
                 RefCadre: RefCadre || null,
                 RefTypeCompte: RefTypeCompte,
-                nature_compte: RefTypeCompte === "4" ? nature_compte : nature_compte,
+                nature_compte:
+                    RefTypeCompte === "4" ? nature_compte : nature_compte,
             };
 
             const res = await axios.post(
@@ -1039,7 +1051,6 @@ const Comptes = () => {
     // };
 
     const downloadReport = (type) => {
-   
         setchargement(true);
         // Générer le nom du fichier avec la date du jour
         const filename = `liste_compte_epargne_${
@@ -1050,7 +1061,7 @@ const Comptes = () => {
                 "/download-report/liste-compte/epargne",
                 {
                     fetchDataCompteInterne: fetchCreatedAccount, // Assurez-vous que fetchData contient vos données
-                    fetchDataCompteEpargne:fetchCompteEpargne,
+                    fetchDataCompteEpargne: fetchCompteEpargne,
                     type: type, // Ajouter le paramètre type à la requête
                 },
                 {
@@ -1077,8 +1088,6 @@ const Comptes = () => {
             })
             .catch((error) => console.error("Error:", error));
     };
-
-
 
     //CREATE PAGINATION
 
@@ -5713,6 +5722,144 @@ const Comptes = () => {
                                                         </td>
                                                     </tr>
 
+                                                    {/* Type impression */}
+                                                    <tr>
+                                                        <td
+                                                            style={{
+                                                                padding: "8px",
+                                                            }}
+                                                        >
+                                                            <label
+                                                                className="small fw-semibold"
+                                                                style={{
+                                                                    color: "steelblue",
+                                                                }}
+                                                            >
+                                                                <i class="fas fa-receipt"></i> Format papier Reçu
+                                                            </label>
+                                                        </td>
+                                                        <td
+                                                            style={{
+                                                                padding: "8px",
+                                                            }}
+                                                        >
+                                                            <div className="d-flex align-items-center gap-2">
+                                                                <select
+                                                                    className="form-select form-select-sm"
+                                                                    style={{
+                                                                        width: "100px",
+                                                                        borderRadius:
+                                                                            "12px",
+                                                                        border: "1px solid #e2e8f0",
+                                                                        backgroundColor:
+                                                                            "#fff",
+                                                                        fontSize:
+                                                                            "0.875rem",
+                                                                        fontWeight:
+                                                                            "500",
+                                                                        color: "#1e293b",
+                                                                        cursor: "pointer",
+                                                                        transition:
+                                                                            "border 0.2s, box-shadow 0.2s",
+                                                                        // Optionnel : personnaliser la flèche Bootstrap
+                                                                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23475569' d='M8 11L3 6h10z'/%3E%3C/svg%3E")`,
+                                                                        backgroundPosition:
+                                                                            "right 0.75rem center",
+                                                                        backgroundSize:
+                                                                            "12px",
+                                                                    }}
+                                                                    value={
+                                                                        typeRecu
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setTypeRecu(
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <option value="A5">
+                                                                        A5
+                                                                    </option>
+                                                                    <option value="Thermique">
+                                                                        Thermique
+                                                                    </option>
+                                                                </select>
+                                                                <span className="text-muted small">
+                                                                    Réçu
+                                                                </span>
+                                                            </div>
+                                                            <small className="text-muted d-block mt-1">
+                                                                <i className="fas fa-info-circle me-1"></i>
+                                                                Type de réçu
+                                                                imprimé à la
+                                                                caisse
+                                                            </small>
+                                                        </td>
+                                                    </tr>
+
+                                                    <tr>
+                                                        <td
+                                                            style={{
+                                                                padding: "8px",
+                                                            }}
+                                                        >
+                                                            <label
+                                                                className="small fw-semibold"
+                                                                style={{
+                                                                    color: "steelblue",
+                                                                }}
+                                                            >
+                                                               <i class="fas fa-sms"></i> Frais SMS
+                                                            </label>
+                                                        </td>
+                                                        <td
+                                                            style={{
+                                                                padding: "8px",
+                                                            }}
+                                                        >
+                                                            <div className="d-flex align-items-center gap-2">
+                                                                <input
+                                                                    type="text"
+                                                                    className="form-control form-control-sm"
+                                                                    style={{
+                                                                        width: "100px",
+                                                                    }}
+                                                                    value={
+                                                                        FraisSMS
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setFraisSMS(
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                />
+                                                                <span className="text-muted small">
+                                                                    Frais des
+                                                                    SMS banking
+                                                                </span>
+                                                            </div>
+                                                            <small className="text-muted d-block mt-1">
+                                                                <i className="fas fa-info-circle me-1"></i>
+                                                                il s'agit d'un
+                                                                paramètre de
+                                                                frais des SMS
+                                                                envoyés pendant
+                                                                differentes
+                                                                opérations,
+                                                                dépot,retrait,remboursement
+                                                                ect
+                                                            </small>
+                                                        </td>
+                                                    </tr>
+
                                                     <tr>
                                                         <td colSpan="2">
                                                             <hr className="my-2" />
@@ -6948,10 +7095,8 @@ const Comptes = () => {
                                         <div className="d-flex justify-content-end">
                                             <button
                                                 onClick={() =>
-                                                            downloadReport(
-                                                                "excel"
-                                                            )
-                                                        }
+                                                    downloadReport("excel")
+                                                }
                                                 className="btn btn-sm"
                                                 style={{
                                                     background: "#28a745",
@@ -6963,11 +7108,9 @@ const Comptes = () => {
                                                 Exporter Excel
                                             </button>
                                             <button
-                                                 onClick={() =>
-                                                            downloadReport(
-                                                                "pdf"
-                                                            )
-                                                        }
+                                                onClick={() =>
+                                                    downloadReport("pdf")
+                                                }
                                                 className="btn btn-sm ms-2"
                                                 style={{
                                                     background: "#dc3545",
@@ -7182,6 +7325,16 @@ const Comptes = () => {
                     </div>
                 </div>
             </div>
+
+            <style>
+                {`
+                    .form-select-modern:focus {
+  border-color: #86b7fe;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+}
+                    `}
+            </style>
         </div>
     );
 };

@@ -13,9 +13,21 @@ const Cloture = () => {
     const [usd, setusd] = useState(1);
     const [todayDate, settodayDate] = useState(new Date());
     const [isClosing, setisClosing] = useState(false);
-    // Ajoutez ces lignes avec vos autres useState
     const [closingStatus, setClosingStatus] = useState("");
     const [closingProgress, setClosingProgress] = useState(0);
+
+    // ================== ÉTATS POUR LE PRÉLÈVEMENT SMS ==================
+    const [showPrelevementForm, setShowPrelevementForm] = useState(false);
+    const [prelevementDateDebut, setPrelevementDateDebut] = useState("");
+    const [prelevementDateFin, setPrelevementDateFin] = useState("");
+    const [isPrelevementRunning, setIsPrelevementRunning] = useState(false);
+
+    // États pour l'exonération
+    const [exonereDepot, setExonereDepot] = useState(false);
+    const [exonereRetrait, setExonereRetrait] = useState(false);
+    const [exonereRappel, setExonereRappel] = useState(false);
+    const [remboursement, setRemboursement] = useState(false);
+    // ================================================================
 
     useEffect(() => {
         setTimeout(() => {
@@ -29,40 +41,30 @@ const Cloture = () => {
         const yyyy = today.getFullYear();
         const formattedDate = `${yyyy}-${mm}-${dd}`;
         setDateWork(formattedDate);
+
+        // Initialisation des dates par défaut
+      const formatLocalDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const now = new Date();
+const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+const lastDay = now; // ou new Date()
+
+setPrelevementDateDebut(formatLocalDate(firstDay)); // 2026-04-01
+setPrelevementDateFin(formatLocalDate(lastDay));   // 2026-04-25
     }, []);
 
-    // const clotureBtn = async (e) => {
-    //     setisClosing(true);
-    //     e.preventDefault();
-    //     const res = await axios.get("/eco/pages/cloture/journee");
-    //     if (res.data.status == 1) {
-    //         setdisabled(true);
-    //         setisClosing(false);
-    //         setshowDateContainer(true);
-    //         Swal.fire({
-    //             title: "Clôture de la journée",
-    //             text: res.data.msg,
-    //             icon: "success",
-    //             button: "OK!",
-    //         });
-    //     } else {
-    //         Swal.fire({
-    //             title: "Clôture de la journée",
-    //             text: res.data.msg,
-    //             icon: "error",
-    //             button: "OK!",
-    //         });
-    //         setisClosing(false);
-    //     }
-    // };
-
+    // ================== FONCTIONS EXISTANTES (NON MODIFIÉES) ==================
     const clotureBtn = async (e) => {
         setisClosing(true);
         setClosingStatus("Initialisation...");
         setClosingProgress(10);
         e.preventDefault();
 
-        // Désactiver le bouton pendant le traitement
         const closeButton = e.currentTarget;
         if (closeButton) closeButton.disabled = true;
 
@@ -71,7 +73,7 @@ const Cloture = () => {
             setClosingProgress(20);
 
             const res = await axios.get("/eco/pages/cloture/journee", {
-                timeout: 30000, // Timeout de 30 secondes
+                timeout: 30000,
                 headers: {
                     "X-Requested-With": "XMLHttpRequest",
                 },
@@ -80,7 +82,6 @@ const Cloture = () => {
             setClosingStatus("Traitement en cours...");
             setClosingProgress(70);
 
-            // Succès
             if (res.data.status === 1 || res.data.success === true) {
                 setClosingStatus("Finalisation...");
                 setClosingProgress(90);
@@ -88,12 +89,10 @@ const Cloture = () => {
                 setdisabled(true);
                 setshowDateContainer(true);
 
-                // Petit délai pour voir la progression à 100%
                 setTimeout(() => {
                     setClosingProgress(100);
                 }, 200);
 
-                // Message de succès détaillé
                 let successMessage =
                     res.data.msg || res.data.message || "Clôture effectuée";
                 if (res.data.details) {
@@ -109,9 +108,7 @@ const Cloture = () => {
                     timer: 3000,
                     timerProgressBar: true,
                 });
-            }
-            // Erreur métier
-            else {
+            } else {
                 setClosingProgress(100);
 
                 let errorTitle = "❌ Erreur";
@@ -121,7 +118,6 @@ const Cloture = () => {
                     "Une erreur est survenue";
                 let errorFooter = "";
 
-                // Personnalisation selon le code d'erreur
                 if (res.data.code) {
                     switch (res.data.code) {
                         case "ERR_DATE_001":
@@ -177,7 +173,6 @@ const Cloture = () => {
             let errorFooter = "";
 
             if (error.response) {
-                // Le serveur a répondu avec une erreur
                 const { status, data } = error.response;
 
                 if (status === 500) {
@@ -189,7 +184,6 @@ const Cloture = () => {
                     errorFooter =
                         "Le processus a été arrêté. Contactez l'administrateur.";
 
-                    // Afficher plus de détails en développement
                     if (process.env.NODE_ENV === "development" && data?.trace) {
                         console.error("Stack trace:", data.trace);
                     }
@@ -215,12 +209,10 @@ const Cloture = () => {
                     errorMessage = data?.message || "Une erreur est survenue";
                 }
             } else if (error.request) {
-                // La requête a été faite mais pas de réponse
                 errorTitle = "🌐 Erreur Réseau";
                 errorMessage = "Impossible de contacter le serveur";
                 errorFooter = "Vérifiez votre connexion internet et réessayez";
             } else {
-                // Erreur lors de la configuration de la requête
                 errorTitle = "🐛 Erreur Technique";
                 errorMessage =
                     error.message || "Une erreur inattendue s'est produite";
@@ -238,7 +230,6 @@ const Cloture = () => {
                 allowOutsideClick: false,
             });
         } finally {
-            // Réinitialiser tous les états après un délai pour voir la progression à 100%
             setTimeout(() => {
                 setisClosing(false);
                 setClosingStatus("");
@@ -247,6 +238,7 @@ const Cloture = () => {
             }, 500);
         }
     };
+
     const OpenDayBtn = async (e) => {
         e.preventDefault();
         const res = await axios.post("/eco/pages/cloture/openday/data", {});
@@ -309,6 +301,71 @@ const Cloture = () => {
     const actualiser = () => {
         location.reload();
     };
+
+    // ================== NOUVELLE FONCTION POUR LE PRÉLÈVEMENT ==================
+    const executerPrelevement = async (e) => {
+        e.preventDefault();
+        if (!prelevementDateDebut || !prelevementDateFin) {
+            Swal.fire({
+                title: "Période incomplète",
+                text: "Veuillez sélectionner une date de début et de fin.",
+                icon: "warning",
+                confirmButtonText: "OK",
+            });
+            return;
+        }
+
+        // Construction de la liste des statuts exonérés
+        const exonereList = [];
+        if (exonereDepot) exonereList.push("depot");
+        if (exonereRetrait) exonereList.push("retrait");
+        if (exonereRappel) exonereList.push("rappel_remboursement");
+        if (remboursement) exonereList.push("remboursement");
+
+        setIsPrelevementRunning(true);
+
+        try {
+            const response = await axios.post("/eco/pages/prelevement-sms/executer", {
+                dateDebut: prelevementDateDebut,
+                dateFin: prelevementDateFin,
+                exonere: exonereList,
+            });
+
+            if (response.data.success) {
+                Swal.fire({
+                    title: "Prélèvement réussi",
+                    text: response.data.message,
+                    icon: "success",
+                    confirmButtonText: "OK",
+                    timer: 3000,
+                    timerProgressBar: true,
+                });
+                // Option : réinitialiser les cases après succès
+                // setExonereDepot(false);
+                // setExonereRetrait(false);
+                // setExonereRappel(false);
+                // setShowPrelevementForm(false);
+            } else {
+                throw new Error(
+                    response.data.message || "Une erreur est survenue",
+                );
+            }
+        } catch (error) {
+            let errorMsg = "Erreur lors du prélèvement.";
+            if (error.response?.data?.message)
+                errorMsg = error.response.data.message;
+            else if (error.message) errorMsg = error.message;
+            Swal.fire({
+                title: "Échec du prélèvement",
+                text: errorMsg,
+                icon: "error",
+                confirmButtonText: "OK",
+            });
+        } finally {
+            setIsPrelevementRunning(false);
+        }
+    };
+    // =========================================================================
 
     if (isloading) {
         return (
@@ -427,36 +484,6 @@ const Cloture = () => {
                             </div>
                             <div className="card-body p-4">
                                 <div className="d-flex flex-column gap-3">
-                                    {/* <button
-                                    disabled={disabled}
-                                    onClick={clotureBtn}
-                                    className="btn py-3 fw-bold"
-                                    style={{
-                                        background: disabled ? "#adb5bd" : "linear-gradient(135deg, #dc3545, #b02a37)",
-                                        color: "white",
-                                        borderRadius: "12px",
-                                        border: "none",
-                                        fontSize: "16px",
-                                        transition: "all 0.3s ease",
-                                        cursor: disabled ? "not-allowed" : "pointer"
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        if (!disabled) {
-                                            e.currentTarget.style.transform = "translateY(-2px)";
-                                            e.currentTarget.style.boxShadow = "0 6px 16px rgba(220,53,69,0.4)";
-                                        }
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        if (!disabled) {
-                                            e.currentTarget.style.transform = "translateY(0)";
-                                            e.currentTarget.style.boxShadow = "none";
-                                        }
-                                    }}
-                                >
-                                    <i className="fas fa-check-circle me-2"></i>
-                                    Clôturer la journée
-                                </button> */}
-
                                     <button
                                         disabled={disabled || isClosing}
                                         onClick={clotureBtn}
@@ -603,12 +630,47 @@ const Cloture = () => {
                                         <i className="fas fa-calendar-plus me-2"></i>
                                         Définir la date N+1
                                     </button>
+
+                                    {/* NOUVEAU BOUTON POUR AFFICHER LE FORMULAIRE DE PRÉLÈVEMENT */}
+                                    <button
+                                        onClick={() =>
+                                            setShowPrelevementForm(
+                                                !showPrelevementForm,
+                                            )
+                                        }
+                                        className="btn py-3 fw-bold"
+                                        style={{
+                                            background:
+                                                "linear-gradient(135deg, #fd7e14, #dc6a0a)",
+                                            color: "white",
+                                            borderRadius: "12px",
+                                            border: "none",
+                                            fontSize: "16px",
+                                            transition: "all 0.3s ease",
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.transform =
+                                                "translateY(-2px)";
+                                            e.currentTarget.style.boxShadow =
+                                                "0 6px 16px rgba(253,126,20,0.4)";
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.transform =
+                                                "translateY(0)";
+                                            e.currentTarget.style.boxShadow =
+                                                "none";
+                                        }}
+                                    >
+                                        <i className="fas fa-comment-dollar me-2"></i>
+                                        Prélèvement auto du mois (Frais SMS
+                                        envoyés)
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Colonne 2 - Configuration date */}
+                    {/* Colonne 2 - Configuration date (d'origine) */}
                     {showDateContainer && (
                         <div className="col-lg-6">
                             <div className="card border-0 shadow-sm rounded-3 h-100">
@@ -732,6 +794,190 @@ const Cloture = () => {
                                         >
                                             <i className="fas fa-save me-2"></i>
                                             Valider la configuration
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* NOUVEAU : Formulaire de prélèvement SMS (affiché à droite si showPrelevementForm vrai) */}
+                    {showPrelevementForm && (
+                        <div className="col-lg-6">
+                            <div className="card border-0 shadow-sm rounded-3 h-100">
+                                <div className="card-header bg-white border-0 pt-3">
+                                    <h6
+                                        className="fw-bold"
+                                        style={{ color: "#fd7e14" }}
+                                    >
+                                        <i className="fas fa-comment-dollar me-2"></i>
+                                        Prélèvement des frais SMS
+                                    </h6>
+                                </div>
+                                <div className="card-body p-4">
+                                    <form onSubmit={executerPrelevement}>
+                                        <div className="mb-4">
+                                            <label className="form-label fw-semibold">
+                                                <i className="fas fa-calendar-alt me-2"></i>
+                                                Période concernée
+                                            </label>
+                                            <div className="row g-2">
+                                                <div className="col-md-6">
+                                                    <input
+                                                        type="date"
+                                                        className="form-control"
+                                                        value={
+                                                            prelevementDateDebut
+                                                        }
+                                                        onChange={(e) =>
+                                                            setPrelevementDateDebut(
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        required
+                                                    />
+                                                    <small className="text-muted">
+                                                        Date début
+                                                    </small>
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <input
+                                                        type="date"
+                                                        className="form-control"
+                                                        value={
+                                                            prelevementDateFin
+                                                        }
+                                                        onChange={(e) =>
+                                                            setPrelevementDateFin(
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        required
+                                                    />
+                                                    <small className="text-muted">
+                                                        Date fin
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Section Exonération */}
+                                        <div className="mb-4 p-3 border rounded-3 bg-light">
+                                            <label className="form-label fw-semibold mb-2">
+                                                <i className="fas fa-ban me-2 text-warning"></i>
+                                                Exonérer les frais pour :
+                                            </label>
+                                            <div className="form-check">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="exonereDepot"
+                                                    checked={exonereDepot}
+                                                    onChange={(e) =>
+                                                        setExonereDepot(
+                                                            e.target.checked,
+                                                        )
+                                                    }
+                                                />
+                                                <label
+                                                    className="form-check-label"
+                                                    htmlFor="exonereDepot"
+                                                >
+                                                    Dépôts
+                                                </label>
+                                            </div>
+                                            <div className="form-check">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="exonereRetrait"
+                                                    checked={exonereRetrait}
+                                                    onChange={(e) =>
+                                                        setExonereRetrait(
+                                                            e.target.checked,
+                                                        )
+                                                    }
+                                                />
+                                                <label
+                                                    className="form-check-label"
+                                                    htmlFor="exonereRetrait"
+                                                >
+                                                    Retraits
+                                                </label>
+                                            </div>
+                                            <div className="form-check">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="exonereRappel"
+                                                    checked={exonereRappel}
+                                                    onChange={(e) =>
+                                                        setExonereRappel(
+                                                            e.target.checked,
+                                                        )
+                                                    }
+                                                />
+                                                <label
+                                                    className="form-check-label"
+                                                    htmlFor="exonereRappel"
+                                                >
+                                                    Rappels de remboursement
+                                                </label>
+                                            </div>
+                                            <div className="form-check">
+                                                <input
+                                                    className="form-check-input"
+                                                    type="checkbox"
+                                                    id="remboursement"
+                                                    checked={exonereRappel}
+                                                    onChange={(e) =>
+                                                        setRemboursement(
+                                                            e.target.checked,
+                                                        )
+                                                    }
+                                                />
+                                                <label
+                                                    className="form-check-label"
+                                                    htmlFor="remboursement"
+                                                >
+                                                    Remboursement
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div className="alert alert-info border-0 bg-light">
+                                            <i className="fas fa-info-circle me-2"></i>
+                                            Les messages avec{" "}
+                                            <code>messageStatus=1</code> et{" "}
+                                            <code>paidStatus=0</code> seront
+                                            prélevés, sauf ceux dont le statut
+                                            est exonéré.  <i className="text-danger">(A faire à la fin du mois)</i>
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={isPrelevementRunning}
+                                            className="btn w-100 py-3 fw-bold"
+                                            style={{
+                                                background:
+                                                    "linear-gradient(135deg, #fd7e14, #dc6a0a)",
+                                                color: "white",
+                                                borderRadius: "12px",
+                                                border: "none",
+                                                fontSize: "16px",
+                                            }}
+                                        >
+                                            {isPrelevementRunning ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2"></span>
+                                                    Exécution...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="fas fa-calculator me-2"></i>
+                                                    Exécuter le prélèvement
+                                                </>
+                                            )}
                                         </button>
                                     </form>
                                 </div>

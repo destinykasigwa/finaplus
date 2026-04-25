@@ -24,6 +24,7 @@
         "html2canvas": "^1.4.1",
         "install": "^0.13.0",
         "jquery": "^3.7.1",
+        "jsbarcode": "^3.12.3",
         "jspdf": "^2.5.1",
         "jspdf-autotable": "^3.8.1",
         "react-bootstrap": "^2.10.2",

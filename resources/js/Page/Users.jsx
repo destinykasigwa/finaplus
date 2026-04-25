@@ -916,9 +916,9 @@ const customStyles = {
               </div>
             </div>
 
-            {/* Panneau d'édition */}
+            {/* Panneau d'édition sticky-top */}
             <div className="col-md-4">
-              <div className="card border-0 shadow-sm rounded-3 sticky-top" style={{ top: "20px" }}>
+              <div className="card border-0 shadow-sm rounded-3" style={{ top: "20px" }}>
                 <div className="card-header bg-white border-0 pt-3">
                   <h6 className="fw-semibold mb-0">
                     <i className="fas fa-cog text-teal me-2"></i>

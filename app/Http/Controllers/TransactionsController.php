@@ -72,9 +72,9 @@ class TransactionsController extends Controller
             $numDocument = CompteurDocument::latest()->first();
             if ($checkRowExist) {
                 $data = Comptes::where(function ($query) use ($request) {
-    $query->where('NumCompte', $request->searched_account)
-          ->orWhere('NumAdherant', $request->searched_account);
-})->where('niveau', 5)->get();
+                    $query->where('NumCompte', $request->searched_account)
+                        ->orWhere('NumAdherant', $request->searched_account);
+                })->where('niveau', 5)->get();
                 $membreSignature =  AdhesionMembre::where("compte_abrege", $request->searched_account)->first();
                 $madantairedata = Mandataires::where("refCompte", $request->searched_account)->get();
                 // CompteurDocument::create([
@@ -102,9 +102,9 @@ class TransactionsController extends Controller
             $numDocument = CompteurDocument::latest()->first();
             if ($checkRowExist) {
                 $data = Comptes::where(function ($query) use ($request) {
-    $query->where('NumCompte', $request->searched_account)
-          ->orWhere('NumAdherant', $request->searched_account);
-})->where('niveau', 5)->get();
+                    $query->where('NumCompte', $request->searched_account)
+                        ->orWhere('NumAdherant', $request->searched_account);
+                })->where('niveau', 5)->get();
                 $membreSignature =  AdhesionMembre::where("compte_abrege", $request->searched_account)->first();
                 $madantairedata = Mandataires::where("refCompte", $request->searched_account)->get();
                 // CompteurDocument::create([
@@ -786,6 +786,19 @@ class TransactionsController extends Controller
                         $NomCaissier = $numCompteCaissierCDF->NomCompte;
                         $dataSystem = TauxEtDateSystem::latest()->first();
 
+
+                        $soldeCompteCaissier = Transactions::select(
+                            DB::raw("SUM(Debitfc)-SUM(Creditfc) as soldeCompte"),
+                        )->where("NumCompte", '=', $CompteCaissierCDF)
+                            ->groupBy("NumCompte")
+                            ->first();
+
+                        $montant = (int) $request->Montant;
+                        $solde = abs($soldeCompteCaissier->soldeCompte);
+                        if ($solde < $montant) {
+                            return response()->json(['status' => 0, 'msg' => "Votre solde est inferieur au montant à retirer votre solde actuel " .  $solde . " votre compte doit être approvisionné"]);
+                        }
+
                         if (isset($request->Commission) and $request->Commission > 0) {
                             CompteurTransaction::create([
                                 'fakevalue' => "0000",
@@ -992,7 +1005,22 @@ class TransactionsController extends Controller
                         $codeAgenceCaissier = $numCompteCaissierUSD->CodeAgence;
                         $NomCaissier = $numCompteCaissierUSD->NomCompte;
                         $dataSystem = TauxEtDateSystem::latest()->first();
+
+
+                        $soldeCompteCaissier = Transactions::select(
+                            DB::raw("SUM(Debitusd)-SUM(Creditusd) as soldeCompte"),
+                        )->where("NumCompte", '=', $CompteCaissierUSD)
+                            ->groupBy("NumCompte")
+                            ->first();
+
+                        $montant = (int) $request->Montant;
+                        $solde = abs($soldeCompteCaissier->soldeCompte);
+                        if ($solde < $montant) {
+                            return response()->json(['status' => 0, 'msg' => "Votre solde est inferieur au montant à retirer votre solde actuel " .  $solde . " votre compte doit être approvisionné"]);
+                        }
                         //RECUPERE LA LIGNE POUR L'OPERATION POSITIONNEE
+
+
 
                         if (isset($request->Commission) and $request->Commission > 0) {
                             CompteurTransaction::create([
@@ -2025,176 +2053,84 @@ class TransactionsController extends Controller
 
     public function getReleveInfo(Request $request)
     {
-        // return response()->json($request->all());
-        if (isset($request->NumCompte)) {
-            try {
-                $checkDevise = Comptes::where("NumCompte", $request->NumCompte)->first();
-                if ($checkDevise->CodeMonnaie == 2) {
-                    // if ($checkDevise->RefCadre == 32 or $checkDevise->RefCadre == 31) {
-                    //     // Initialisation du solde
-                    //     DB::statement(DB::raw('SET @cumul := 0'));
-                    //     // Requête principale pour calculer le solde
-                    //     $data = DB::select('
-                    //         SELECT 
-                    //             t.RefTransaction,
-                    //             t.NumTransaction,
-                    //             t.DateTransaction,
-                    //             t.Libelle,
-                    //             t.Debitfc,
-                    //             t.Creditfc,
-                    //             c.NomCompte,
-                    //             c.CodeMonnaie,
-                    //             @cumul := @cumul + t.Debitfc - t.Creditfc AS solde
-                    //         FROM transactions t
-                    //         INNER JOIN comptes c ON t.NumCompte = c.NumCompte
-                    //         WHERE 
-                    //             t.NumCompte = :numCompte 
-                    //             AND t.DateTransaction BETWEEN :dateDebut AND :dateFin
-                    //             AND (t.Creditfc != 0 OR t.Debitfc != 0)
-                    //         ORDER BY 
-                    //             t.DateTransaction, t.RefTransaction
-                    //     ', [
-                    //         'numCompte' => $request->NumCompte,
-                    //         'dateDebut' => $request->DateDebut,
-                    //         'dateFin' => $request->DateFin
-                    //     ]);
-                    //     // Calcul du solde reporté
-                    //     $dataSoldeReport = Transactions::select(
-                    //         DB::raw("COALESCE(SUM(Creditfc) - SUM(Debitfc), 0) as soldeReport")
-                    //     )
-                    //         ->where("NumCompte", "=", $request->NumCompte)
-                    //         ->where('DateTransaction', "<", $request->DateDebut)
-                    //         ->groupBy("NumCompte")
-                    //         ->first();
-
-                    //     $soldeInfo = Transactions::select(
-                    //         DB::raw("COALESCE(SUM(transactions.Creditfc)-SUM(transactions.Debitfc),0) as soldeDispo"),
-                    //         DB::raw("SUM(transactions.Creditfc) as TotalCredit"),
-                    //         DB::raw("SUM(transactions.Debitfc) as TotalDebit"),
-                    //     )->join("comptes", "transactions.NumCompte", "=", "comptes.NumCompte")
-                    //         ->where("transactions.NumCompte", "=", $request->NumCompte)
-                    //         ->where('transactions.DateTransaction', "<=", $request->DateFin)
-                    //         ->groupBy("transactions.NumCompte")
-                    //         ->first();
-                    //     $getCompteInfo = Comptes::where("NumCompte", $request->NumCompte)
-                    //         ->where("CodeMonnaie", 2)
-                    //         ->first();
-                    //     return response()->json([
-                    //         "status" => 1,
-                    //         "dataReleve" => $data,
-                    //         "dataSoldeReport" => $dataSoldeReport ? $dataSoldeReport : 0,
-                    //         "devise" => "CDF",
-                    //         "soldeInfo" => $soldeInfo,
-                    //         "getCompteInfo" => $getCompteInfo
-                    //     ]);
-                    // } else {
-
-                    $data = DB::select('SELECT transactions.RefTransaction,transactions.NumTransaction,transactions.DateTransaction,transactions.Libelle,transactions.Debitfc,transactions.Creditfc,comptes.NomCompte,comptes.CodeMonnaie, @cumul := @cumul + transactions.Creditfc-transactions.Debitfc 
-            AS solde FROM ( SELECT @cumul := 0 ) AS C, transactions 
-            INNER JOIN comptes ON transactions.NumCompte=comptes.NumCompte 
-             WHERE (transactions.NumCompte="' . $request->NumCompte . '" AND transactions.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '") AND (transactions.Credit!=0 OR transactions.Debit!=0)
-            ORDER BY transactions.DateTransaction,transactions.RefTransaction');
-                    $dataSoldeReport = Transactions::select(
-                        DB::raw("COALESCE(SUM(Creditfc)-SUM(Debitfc),0) as soldeReport"),
-                    )->where("NumCompte", "=", $request->NumCompte)
-                        ->where('transactions.DateTransaction', "<", $request->DateDebut)
-                        ->groupBy("NumCompte")
-                        ->first();
-                    $soldeInfo = Transactions::select(
-                        DB::raw("COALESCE(SUM(transactions.Creditfc)-SUM(transactions.Debitfc),0) as soldeDispo"),
-                        DB::raw("SUM(transactions.Creditfc) as TotalCredit"),
-                        DB::raw("SUM(transactions.Debitfc) as TotalDebit"),
-                    )->join("comptes", "transactions.NumCompte", "=", "comptes.NumCompte")
-                        ->where("transactions.NumCompte", "=", $request->NumCompte)
-                        ->where('transactions.DateTransaction', "<=", $request->DateFin)
-                        ->groupBy("transactions.NumCompte")
-                        ->first();
-                    $getCompteInfo = Comptes::where("NumCompte", $request->NumCompte)
-                        ->where("CodeMonnaie", 2)
-                        ->first();
-                    return response()->json([
-                        "status" => 1,
-                        "dataReleve" => $data,
-                        "dataSoldeReport" => $dataSoldeReport ? $dataSoldeReport : 0,
-                        "devise" => "CDF",
-                        "soldeInfo" => $soldeInfo,
-                        "getCompteInfo" => $getCompteInfo
-                    ]);
-                    // }
-                } else if ($checkDevise->CodeMonnaie == 1) {
-
-                    if ($checkDevise->RefCadre == 32 or $checkDevise->RefCadre == 31) {
-
-                        $data = DB::select('SELECT transactions.RefTransaction,transactions.NumTransaction,transactions.DateTransaction,transactions.Libelle,transactions.Debitusd,transactions.Creditusd,comptes.NomCompte,comptes.CodeMonnaie, @cumul := @cumul + transactions.Debitusd-transactions.Creditusd
-                    AS solde FROM ( SELECT @cumul := 0 ) AS C, transactions 
-                    INNER JOIN comptes ON transactions.NumCompte=comptes.NumCompte 
-                     WHERE (transactions.NumCompte="' . $request->NumCompte . '" AND transactions.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '") AND (transactions.Credit!=0 OR transactions.Debit!=0)
-                    ORDER BY transactions.DateTransaction,transactions.RefTransaction');
-                        $dataSoldeReport = Transactions::select(
-                            DB::raw("COALESCE(SUM(Creditusd)-SUM(Debitusd),0) as soldeReport"),
-                        )->where("NumCompte", "=", $request->NumCompte)
-                            ->where('transactions.DateTransaction', "<", $request->DateDebut)
-                            ->groupBy("NumCompte")
-                            ->first();
-                        $soldeInfo = Transactions::select(
-                            DB::raw("COALESCE(SUM(transactions.Creditusd)-SUM(transactions.Debitusd),0) as soldeDispo"),
-                            DB::raw("SUM(transactions.Creditusd) as TotalCredit"),
-                            DB::raw("SUM(transactions.Debitusd) as TotalDebit"),
-                        )->join("comptes", "transactions.NumCompte", "=", "comptes.NumCompte")
-                            ->where("transactions.NumCompte", "=", $request->NumCompte)
-                            ->where('transactions.DateTransaction', "<=", $request->DateFin)
-                            ->groupBy("transactions.NumCompte")
-                            ->first();
-                        $getCompteInfo = Comptes::where("NumCompte", $request->NumCompte)
-                            ->where("CodeMonnaie", 1)
-                            ->first();
-                        return response()->json([
-                            "status" => 1,
-                            "dataReleve" => $data,
-                            "dataSoldeReport" => $dataSoldeReport ? $dataSoldeReport : 0,
-                            "devise" => "USD",
-                            "soldeInfo" => $soldeInfo,
-                            "getCompteInfo" => $getCompteInfo
-                        ]);
-                    } else {
-                        $data = DB::select('SELECT transactions.RefTransaction,transactions.NumTransaction,transactions.DateTransaction,transactions.Libelle,transactions.Debitusd,transactions.Creditusd,comptes.NomCompte,comptes.CodeMonnaie, @cumul := @cumul + transactions.Creditusd-transactions.Debitusd
-            AS solde FROM ( SELECT @cumul := 0 ) AS C, transactions 
-            INNER JOIN comptes ON transactions.NumCompte=comptes.NumCompte 
-             WHERE (transactions.NumCompte="' . $request->NumCompte . '" AND transactions.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '") AND (transactions.Credit!=0 OR transactions.Debit!=0)
-            ORDER BY transactions.DateTransaction,transactions.RefTransaction');
-                        $dataSoldeReport = Transactions::select(
-                            DB::raw("COALESCE(SUM(Creditusd)-SUM(Debitusd),0) as soldeReport"),
-                        )->where("NumCompte", "=", $request->NumCompte)
-                            ->where('transactions.DateTransaction', "<", $request->DateDebut)
-                            ->groupBy("NumCompte")
-                            ->first();
-                        $soldeInfo = Transactions::select(
-                            DB::raw("COALESCE(SUM(transactions.Creditusd)-SUM(transactions.Debitusd),0) as soldeDispo"),
-                            DB::raw("SUM(transactions.Creditusd) as TotalCredit"),
-                            DB::raw("SUM(transactions.Debitusd) as TotalDebit"),
-                        )->join("comptes", "transactions.NumCompte", "=", "comptes.NumCompte")
-                            ->where("transactions.NumCompte", "=", $request->NumCompte)
-                            ->where('transactions.DateTransaction', "<=", $request->DateFin)
-                            ->groupBy("transactions.NumCompte")
-                            ->first();
-                        $getCompteInfo = Comptes::where("NumCompte", $request->NumCompte)
-                            ->where("CodeMonnaie", 1)
-                            ->first();
-                        return response()->json([
-                            "status" => 1,
-                            "dataReleve" => $data,
-                            "dataSoldeReport" => $dataSoldeReport ? $dataSoldeReport : 0,
-                            "devise" => "USD",
-                            "soldeInfo" => $soldeInfo,
-                            "getCompteInfo" => $getCompteInfo
-                        ]);
-                    }
-                }
-            } catch (\Throwable $th) {
-                throw $th;
-            }
-        } else {
+        if (!$request->NumCompte) {
             return response()->json(["status" => 0, "msg" => "Aucun compte trouvé."]);
+        }
+
+        try {
+
+            $compte = Comptes::where("NumCompte", $request->NumCompte)->first();
+
+            if (!$compte) {
+                return response()->json(["status" => 0, "msg" => "Compte introuvable."]);
+            }
+
+            $isCDF = $compte->CodeMonnaie == 2;
+
+            $debit  = $isCDF ? "Debitfc"  : "Debitusd";
+            $credit = $isCDF ? "Creditfc" : "Creditusd";
+
+            // 🔥 SOLDE REPORT
+            $soldeReport = Transactions::where("NumCompte", $request->NumCompte)
+                ->where("DateTransaction", "<", $request->DateDebut)
+                ->selectRaw("COALESCE(SUM($credit) - SUM($debit),0) as solde")
+                ->value("solde");
+
+            DB::statement("SET @cumul := " . ($soldeReport ?? 0));
+
+            // 🔥 LOGIQUE PROPRE
+            $sens = "(COALESCE(t.$credit,0) - COALESCE(t.$debit,0))";
+
+            $data = DB::select("
+            SELECT 
+                t.RefTransaction,
+                t.NumTransaction,
+                t.DateTransaction,
+                t.Libelle,
+
+                COALESCE(t.$debit,0) AS Debit,
+                COALESCE(t.$credit,0) AS Credit,
+
+                c.NomCompte,
+                c.CodeMonnaie,
+
+                @cumul := @cumul + ($sens) AS solde
+
+            FROM transactions t
+            INNER JOIN comptes c ON t.NumCompte = c.NumCompte
+            WHERE 
+                t.NumCompte = ?
+                AND t.DateTransaction BETWEEN ? AND ?
+                AND (t.$credit != 0 OR t.$debit != 0)
+            ORDER BY t.DateTransaction,t.created_at, t.RefTransaction
+        ", [
+                $request->NumCompte,
+                $request->DateDebut,
+                $request->DateFin
+            ]);
+
+            $soldeInfo = Transactions::where("NumCompte", $request->NumCompte)
+                ->where("DateTransaction", "<=", $request->DateFin)
+                ->selectRaw("
+                COALESCE(SUM($credit) - SUM($debit),0) as soldeDispo,
+                SUM($credit) as TotalCredit,
+                SUM($debit) as TotalDebit
+            ")
+                ->first();
+
+            return response()->json([
+                "status" => 1,
+                "dataReleve" => $data,
+                "dataSoldeReport" => $soldeReport ?? 0,
+                "devise" => $isCDF ? "CDF" : "USD",
+                "soldeInfo" => $soldeInfo,
+                "getCompteInfo" => $compte
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                "status" => 0,
+                "msg" => $th->getMessage()
+            ]);
         }
     }
 
@@ -3104,19 +3040,19 @@ class TransactionsController extends Controller
     public function extourneOperation($reference)
     {
 
-      if (strpos($reference, 'AT') === 0) {
-        try {
-            $cloture = new ClotureJourneeCopy(new \Illuminate\Http\Request());
-            $result = $cloture->annulerRemboursementParReference($reference);
-            if ($result) {
-                return response()->json(["status" => 1, "msg" => "Remboursement annulé avec succès."]);
-            } else {
-                return response()->json(["status" => 0, "msg" => "Échec de l'annulation du remboursement."]);
+        if (strpos($reference, 'AT') === 0) {
+            try {
+                $cloture = new ClotureJourneeCopy(new \Illuminate\Http\Request());
+                $result = $cloture->annulerRemboursementParReference($reference);
+                if ($result) {
+                    return response()->json(["status" => 1, "msg" => "Remboursement annulé avec succès."]);
+                } else {
+                    return response()->json(["status" => 0, "msg" => "Échec de l'annulation du remboursement."]);
+                }
+            } catch (\Exception $e) {
+                return response()->json(["status" => 0, "msg" => $e->getMessage()]);
             }
-        } catch (\Exception $e) {
-            return response()->json(["status" => 0, "msg" => $e->getMessage()]);
         }
-    }
         $data = Transactions::where("NumTransaction", "=", $reference)->first();
         $dataRefCompteClient = Transactions::where("NumTransaction", $reference)
             ->where("NumCompte", "like", "33%")
@@ -3287,7 +3223,9 @@ class TransactionsController extends Controller
     public function getCommissionConfig()
     {
         $data = EpargneAdhesionModel::first()->show_commission_pannel;
-        return response()->json(["status" => 1, "data" => $data]);
+        $type_recu= EpargneAdhesionModel::first()->type_recu;
+        
+        return response()->json(["status" => 1, "data" => $data,"type_recu"=>$type_recu]);
     }
 
 

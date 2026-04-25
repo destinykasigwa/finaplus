@@ -311,6 +311,7 @@ class Authentication extends Controller
             $data = User::where("name", $request->name)->first();
             $passwordHash = Hash::make($request->newPassword);
             if (Hash::check($request->Previouspassword, $data->password)) {
+                
                 $todayDate = date("Y-m-d");
                 $nbrJourExpiration = ExpirateDateConfig::first()->password_expired_days;
                 // $dateDuChangementPW = $data->start_date;

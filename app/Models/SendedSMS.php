@@ -13,5 +13,14 @@ class SendedSMS extends Model
         "messageStatus",
         "paidStatus",
         "dateEnvoie",
+        "NumCompte",
+        "CodeMonnaie",
+        "statut"
+
     ];
 }
+
+
+
+
+

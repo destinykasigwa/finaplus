@@ -123,14 +123,14 @@ const Releve = () => {
             setloading(false);
             setGetReleveData(res.data.dataReleve);
             setGetSoldeReport(
-                res.data.dataSoldeReport.soldeReport == undefined
+                res.data.dataSoldeReport== undefined
                     ? 0
-                    : res.data.dataSoldeReport.soldeReport,
+                    : res.data.dataSoldeReport,
             );
             setGetDevise(res.data.devise);
             setGetSoldeInfo(res.data.soldeInfo);
             setGetOtherInfo(res.data.getCompteInfo);
-            console.log(res.data.dataSoldeReport.soldeReport);
+            console.log(res.data.dataSoldeReport);
         } else {
             setloading(false);
             Swal.fire({
@@ -347,8 +347,7 @@ const Releve = () => {
                                 <div
                                     className="card-body p-3"
                                     style={{
-                                        background:
-                                            "#138496",
+                                        background: "#138496",
                                         borderRadius: "12px",
                                     }}
                                 >
@@ -967,38 +966,53 @@ const Releve = () => {
                                                                         res.DateTransaction,
                                                                     )}
                                                                 </td>
+
                                                                 <td>
                                                                     {
                                                                         res.NumTransaction
                                                                     }
                                                                 </td>
+
                                                                 <td>
                                                                     {
                                                                         res.Libelle
                                                                     }
                                                                 </td>
+
+                                                                {/* Débit */}
                                                                 <td className="text-danger text-end">
-                                                                    {res.Debitfc?.toLocaleString() ||
-                                                                        "0,00"}
+                                                                    {numberWithSpaces(
+                                                                        parseFloat(
+                                                                            res.Debit ||
+                                                                                0,
+                                                                        ).toFixed(
+                                                                            2,
+                                                                        ),
+                                                                    )}
                                                                 </td>
+
+                                                                {/* Crédit */}
                                                                 <td className="text-success text-end">
-                                                                    {res.Creditfc?.toLocaleString() ||
-                                                                        "0,00"}
+                                                                    {numberWithSpaces(
+                                                                        parseFloat(
+                                                                            res.Credit ||
+                                                                                0,
+                                                                        ).toFixed(
+                                                                            2,
+                                                                        ),
+                                                                    )}
                                                                 </td>
+
+                                                                {/* Solde */}
                                                                 <td className="fw-bold text-end">
-                                                                    {getOtherInfo.RefCadre ==
-                                                                        31 ||
-                                                                    getOtherInfo.RefCadre ==
-                                                                        32
-                                                                        ? `(${numberWithSpaces(parseFloat(res.solde + getSoldeReport).toFixed(2))})`
-                                                                        : numberWithSpaces(
-                                                                              parseFloat(
-                                                                                  res.solde +
-                                                                                      getSoldeReport,
-                                                                              ).toFixed(
-                                                                                  2,
-                                                                              ),
-                                                                          )}
+                                                                    {numberWithSpaces(
+                                                                        parseFloat(
+                                                                            res.solde ||
+                                                                                0,
+                                                                        ).toFixed(
+                                                                            2,
+                                                                        ),
+                                                                    )}
                                                                 </td>
                                                             </tr>
                                                         ),
@@ -1291,38 +1305,53 @@ const Releve = () => {
                                                                         res.DateTransaction,
                                                                     )}
                                                                 </td>
+
                                                                 <td>
                                                                     {
                                                                         res.NumTransaction
                                                                     }
                                                                 </td>
+
                                                                 <td>
                                                                     {
                                                                         res.Libelle
                                                                     }
                                                                 </td>
+
+                                                                {/* Débit */}
                                                                 <td className="text-danger text-end">
-                                                                    {res.Debitusd?.toLocaleString() ||
-                                                                        "0,00"}
+                                                                    {numberWithSpaces(
+                                                                        parseFloat(
+                                                                            res.Debit ||
+                                                                                0,
+                                                                        ).toFixed(
+                                                                            2,
+                                                                        ),
+                                                                    )}
                                                                 </td>
+
+                                                                {/* Crédit */}
                                                                 <td className="text-success text-end">
-                                                                    {res.Creditusd?.toLocaleString() ||
-                                                                        "0,00"}
+                                                                    {numberWithSpaces(
+                                                                        parseFloat(
+                                                                            res.Credit ||
+                                                                                0,
+                                                                        ).toFixed(
+                                                                            2,
+                                                                        ),
+                                                                    )}
                                                                 </td>
+
+                                                                {/* Solde */}
                                                                 <td className="fw-bold text-end">
-                                                                    {getOtherInfo.RefCadre ==
-                                                                        31 ||
-                                                                    getOtherInfo.RefCadre ==
-                                                                        32
-                                                                        ? `(${numberWithSpaces(parseFloat(res.solde + getSoldeReport).toFixed(2))})`
-                                                                        : numberWithSpaces(
-                                                                              parseFloat(
-                                                                                  res.solde +
-                                                                                      getSoldeReport,
-                                                                              ).toFixed(
-                                                                                  2,
-                                                                              ),
-                                                                          )}
+                                                                    {numberWithSpaces(
+                                                                        parseFloat(
+                                                                            res.solde ||
+                                                                                0,
+                                                                        ).toFixed(
+                                                                            2,
+                                                                        ),
+                                                                    )}
                                                                 </td>
                                                             </tr>
                                                         ),
