@@ -399,6 +399,15 @@ const RecuApproUSD = ({ data }) => {
         paddingBottom: "5px",
         lineHeight: "1",
     };
+
+     function numberWithSpaces(x) {
+        if (x === null || x === undefined) {
+            return "0.00";
+        }
+        var parts = x.toString().split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        return parts.join(".");
+    }
     return (
         <>
             <div
@@ -818,7 +827,7 @@ const RecuApproUSD = ({ data }) => {
                                                                                 "bold",
                                                                         }}
                                                                     >
-                                                                        {parseInt(
+                                                                        {numberWithSpaces(
                                                                             data.montant
                                                                         )}
                                                                     </td>

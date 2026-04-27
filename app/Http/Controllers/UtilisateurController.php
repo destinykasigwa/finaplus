@@ -2,14 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Agences;
 use App\Models\Comptes;
 use App\Models\Menus;
 use App\Models\Profile;
 use App\Models\ProfilsUser;
 use App\Models\User;
+use App\Models\UserAgences;
 use App\Models\UserMenu;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 
 class UtilisateurController extends Controller
 {
@@ -222,4 +225,72 @@ class UtilisateurController extends Controller
             return response()->json(["status" => 0, "msg" => "Aucun utilisateur sélectionné!"]);
         }
     }
+
+    //PERMET DE RECUPERER TOUTES LES AGENCES 
+
+    // Exemples de méthodes (à adapter)
+public function getAgences() {
+    $agences = Agences::where('active', true)->get();
+    return response()->json(['status' => 1, 'data' => $agences]);
+}
+
+public function getUserAgences(Request $request)
+{
+    $user = User::find($request->userId);
+    // Inclure l'id du pivot
+    $agences = $user->agences()->get()->map(function($agence) {
+        return [
+            'id' => $agence->pivot->id,          // id de user_agences
+            'agence_id' => $agence->id,
+            'code_agence' => $agence->code_agence,
+            'nom_agence' => $agence->nom_agence,
+        ];
+    });
+    return response()->json(['status' => 1, 'get_agences_user' => $agences]);
+}
+
+public function addAgenceToUser(Request $request) {
+    $user = User::find($request->userId);
+    $user->agences()->attach($request->agenceId);
+    return response()->json(['status' => 1, 'msg' => 'Agence ajoutée']);
+}
+
+public function removeAgenceFromUser(Request $request) {
+    UserAgences::find($request->idUserAgence)->delete();
+    return response()->json(['status' => 1, 'msg' => 'Agence retirée']);
+}
+
+public function addAllAgencesToUser(Request $request) {
+    $user = User::find($request->userId);
+    $allAgencesIds = Agences::pluck('id')->toArray();
+    $user->agences()->sync($allAgencesIds);
+    return response()->json(['status' => 1, 'msg' => 'Toutes les agences ont été attribuées']);
+}
+
+
+
+public function changeActiveAgence(Request $request)
+{
+    $agenceId = $request->agence_id;
+    $agenceCode = $request->agence_code;
+    $agenceNom = $request->agence_nom;
+    
+    // Vérifier que cette agence appartient bien à l'utilisateur
+    $user = auth()->user();
+    $userAgences = $user->agences; // relation many-to-many
+    
+    $validAgence = $userAgences->firstWhere('id', $agenceId);
+    if (!$validAgence) {
+        return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
+    }
+    
+    // Stocker en session (et non en base)
+    Session::put('current_agence', [
+        'id' => $agenceId,
+        'code_agence' => $agenceCode,
+        'nom_agence' => $agenceNom,
+    ]);
+    
+    return response()->json(['status' => 1, 'msg' => 'Agence changée avec succès']);
+}
 }

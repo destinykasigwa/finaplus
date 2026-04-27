@@ -23,7 +23,7 @@ const EntreeT = () => {
             setGetdata(res.data.data);
             setFetchInfo(res.data.billetageUSD);
             setFetchInfo2(res.data.billetageCDF);
-            console.log(getData[0].centDollars);
+            //console.log(getData[0].centDollars);
         }
     };
 

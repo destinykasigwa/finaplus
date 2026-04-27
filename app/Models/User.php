@@ -54,4 +54,18 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Profile::class, 'profils_users', 'user_id', 'profil_id');
     }
+
+
+ public function agences()
+{
+    return $this->belongsToMany(Agences::class, 'user_agences', 'user_id', 'agence_id')
+                ->withPivot('id')
+                ->withTimestamps();
+}
+
+
+public function currentAgence()
+{
+    return $this->belongsTo(Agences::class, 'current_agence_id');
+}
 }

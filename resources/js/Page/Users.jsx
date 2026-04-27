@@ -36,6 +36,15 @@ const Users = () => {
     const [Profilrecords, setProfilrecords] = useState();
     const [menuRecords, setMenuRecords] = useState();
 
+
+      // NOUVEAUX ÉTATS POUR LES AGENCES
+    const [fetchAgences, setFetchAgences] = useState();       // toutes les agences
+    const [agenceRecords, setAgenceRecords] = useState();     // pour le filtrage
+    const [selectedAgenceData, setSelectedAgenceData] = useState(); // agence(s) sélectionnée(s) dans le tableau
+    const [fetchAgencesForSelectedUser, setFetchAgencesForSelectedUser] = useState(); // agences de l'utilisateur
+    const [loadingAgences, setLoadingAgences] = useState(false);
+    const [multiAgenceLoading, setMultiAgenceLoading] = useState(false);
+
    const columns = [
   {
     name: (
@@ -786,6 +795,250 @@ const customStyles = {
         }
     };
 
+
+
+
+
+    // ---- NOUVELLES COLONNES POUR LE TABLEAU DES AGENCES ----
+    const columnsAgence = [
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i className="fas fa-building" style={{ fontSize: "14px" }}></i>
+                    <span>Code agence</span>
+                </div>
+            ),
+            selector: row => row.code_agence,
+            sortable: true,
+            grow: 1,
+        },
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i className="fas fa-store" style={{ fontSize: "14px" }}></i>
+                    <span>Nom de l'agence</span>
+                </div>
+            ),
+            selector: row => row.nom_agence,
+            grow: 3,
+        },
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i className="fas fa-plus-circle" style={{ fontSize: "14px" }}></i>
+                    <span>Action</span>
+                </div>
+            ),
+            cell: row => (
+                <button
+                    className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
+                    onClick={() => addAgenceForUser(row.id)}
+                    style={{
+                        borderRadius: "8px",
+                        padding: "6px 12px",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                        transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#0d6efd";
+                        e.currentTarget.style.color = "white";
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "#0d6efd";
+                    }}
+                >
+                    <i className="fas fa-user-plus"></i>
+                    <span>Attribuer</span>
+                </button>
+            ),
+            grow: 1,
+            center: true,
+        },
+    ];
+
+    const AgenceForUserColumn = [
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i className="fas fa-tag" style={{ fontSize: "14px" }}></i>
+                    <span>Agence</span>
+                </div>
+            ),
+            selector: row => row.nom_agence,
+            grow: 3,
+            cell: row => (
+                <span className="fw-semibold" style={{ color: "teal" }}>
+                    <i className="fas fa-building me-2" style={{ fontSize: "12px" }}></i>
+                    {row.code_agence} - {row.nom_agence}
+                </span>
+            ),
+        },
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i className="fas fa-trash-alt" style={{ fontSize: "14px" }}></i>
+                    <span>Action</span>
+                </div>
+            ),
+            cell: row => (
+                <button
+                    className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
+                    onClick={() => removeAgenceForUser(row.id)}
+                    style={{
+                        borderRadius: "8px",
+                        padding: "6px 12px",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                        transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#dc3545";
+                        e.currentTarget.style.color = "white";
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "#dc3545";
+                    }}
+                >
+                    <i className="fas fa-trash-alt"></i>
+                    <span>Retirer</span>
+                </button>
+            ),
+            grow: 1,
+            center: true,
+        },
+    ];
+
+    // ---- Récupération initiale des agences (au chargement du composant) ----
+    useEffect(() => {
+        getUsers();
+        getAgences(); // charger la liste des agences
+    }, []);
+
+    const getAgences = async () => {
+        try {
+            const res = await axios.get("/eco/pages/getagences");
+            if (res.data.status === 1) {
+                setFetchAgences(res.data);
+                setAgenceRecords(res.data.data); // suppose que res.data.data contient le tableau
+            } else {
+                console.error("Erreur chargement agences", res.data.msg);
+            }
+        } catch (error) {
+            console.error("Erreur API getagences", error);
+            Swal.fire("Erreur", "Impossible de charger les agences", "error");
+        }
+    };
+
+    // ---- Filtre pour le tableau des agences ----
+    const handleFilterAgence = (event) => {
+        if (!fetchAgences?.data) return;
+        const newData = fetchAgences.data.filter((row) => {
+            return (
+                row.code_agence.toLowerCase().includes(event.target.value.toLowerCase()) ||
+                row.nom_agence.toLowerCase().includes(event.target.value.toLowerCase())
+            );
+        });
+        setAgenceRecords(newData);
+    };
+
+    // ---- Sélection d'une ou plusieurs agences dans le tableau ----
+    const handleChangeAgence = (state) => {
+        setSelectedAgenceData(state.selectedRows);
+    };
+
+    // ---- Récupérer les agences déjà attribuées à l'utilisateur sélectionné ----
+    const getAgencesForSelectedUser = async (e) => {
+        if (e) e.preventDefault();
+        if (!selectedData || selectedData.length === 0) {
+            Swal.fire("Info", "Veuillez d'abord sélectionner un utilisateur", "info");
+            return;
+        }
+        try {
+            const res = await axios.post("/eco/pages/getusers/agences", {
+                userId: selectedData[0].id,
+            });
+            if (res.data.status === 1) {
+                setFetchAgencesForSelectedUser(res.data.get_agences_user);
+            } else {
+                Swal.fire("Erreur", res.data.msg, "error");
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire("Erreur", "Problème lors du chargement des agences de l'utilisateur", "error");
+        }
+    };
+
+    // ---- Ajouter une agence à l'utilisateur ----
+    const addAgenceForUser = async (agenceId) => {
+        if (!selectedData || selectedData.length === 0) {
+            Swal.fire("Info", "Sélectionnez d'abord un utilisateur", "info");
+            return;
+        }
+        try {
+            const res = await axios.post("/eco/pages/add/agence", {
+                agenceId: agenceId,
+                userId: selectedData[0].id,
+            });
+            if (res.data.status === 1) {
+                Swal.fire("Succès", res.data.msg, "success");
+                // Recharger les agences de l'utilisateur pour rafraîchir l'affichage
+                getAgencesForSelectedUser();
+            } else {
+                Swal.fire("Erreur", res.data.msg, "error");
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire("Erreur", "Impossible d'ajouter l'agence", "error");
+        }
+    };
+
+    // ---- Retirer une agence de l'utilisateur ----
+    const removeAgenceForUser = async (userAgenceId) => {
+        try {
+            const res = await axios.post("/eco/pages/remove/agence", {
+                idUserAgence: userAgenceId, // l'id de la table user_agences
+            });
+            if (res.data.status === 1) {
+                Swal.fire("Succès", res.data.msg, "success");
+                getAgencesForSelectedUser(); // recharger
+            } else {
+                Swal.fire("Erreur", res.data.msg, "error");
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire("Erreur", "Impossible de retirer l'agence", "error");
+        }
+    };
+
+    // ---- Bouton Multi‑agence : attribuer TOUTES les agences à l'utilisateur ----
+    const handleMultiAgence = async () => {
+        if (!selectedData || selectedData.length === 0) {
+            Swal.fire("Info", "Sélectionnez un utilisateur", "info");
+            return;
+        }
+        setMultiAgenceLoading(true);
+        try {
+            const res = await axios.post("/eco/pages/add/all-agences", {
+                userId: selectedData[0].id,
+            });
+            if (res.data.status === 1) {
+                Swal.fire("Succès", res.data.msg, "success");
+                getAgencesForSelectedUser(); // rafraîchir la liste
+            } else {
+                Swal.fire("Erreur", res.data.msg, "error");
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire("Erreur", "Le backend multi‑agence n'est pas encore implémenté", "info");
+            // Pour le moment, on peut simuler un succès en attendant le backend
+            // getAgencesForSelectedUser();
+        } finally {
+            setMultiAgenceLoading(false);
+        }
+    };
     return (
       <div style={{ marginTop: "5px" }}>
   <div className="card border-0 shadow-lg rounded-3 overflow-hidden">
@@ -838,6 +1091,12 @@ const customStyles = {
             Menus
         </a>
     </li>
+    {/* NOUVEL ONGLET AGENCE */}
+                        <li className="nav-item">
+                            <a className="nav-link" id="custom-tabs-one-agence-tab" data-toggle="pill" href="#custom-tabs-one-agence" role="tab">
+                                <i className="fas fa-building"></i> Agences
+                            </a>
+                        </li>
 </ul>
     </div>
 
@@ -1292,6 +1551,117 @@ const customStyles = {
             </div>
           </div>
         </div>
+
+          {/* ================= TAB AGENCES ================= */}
+                        <div className="tab-pane fade" id="custom-tabs-one-agence" role="tabpanel">
+                            <div className="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <h4 className="fw-bold mb-0" style={{ color: "teal" }}>
+                                        <i className="fas fa-building me-2"></i>
+                                        Gestion des agences
+                                    </h4>
+                                    <small className="text-muted">Attribuez une ou plusieurs agences à un utilisateur</small>
+                                </div>
+                            </div>
+
+                            <div className="row g-4">
+                                {/* Colonne gauche : liste de toutes les agences */}
+                                <div className="col-md-7">
+                                    <div className="card border-0 shadow-sm rounded-3">
+                                        <div className="card-body p-0">
+                                            <div className="p-3 border-bottom bg-light rounded-top">
+                                                <div className="d-flex justify-content-between align-items-center">
+                                                    <div className="position-relative">
+                                                        <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                                                        <input
+                                                            type="text"
+                                                            onChange={handleFilterAgence}
+                                                            className="form-control form-control-sm ps-5"
+                                                            style={{ width: "250px", borderRadius: "20px" }}
+                                                            placeholder="Code ou nom agence..."
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        className="btn btn-sm btn-teal"
+                                                        onClick={() => getAgences()}
+                                                        style={{ backgroundColor: "teal", color: "white", borderRadius: "8px" }}
+                                                    >
+                                                        <i className="fas fa-sync-alt me-1"></i> Rafraîchir
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div style={{ overflowY: "auto", maxHeight: "500px" }}>
+                                                {agenceRecords ? (
+                                                    <DataTable
+                                                        data={agenceRecords}
+                                                        columns={columnsAgence}
+                                                        pagination={5}
+                                                        onSelectedRowsChange={handleChangeAgence}
+                                                        customStyles={customStyles}
+                                                    />
+                                                ) : (
+                                                    <div className="text-center py-5">
+                                                        <div className="spinner-border text-teal" role="status"></div>
+                                                        <p className="mt-2 text-muted">Chargement des agences...</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Colonne droite : agences de l'utilisateur + bouton multi-agence */}
+                                <div className="col-md-5">
+                                    <div className="card border-0 shadow-sm rounded-3">
+                                        <div className="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
+                                            <h6 className="fw-semibold mb-0">
+                                                <i className="fas fa-spinner me-2 text-teal"></i>
+                                                Agences de l'utilisateur
+                                            </h6>
+                                            <button
+                                                className="btn btn-sm btn-outline-success"
+                                                onClick={handleMultiAgence}
+                                                disabled={multiAgenceLoading}
+                                                style={{ borderRadius: "8px" }}
+                                            >
+                                                {multiAgenceLoading ? (
+                                                    <span className="spinner-border spinner-border-sm"></span>
+                                                ) : (
+                                                    <>
+                                                        <i className="fas fa-layer-group me-1"></i> Multi‑agence
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                        <div className="card-body">
+                                            <button
+                                                className="btn btn-outline-teal w-100 mb-3"
+                                                onClick={getAgencesForSelectedUser}
+                                                style={{ borderRadius: "8px", borderColor: "teal", color: "#000" }}
+                                            >
+                                                <i className="fas fa-sync-alt me-2"></i>
+                                                Charger les agences de l'utilisateur
+                                            </button>
+                                            {fetchAgencesForSelectedUser && fetchAgencesForSelectedUser.length > 0 ? (
+                                                <div style={{ maxHeight: "350px", overflowY: "auto" }}>
+                                                    <DataTable
+                                                        data={fetchAgencesForSelectedUser}
+                                                        columns={AgenceForUserColumn}
+                                                        pagination={5}
+                                                        customStyles={customStyles}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <p className="text-center text-muted small mt-3">
+                                                    Aucune agence attribuée à cet utilisateur.
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {/* ============= FIN TAB AGENCES ============= */}
       </div>
     </div>
   </div>

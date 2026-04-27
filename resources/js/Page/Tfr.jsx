@@ -20,6 +20,7 @@ const TFR = () => {
         resultat: 0,
     });
     const [currentPage, setCurrentPage] = useState(1);
+     const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
     const itemsPerPage = 20;
 
     useEffect(() => {
@@ -62,6 +63,7 @@ const TFR = () => {
                     date_fin,
                     devise,
                     type_tfr: typeTFR,
+                     agence_filter: agenceFilter, // <- ajout
                 },
             );
             if (res.data.status === 1) {
@@ -317,7 +319,54 @@ const TFR = () => {
                         </div>
                     </div>
                 </div>
-                <div className="filter-card action-card">
+
+                
+                    <div  className="filter-card">
+                         <div className="filter-header">
+                                <h6 className="section-title">
+                                    <i
+                                        className="fas fa-building me-2"
+                                        style={{ color: "#6366f1" }}
+                                    ></i>
+                                    Agence
+                                </h6>
+                            </div>
+                        <div className="filter-body">
+                           
+                            <div className="card-body pt-2">
+                                <select
+                                    className="modern-select w-100"
+                                    value={agenceFilter}
+                                    onChange={(e) =>
+                                        setAgenceFilter(e.target.value)
+                                    }
+                                    disabled={userAgences.length <= 1}
+                                >
+                                    <option value="current">
+                                        Agence courante (
+                                        {currentAgence?.nom_agence ||
+                                            "Non définie"}
+                                        )
+                                    </option>
+                                    {userAgences.length > 1 && (
+                                        <>
+                                            <option value="all">
+                                                Toutes mes agences
+                                            </option>
+                                            {userAgences.map((agence) => (
+                                                <option
+                                                    key={agence.id}
+                                                    value={agence.id}
+                                                >
+                                                    {agence.code_agence} -{" "}
+                                                    {agence.nom_agence}
+                                                </option>
+                                            ))}
+                                        </>
+                                    )}
+                                </select>
+                            </div>
+                          <div className="filter-card action-card">
                     <div className="btn-with-tooltip" style={{ width: "100%" }}>
                         <button
                             className="btn-primary-gradient mt-2"
@@ -343,6 +392,9 @@ const TFR = () => {
                         )}
                     </div>
                 </div>
+                        </div>
+                    </div>
+                
             </div>
 
             {tfrData.length > 0 && (

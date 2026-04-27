@@ -69,6 +69,7 @@ class TransactionsController extends Controller
     {
         if (isset($request->searched_account)) {
             $checkRowExist = Comptes::where("NumCompte", $request->searched_account)->orWhere("NumAdherant", $request->searched_account)->first();
+
             $numDocument = CompteurDocument::latest()->first();
             if ($checkRowExist) {
                 $data = Comptes::where(function ($query) use ($request) {
@@ -102,9 +103,12 @@ class TransactionsController extends Controller
             $numDocument = CompteurDocument::latest()->first();
             if ($checkRowExist) {
                 $data = Comptes::where(function ($query) use ($request) {
-                    $query->where('NumCompte', $request->searched_account)
-                        ->orWhere('NumAdherant', $request->searched_account);
-                })->where('niveau', 5)->get();
+            $query->where('NumCompte', $request->searched_account)
+                  ->orWhere('NumAdherant', $request->searched_account);
+        })
+        ->where('niveau', 5)
+        ->where('RefGroupe', 330) // ← Ajout du filtre
+        ->get();
                 $membreSignature =  AdhesionMembre::where("compte_abrege", $request->searched_account)->first();
                 $madantairedata = Mandataires::where("refCompte", $request->searched_account)->get();
                 // CompteurDocument::create([
@@ -1279,6 +1283,12 @@ class TransactionsController extends Controller
                     ->where("delested", "=", 0)
                     ->groupBy("NomUtilisateur")
                     ->first();
+                if(!$billetageCDF){
+                    return response()->json([
+                    "status" => 0,
+                    "msg" => "Le délestage est déjà effectué.",
+                ]);
+                }
                 //RENSEINE LE DELESTAGE
                 BilletageCDF::where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)->update([
                     "delested" => 1
@@ -1331,6 +1341,12 @@ class TransactionsController extends Controller
                     ->where("delested", "=", 0)
                     ->groupBy("NomUtilisateur")
                     ->first();
+                    if(!$billetageUSD){
+                    return response()->json([
+                    "status" => 0,
+                    "msg" => "Le délestage est déjà effectué.",
+                ]);
+                }
 
                 //RENSEINE LE DELESTAGE
                 BilletageUSD::where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)->update([

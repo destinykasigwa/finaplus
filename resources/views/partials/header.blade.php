@@ -330,6 +330,16 @@
         .dropdown-toggle:hover::after {
             transform: rotate(180deg);
         }
+
+        .btn-teal {
+    background-color: #20c997;
+    border-color: #20c997;
+    color: white;
+}
+.btn-teal:hover {
+    background-color: #198764;
+    border-color: #198764;
+}
     </style>
 </head>
 
@@ -544,6 +554,52 @@
                             </a>
                         </div>
                     </li>
+
+                    <!-- ========== SÉLECTEUR D'AGENCE MODERNE ========== -->
+@php
+    $userAgences = session('user_agences', []);
+    $currentAgence = session('current_agence');
+@endphp
+
+@if(count($userAgences) > 1)
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="agenceDropdown" 
+           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fas fa-building me-1"></i>
+            @if($currentAgence)
+                {{ $currentAgence['code_agence'] ?? $currentAgence['nom_agence'] ?? 'Agence' }}
+            @else
+                Agence
+            @endif
+        </a>
+        <div class="dropdown-menu dropdown-menu-modern p-3" aria-labelledby="agenceDropdown" style="min-width: 280px;">
+            <div class="form-group mb-2">
+                <label class="small text-muted mb-1">Sélectionnez votre agence</label>
+                <select id="agenceSelect" class="form-control form-control-sm">
+                    @foreach($userAgences as $agence)
+                        <option value="{{ $agence['id'] }}" 
+                            data-code="{{ $agence['code_agence'] }}"
+                            data-nom="{{ $agence['nom_agence'] }}"
+                            @if($currentAgence && $currentAgence['id'] == $agence['id']) selected @endif>
+                            {{ $agence['code_agence'] }} - {{ $agence['nom_agence'] }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <button id="btnConnectAgence" class="btn btn-teal btn-sm w-100">
+                <i class="fas fa-plug me-1"></i> Se connecter
+            </button>
+        </div>
+    </li>
+@elseif(count($userAgences) == 1)
+    <li class="nav-item">
+        <span class="nav-link text-white-50">
+            <i class="fas fa-building me-1"></i> {{ $userAgences[0]['code_agence'] }}
+        </span>
+    </li>
+@endif
+
+
                 </ul>
             </div>
         </div>
@@ -552,4 +608,59 @@
     <div class="d-flex flex-column min-vh-100">
         <main class="flex-grow-1" style="flex: 1;">
             <!-- Contenu principal de la page -->
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnConnect = document.getElementById('btnConnectAgence');
+    if (btnConnect) {
+        btnConnect.addEventListener('click', function() {
+            const select = document.getElementById('agenceSelect');
+            const selectedOption = select.options[select.selectedIndex];
+            const agenceId = select.value;
+            const agenceCode = selectedOption.getAttribute('data-code');
+            const agenceNom = selectedOption.getAttribute('data-nom');
+
+            // Requête AJAX pour changer l'agence active en session
+            fetch('{{ route("eco.agence.change") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    agence_id: agenceId,
+                    agence_code: agenceCode,
+                    agence_nom: agenceNom
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 1) {
+                    // Recharger la page pour appliquer le changement d'agence
+                    window.location.reload();
+                } else {
+                    alert('Erreur : ' + (data.msg || 'Impossible de changer d\'agence'));
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue');
+            });
+        });
+    }
+});
+
+
+// Empêcher la fermeture du dropdown agence quand on clique sur le select ou le bouton
+document.addEventListener('DOMContentLoaded', function() {
+    var agenceDropdown = document.getElementById('agenceDropdown');
+    if (agenceDropdown) {
+        var dropdownMenu = agenceDropdown.nextElementSibling;
+        if (dropdownMenu) {
+            dropdownMenu.addEventListener('click', function(event) {
+                event.stopPropagation(); // Empêche la fermeture du dropdown
+            });
+        }
+    }
+});
+</script>
    

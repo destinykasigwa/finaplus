@@ -17,10 +17,8 @@ const Balance = () => {
     const [balanceData, setBalanceData] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [typeBalance, setTypeBalance] = useState("detail"); // "detail" ou "consolide"
+    const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
     const itemsPerPage = 20;
-
-
-
 
     const buildHierarchy = (data) => {
         const result = [];
@@ -71,19 +69,18 @@ const Balance = () => {
         );
     }, []);
 
+    // Fonction utilitaire
+    const getPremierJourAnnee = (annee = null) => {
+        const anneeUtilisee = annee || new Date().getFullYear();
+        return `${anneeUtilisee}-01-01`;
+    };
 
-     // Fonction utilitaire
-        const getPremierJourAnnee = (annee = null) => {
-            const anneeUtilisee = annee || new Date().getFullYear();
-            return `${anneeUtilisee}-01-01`;
-        };
-    
-        // Dans votre composant
-        useEffect(() => {
-            setDateDebut(getPremierJourAnnee()); // Année en cours
-            // ou
-            setDateDebut(getPremierJourAnnee()); // Année 2025 spécifique
-        }, []);
+    // Dans votre composant
+    useEffect(() => {
+        setDateDebut(getPremierJourAnnee()); // Année en cours
+        // ou
+        setDateDebut(getPremierJourAnnee()); // Année 2025 spécifique
+    }, []);
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -106,6 +103,7 @@ const Balance = () => {
                     compte_debut: compteDebut,
                     compte_fin: compteFin,
                     type_balance: typeBalance,
+                    agence_filter: agenceFilter, // <- ajout
                 },
             );
             if (res.data.status === 1) {
@@ -287,10 +285,10 @@ const Balance = () => {
             )}
 
             {/* Header */}
-            <div className="balance-header" style={{   background: "#138496"}} >
+            <div className="balance-header" style={{ background: "#138496" }}>
                 <div className="balance-header-content">
                     <div className="balance-header-icon">
-                      <i className="fas fa-balance-scale"></i>
+                        <i className="fas fa-balance-scale"></i>
                     </div>
                     <div>
                         <h1>Balance des comptes</h1>
@@ -390,7 +388,7 @@ const Balance = () => {
                                     Balance semi‑détaillée
                                 </label>
                             </div>
-                            <div className="form-check">
+                            <div className="form-check mb-3">
                                 <input
                                     type="radio"
                                     className="form-check-input modern-radio"
@@ -408,21 +406,68 @@ const Balance = () => {
                                     Balance consolidée
                                 </label>
                             </div>
+
+                            {/* Sélecteur d'agence (désactivé si mono-agence) */}
+                            <div className="mt-3 pt-1 border-top">
+                                <label className="label-modern mb-2">
+                                    <i
+                                        className="fas fa-building me-1"
+                                        style={{ fontSize: "0.8rem" }}
+                                    ></i>
+                                    Agence
+                                </label>
+                                <select
+                                    className="modern-select w-100"
+                                    value={agenceFilter}
+                                    onChange={(e) =>
+                                        setAgenceFilter(e.target.value)
+                                    }
+                                    disabled={userAgences.length <= 1}
+                                >
+                                    <option value="current">
+                                        Agence courante (
+                                        {currentAgence?.nom_agence ||
+                                            "Non définie"}
+                                        )
+                                    </option>
+                                    {userAgences.length > 1 && (
+                                        <>
+                                            <option value="all">
+                                                Toutes mes agences
+                                            </option>
+                                            {userAgences.map((agence) => (
+                                                <option
+                                                    key={agence.id}
+                                                    value={agence.id}
+                                                >
+                                                    {agence.code_agence} -{" "}
+                                                    {agence.nom_agence}
+                                                </option>
+                                            ))}
+                                        </>
+                                    )}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="card-body d-flex align-items-center justify-content-center p-3 border-top">
+                            <button
+                                className="btn-primary-gradient w-100 py-3"
+                                onClick={handleSearch}
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <span
+                                        className="spinner-border spinner-border-sm"
+                                        role="status"
+                                        aria-hidden="true"
+                                    ></span>
+                                ) : (
+                                    <i className="fas fa-chart-line me-2"></i>
+                                )}
+                                Afficher la balance
+                            </button>
                         </div>
                     </div>
-                </div>
-                <div className="filter-card action-card">
-                    <button
-                        className="btn-primary-gradient"
-                        onClick={handleSearch}
-                    >
-                        {loading ? (
-                            <span className="spinner-border spinner-border-sm"></span>
-                        ) : (
-                            <i className="fas fa-chart-line"></i>
-                        )}
-                        Afficher la balance
-                    </button>
                 </div>
             </div>
 
@@ -823,7 +868,6 @@ const Balance = () => {
                     padding: 20px 28px;
                     margin-bottom: 32px;
                     box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
-                 
                 }
                 .balance-header-content {
                     display: flex;

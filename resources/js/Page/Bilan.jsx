@@ -21,6 +21,7 @@ const Bilan = () => {
     const [currentPagePassif, setCurrentPagePassif] = useState(1);
     const [totalActif, setTotalActif] = useState(0);
     const [totalPassif, setTotalPassif] = useState(0);
+    const [agenceFilter, setAgenceFilter] = useState('current'); // 'current', 'all', ou un id d'agence
 
     useEffect(() => {
         const today = new Date();
@@ -72,6 +73,7 @@ const Bilan = () => {
                     date_debut_balance,
                     date_fin_balance,
                     devise,
+                    agence_filter: agenceFilter,  // <- ajout
                 },
             );
 
@@ -937,170 +939,163 @@ const Bilan = () => {
 
                 {/* Filtres */}
 
-                <div className="row g-4 mb-5">
-                    {/* Période */}
-                    <div className="col-md-3">
-                        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-                            <div className="card-header bg-transparent border-0 pt-3 pb-0">
-                                <h6 className="section-title">
-                                    <i
-                                        className="fas fa-calendar-alt me-2"
-                                        style={{ color: "#6366f1" }}
-                                    ></i>
-                                    Période
-                                </h6>
-                            </div>
-                            <div className="card-body pt-2">
-                                <div className="mb-3">
-                                    <label className="label-modern">
-                                        Période N-1
-                                    </label>
-                                    <input
-                                        type="date"
-                                        className="form-control modern-input"
-                                        value={date_debut_balance}
-                                        onChange={(e) =>
-                                            setdate_debut_balance(
-                                                e.target.value,
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div>
-                                    <label className="label-modern">
-                                        Date fin
-                                    </label>
-                                    <input
-                                        type="date"
-                                        className="form-control modern-input"
-                                        value={date_fin_balance}
-                                        onChange={(e) =>
-                                            setdate_fin_balance(e.target.value)
-                                        }
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Consolidation */}
-                    <div className="col-md-3">
-                        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-                            <div className="card-header bg-transparent border-0 pt-3 pb-0">
-                                <h6 className="section-title">
-                                    <i
-                                        className="fas fa-exchange-alt me-2"
-                                        style={{ color: "#6366f1" }}
-                                    ></i>
-                                    Consolidation
-                                </h6>
-                            </div>
-                            <div className="card-body pt-2">
-                                <div className="d-flex align-items-center flex-wrap gap-2">
-                                    <input
-                                        type="radio"
-                                        className="modern-radio"
-                                        id="type_balance"
-                                        value="type_balance"
-                                        checked={radioValue === "type_balance"}
-                                        onChange={handleRadioChange}
-                                    />
-                                    <label
-                                        htmlFor="type_balance"
-                                        className="text-secondary fw-medium me-1"
-                                        style={{ fontSize: "0.85rem" }}
-                                    >
-                                        Bilan uniquement en
-                                    </label>
-                                    <select
-                                        className="modern-select"
-                                        onChange={(e) =>
-                                            setdevise(e.target.value)
-                                        }
-                                        value={devise}
-                                    >
-                                        <option value="CDF">CDF</option>
-                                        <option value="USD">USD</option>
-                                    </select>
-                                </div>
-                                {/* Sections commentées conservées mais cachées */}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="col-md-3">
-                        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-                            <div className="card-header bg-transparent border-0 pt-3 pb-0">
-                                <h6 className="section-title">
-                                    <i
-                                        className="fas fa-chart-pie me-2"
-                                        style={{ color: "#6366f1" }}
-                                    ></i>
-                                    Type bilan
-                                </h6>
-                            </div>
-                            <div className="card-body pt-2">
-                                <div className="form-check mb-2">
-                                    <input
-                                        type="radio"
-                                        className="form-check-input modern-radio"
-                                        id="porte_detaillee"
-                                        value="porte_detaillee"
-                                        checked={
-                                            radioValue2 === "porte_detaillee"
-                                        }
-                                        onChange={handleRadioChange2}
-                                    />
-                                    <label
-                                        className="form-check-label text-secondary"
-                                        htmlFor="porte_detaillee"
-                                    >
-                                        Bilan semi‑détaillé
-                                    </label>
-                                </div>
-                                <div className="form-check">
-                                    <input
-                                        type="radio"
-                                        className="form-check-input modern-radio"
-                                        id="porte_groupee"
-                                        value="porte_groupee"
-                                        checked={
-                                            radioValue2 === "porte_groupee"
-                                        }
-                                        onChange={handleRadioChange2}
-                                    />
-                                    <label
-                                        className="form-check-label text-secondary"
-                                        htmlFor="porte_groupee"
-                                    >
-                                        Bilan consolidé
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {/* Bouton d'action */}
-                    <div className="col-md-3">
-                        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-                            <div className="card-body d-flex align-items-center justify-content-center p-3">
-                                <button
-                                    onClick={AfficherBilan}
-                                    className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
-                                >
-                                    {loading ? (
-                                        <span
-                                            className="spinner-border spinner-border-sm"
-                                            role="status"
-                                            aria-hidden="true"
-                                        ></span>
-                                    ) : (
-                                        <i className="fas fa-chart-line"></i>
-                                    )}
-                                    <span>Afficher le bilan</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+             {/* Filtres */}
+<div className="row g-4 mb-5">
+    {/* Période */}
+    <div className="col-md-3">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-calendar-alt me-2" style={{ color: "#6366f1" }}></i>
+                    Période
+                </h6>
+            </div>
+            <div className="card-body pt-2">
+                <div className="mb-3">
+                    <label className="label-modern">Date début</label>
+                    <input
+                        type="date"
+                        className="form-control modern-input"
+                        value={date_debut_balance}
+                        onChange={(e) => setdate_debut_balance(e.target.value)}
+                    />
                 </div>
+                <div>
+                    <label className="label-modern">Date fin</label>
+                    <input
+                        type="date"
+                        className="form-control modern-input"
+                        value={date_fin_balance}
+                        onChange={(e) => setdate_fin_balance(e.target.value)}
+                    />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {/* Consolidation */}
+    <div className="col-md-3">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-exchange-alt me-2" style={{ color: "#6366f1" }}></i>
+                    Consolidation
+                </h6>
+            </div>
+            <div className="card-body pt-2">
+                <div className="d-flex align-items-center flex-wrap gap-2">
+                    <input
+                        type="radio"
+                        className="modern-radio"
+                        id="type_balance"
+                        value="type_balance"
+                        checked={radioValue === "type_balance"}
+                        onChange={handleRadioChange}
+                    />
+                    <label htmlFor="type_balance" className="text-secondary fw-medium me-1" style={{ fontSize: "0.85rem" }}>
+                        Bilan uniquement en
+                    </label>
+                    <select
+                        className="modern-select"
+                        onChange={(e) => setdevise(e.target.value)}
+                        value={devise}
+                    >
+                        <option value="CDF">CDF</option>
+                        <option value="USD">USD</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {/* Type bilan */}
+    <div className="col-md-3">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-chart-pie me-2" style={{ color: "#6366f1" }}></i>
+                    Type bilan
+                </h6>
+            </div>
+            <div className="card-body pt-2">
+                <div className="form-check mb-2">
+                    <input
+                        type="radio"
+                        className="form-check-input modern-radio"
+                        id="porte_detaillee"
+                        value="porte_detaillee"
+                        checked={radioValue2 === "porte_detaillee"}
+                        onChange={handleRadioChange2}
+                    />
+                    <label className="form-check-label text-secondary" htmlFor="porte_detaillee">
+                        Bilan semi‑détaillé
+                    </label>
+                </div>
+                <div className="form-check">
+                    <input
+                        type="radio"
+                        className="form-check-input modern-radio"
+                        id="porte_groupee"
+                        value="porte_groupee"
+                        checked={radioValue2 === "porte_groupee"}
+                        onChange={handleRadioChange2}
+                    />
+                    <label className="form-check-label text-secondary" htmlFor="porte_groupee">
+                        Bilan consolidé
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   <div className="col-md-3">
+    <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+        <div className="card-header bg-transparent border-0 pt-3 pb-0">
+            <h6 className="section-title">
+                <i className="fas fa-building me-2" style={{ color: "#6366f1" }}></i>
+                Agence
+            </h6>
+        </div>
+        <div className="card-body pt-2">
+            <select
+                className="modern-select w-100"
+                value={agenceFilter}
+                onChange={(e) => setAgenceFilter(e.target.value)}
+                disabled={userAgences.length <= 1}   // Désactivé pour mono‑agence
+            >
+                <option value="current">
+                    Agence courante ({currentAgence?.nom_agence || 'Non définie'})
+                </option>
+                {userAgences.length > 1 && (
+                    <>
+                        <option value="all">Toutes mes agences</option>
+                        {userAgences.map(agence => (
+                            <option key={agence.id} value={agence.id}>
+                                {agence.code_agence} - {agence.nom_agence}
+                            </option>
+                        ))}
+                    </>
+                )}
+            </select>
+        </div>
+        <div className="card-body d-flex align-items-center justify-content-center p-3 border-top">
+            <button
+                onClick={AfficherBilan}
+                className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
+            >
+                {loading ? (
+                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                ) : (
+                    <i className="fas fa-chart-line"></i>
+                )}
+                <span>Afficher le bilan</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+  
+</div>
 
                 {/* Affichage du bilan */}
                 {(fetchActif.length > 0 || fetchPassif.length > 0) && (

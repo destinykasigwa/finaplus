@@ -16,6 +16,7 @@ const GrandLivre = () => {
     const [compteFin, setCompteFin] = useState("");
     const [rawData, setRawData] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
+    const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
     const itemsPerPage = 50; // lignes par page
 
     useEffect(() => {
@@ -34,19 +35,18 @@ const GrandLivre = () => {
         );
     }, []);
 
+    // Fonction utilitaire
+    const getPremierJourAnnee = (annee = null) => {
+        const anneeUtilisee = annee || new Date().getFullYear();
+        return `${anneeUtilisee}-01-01`;
+    };
 
-     // Fonction utilitaire
-        const getPremierJourAnnee = (annee = null) => {
-            const anneeUtilisee = annee || new Date().getFullYear();
-            return `${anneeUtilisee}-01-01`;
-        };
-    
-        // Dans votre composant
-        useEffect(() => {
-            setDateDebut(getPremierJourAnnee()); // Année en cours
-            // ou
-            setDateDebut(getPremierJourAnnee()); // Année 2025 spécifique
-        }, []);
+    // Dans votre composant
+    useEffect(() => {
+        setDateDebut(getPremierJourAnnee()); // Année en cours
+        // ou
+        setDateDebut(getPremierJourAnnee()); // Année 2025 spécifique
+    }, []);
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -69,6 +69,7 @@ const GrandLivre = () => {
                 devise,
                 compte_debut: compteDebut,
                 compte_fin: compteFin,
+                agence_filter: agenceFilter, // <- ajout
             });
 
             if (res.data.status === 1) {
@@ -423,7 +424,49 @@ const GrandLivre = () => {
 
                     <div className="col-md-3">
                         <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-                            <div className="card-body d-flex align-items-center justify-content-center p-3">
+                            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                                <h6 className="section-title">
+                                    <i
+                                        className="fas fa-building me-2"
+                                        style={{ color: "#6366f1" }}
+                                    ></i>
+                                    Agence
+                                </h6>
+                            </div>
+                            <div className="card-body pt-2">
+                                <select
+                                    className="modern-select w-100"
+                                    value={agenceFilter}
+                                    onChange={(e) =>
+                                        setAgenceFilter(e.target.value)
+                                    }
+                                    disabled={userAgences.length <= 1}
+                                >
+                                    <option value="current">
+                                        Agence courante (
+                                        {currentAgence?.nom_agence ||
+                                            "Non définie"}
+                                        )
+                                    </option>
+                                    {userAgences.length > 1 && (
+                                        <>
+                                            <option value="all">
+                                                Toutes mes agences
+                                            </option>
+                                            {userAgences.map((agence) => (
+                                                <option
+                                                    key={agence.id}
+                                                    value={agence.id}
+                                                >
+                                                    {agence.code_agence} -{" "}
+                                                    {agence.nom_agence}
+                                                </option>
+                                            ))}
+                                        </>
+                                    )}
+                                </select>
+                            </div>
+                            <div className="card-body d-flex align-items-center justify-content-center p-3 border-top">
                                 <button
                                     onClick={handleSearch}
                                     className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"

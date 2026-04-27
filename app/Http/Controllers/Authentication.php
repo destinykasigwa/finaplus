@@ -71,115 +71,224 @@ class Authentication extends Controller
         }
     }
 
+    // public function login(Request $request)
+    // {
+    //     $validator = validator::make($request->all(), [
+    //         'name' => 'required',
+    //         'password' => 'required',
+    //     ]);
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'validate_error' => $validator->messages()
+    //         ]);
+    //     }
+    //     //VERIFIE SI LA JOURNEE N'EST PAS CLOTURE 
+    //     $data = User::where("name", $request->name)->first();
+    //     if ($data and $data->admin == 0) {
+    //         $checkIfDateClosed = ClosedDay::latest()->first();
+    //         if ($checkIfDateClosed and $checkIfDateClosed->closed == 1) {
+    //             return response()->json(["status" => 0, "msg" => "Accès interdit la journée doit être ouverte par l'admin du système."]);
+    //         }
+    //     }
+    //     if ($data and $data->locked_state == 1) {
+    //         return response()->json(["status" => 0, "msg" => "Accès interdit."]);
+    //     }
+
+    //     if ($data and $data->expirate_password == 1) {
+    //         return response()->json(["status" => 0, "msg" => "Votre mot de passe à expirer veuillez contacter l'administrateur du système."]);
+    //     }
+
+    //     if (!$data) {
+    //         return response()->json(["status" => 0, "msg" => "Votre nom d'utilisateur n'est pas valide."]);
+    //     }
+
+    //     // if ($data->reseted_password == 1) {
+    //     //     return redirect("/auth/forget-password");
+    //     // }
+
+    //     if (Hash::check($request->password, $data->password)) {
+    //         User::where('id', $data->id)->update([
+    //             "attempt_times" => ExpirateDateConfig::first()->login_attempt,
+    //         ]);
+    //         //LOGIC FOR THE PASSWORD EXPIRATE
+    //         $nbrJourExpiration = ExpirateDateConfig::first()->password_expired_days;
+    //         $dateDuChangementPW = $data->start_date;
+    //         $oneDayRemain = $nbrJourExpiration - 1;
+    //         $twoDaysRemain = $nbrJourExpiration - 2;
+    //         $threeDaysRemain = $nbrJourExpiration - 3;
+    //         $fourDaysRemain = $nbrJourExpiration - 4;
+    //         $fiveDaysRemain = $nbrJourExpiration - 5;
+    //         $sixDaysRemain = $nbrJourExpiration - 6;
+    //         $dateAujourd = date("Y-m-d");
+    //         $DateExpiration = date('Y-m-d', strtotime("+" . $nbrJourExpiration . " days", strtotime("$dateDuChangementPW")));
+    //         $oneDay = date('Y-m-d', strtotime("+" . $oneDayRemain . " days", strtotime("$dateDuChangementPW")));
+    //         $twoDays = date('Y-m-d', strtotime("+" . $twoDaysRemain . " days", strtotime("$dateDuChangementPW")));
+    //         $threeDays = date('Y-m-d', strtotime("+" . $threeDaysRemain . " days", strtotime("$dateDuChangementPW")));
+    //         $fourDays = date('Y-m-d', strtotime("+" . $fourDaysRemain . " days", strtotime("$dateDuChangementPW")));
+    //         $fiveDays = date('Y-m-d', strtotime("+" . $fiveDaysRemain . " days", strtotime("$dateDuChangementPW")));
+    //         $sixDays = date('Y-m-d', strtotime("+" . $sixDaysRemain . " days", strtotime("$dateDuChangementPW")));
+    //         //dd($DateExpiration);
+
+    //         if ($dateAujourd == $DateExpiration) {
+    //             User::where('id', $data->id)->update([
+    //                 "expirate_password" => 1,
+    //             ]);
+
+    //             return response()->json(["status" => 0, "msg" => "Votre mot de passe à expirer veuillez contacter votre administrateur système."]);
+    //         } else if ($dateAujourd == $oneDay) {
+    //             return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans un jour."]);
+    //         } else if ($dateAujourd == $twoDays) {
+    //             return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans deux jour."]);
+    //         } else if ($dateAujourd == $threeDays) {
+
+    //             return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans trois jour."]);
+    //         } else if ($dateAujourd == $fourDays) {
+    //             return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans quatre jour."]);
+    //         } else if ($dateAujourd == $fiveDays) {
+    //             return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans cinq jour."]);
+    //         } else if ($dateAujourd == $sixDays) {
+    //             return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans six jour."]);
+    //         }
+    //     } else {
+    //         User::where('id', $data->id)->update([
+    //             "attempt_times" => $data->attempt_times - 1,
+    //         ]);
+    //         $attempt_times = User::where('id', $data->id)->first()->attempt_times;
+    //         if ($attempt_times == 0) {
+    //             User::where('id', $data->id)->update([
+    //                 "locked_state" => 1
+    //             ]);
+    //             return response()->json(["status" => 0, "msg" => "Vous êtes désactivé suite à plusieurs tentatives de connexion incorrecte veuillez contacter votre administrateur système."]);
+    //         }
+    //         return response()->json(["status" => 0, "msg" => "Votre mot de passe ne pas valide il vous reste " . $attempt_times . " tentatives"]);
+    //     }
+
+    //     if (auth()->attempt($request->only('name', 'password'))) {
+    //         session('returnUrl');
+    //         session()->forget('returnUrl');
+
+
+    //         return response()->json(["status" => 1, "data" => $data]);
+    //     } else {
+    //         return response()->json(["status" => 0, "msg" => "Les identifiants ne correspondent pas"]);
+    //     }
+    // }
+
     public function login(Request $request)
-    {
-        $validator = validator::make($request->all(), [
-            'name' => 'required',
-            'password' => 'required',
-        ]);
-        if ($validator->fails()) {
-            return response()->json([
-                'validate_error' => $validator->messages()
-            ]);
-        }
-        //VERIFIE SI LA JOURNEE N'EST PAS CLOTURE 
-        $data = User::where("name", $request->name)->first();
-        if ($data and $data->admin == 0) {
-            $checkIfDateClosed = ClosedDay::latest()->first();
-            if ($checkIfDateClosed and $checkIfDateClosed->closed == 1) {
-                return response()->json(["status" => 0, "msg" => "Accès interdit la journée doit être ouverte par l'admin du système."]);
-            }
-        }
-        if ($data and $data->locked_state == 1) {
-            return response()->json(["status" => 0, "msg" => "Accès interdit."]);
-        }
+{
+    $validator = validator::make($request->all(), [
+        'name' => 'required',
+        'password' => 'required',
+    ]);
+    if ($validator->fails()) {
+        return response()->json(['validate_error' => $validator->messages()]);
+    }
 
-        if ($data and $data->expirate_password == 1) {
-            return response()->json(["status" => 0, "msg" => "Votre mot de passe à expirer veuillez contacter l'administrateur du système."]);
-        }
+    $data = User::where("name", $request->name)->first();
 
-        if (!$data) {
-            return response()->json(["status" => 0, "msg" => "Votre nom d'utilisateur n'est pas valide."]);
-        }
-
-        // if ($data->reseted_password == 1) {
-        //     return redirect("/auth/forget-password");
-        // }
-
-        if (Hash::check($request->password, $data->password)) {
-            User::where('id', $data->id)->update([
-                "attempt_times" => ExpirateDateConfig::first()->login_attempt,
-            ]);
-            //LOGIC FOR THE PASSWORD EXPIRATE
-            $nbrJourExpiration = ExpirateDateConfig::first()->password_expired_days;
-            $dateDuChangementPW = $data->start_date;
-            $oneDayRemain = $nbrJourExpiration - 1;
-            $twoDaysRemain = $nbrJourExpiration - 2;
-            $threeDaysRemain = $nbrJourExpiration - 3;
-            $fourDaysRemain = $nbrJourExpiration - 4;
-            $fiveDaysRemain = $nbrJourExpiration - 5;
-            $sixDaysRemain = $nbrJourExpiration - 6;
-            $dateAujourd = date("Y-m-d");
-            $DateExpiration = date('Y-m-d', strtotime("+" . $nbrJourExpiration . " days", strtotime("$dateDuChangementPW")));
-            $oneDay = date('Y-m-d', strtotime("+" . $oneDayRemain . " days", strtotime("$dateDuChangementPW")));
-            $twoDays = date('Y-m-d', strtotime("+" . $twoDaysRemain . " days", strtotime("$dateDuChangementPW")));
-            $threeDays = date('Y-m-d', strtotime("+" . $threeDaysRemain . " days", strtotime("$dateDuChangementPW")));
-            $fourDays = date('Y-m-d', strtotime("+" . $fourDaysRemain . " days", strtotime("$dateDuChangementPW")));
-            $fiveDays = date('Y-m-d', strtotime("+" . $fiveDaysRemain . " days", strtotime("$dateDuChangementPW")));
-            $sixDays = date('Y-m-d', strtotime("+" . $sixDaysRemain . " days", strtotime("$dateDuChangementPW")));
-            //dd($DateExpiration);
-
-            if ($dateAujourd == $DateExpiration) {
-                User::where('id', $data->id)->update([
-                    "expirate_password" => 1,
-                ]);
-
-                return response()->json(["status" => 0, "msg" => "Votre mot de passe à expirer veuillez contacter votre administrateur système."]);
-            } else if ($dateAujourd == $oneDay) {
-                return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans un jour."]);
-            } else if ($dateAujourd == $twoDays) {
-                return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans deux jour."]);
-            } else if ($dateAujourd == $threeDays) {
-
-                return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans trois jour."]);
-            } else if ($dateAujourd == $fourDays) {
-                return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans quatre jour."]);
-            } else if ($dateAujourd == $fiveDays) {
-                return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans cinq jour."]);
-            } else if ($dateAujourd == $sixDays) {
-                return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans six jour."]);
-            }
-        } else {
-            User::where('id', $data->id)->update([
-                "attempt_times" => $data->attempt_times - 1,
-            ]);
-            $attempt_times = User::where('id', $data->id)->first()->attempt_times;
-            if ($attempt_times == 0) {
-                User::where('id', $data->id)->update([
-                    "locked_state" => 1
-                ]);
-                return response()->json(["status" => 0, "msg" => "Vous êtes désactivé suite à plusieurs tentatives de connexion incorrecte veuillez contacter votre administrateur système."]);
-            }
-            return response()->json(["status" => 0, "msg" => "Votre mot de passe ne pas valide il vous reste " . $attempt_times . " tentatives"]);
-        }
-
-        if (auth()->attempt($request->only('name', 'password'))) {
-            session('returnUrl');
-            session()->forget('returnUrl');
-
-
-            return response()->json(["status" => 1, "data" => $data]);
-        } else {
-            return response()->json(["status" => 0, "msg" => "Les identifiants ne correspondent pas"]);
+    // Vérifications diverses (journée fermée, locked, expiré, etc.)
+    if ($data && $data->admin == 0) {
+        $checkIfDateClosed = ClosedDay::latest()->first();
+        if ($checkIfDateClosed && $checkIfDateClosed->closed == 1) {
+            return response()->json(["status" => 0, "msg" => "Accès interdit la journée doit être ouverte par l'admin du système."]);
         }
     }
+    if ($data && $data->locked_state == 1) {
+        return response()->json(["status" => 0, "msg" => "Accès interdit."]);
+    }
+    if ($data && $data->expirate_password == 1) {
+        return response()->json(["status" => 0, "msg" => "Votre mot de passe a expiré, veuillez contacter l'administrateur."]);
+    }
+    if (!$data) {
+        return response()->json(["status" => 0, "msg" => "Nom d'utilisateur invalide."]);
+    }
+
+    // Vérification du mot de passe
+    if (Hash::check($request->password, $data->password)) {
+        // Réinitialiser les tentatives
+        User::where('id', $data->id)->update([
+            "attempt_times" => ExpirateDateConfig::first()->login_attempt,
+        ]);
+
+        // Gestion expiration mot de passe (jours restants)
+        $nbrJourExpiration = ExpirateDateConfig::first()->password_expired_days;
+        $dateDuChangementPW = $data->start_date;
+        $dateAujourd = date("Y-m-d");
+        $DateExpiration = date('Y-m-d', strtotime("+$nbrJourExpiration days", strtotime($dateDuChangementPW)));
+        $oneDay = date('Y-m-d', strtotime("+" . ($nbrJourExpiration - 1) . " days", strtotime($dateDuChangementPW)));
+        $twoDays = date('Y-m-d', strtotime("+" . ($nbrJourExpiration - 2) . " days", strtotime($dateDuChangementPW)));
+        $threeDays = date('Y-m-d', strtotime("+" . ($nbrJourExpiration - 3) . " days", strtotime($dateDuChangementPW)));
+        $fourDays = date('Y-m-d', strtotime("+" . ($nbrJourExpiration - 4) . " days", strtotime($dateDuChangementPW)));
+        $fiveDays = date('Y-m-d', strtotime("+" . ($nbrJourExpiration - 5) . " days", strtotime($dateDuChangementPW)));
+        $sixDays = date('Y-m-d', strtotime("+" . ($nbrJourExpiration - 6) . " days", strtotime($dateDuChangementPW)));
+
+        if ($dateAujourd == $DateExpiration) {
+            User::where('id', $data->id)->update(["expirate_password" => 1]);
+            return response()->json(["status" => 0, "msg" => "Votre mot de passe a expiré."]);
+        } elseif ($dateAujourd == $oneDay) {
+            return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans 1 jour."]);
+        } elseif ($dateAujourd == $twoDays) {
+            return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans 2 jours."]);
+        } elseif ($dateAujourd == $threeDays) {
+            return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans 3 jours."]);
+        } elseif ($dateAujourd == $fourDays) {
+            return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans 4 jours."]);
+        } elseif ($dateAujourd == $fiveDays) {
+            return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans 5 jours."]);
+        } elseif ($dateAujourd == $sixDays) {
+            return response()->json(["status" => "password_expired", "msg" => "Votre mot de passe expire dans 6 jours."]);
+        }
+
+        // ************** AUTHENTIFICATION RÉUSSIE **************
+        auth()->login($data); // Connexion explicite
+
+        // --- INITIALISATION DES SESSIONS AGENCE ---
+        $agences = $data->agences; // relation many-to-many
+        $agencesList = $agences->map(function($agence) {
+            return [
+                'id'           => $agence->id,
+                'code_agence'  => $agence->code_agence,
+                'nom_agence'   => $agence->nom_agence,
+            ];
+        })->toArray();
+
+        session(['user_agences' => $agencesList]);
+
+        // Si aucune agence active n'existe, prendre la première (ou unique)
+        if (!session()->has('current_agence') && count($agencesList) > 0) {
+            session(['current_agence' => $agencesList[0]]);
+        }
+        // --- FIN INITIALISATION ---
+
+        return response()->json(["status" => 1, "data" => $data]);
+    } else {
+        // Mot de passe incorrect
+        User::where('id', $data->id)->update([
+            "attempt_times" => $data->attempt_times - 1,
+        ]);
+        $attempt_times = User::where('id', $data->id)->first()->attempt_times;
+        if ($attempt_times == 0) {
+            User::where('id', $data->id)->update(["locked_state" => 1]);
+            return response()->json(["status" => 0, "msg" => "Compte désactivé après plusieurs tentatives."]);
+        }
+        return response()->json(["status" => 0, "msg" => "Mot de passe incorrect. Il vous reste $attempt_times tentative(s)."]);
+    }
+}
+
+    // public function logout()
+    // {
+    //     auth()->logout();
+    //     session(['returnUrl' => url()->previous()]);
+    //     return redirect("/auth/login");
+    // }
 
     public function logout()
-    {
-        auth()->logout();
-        session(['returnUrl' => url()->previous()]);
-        return redirect("/auth/login");
-    }
+{
+    auth()->logout();
+    session()->forget(['user_agences', 'current_agence']); // Supprime les données d'agence
+    session(['returnUrl' => url()->previous()]);
+    return redirect("/auth/login");
+}
 
     //RECUPERATION PASSWORD HOME PAGE 
 

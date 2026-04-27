@@ -40,9 +40,9 @@ const RecuDelestageCDF = ({ data }) => {
             case 9:
                 unite = "neuf";
                 break;
-        } //fin switch
+        }
         return unite;
-    } //-----------------------------------------------------------------------
+    }
 
     function Dizaine(nombre) {
         let dizaine = "";
@@ -101,24 +101,20 @@ const RecuDelestageCDF = ({ data }) => {
             case 90:
                 dizaine = "quatre-vingt-dix";
                 break;
-        } //fin switch
+        }
         return dizaine;
-    } //-----------------------------------------------------------------------
+    }
 
     function NumberToLetter(nombre) {
         var i, j, n, quotient, reste, nb;
         var ch;
         var numberToLetter = "";
-        //__________________________________
-
         if (nombre.toString().replace(/ /gi, "").length > 15)
             return "dépassement de capacité";
         if (isNaN(nombre.toString().replace(/ /gi, "")))
             return "Nombre non valide";
-
         nb = parseFloat(nombre.toString().replace(/ /gi, ""));
         if (Math.ceil(nb) != nb) return "Nombre avec virgule non géré.";
-
         n = nb.toString().length;
         switch (n) {
             case 1:
@@ -170,19 +166,6 @@ const RecuDelestageCDF = ({ data }) => {
                         NumberToLetter(reste);
                 break;
             case 5:
-                quotient = Math.floor(nb / 1000);
-                reste = nb - quotient * 1000;
-                if (quotient == 1 && reste == 0) numberToLetter = "mille";
-                if (quotient == 1 && reste != 0)
-                    numberToLetter = "mille" + " " + NumberToLetter(reste);
-                if (quotient > 1 && reste == 0)
-                    numberToLetter = NumberToLetter(quotient) + " mille";
-                if (quotient > 1 && reste != 0)
-                    numberToLetter =
-                        NumberToLetter(quotient) +
-                        " mille " +
-                        NumberToLetter(reste);
-                break;
             case 6:
                 quotient = Math.floor(nb / 1000);
                 reste = nb - quotient * 1000;
@@ -198,33 +181,7 @@ const RecuDelestageCDF = ({ data }) => {
                         NumberToLetter(reste);
                 break;
             case 7:
-                quotient = Math.floor(nb / 1000000);
-                reste = nb % 1000000;
-                if (quotient == 1 && reste == 0) numberToLetter = "un million";
-                if (quotient == 1 && reste != 0)
-                    numberToLetter = "un million" + " " + NumberToLetter(reste);
-                if (quotient > 1 && reste == 0)
-                    numberToLetter = NumberToLetter(quotient) + " millions";
-                if (quotient > 1 && reste != 0)
-                    numberToLetter =
-                        NumberToLetter(quotient) +
-                        " millions " +
-                        NumberToLetter(reste);
-                break;
             case 8:
-                quotient = Math.floor(nb / 1000000);
-                reste = nb % 1000000;
-                if (quotient == 1 && reste == 0) numberToLetter = "un million";
-                if (quotient == 1 && reste != 0)
-                    numberToLetter = "un million" + " " + NumberToLetter(reste);
-                if (quotient > 1 && reste == 0)
-                    numberToLetter = NumberToLetter(quotient) + " millions";
-                if (quotient > 1 && reste != 0)
-                    numberToLetter =
-                        NumberToLetter(quotient) +
-                        " millions " +
-                        NumberToLetter(reste);
-                break;
             case 9:
                 quotient = Math.floor(nb / 1000000);
                 reste = nb % 1000000;
@@ -240,35 +197,7 @@ const RecuDelestageCDF = ({ data }) => {
                         NumberToLetter(reste);
                 break;
             case 10:
-                quotient = Math.floor(nb / 1000000000);
-                reste = nb - quotient * 1000000000;
-                if (quotient == 1 && reste == 0) numberToLetter = "un milliard";
-                if (quotient == 1 && reste != 0)
-                    numberToLetter =
-                        "un milliard" + " " + NumberToLetter(reste);
-                if (quotient > 1 && reste == 0)
-                    numberToLetter = NumberToLetter(quotient) + " milliards";
-                if (quotient > 1 && reste != 0)
-                    numberToLetter =
-                        NumberToLetter(quotient) +
-                        " milliards " +
-                        NumberToLetter(reste);
-                break;
             case 11:
-                quotient = Math.floor(nb / 1000000000);
-                reste = nb - quotient * 1000000000;
-                if (quotient == 1 && reste == 0) numberToLetter = "un milliard";
-                if (quotient == 1 && reste != 0)
-                    numberToLetter =
-                        "un milliard" + " " + NumberToLetter(reste);
-                if (quotient > 1 && reste == 0)
-                    numberToLetter = NumberToLetter(quotient) + " milliards";
-                if (quotient > 1 && reste != 0)
-                    numberToLetter =
-                        NumberToLetter(quotient) +
-                        " milliards " +
-                        NumberToLetter(reste);
-                break;
             case 12:
                 quotient = Math.floor(nb / 1000000000);
                 reste = nb - quotient * 1000000000;
@@ -285,33 +214,7 @@ const RecuDelestageCDF = ({ data }) => {
                         NumberToLetter(reste);
                 break;
             case 13:
-                quotient = Math.floor(nb / 1000000000000);
-                reste = nb - quotient * 1000000000000;
-                if (quotient == 1 && reste == 0) numberToLetter = "un billion";
-                if (quotient == 1 && reste != 0)
-                    numberToLetter = "un billion" + " " + NumberToLetter(reste);
-                if (quotient > 1 && reste == 0)
-                    numberToLetter = NumberToLetter(quotient) + " billions";
-                if (quotient > 1 && reste != 0)
-                    numberToLetter =
-                        NumberToLetter(quotient) +
-                        " billions " +
-                        NumberToLetter(reste);
-                break;
             case 14:
-                quotient = Math.floor(nb / 1000000000000);
-                reste = nb - quotient * 1000000000000;
-                if (quotient == 1 && reste == 0) numberToLetter = "un billion";
-                if (quotient == 1 && reste != 0)
-                    numberToLetter = "un billion" + " " + NumberToLetter(reste);
-                if (quotient > 1 && reste == 0)
-                    numberToLetter = NumberToLetter(quotient) + " billions";
-                if (quotient > 1 && reste != 0)
-                    numberToLetter =
-                        NumberToLetter(quotient) +
-                        " billions " +
-                        NumberToLetter(reste);
-                break;
             case 15:
                 quotient = Math.floor(nb / 1000000000000);
                 reste = nb - quotient * 1000000000000;
@@ -326,8 +229,7 @@ const RecuDelestageCDF = ({ data }) => {
                         " billions " +
                         NumberToLetter(reste);
                 break;
-        } //fin switch
-        /*respect de l'accord de quatre-vingt*/
+        }
         if (
             numberToLetter.substr(
                 numberToLetter.length - "quatre-vingt".length,
@@ -335,34 +237,28 @@ const RecuDelestageCDF = ({ data }) => {
             ) == "quatre-vingt"
         )
             numberToLetter = numberToLetter + "s";
-
         return numberToLetter;
-    } //-----------------------------------------------------------------------
+    }
 
     const dateParser = (num) => {
         const options = {
-            // weekday: "long",
             year: "numeric",
             month: "numeric",
             day: "numeric",
         };
-
         let timestamp = Date.parse(num);
-
         let date = new Date(timestamp).toLocaleDateString("fr-FR", options);
-
         return date.toString();
     };
 
     const exportToPDF = () => {
         const content = document.getElementById("modal-to-print");
-
         if (!content) {
             console.error("Element not found!");
             return;
         }
 
-        html2canvas(content, { scale: 3 }).then((canvas) => {
+        html2canvas(content, { scale: 2 }).then((canvas) => {
             const paddingTop = 50;
             const paddingRight = 50;
             const paddingBottom = 50;
@@ -377,15 +273,16 @@ const RecuDelestageCDF = ({ data }) => {
             const ctx = newCanvas.getContext("2d");
 
             if (ctx) {
-                ctx.fillStyle = "#ffffff"; // Background color
+                ctx.fillStyle = "#ffffff";
                 ctx.fillRect(0, 0, canvasWidth, canvasHeight);
                 ctx.drawImage(canvas, paddingLeft, paddingTop);
             }
 
-            const pdf = new jsPDF("p", "mm", "a4");
+            // ✅ Format A5 au lieu de A4
+            const pdf = new jsPDF("p", "mm", "a5");
             const imgData = newCanvas.toDataURL("image/png");
             const imgProps = pdf.getImageProperties(imgData);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfWidth = pdf.internal.pageSize.getWidth(); // 148 mm pour A5
             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
             pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
@@ -399,31 +296,31 @@ const RecuDelestageCDF = ({ data }) => {
         paddingBottom: "5px",
         lineHeight: "1",
     };
+
+    function numberWithSpaces(x) {
+        if (x === null || x === undefined) {
+            return "0.00";
+        }
+        var parts = x.toString().split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        return parts.join(".");
+    }
+
     return (
         <>
             <div
                 className="modal fade card-body h-200"
                 id="modal-delestage-cdf"
-                style={{
-                    background: "#dcdcdc",
-                }}
+                style={{ background: "#dcdcdc" }}
             >
                 <div className="modal-dialog modal-lg">
                     <div className="modal-content">
                         <div className="modal-header">
-                            {/* <h4
-                                style={{ color: "#000" }}
-                                className="modal-title"
-                            >
-                                Recu appro {data.Reference}
-                               
-                            </h4> */}
                             <button
                                 type="button"
                                 class="close"
                                 data-dismiss="modal"
                                 aria-label="Close"
-                                // onClick={clearData}
                             >
                                 <span aria-hidden="true">&times;</span>
                             </button>
@@ -431,12 +328,7 @@ const RecuDelestageCDF = ({ data }) => {
                         <div className="modal-body" id="modal-to-print">
                             <div className="row">
                                 <div className="col-md-12">
-                                    <div
-                                    // className="card-body h-200"
-                                    // style={{
-                                    //     background: "#dcdcdc",
-                                    // }}
-                                    >
+                                    <div>
                                         <div className="row" id="printme">
                                             <div
                                                 className="card"
@@ -447,28 +339,21 @@ const RecuDelestageCDF = ({ data }) => {
                                             >
                                                 <div
                                                     className="logo-container"
-                                                    style={{
-                                                        // margin: "0 auto",
-                                                        width: "100%",
-                                                    }}
+                                                    style={{ width: "100%" }}
                                                 >
-                                                    {" "}
                                                     <br />
                                                     <br />
-                                                    {/* <div style={{ textAlign: "center" }}><h4><b>ACTION POUR LA PAIX L'EDUCATION ET LE DEFENSE DES DROITS HUMAINS</b></h4></div> */}
                                                     <EnteteRecu />
                                                 </div>
                                                 <div
                                                     className="row"
                                                     style={{
-                                                        // margin: "0px auto",
                                                         marginTop: "5px",
                                                         margin: "auto",
                                                         width: "300px",
                                                         textAlign: "center",
                                                     }}
                                                 >
-                                                    {" "}
                                                     <h5
                                                         style={{
                                                             background:
@@ -484,7 +369,7 @@ const RecuDelestageCDF = ({ data }) => {
                                                     >
                                                         PIECE DE DELESTAGE N°{" "}
                                                         {data.Reference}
-                                                    </h5>{" "}
+                                                    </h5>
                                                 </div>
 
                                                 <div
@@ -499,7 +384,6 @@ const RecuDelestageCDF = ({ data }) => {
                                                         className="row entete-recu"
                                                         style={{
                                                             width: "100%",
-                                                            // margin: "0px auto",
                                                             background:
                                                                 "#dcdcdc",
                                                             padding: "2px",
@@ -511,105 +395,84 @@ const RecuDelestageCDF = ({ data }) => {
                                                     >
                                                         <div className="col-md-12">
                                                             <table
-                                                                className=""
                                                                 style={{
                                                                     width: "100%",
                                                                 }}
                                                             >
-                                                                <tr
-                                                                    style={{
-                                                                        border: "1px solid #fff",
-                                                                    }}
-                                                                >
-                                                                    <td
-                                                                        style={{
-                                                                            border: "1px solid #fff",
-                                                                        }}
-                                                                    >
-                                                                        N°
-                                                                        Compte :
-                                                                    </td>
-                                                                    <td
-                                                                        style={{
-                                                                            border: "1px solid #fff",
-                                                                        }}
-                                                                    >
-                                                                        {" "}
-                                                                        {
-                                                                            data.NumCompteCaissier
-                                                                        }
-                                                                    </td>
-                                                                </tr>
-                                                                <tr
-                                                                    style={{
-                                                                        border: "1px solid #fff",
-                                                                    }}
-                                                                >
-                                                                    <td
-                                                                        style={{
-                                                                            border: "1px solid #fff",
-                                                                        }}
-                                                                    >
-                                                                        Nom
-                                                                        Caissier
-                                                                        :
-                                                                    </td>
-                                                                    <td
-                                                                        style={{
-                                                                            border: "1px solid #fff",
-                                                                        }}
-                                                                    >
-                                                                        {
-                                                                            data.NomDemandeur
-                                                                        }
-                                                                    </td>
-                                                                </tr>
-                                                                <tr
-                                                                    style={{
-                                                                        border: "1px solid #fff",
-                                                                    }}
-                                                                ></tr>
-
-                                                                <tr
-                                                                    style={{
-                                                                        border: "1px solid #fff",
-                                                                    }}
-                                                                >
-                                                                    <td
-                                                                        style={{
-                                                                            border: "1px solid #fff",
-                                                                        }}
-                                                                    >
-                                                                        Motif
-                                                                    </td>
-                                                                    <td
-                                                                        style={{
-                                                                            border: "1px solid #fff",
-                                                                        }}
-                                                                    >
-                                                                        Déléstage
-                                                                    </td>
-                                                                </tr>
-                                                                <tr
-                                                                    style={{
-                                                                        border: "1px solid #fff",
-                                                                    }}
-                                                                >
-                                                                    <td
-                                                                        style={{
-                                                                            border: "1px solid #fff",
-                                                                        }}
-                                                                    >
-                                                                        Dévise
-                                                                    </td>
-                                                                    <td
-                                                                        style={{
-                                                                            border: "1px solid #fff",
-                                                                        }}
-                                                                    >
-                                                                        CDF
-                                                                    </td>
-                                                                </tr>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td
+                                                                            style={{
+                                                                                border: "1px solid #fff",
+                                                                            }}
+                                                                        >
+                                                                            N°
+                                                                            Compte
+                                                                            :
+                                                                        </td>
+                                                                        <td
+                                                                            style={{
+                                                                                border: "1px solid #fff",
+                                                                            }}
+                                                                        >
+                                                                            {
+                                                                                data.NumCompteCaissier
+                                                                            }
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td
+                                                                            style={{
+                                                                                border: "1px solid #fff",
+                                                                            }}
+                                                                        >
+                                                                            Nom
+                                                                            Caissier
+                                                                            :
+                                                                        </td>
+                                                                        <td
+                                                                            style={{
+                                                                                border: "1px solid #fff",
+                                                                            }}
+                                                                        >
+                                                                            {
+                                                                                data.NomDemandeur
+                                                                            }
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td
+                                                                            style={{
+                                                                                border: "1px solid #fff",
+                                                                            }}
+                                                                        >
+                                                                            Motif
+                                                                        </td>
+                                                                        <td
+                                                                            style={{
+                                                                                border: "1px solid #fff",
+                                                                            }}
+                                                                        >
+                                                                            Déléstage
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td
+                                                                            style={{
+                                                                                border: "1px solid #fff",
+                                                                            }}
+                                                                        >
+                                                                            Dévise
+                                                                        </td>
+                                                                        <td
+                                                                            style={{
+                                                                                border: "1px solid #fff",
+                                                                            }}
+                                                                        >
+                                                                            CDF
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
                                                             </table>
                                                         </div>
                                                     </div>
@@ -622,11 +485,9 @@ const RecuDelestageCDF = ({ data }) => {
                                                         BILLETAGE
                                                     </div>
                                                     <div
-                                                        className="row  corp-recu"
-                                                        // id=""
+                                                        className="row corp-recu"
                                                         style={{
                                                             width: "100%",
-                                                            // margin: "0px auto",
                                                             background:
                                                                 "#DCDCDC",
                                                             padding: "5px",
@@ -664,189 +525,171 @@ const RecuDelestageCDF = ({ data }) => {
                                                                 {parseInt(
                                                                     data.vightMilleFranc
                                                                 ) > 0 && (
-                                                                    <React.Fragment>
-                                                                        <tr>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.vightMilleFranc
-                                                                                )}{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                X
-                                                                                20000{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.vightMilleFranc
-                                                                                ) *
-                                                                                    20000}
-                                                                            </td>
-                                                                        </tr>
-                                                                    </React.Fragment>
+                                                                    <tr>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.vightMilleFranc
+                                                                            )}
+                                                                        </td>
+                                                                        <td>
+                                                                            X
+                                                                            20000
+                                                                        </td>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.vightMilleFranc
+                                                                            ) *
+                                                                                20000}
+                                                                        </td>
+                                                                    </tr>
                                                                 )}
                                                                 {parseInt(
                                                                     data.dixMilleFranc
                                                                 ) > 0 && (
-                                                                    <React.Fragment>
-                                                                        <tr>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.dixMilleFranc
-                                                                                )}{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                X
-                                                                                10000{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.dixMilleFranc
-                                                                                ) *
-                                                                                    10000}
-                                                                            </td>
-                                                                        </tr>
-                                                                    </React.Fragment>
+                                                                    <tr>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.dixMilleFranc
+                                                                            )}
+                                                                        </td>
+                                                                        <td>
+                                                                            X
+                                                                            10000
+                                                                        </td>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.dixMilleFranc
+                                                                            ) *
+                                                                                10000}
+                                                                        </td>
+                                                                    </tr>
                                                                 )}
                                                                 {parseInt(
                                                                     data.cinqMilleFranc
                                                                 ) > 0 && (
-                                                                    <React.Fragment>
-                                                                        <tr>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.cinqMilleFranc
-                                                                                )}{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                X
-                                                                                5000{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.cinqMilleFranc
-                                                                                ) *
-                                                                                    5000}
-                                                                            </td>
-                                                                        </tr>
-                                                                    </React.Fragment>
+                                                                    <tr>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.cinqMilleFranc
+                                                                            )}
+                                                                        </td>
+                                                                        <td>
+                                                                            X
+                                                                            5000
+                                                                        </td>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.cinqMilleFranc
+                                                                            ) *
+                                                                                5000}
+                                                                        </td>
+                                                                    </tr>
                                                                 )}
                                                                 {parseInt(
                                                                     data.milleFranc
                                                                 ) > 0 && (
-                                                                    <React.Fragment>
-                                                                        <tr>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.milleFranc
-                                                                                )}{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                X
-                                                                                1000{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.milleFranc
-                                                                                ) *
-                                                                                    1000}
-                                                                            </td>
-                                                                        </tr>
-                                                                    </React.Fragment>
+                                                                    <tr>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.milleFranc
+                                                                            )}
+                                                                        </td>
+                                                                        <td>
+                                                                            X
+                                                                            1000
+                                                                        </td>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.milleFranc
+                                                                            ) *
+                                                                                1000}
+                                                                        </td>
+                                                                    </tr>
                                                                 )}
                                                                 {parseInt(
                                                                     data.cinqCentFranc
                                                                 ) > 0 && (
-                                                                    <React.Fragment>
-                                                                        <tr>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.cinqCentFranc
-                                                                                )}{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                X
-                                                                                500{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.cinqCentFranc
-                                                                                ) *
-                                                                                    500}
-                                                                            </td>
-                                                                        </tr>
-                                                                    </React.Fragment>
+                                                                    <tr>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.cinqCentFranc
+                                                                            )}
+                                                                        </td>
+                                                                        <td>
+                                                                            X
+                                                                            500
+                                                                        </td>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.cinqCentFranc
+                                                                            ) *
+                                                                                500}
+                                                                        </td>
+                                                                    </tr>
                                                                 )}
                                                                 {parseInt(
                                                                     data.deuxCentFranc
                                                                 ) > 0 && (
-                                                                    <React.Fragment>
-                                                                        <tr>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.deuxCentFranc
-                                                                                )}{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                X
-                                                                                200{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.deuxCentFranc
-                                                                                ) *
-                                                                                    200}
-                                                                            </td>
-                                                                        </tr>
-                                                                    </React.Fragment>
+                                                                    <tr>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.deuxCentFranc
+                                                                            )}
+                                                                        </td>
+                                                                        <td>
+                                                                            X
+                                                                            200
+                                                                        </td>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.deuxCentFranc
+                                                                            ) *
+                                                                                200}
+                                                                        </td>
+                                                                    </tr>
                                                                 )}
-
                                                                 {parseInt(
                                                                     data.centFranc
                                                                 ) > 0 && (
-                                                                    <React.Fragment>
-                                                                        <tr>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.centFranc
-                                                                                )}{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                X
-                                                                                100{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.centFranc
-                                                                                ) *
-                                                                                    100}
-                                                                            </td>
-                                                                        </tr>
-                                                                    </React.Fragment>
+                                                                    <tr>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.centFranc
+                                                                            )}
+                                                                        </td>
+                                                                        <td>
+                                                                            X
+                                                                            100
+                                                                        </td>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.centFranc
+                                                                            ) *
+                                                                                100}
+                                                                        </td>
+                                                                    </tr>
                                                                 )}
                                                                 {parseInt(
                                                                     data.cinquanteFanc
                                                                 ) > 0 && (
-                                                                    <React.Fragment>
-                                                                        <tr>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.cinquanteFanc
-                                                                                )}{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                X
-                                                                                50{" "}
-                                                                            </td>
-                                                                            <td>
-                                                                                {parseInt(
-                                                                                    data.cinquanteFanc
-                                                                                ) *
-                                                                                    50}
-                                                                            </td>
-                                                                        </tr>
-                                                                    </React.Fragment>
+                                                                    <tr>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.cinquanteFanc
+                                                                            )}
+                                                                        </td>
+                                                                        <td>
+                                                                            X
+                                                                            50
+                                                                        </td>
+                                                                        <td>
+                                                                            {parseInt(
+                                                                                data.cinquanteFanc
+                                                                            ) *
+                                                                                50}
+                                                                        </td>
+                                                                    </tr>
                                                                 )}
-
                                                                 <tr>
                                                                     <th>
                                                                         Total
@@ -864,7 +707,7 @@ const RecuDelestageCDF = ({ data }) => {
                                                                                 "bold",
                                                                         }}
                                                                     >
-                                                                        {parseInt(
+                                                                        {numberWithSpaces(
                                                                             data.montantCDF
                                                                         )}
                                                                     </td>
@@ -874,12 +717,12 @@ const RecuDelestageCDF = ({ data }) => {
                                                         <div>
                                                             Nous disons CDF{" "}
                                                             <b>
-                                                                {" "}
                                                                 {NumberToLetter(
                                                                     data.montantCDF
                                                                 )}{" "}
-                                                                Francs congolais
-                                                            </b>{" "}
+                                                                Francs
+                                                                congolais
+                                                            </b>
                                                         </div>
                                                         <hr
                                                             style={{
@@ -893,7 +736,6 @@ const RecuDelestageCDF = ({ data }) => {
                                                                 data.DateTransaction
                                                             )}
                                                         </div>
-
                                                         <div>
                                                             Fait à goma le{" "}
                                                             {dateParser(
@@ -919,7 +761,6 @@ const RecuDelestageCDF = ({ data }) => {
                                                                                 "20px",
                                                                         }}
                                                                     >
-                                                                        {" "}
                                                                         Signature{" "}
                                                                         {
                                                                             data.NomUtilisateur
@@ -930,7 +771,6 @@ const RecuDelestageCDF = ({ data }) => {
                                                                     <th></th>
                                                                     <th></th>
                                                                     <th></th>
-
                                                                     <th
                                                                         style={{
                                                                             border: "2px solid #000",
@@ -957,8 +797,6 @@ const RecuDelestageCDF = ({ data }) => {
                             </div>
                         </div>
                         <div className="modal-footer justify-content-between">
-                            {/* <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
-              <button type="button" className="btn btn-primary">Sav changes</button> */}
                             <button
                                 type="button"
                                 className="btn btn-primary"

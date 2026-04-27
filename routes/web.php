@@ -611,4 +611,32 @@ eco/page/report/get-searched-repertoire', [ReportsController::class, 'getSearche
  
  //GET GRAND LIVRE
     Route::post('/eco/pages/rapport/grand-livre', [ReportsController::class, 'getGrandLivre']);
+
+ //GET AGENCES
+ Route::get('eco/pages/getagences', [UtilisateurController::class, 'getAgences']);
+
+ // Nouvelles routes pour la gestion des agences utilisateur
+Route::post('eco/pages/getusers/agences', [UtilisateurController::class, 'getUserAgences']);
+Route::post('eco/pages/add/agence', [UtilisateurController::class, 'addAgenceToUser']);
+Route::post('eco/pages/remove/agence', [UtilisateurController::class, 'removeAgenceFromUser']);
+Route::post('eco/pages/add/all-agences', [UtilisateurController::class, 'addAllAgencesToUser']);
+Route::post('eco/agence/change', [UtilisateurController::class, 'changeActiveAgence'])->name('eco.agence.change');
+
+
+
+
+
+
+
+
+
+
+
 });
+
+
+
+
+
+
+
