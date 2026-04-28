@@ -55,7 +55,7 @@
 
         /* Header principal amélioré */
         .main-header {
-            background:#138496;
+            background: #138496;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
             border-bottom: 1px solid rgba(32, 201, 151, 0.3);
@@ -142,6 +142,7 @@
                 width: 0;
                 opacity: 0;
             }
+
             to {
                 width: 60%;
                 opacity: 1;
@@ -201,6 +202,7 @@
                 opacity: 0;
                 transform: translateY(-15px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -245,25 +247,25 @@
                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
                 border: 1px solid rgba(32, 201, 151, 0.2);
             }
-            
+
             .navbar-modern .navbar-nav {
                 margin: 0;
             }
-            
+
             .navbar-modern .nav-link {
                 padding: 0.75rem !important;
                 border-radius: 10px;
                 text-align: center;
             }
-            
+
             .navbar-modern .nav-link.active::after {
                 display: none;
             }
-            
+
             .navbar-modern .nav-link.active {
                 background: linear-gradient(90deg, rgba(32, 201, 151, 0.2), transparent);
             }
-            
+
             .dropdown-menu-modern {
                 background: rgba(26, 26, 26, 0.95);
                 margin-left: 15px;
@@ -275,16 +277,16 @@
                 padding: 0.5rem 0.75rem;
                 font-size: 0.85rem;
             }
-            
+
             .navbar-modern .navbar-brand {
                 font-size: 1.2rem;
             }
-            
+
             .brand-icon {
                 width: 32px;
                 height: 32px;
             }
-            
+
             .brand-icon i {
                 font-size: 16px;
             }
@@ -294,7 +296,7 @@
         .badge-notification {
             position: relative;
         }
-        
+
         .badge-notification::after {
             content: '';
             position: absolute;
@@ -306,16 +308,18 @@
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
-        
+
         @keyframes pulse {
             0% {
                 transform: scale(1);
                 opacity: 1;
             }
+
             50% {
                 transform: scale(1.2);
                 opacity: 0.7;
             }
+
             100% {
                 transform: scale(1);
                 opacity: 1;
@@ -326,20 +330,21 @@
         .dropdown-toggle::after {
             transition: transform 0.3s ease;
         }
-        
+
         .dropdown-toggle:hover::after {
             transform: rotate(180deg);
         }
 
         .btn-teal {
-    background-color: #20c997;
-    border-color: #20c997;
-    color: white;
-}
-.btn-teal:hover {
-    background-color: #198764;
-    border-color: #198764;
-}
+            background-color: #20c997;
+            border-color: #20c997;
+            color: white;
+        }
+
+        .btn-teal:hover {
+            background-color: #198764;
+            border-color: #198764;
+        }
     </style>
 </head>
 
@@ -348,7 +353,7 @@
     <nav class="main-header navbar navbar-expand">
         <div class="container-fluid">
             <!-- Left navbar links -->
-            <ul class="navbar-nav">
+            <ul class="navbar-nav d-flex w-100">
                 <li class="nav-item">
                     <a class="nav-link" data-widget="pushmenu" href="#" role="button">
                         <i class="fas fa-bars"></i>
@@ -360,13 +365,67 @@
                         Accueil
                     </a>
                 </li>
+                <!-- ========== SÉLECTEUR D'AGENCE MODERNE ========== -->
+                @php
+                    $userAgences = session('user_agences', []);
+                    $currentAgence = session('current_agence');
+                @endphp
+
+                @if (count($userAgences) > 1)
+                    <li class="nav-item dropdown ms-auto">
+                        <a class="nav-link dropdown-toggle " href="#" id="agenceDropdown" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-building me-1"></i>
+                            @if ($currentAgence)
+                                AGENCE DE
+                                {{ $currentAgence['nom_agence'] ?? '' }}-{{ $currentAgence['code_agence'] ?? '' }}
+                            @else
+                                Agence
+                            @endif
+
+                            {{-- @if ($currentAgence)
+    Connecté(e) à l'Agence de 
+    {{ $currentAgence['nom_agence'] ?? '' }}
+    @if (!empty($currentAgence['code_agence']))
+        -{{ $currentAgence['code_agence'] }}
+    @endif
+@else
+    Agence
+@endif --}}
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-modern p-3" aria-labelledby="agenceDropdown"
+                            style="min-width: 280px;">
+                            <div class="form-group mb-2">
+                                <label class="small text-muted mb-1">Sélectionnez votre agence</label>
+                                <select id="agenceSelect" class="form-control form-control-sm">
+                                    @foreach ($userAgences as $agence)
+                                        <option value="{{ $agence['id'] }}" data-code="{{ $agence['code_agence'] }}"
+                                            data-nom="{{ $agence['nom_agence'] }}"
+                                            @if ($currentAgence && $currentAgence['id'] == $agence['id']) selected @endif>
+                                            {{ $agence['code_agence'] }} - {{ $agence['nom_agence'] }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <button id="btnConnectAgence" class="btn btn-teal btn-sm w-100">
+                                <i class="fas fa-plug me-1"></i> Se connecter
+                            </button>
+                        </div>
+                    </li>
+                @elseif(count($userAgences) == 1)
+                    <li class="nav-item">
+                        <span class="nav-link text-white-50">
+                            <i class="fas fa-building me-1"></i> {{ $userAgences[0]['code_agence'] }}
+                        </span>
+                    </li>
+                @endif
             </ul>
 
             <!-- Right navbar links -->
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-toggle="dropdown" 
-                       aria-haspopup="true" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
                         <i class="fas fa-user-circle me-1"></i>
                         <span class="d-none d-md-inline">{{ auth()->user()->name ?? 'Utilisateur' }}</span>
                     </a>
@@ -382,7 +441,8 @@
                                 Connexion
                             </a>
                         @endif
-                        <a style="cursor: pointer" class="dropdown-item" onclick="document.getElementById('logout-form').submit()">
+                        <a style="cursor: pointer" class="dropdown-item"
+                            onclick="document.getElementById('logout-form').submit()">
                             <i class="fas fa-sign-out-alt me-2"></i>
                             Déconnexion
                         </a>
@@ -405,23 +465,24 @@
                     <strong>FinaPlus</strong>
                 </a>
             </div>
-            
-            <button class="navbar-toggler navbar-toggler-modern" type="button" data-toggle="collapse" 
-                    data-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false" 
-                    aria-label="Toggle navigation">
+
+            <button class="navbar-toggler navbar-toggler-modern" type="button" data-toggle="collapse"
+                data-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false"
+                aria-label="Toggle navigation">
                 <i class="fas fa-bars"></i> Menu
             </button>
-            
+
             <div class="collapse navbar-collapse" id="mainNavigation">
                 <!-- Menu centré avec mx-auto -->
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                    
+
                     @if ($isCaissier)
-                     <li class="nav-item active"><a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a></li>
+                        <li class="nav-item active"><a href="/" class="nav-link"><i class="fas fa-home"></i>
+                                Home</a></li>
                         <li class="nav-item dropdown">
-                           
-                            <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown" 
-                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+                            <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-money-bill-wave me-1"></i> Caisse
                             </a>
                             <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
@@ -440,37 +501,37 @@
                                 <a class="dropdown-item" href="{{ route('eco.pages.delestage') }}">
                                     <i class="fas fa-exchange-alt me-2"></i>Délestage
                                 </a>
-                              
+
                             </div>
                         </li>
                     @endif
 
-                        @if ($isChefCaisse)
+                    @if ($isChefCaisse)
                         <li class="nav-item dropdown">
-                           
-                            <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown" 
-                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+                            <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-money-bill-wave me-1"></i> Tresor
                             </a>
                             <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
-                                
+
                                 <a class="dropdown-item" href="{{ route('eco.pages.appro') }}">
                                     <i class="fas fa-charging-station me-2"></i>Appro
                                 </a>
-                                
-                                 
+
+
                                 <a class="dropdown-item" href="{{ route('eco.pages.entreeT') }}">
                                     <i class="fas fa-door-open me-2"></i>Entrée T
                                 </a>
-                              
+
                             </div>
                         </li>
                     @endif
-                    
+
                     @if ($isAgentCredit)
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="creditDropdown" 
-                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle" href="#" id="creditDropdown"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-credit-card me-1"></i> Crédit
                             </a>
                             <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="creditDropdown">
@@ -483,11 +544,11 @@
                             </div>
                         </li>
                     @endif
-                    
+
                     @if ($isAgentClientele)
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="clienteleDropdown" 
-                               data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle" href="#" id="clienteleDropdown"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="fas fa-users me-1"></i> Clientèle
                             </a>
                             <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="clienteleDropdown">
@@ -503,22 +564,22 @@
                             </div>
                         </li>
                     @endif
-                    
+
                     <li class="nav-item">
                         <a href="{{ route('eco.pages.releve') }}" class="nav-link">
                             <i class="fas fa-file-alt me-1"></i> Relevé
                         </a>
                     </li>
-                    
+
                     <li class="nav-item">
                         <a href="{{ route('eco.pages.sms-banking') }}" class="nav-link">
                             <i class="fas fa-sms me-1"></i> SMS Banking
                         </a>
                     </li>
-                    
+
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="rapportDropdown" 
-                           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="rapportDropdown"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-chart-bar me-1"></i> Rapport
                         </a>
                         <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="rapportDropdown">
@@ -528,7 +589,7 @@
                             <a class="dropdown-item" href="{{ route('eco.pages.bilan') }}">
                                 <i class="fas fa-chart-line me-2"></i>Bilan
                             </a>
-                              <a class="dropdown-item" href="{{ route('eco.pages.grandlivre') }}">
+                            <a class="dropdown-item" href="{{ route('eco.pages.grandlivre') }}">
                                 <i class="fas fa-book me-3"></i>Grand Livre
                             </a>
                             <a class="dropdown-item" href="{{ route('eco.pages.tfr') }}">
@@ -555,49 +616,7 @@
                         </div>
                     </li>
 
-                    <!-- ========== SÉLECTEUR D'AGENCE MODERNE ========== -->
-@php
-    $userAgences = session('user_agences', []);
-    $currentAgence = session('current_agence');
-@endphp
 
-@if(count($userAgences) > 1)
-    <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" id="agenceDropdown" 
-           data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fas fa-building me-1"></i>
-            @if($currentAgence)
-                {{ $currentAgence['code_agence'] ?? $currentAgence['nom_agence'] ?? 'Agence' }}
-            @else
-                Agence
-            @endif
-        </a>
-        <div class="dropdown-menu dropdown-menu-modern p-3" aria-labelledby="agenceDropdown" style="min-width: 280px;">
-            <div class="form-group mb-2">
-                <label class="small text-muted mb-1">Sélectionnez votre agence</label>
-                <select id="agenceSelect" class="form-control form-control-sm">
-                    @foreach($userAgences as $agence)
-                        <option value="{{ $agence['id'] }}" 
-                            data-code="{{ $agence['code_agence'] }}"
-                            data-nom="{{ $agence['nom_agence'] }}"
-                            @if($currentAgence && $currentAgence['id'] == $agence['id']) selected @endif>
-                            {{ $agence['code_agence'] }} - {{ $agence['nom_agence'] }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <button id="btnConnectAgence" class="btn btn-teal btn-sm w-100">
-                <i class="fas fa-plug me-1"></i> Se connecter
-            </button>
-        </div>
-    </li>
-@elseif(count($userAgences) == 1)
-    <li class="nav-item">
-        <span class="nav-link text-white-50">
-            <i class="fas fa-building me-1"></i> {{ $userAgences[0]['code_agence'] }}
-        </span>
-    </li>
-@endif
 
 
                 </ul>
@@ -608,59 +627,58 @@
     <div class="d-flex flex-column min-vh-100">
         <main class="flex-grow-1" style="flex: 1;">
             <!-- Contenu principal de la page -->
-    <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const btnConnect = document.getElementById('btnConnectAgence');
-    if (btnConnect) {
-        btnConnect.addEventListener('click', function() {
-            const select = document.getElementById('agenceSelect');
-            const selectedOption = select.options[select.selectedIndex];
-            const agenceId = select.value;
-            const agenceCode = selectedOption.getAttribute('data-code');
-            const agenceNom = selectedOption.getAttribute('data-nom');
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const btnConnect = document.getElementById('btnConnectAgence');
+                    if (btnConnect) {
+                        btnConnect.addEventListener('click', function() {
+                            const select = document.getElementById('agenceSelect');
+                            const selectedOption = select.options[select.selectedIndex];
+                            const agenceId = select.value;
+                            const agenceCode = selectedOption.getAttribute('data-code');
+                            const agenceNom = selectedOption.getAttribute('data-nom');
 
-            // Requête AJAX pour changer l'agence active en session
-            fetch('{{ route("eco.agence.change") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    agence_id: agenceId,
-                    agence_code: agenceCode,
-                    agence_nom: agenceNom
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 1) {
-                    // Recharger la page pour appliquer le changement d'agence
-                    window.location.reload();
-                } else {
-                    alert('Erreur : ' + (data.msg || 'Impossible de changer d\'agence'));
-                }
-            })
-            .catch(error => {
-                console.error('Erreur:', error);
-                alert('Une erreur est survenue');
-            });
-        });
-    }
-});
+                            // Requête AJAX pour changer l'agence active en session
+                            fetch('{{ route('eco.agence.change') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    },
+                                    body: JSON.stringify({
+                                        agence_id: agenceId,
+                                        agence_code: agenceCode,
+                                        agence_nom: agenceNom
+                                    })
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.status === 1) {
+                                        // Recharger la page pour appliquer le changement d'agence
+                                        window.location.reload();
+                                    } else {
+                                        alert('Erreur : ' + (data.msg || 'Impossible de changer d\'agence'));
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Erreur:', error);
+                                    alert('Une erreur est survenue');
+                                });
+                        });
+                    }
+                });
 
 
-// Empêcher la fermeture du dropdown agence quand on clique sur le select ou le bouton
-document.addEventListener('DOMContentLoaded', function() {
-    var agenceDropdown = document.getElementById('agenceDropdown');
-    if (agenceDropdown) {
-        var dropdownMenu = agenceDropdown.nextElementSibling;
-        if (dropdownMenu) {
-            dropdownMenu.addEventListener('click', function(event) {
-                event.stopPropagation(); // Empêche la fermeture du dropdown
-            });
-        }
-    }
-});
-</script>
-   
+                // Empêcher la fermeture du dropdown agence quand on clique sur le select ou le bouton
+                document.addEventListener('DOMContentLoaded', function() {
+                    var agenceDropdown = document.getElementById('agenceDropdown');
+                    if (agenceDropdown) {
+                        var dropdownMenu = agenceDropdown.nextElementSibling;
+                        if (dropdownMenu) {
+                            dropdownMenu.addEventListener('click', function(event) {
+                                event.stopPropagation(); // Empêche la fermeture du dropdown
+                            });
+                        }
+                    }
+                });
+            </script>

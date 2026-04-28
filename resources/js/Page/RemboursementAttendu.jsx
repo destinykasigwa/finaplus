@@ -18,6 +18,7 @@ const RemboursementAttendu = () => {
     const [total2, setTotal2] = useState(0);
     const [fetchAgentCredit, setFetchAgentCredit] = useState();
     const [agent_credit_name, setagent_credit_name] = useState();
+     const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
 
     useEffect(() => {
         // GET CURRENT DATE
@@ -75,6 +76,7 @@ const RemboursementAttendu = () => {
             dateToSearch2,
             devise,
             agent_credit_name,
+            agence_filter: agenceFilter,
         });
         if (res.data.status == 1) {
             setloading(false);
@@ -278,81 +280,146 @@ const RemboursementAttendu = () => {
         </div>
     </div>
 
-    {/* Filtres de recherche */}
-    <div className="row g-3 mb-4">
-        {/* Période et devise */}
-        <div className="col-md-4">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-calendar-alt me-2"></i>Période et devise
-                    </h6>
-                </div>
-                <div className="card-body">
-                    <div className="mb-3">
-                        <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Période N-1</label>
-                        <input type="date" className="form-control" style={{ borderRadius: "8px", borderColor: "#138496" }}
-                            onChange={(e) => setdateToSearch1(e.target.value)} value={dateToSearch1} />
-                    </div>
-                    <div className="mb-3">
-                        <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Date Fin</label>
-                        <input type="date" className="form-control" style={{ borderRadius: "8px", borderColor: "#138496" }}
-                            onChange={(e) => setdateToSearch2(e.target.value)} value={dateToSearch2} />
-                    </div>
-                    <div className="mb-2">
-                        <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Devise</label>
-                        <select className="form-control" style={{ borderRadius: "8px", borderColor: "#138496" }}
-                            onChange={(e) => setdevise(e.target.value)}>
-                            <option value="CDF">CDF</option>
-                            <option value="USD">USD</option>
-                        </select>
-                    </div>
-                </div>
+  {/* Filtres */}
+<div className="row g-4 mb-5">
+    {/* Période */}
+    <div className="col-md-3">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-calendar-alt me-2" style={{ color: "#6366f1" }}></i>
+                    Période
+                </h6>
             </div>
-        </div>
-
-        {/* Agent de crédit */}
-        <div className="col-md-4">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-user-tie me-2"></i>Agent de crédit
-                    </h6>
+            <div className="card-body pt-2">
+                <div className="mb-3">
+                    <label className="label-modern">Date début</label>
+                    <input
+                        type="date"
+                        className="form-control modern-input"
+                        value={dateToSearch1}
+                        onChange={(e) => setdateToSearch1(e.target.value)}
+                    />
                 </div>
-                <div className="card-body">
-                    <div className="mb-2">
-                        <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Sélectionner un agent</label>
-                        <select className="form-control" style={{ borderRadius: "8px", borderColor: "#138496" }}
-                            name="agent_credit_name" id="agent_credit_name"
-                            onChange={(e) => setagent_credit_name(e.target.value)}>
-                            <option value="">Tous les agents</option>
-                            {fetchAgentCredit && fetchAgentCredit.map((res, index) => (
-                                <option key={index} value={res.name}>{res.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {/* Action */}
-        <div className="col-md-4">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-play me-2"></i>Action
-                    </h6>
-                </div>
-                <div className="card-body d-flex align-items-center justify-content-center">
-                    <button onClick={AfficherRemboursementAttendu} className="btn w-100 py-2" 
-                        style={{ background: "#138496", color: "white", borderRadius: "8px" }}>
-                        <i className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-desktop me-2"}`}></i>
-                        Afficher
-                    </button>
+                <div>
+                    <label className="label-modern">Date fin</label>
+                    <input
+                        type="date"
+                        className="form-control modern-input"
+                        value={dateToSearch2}
+                        onChange={(e) => setdateToSearch2(e.target.value)}
+                    />
                 </div>
             </div>
         </div>
     </div>
+
+    {/* Devise */}
+    <div className="col-md-2">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-money-bill-wave me-2" style={{ color: "#6366f1" }}></i>
+                    Devise
+                </h6>
+            </div>
+            <div className="card-body pt-2">
+                <select
+                    className="modern-select w-100"
+                    value={devise}
+                    onChange={(e) => setdevise(e.target.value)}
+                >
+                    <option value="CDF">CDF</option>
+                    <option value="USD">USD</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    {/* Agent de crédit */}
+    <div className="col-md-3">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-user-tie me-2" style={{ color: "#6366f1" }}></i>
+                    Agent de crédit
+                </h6>
+            </div>
+            <div className="card-body pt-2">
+                <select
+                    className="modern-select w-100"
+                    value={agent_credit_name}
+                    onChange={(e) => setagent_credit_name(e.target.value)}
+                >
+                    <option value="">Tous les agents</option>
+                    {fetchAgentCredit?.map((agent, idx) => (
+                        <option key={idx} value={agent.name}>{agent.name}</option>
+                    ))}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    {/* Agence */}
+    <div className="col-md-2">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-building me-2" style={{ color: "#6366f1" }}></i>
+                    Agence
+                </h6>
+            </div>
+            <div className="card-body pt-2">
+                <select
+                    className="modern-select w-100"
+                    value={agenceFilter}
+                    onChange={(e) => setAgenceFilter(e.target.value)}
+                    disabled={userAgences.length <= 1}
+                >
+                    <option value="current">
+                        Agence courante ({currentAgence?.nom_agence || "Non définie"})
+                    </option>
+                    {userAgences.length > 1 && (
+                        <>
+                            <option value="all">📊 Toutes mes agences</option>
+                            {userAgences.map((agence) => (
+                                <option key={agence.id} value={agence.id}>
+                                    🏢 {agence.code_agence} - {agence.nom_agence}
+                                </option>
+                            ))}
+                        </>
+                    )}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    {/* Action */}
+    <div className="col-md-2">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-play me-2" style={{ color: "#6366f1" }}></i>
+                    Action
+                </h6>
+            </div>
+            <div className="card-body d-flex align-items-center justify-content-center pt-2">
+                <button
+                    onClick={AfficherRemboursementAttendu}
+                    className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    ) : (
+                        <i className="fas fa-desktop"></i>
+                    )}
+                    <span>Afficher</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
     {/* Tableau des résultats */}
     {fetchData && fetchData.length != 0 && (

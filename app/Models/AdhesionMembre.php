@@ -38,6 +38,8 @@ class AdhesionMembre extends Model
         "quartier",
         "type_de_gestion",
         "critere",
-        "signature_image_file"
+        "signature_image_file",
+        "suiteAdresse"
+
     ];
 }

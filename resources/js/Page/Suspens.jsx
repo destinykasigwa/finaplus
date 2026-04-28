@@ -1,7 +1,10 @@
 // import styles from "../styles/RegisterForm.module.css";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
+import RecuDepot from "./Modals/RecuDepot";
+import { Bars } from "react-loader-spinner";
+import RecuDepotA5 from "./Modals/RecuDepotA5";
 // import { useNavigate } from "react-router-dom";
 
 const Suspens = () => {
@@ -14,6 +17,11 @@ const Suspens = () => {
     const [deuxCentFranc, setdeuxCentFranc] = useState(0);
     const [centFranc, setcentFranc] = useState(0);
     const [cinquanteFanc, setcinquanteFanc] = useState(0);
+      const [getBilletageCDF, setGetBilletageCDF] = useState();
+    const [getBilletageUSD, setGetBilletageUSD] = useState();
+    const [selectedData, setSelectedData] = useState(null);
+    const [GetRecuConfig, setGetRecuConfig] = useState("");
+     const [GetCommissionConfig, setGetCommissionConfig] = useState("");
 
     //USD ATTRIBUTE
     const [hundred, sethundred] = useState(0);
@@ -34,6 +42,29 @@ const Suspens = () => {
     const [error, setError] = useState([]);
     const [fetchData2, setfetchData2] = useState();
     //GET SEACHED DATA
+
+     useEffect(() => {
+        getBilletage();
+        getCommissionConfig();
+    }, []);
+
+    const getBilletage = async () => {
+        const res = await axios.get("/eco/depot/get-recu");
+        if (res.data.status == 1) {
+            setGetBilletageCDF(res.data.dataCDF);
+            setGetBilletageUSD(res.data.dataUSD);
+        }
+    };
+
+      const getCommissionConfig = async () => {
+        const res = await axios.get("/eco/pages/get-commission-setting");
+        if (res.data.status == 1) {
+            console.log(res.data.data);
+            setGetCommissionConfig(res.data.data);
+            setGetRecuConfig(res.data.type_recu);
+        }
+    };
+
     const getSeachedData = async (e) => {
         e.preventDefault();
         const res = await axios.post("/eco/page/depot-espece/get-account", {
@@ -142,996 +173,580 @@ const Suspens = () => {
             }
         }
     };
+
+      const handlePrintClick = (data) => {
+        setSelectedData(data);
+       
+        // Si A5 → imprimer directement
+    };
     return (
-        <div className="container-fluid" style={{ marginTop: "10px" }}>
-            <div className="row">
-                <div className="col-md-12 card rounded-10 p-1">
-                    <div
-                        style={{
-                            background: "teal",
-                            borderRadius: "10px",
-                            height: "10",
-                            padding: "2px",
-                            color: "white",
-                        }}
-                    >
-                        <h5 className="text-bold p-1">Opérations de suspens</h5>
-                    </div>{" "}
-                </div>
-            </div>
-            <div className="row mt-3">
-                <div
-                    className="col-md-4 card rounded-0 p-3"
-                    style={{ marginRight: "3px" }}
-                >
-                    <form action="">
-                        <table>
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <input
-                                            id="compte_to_search"
-                                            name="compte_to_search"
-                                            type="text"
-                                            style={{
-                                                padding: "1px ",
-                                                border: `${"1px solid #dcdcdc"}`,
-                                                marginBottom: "5px",
-                                                width: "80px",
-                                                color: "red",
-                                            }}
-                                            onChange={(e) => {
-                                                setsearched_account(
-                                                    e.target.value
-                                                );
-                                            }}
-                                        />
-                                        <button
-                                            className="btn btn-primary rounded-0"
-                                            style={{
-                                                padding: "2px",
-                                                marginTop: "-5px",
-                                            }}
-                                            onClick={getSeachedData}
-                                        >
-                                            Rechercher
-                                        </button>
-                                    </td>
-                                </tr>
-                                <hr />
-                                <tr>
-                                    <td>
-                                        {" "}
-                                        <label
-                                            htmlFor="intituleCompte"
-                                            style={{
-                                                padding: "2px",
-                                                color: "steelblue",
-                                            }}
-                                        >
-                                            Intitulé de compte
-                                        </label>
-                                    </td>
-                                    <td>
-                                        {" "}
-                                        <input
-                                            id="intituleCompte"
-                                            name="intituleCompte"
-                                            type="text"
-                                            style={{
-                                                padding: "1px ",
-                                                border: `${"1px solid #dcdcdc"}`,
-                                                marginBottom: "5px",
-                                                color: "red",
-                                            }}
-                                            value={
-                                                fetchData2 &&
-                                                fetchData2.NomCompte
-                                            }
-                                            disabled
-                                        />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        {" "}
-                                        <label
-                                            htmlFor="NumCompte"
-                                            style={{
-                                                padding: "2px",
-                                                color: "steelblue",
-                                            }}
-                                        >
-                                            Numéro de compte
-                                        </label>
-                                    </td>
-                                    <td>
-                                        {" "}
-                                        <input
-                                            id="NumCompte"
-                                            name="NumCompte"
-                                            type="text"
-                                            style={{
-                                                padding: "1px ",
-                                                border: `${"1px solid #dcdcdc"}`,
-                                                marginBottom: "5px",
-                                                color: "red",
-                                            }}
-                                            disabled
-                                            value={
-                                                fetchData2 &&
-                                                fetchData2.NumCompte
-                                            }
-                                        />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        {" "}
-                                        <label
-                                            htmlFor="CodeAgence"
-                                            style={{
-                                                padding: "2px",
-                                                color: "steelblue",
-                                            }}
-                                        >
-                                            Code Agence
-                                        </label>
-                                    </td>
-                                    <td>
-                                        {" "}
-                                        <input
-                                            id="CodeAgence"
-                                            name="CodeAgence"
-                                            type="text"
-                                            style={{
-                                                padding: "1px ",
-                                                border: `${"1px solid #dcdcdc"}`,
-                                                marginBottom: "5px",
-                                                width: "50px",
-                                                color: "red",
-                                            }}
-                                            value={
-                                                fetchData2 &&
-                                                fetchData2.CodeAgence
-                                            }
-                                            disabled
-                                        />
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </form>
-                </div>
-                <div className="col-md-4 card rounded-0 p-3">
-                    <p className="text-bold" style={{ color: "steelblue" }}>
-                        Liste de comptes
-                    </p>
-                    <form
-                        action=""
-                        style={{ overflowX: "scroll", height: "150px" }}
-                    >
-                        <table className="table">
-                            {fetchData &&
-                                fetchData.map((res, index) => {
-                                    return (
-                                        <tr
-                                            key={index}
-                                            style={{
-                                                background: "#dcdcdc",
-                                                color: "red",
-                                            }}
-                                        >
-                                            <td
-                                                style={{
-                                                    border: "1px solid #fff",
-                                                    cursor: "pointer",
-                                                }}
-                                                onClick={(event) =>
-                                                    getAccountInfo(event)
-                                                }
-                                            >
-                                                {res.NumCompte}
-                                            </td>
-                                            <td
-                                                style={{
-                                                    border: "1px solid #fff",
-                                                }}
-                                            >
-                                                {res.CodeMonnaie == 1
-                                                    ? "USD"
-                                                    : "CDF"}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            <tr>
-                                {/* <td>
-                                    <button className="btn btn-primary rounded-0">
-                                        Afficher le solde
-                                    </button>
-                                </td> */}
-                            </tr>
-                        </table>
-                    </form>
-                </div>
-            </div>
-            <p
-                className="border border-10"
-                style={{
-                    background: "#dcdcdc",
-                    padding: "1px",
-                }}
-            ></p>
-            <div
-                className="row"
-                // style={{ height: "340px", overflowX: "scroll" }}
-            >
-                <div
-                    className="col-md-4 card rounded-0 p-1"
-                    style={{ marginRight: "3px" }}
-                >
-                    <form action="">
-                        <fieldset>
-                            <legend
-                                style={{
-                                    border: "2px solid:#dcdcdc !important",
-                                }}
-                            >
-                                <p>Informations</p>
-                            </legend>
-                            <table>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            {" "}
-                                            <label
-                                                htmlFor="Devise"
-                                                style={{
-                                                    padding: "2px",
-                                                    color: "steelblue",
-                                                }}
-                                            >
-                                                Devise
-                                            </label>
-                                        </td>
-                                        <td>
-                                            {" "}
-                                            <select
-                                                id="devise"
-                                                name="devise"
-                                                style={{
-                                                    padding: "1px ",
-                                                    border: `${
-                                                        error.devise
-                                                            ? "1px solid red"
-                                                            : "1px solid #dcdcdc"
-                                                    }`,
-                                                    marginBottom: "5px",
-                                                    color: "red",
-                                                }}
-                                                disabled
-                                                onChange={(e) => {
-                                                    setDevise(e.target.value);
-                                                }}
-                                            >
-                                                <option
-                                                    value={
-                                                        fetchData2 &&
-                                                        fetchData2.CodeMonnaie ==
-                                                            1
-                                                            ? "USD"
-                                                            : "CDF"
-                                                    }
-                                                >
-                                                    {fetchData2 &&
-                                                    fetchData2.CodeMonnaie == 1
-                                                        ? "USD"
-                                                        : "CDF"}
-                                                </option>
-                                                {/* <option value="USD">USD</option> */}
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            {" "}
-                                            <label
-                                                htmlFor="motifDepot"
-                                                style={{
-                                                    padding: "2px",
-                                                    color: "steelblue",
-                                                }}
-                                            >
-                                                Motif
-                                            </label>
-                                        </td>
-                                        <td>
-                                            {" "}
-                                            <input
-                                                id="motifDepot"
-                                                name="motifDepot"
-                                                type="text"
-                                                style={{
-                                                    padding: "1px ",
-                                                    border: `${
-                                                        error.motifDepot
-                                                            ? "1px solid red"
-                                                            : "1px solid #dcdcdc"
-                                                    }`,
-                                                    marginBottom: "5px",
-                                                    color: "red",
-                                                }}
-                                                onChange={(e) =>
-                                                    setMotifDepot(
-                                                        e.target.value
-                                                    )
-                                                }
-                                                value={motifDepot}
-                                            />
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>
-                                            {" "}
-                                            <label
-                                                htmlFor="DeposantName"
-                                                style={{
-                                                    padding: "2px",
-                                                    color: "steelblue",
-                                                }}
-                                            >
-                                                Nom du déposant
-                                            </label>
-                                        </td>
-                                        <td>
-                                            {" "}
-                                            <input
-                                                id="DeposantName"
-                                                name="DeposantName"
-                                                type="text"
-                                                style={{
-                                                    padding: "1px ",
-                                                    border: `${
-                                                        error.DeposantName
-                                                            ? "1px solid red"
-                                                            : "1px solid #dcdcdc"
-                                                    }`,
-                                                    marginBottom: "5px",
-                                                    color: "red",
-                                                }}
-                                                onChange={(e) =>
-                                                    setDeposantName(
-                                                        e.target.value
-                                                    )
-                                                }
-                                                value={DeposantName}
-                                            />
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>
-                                            {" "}
-                                            <label
-                                                htmlFor="DeposantPhone"
-                                                style={{
-                                                    padding: "2px",
-                                                    color: "steelblue",
-                                                }}
-                                            >
-                                                Téléphone
-                                            </label>
-                                        </td>
-                                        <td>
-                                            {" "}
-                                            <input
-                                                id="DeposantPhone"
-                                                name="DeposantPhone"
-                                                type="text"
-                                                style={{
-                                                    padding: "1px ",
-                                                    border: `${"1px solid #dcdcdc"}`,
-                                                    marginBottom: "5px",
-                                                    color: "red",
-                                                }}
-                                                onChange={(e) =>
-                                                    setDeposantPhone(
-                                                        e.target.value
-                                                    )
-                                                }
-                                                value={DeposantPhone}
-                                            />
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            {" "}
-                                            <label
-                                                htmlFor="Montant"
-                                                style={{
-                                                    padding: "2px",
-                                                    color: "steelblue",
-                                                }}
-                                            >
-                                                Montant
-                                            </label>
-                                        </td>
-                                        <td>
-                                            {" "}
-                                            <input
-                                                id="Montant"
-                                                name="Montant"
-                                                type="text"
-                                                style={{
-                                                    padding: "1px ",
-                                                    border: `${
-                                                        error.Montant
-                                                            ? "1px solid red"
-                                                            : "1px solid #dcdcdc"
-                                                    }`,
-                                                    marginBottom: "5px",
-                                                    width: "70px",
-                                                    color: "red",
-                                                }}
-                                                onChange={(e) =>
-                                                    setMontant(e.target.value)
-                                                }
-                                                value={Montant}
-                                            />
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </fieldset>
-                    </form>
-                </div>
-                <div
-                    className="col-md-4 card rounded-0 p-3"
-                    style={{ marginRight: "2px" }}
-                >
-                    <form action="">
-                        <fieldset>
-                            <legend>
-                                <p>Billetage</p>
-                            </legend>
-                            {fetchData2 && fetchData2.CodeMonnaie == 1 ? (
-                                <form
-                                    method="POST"
-                                    style={{
-                                        height: "auto",
-                                    }}
-                                >
-                                    <table
-                                        className="tableDepotEspece"
-                                        style={{
-                                            border: "2px solid #dcdcdc",
-                                        }}
-                                    >
-                                        <thead>
-                                            <tr>
-                                                <th className="col-md-4">
-                                                    Coupures
-                                                </th>
-                                                <th className="col-md-4">
-                                                    Nbr Billets
-                                                </th>
-                                                <th className="col-md-2">
-                                                    Total
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr ng-repeat="name in getdrugnameNewArray">
-                                                <td style={{ padding: "4px" }}>
-                                                    100
-                                                </td>
-                                                <td>
-                                                    <input
-                                                        type="text"
-                                                        name="hundred"
-                                                        style={{
-                                                            boxShadow:
-                                                                "inset 0 0 5px 5px #888",
-                                                            fontSize: "15px",
-                                                            color: "red",
-                                                        }}
-                                                        value={hundred}
-                                                        onChange={(e) =>
-                                                            sethundred(
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                    />
-                                                </td>
-                                                <td>{hundred * 100}</td>
-                                            </tr>
-                                            <tr ng-repeat="name in getdrugnameNewArray">
-                                                <td style={{ padding: "4px" }}>
-                                                    50
-                                                </td>
-                                                <td>
-                                                    <input
-                                                        type="text"
-                                                        name="fitfty"
-                                                        style={{
-                                                            boxShadow:
-                                                                "inset 0 0 5px 5px #888",
-                                                            fontSize: "15px",
-                                                            color: "red",
-                                                        }}
-                                                        onChange={(e) =>
-                                                            setfitfty(
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        value={fitfty}
-                                                    />
-                                                </td>
-                                                <td>{fitfty * 50}</td>
-                                            </tr>
-                                            <tr ng-repeat="name in getdrugnameNewArray">
-                                                <td style={{ padding: "4px" }}>
-                                                    20
-                                                </td>
-                                                <td>
-                                                    <input
-                                                        type="text"
-                                                        name="twenty"
-                                                        style={{
-                                                            boxShadow:
-                                                                "inset 0 0 5px 5px #888",
-                                                            fontSize: "15px",
-                                                            color: "red",
-                                                        }}
-                                                        onChange={(e) =>
-                                                            settwenty(
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        value={twenty}
-                                                    />
-                                                </td>
-                                                <td>{twenty * 20}</td>
-                                            </tr>
-                                            <tr ng-repeat="name in getdrugnameNewArray">
-                                                <td style={{ padding: "4px" }}>
-                                                    10
-                                                </td>
-                                                <td>
-                                                    <input
-                                                        type="text"
-                                                        name="ten"
-                                                        style={{
-                                                            boxShadow:
-                                                                "inset 0 0 5px 5px #888",
-                                                            fontSize: "15px",
-                                                            color: "red",
-                                                        }}
-                                                        onChange={(e) =>
-                                                            setten(
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        value={ten}
-                                                    />
-                                                </td>
-                                                <td>{ten * 10}</td>
-                                            </tr>
-                                            <tr ng-repeat="name in getdrugnameNewArray">
-                                                <td style={{ padding: "4px" }}>
-                                                    5
-                                                </td>
-                                                <td>
-                                                    <input
-                                                        type="text"
-                                                        name="five"
-                                                        style={{
-                                                            boxShadow:
-                                                                "inset 0 0 5px 5px #888",
-                                                            fontSize: "15px",
-                                                            color: "red",
-                                                        }}
-                                                        onChange={(e) =>
-                                                            setfive(
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        value={five}
-                                                    />
-                                                </td>
-                                                <td>{five * 5}</td>
-                                            </tr>
-                                            <tr ng-repeat="name in getdrugnameNewArray">
-                                                <td style={{ padding: "4px" }}>
-                                                    1
-                                                </td>
-                                                <td>
-                                                    <input
-                                                        type="text"
-                                                        name="oneDollar"
-                                                        style={{
-                                                            boxShadow:
-                                                                "inset 0 0 5px 5px #888",
-                                                            fontSize: "15px",
-                                                            color: "red",
-                                                        }}
-                                                        onChange={(e) =>
-                                                            setoneDollar(
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                        value={oneDollar}
-                                                    />
-                                                </td>
-                                                <td>{oneDollar * 1}</td>
-                                            </tr>
-                                            <tr
-                                                style={{
-                                                    padding: "10px",
-                                                }}
-                                            >
-                                                <th style={{ padding: "4px" }}>
-                                                    Total
-                                                </th>
-                                                <th>
-                                                    {" "}
-                                                    {parseInt(hundred) +
-                                                        parseInt(fitfty) +
-                                                        parseInt(twenty) +
-                                                        parseInt(ten) +
-                                                        parseInt(five) +
-                                                        parseInt(
-                                                            oneDollar
-                                                        )}{" "}
-                                                </th>
-                                                <th
-                                                    style={{
-                                                        fontSize: "25px",
-                                                        background: "green",
-                                                        color: "#fff",
-                                                    }}
-                                                >
-                                                    {" "}
-                                                    {hundred * 100 +
-                                                        fitfty * 50 +
-                                                        twenty * 20 +
-                                                        ten * 10 +
-                                                        five * 5 +
-                                                        oneDollar * 1}
-                                                </th>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </form>
-                            ) : (
-                                <table
-                                    className="tableDepotEspece"
-                                    style={{
-                                        border: "2px solid #dcdcdc",
-                                    }}
-                                >
-                                    <thead>
-                                        <tr>
-                                            <th className="col-md-4">
-                                                Coupures
-                                            </th>
-                                            <th className="col-md-4">
-                                                Nbr Billets
-                                            </th>
-                                            <th className="col-md-2">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr ng-repeat="name in getdrugnameNewArray">
-                                            <td style={{ padding: "4px" }}>
-                                                20000
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="text"
-                                                    name="vightMille"
-                                                    style={{
-                                                        boxShadow:
-                                                            "inset 0 0 5px 5px #888",
-                                                        fontSize: "15px",
-                                                        color: "red",
-                                                    }}
-                                                    onChange={(e) =>
-                                                        setvightMille(
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    value={vightMille}
-                                                />
-                                            </td>
-                                            <td>{vightMille * 20000}</td>
-                                        </tr>
-                                        <tr ng-repeat="name in getdrugnameNewArray">
-                                            <td style={{ padding: "4px" }}>
-                                                10000
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="text"
-                                                    name="dixMille"
-                                                    style={{
-                                                        boxShadow:
-                                                            "inset 0 0 5px 5px #888",
-                                                        fontSize: "15px",
-                                                        color: "red",
-                                                    }}
-                                                    onChange={(e) =>
-                                                        setdixMille(
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    value={dixMille}
-                                                />
-                                            </td>
-                                            <td>{dixMille * 10000}</td>
-                                        </tr>
-                                        <tr ng-repeat="name in getdrugnameNewArray">
-                                            <td style={{ padding: "4px" }}>
-                                                5000
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="text"
-                                                    name="cinqMille"
-                                                    style={{
-                                                        boxShadow:
-                                                            "inset 0 0 5px 5px #888",
-                                                        fontSize: "15px",
-                                                        color: "red",
-                                                    }}
-                                                    onChange={(e) =>
-                                                        setcinqMille(
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    value={cinqMille}
-                                                />
-                                            </td>
-                                            <td>{cinqMille * 5000}</td>
-                                        </tr>
-                                        <tr ng-repeat="name in getdrugnameNewArray">
-                                            <td style={{ padding: "4px" }}>
-                                                1000
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="text"
-                                                    name="milleFranc"
-                                                    style={{
-                                                        boxShadow:
-                                                            "inset 0 0 5px 5px #888",
-                                                        fontSize: "15px",
-                                                        color: "red",
-                                                    }}
-                                                    onChange={(e) =>
-                                                        setmilleFranc(
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    value={milleFranc}
-                                                />
-                                            </td>
-                                            <td>{milleFranc * 1000}</td>
-                                        </tr>
-                                        <tr ng-repeat="name in getdrugnameNewArray">
-                                            <td style={{ padding: "4px" }}>
-                                                500
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="text"
-                                                    name="cinqCentFr"
-                                                    style={{
-                                                        boxShadow:
-                                                            "inset 0 0 5px 5px #888",
-                                                        fontSize: "15px",
-                                                        color: "red",
-                                                    }}
-                                                    onChange={(e) =>
-                                                        setcinqCentFr(
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    value={cinqCentFr}
-                                                />
-                                            </td>
-                                            <td>{cinqCentFr * 500}</td>
-                                        </tr>
-                                        <tr ng-repeat="name in getdrugnameNewArray">
-                                            <td style={{ padding: "4px" }}>
-                                                200
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="text"
-                                                    name="deuxCentFranc"
-                                                    style={{
-                                                        boxShadow:
-                                                            "inset 0 0 5px 5px #888",
-                                                        fontSize: "15px",
-                                                        color: "red",
-                                                    }}
-                                                    onChange={(e) =>
-                                                        setdeuxCentFranc(
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    value={deuxCentFranc}
-                                                />
-                                            </td>
-                                            <td>{deuxCentFranc * 200}</td>
-                                        </tr>
-                                        <tr ng-repeat="name in getdrugnameNewArray">
-                                            <td style={{ padding: "4px" }}>
-                                                100
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="text"
-                                                    name="centFranc"
-                                                    style={{
-                                                        boxShadow:
-                                                            "inset 0 0 5px 5px #888",
-                                                        fontSize: "15px",
-                                                        color: "red",
-                                                    }}
-                                                    onChange={(e) =>
-                                                        setcentFranc(
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    value={centFranc}
-                                                />
-                                            </td>
-                                            <td>{centFranc * 100}</td>
-                                        </tr>
-                                        <tr ng-repeat="name in getdrugnameNewArray">
-                                            <td style={{ padding: "4px" }}>
-                                                50
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="text"
-                                                    name="cinquanteFanc"
-                                                    style={{
-                                                        boxShadow:
-                                                            "inset 0 0 5px 5px #888",
-                                                        fontSize: "15px",
-                                                        color: "red",
-                                                    }}
-                                                    onChange={(e) =>
-                                                        setcinquanteFanc(
-                                                            e.target.value
-                                                        )
-                                                    }
-                                                    value={cinquanteFanc}
-                                                />
-                                            </td>
-                                            <td>{cinquanteFanc * 50}</td>
-                                        </tr>
-                                        <tr
-                                            style={{
-                                                padding: "10px",
-                                            }}
-                                        >
-                                            <th style={{ padding: "4px" }}>
-                                                Total
-                                            </th>
-                                            <th style={{ padding: "4px" }}>
-                                                {" "}
-                                                {parseInt(vightMille) +
-                                                    parseInt(dixMille) +
-                                                    parseInt(cinqMille) +
-                                                    parseInt(milleFranc) +
-                                                    parseInt(cinqCentFr) +
-                                                    parseInt(deuxCentFranc) +
-                                                    parseInt(centFranc) +
-                                                    parseInt(
-                                                        cinquanteFanc
-                                                    )}{" "}
-                                            </th>
-                                            <th
-                                                style={{
-                                                    fontSize: "25px",
-                                                    background: "green",
-                                                    color: "#fff",
-                                                    padding: "4px",
-                                                }}
-                                            >
-                                                {" "}
-                                                {vightMille * 20000 +
-                                                    dixMille * 10000 +
-                                                    cinqMille * 5000 +
-                                                    milleFranc * 1000 +
-                                                    cinqCentFr * 500 +
-                                                    deuxCentFranc * 200 +
-                                                    centFranc * 100 +
-                                                    cinquanteFanc * 50}{" "}
-                                            </th>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            )}
-                        </fieldset>
-                    </form>
-                </div>
-                <div className="col-md-2 card rounded-0 p-3">
-                    <form action="">
-                        <table>
-                            <tr>
-                                <td>
-                                    {hundred * 100 +
-                                        fitfty * 50 +
-                                        twenty * 20 +
-                                        ten * 10 +
-                                        five * 5 +
-                                        oneDollar * 1 ===
-                                        parseInt(Montant) ||
-                                    vightMille * 20000 +
-                                        dixMille * 10000 +
-                                        cinqMille * 5000 +
-                                        milleFranc * 1000 +
-                                        cinqCentFr * 500 +
-                                        deuxCentFranc * 200 +
-                                        centFranc * 100 +
-                                        cinquanteFanc * 50 ===
-                                        parseInt(Montant) ? (
-                                        <button
-                                            className="btn btn-primary rounded-0"
-                                            id="validerbtn"
-                                            onClick={saveOperation}
-                                        >
-                                            <i
-                                                className={`${
-                                                    loading
-                                                        ? "spinner-border spinner-border-sm"
-                                                        : " fas fa-check"
-                                                }`}
-                                            ></i>
-                                            Valider
-                                        </button>
-                                    ) : (
-                                        <button
-                                            className="btn btn-primary rounded-0"
-                                            disabled
-                                        >
-                                            {" "}
-                                            <i className="fas fa-check"></i>{" "}
-                                            Valider
-                                        </button>
-                                    )}
-                                    {/* <button className="btn btn-primary rounded-0">
-                                        Valider
-                                    </button> */}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <button className="btn btn-success rounded-0 mt-1">
-                                        <i className="fas fa-print"></i>{" "}
-                                        Imprimer
-                                    </button>
-                                </td>
-                            </tr>
-                            {/* <tr>
-                                <td>
-                                    <button className="btn btn-danger rounded-0 mt-1">
-                                        Réinitialiser
-                                    </button>
-                                </td>
-                            </tr> */}
-                        </table>
-                    </form>
+       <div className="container-fluid py-3">
+    {/* En-tête moderne */}
+    <div className="row mb-4" >
+        <div className="col-12">
+            <div className="card border-0 shadow-sm rounded-4 overflow-hidden" >
+                <div className="card-header text-white border-0 py-3" style={{background:"#138496" }}>
+                    <h5 className="fw-bold mb-0">
+                        <i className="fas fa-hourglass-half me-2"></i>
+                        Opérations de suspens
+                    </h5>
                 </div>
             </div>
         </div>
+    </div>
+
+    {/* Section 1 : Recherche et sélection du compte */}
+    <div className="row g-4 mb-4">
+        {/* Panneau de recherche */}
+        <div className="col-md-5">
+            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                    <h6 className="section-title">
+                        <i className="fas fa-search me-2" style={{ color: "#6366f1" }}></i>
+                        Rechercher un compte
+                    </h6>
+                </div>
+                <div className="card-body pt-2">
+                    <div className="input-group mb-3">
+                        <input
+                            type="text"
+                            className="form-control modern-input"
+                            placeholder="Numéro de compte"
+                            value={searched_account}
+                            onChange={(e) => setsearched_account(e.target.value)}
+                        />
+                        <button
+                            className="btn gradient-btn"
+                            onClick={getSeachedData}
+                            style={{ borderRadius: "0 12px 12px 0" }}
+                        >
+                            <i className="fas fa-search"></i>
+                        </button>
+                    </div>
+
+                    {fetchData2 && (
+                        <div className="bg-light rounded-3 p-3 mt-2">
+                            <h6 className="fw-bold mb-3" style={{ color: "teal" }}>
+                                <i className="fas fa-info-circle me-2"></i>Détails du compte
+                            </h6>
+                            <div className="row">
+                                <div className="col-6 mb-2">
+                                    <label className="label-modern">Intitulé</label>
+                                    <input
+                                        type="text"
+                                        className="form-control modern-input"
+                                        value={fetchData2.NomCompte || ""}
+                                        disabled
+                                    />
+                                </div>
+                                <div className="col-6 mb-2">
+                                    <label className="label-modern">Numéro</label>
+                                    <input
+                                        type="text"
+                                        className="form-control modern-input"
+                                        value={fetchData2.NumCompte || ""}
+                                        disabled
+                                    />
+                                </div>
+                                <div className="col-6">
+                                    <label className="label-modern">Code agence</label>
+                                    <input
+                                        type="text"
+                                        className="form-control modern-input"
+                                        value={fetchData2.CodeAgence || ""}
+                                        disabled
+                                    />
+                                </div>
+                                <div className="col-6">
+                                    <label className="label-modern">Devise</label>
+                                    <input
+                                        type="text"
+                                        className="form-control modern-input"
+                                        value={fetchData2.CodeMonnaie == 1 ? "USD" : "CDF"}
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+
+        {/* Liste des comptes */}
+        <div className="col-md-7">
+            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                    <h6 className="section-title">
+                        <i className="fas fa-list me-2" style={{ color: "#6366f1" }}></i>
+                        Liste des comptes
+                    </h6>
+                </div>
+                <div className="card-body pt-2">
+                    <div className="table-responsive" style={{ maxHeight: "300px", overflowY: "auto" }}>
+                        <table className="table table-hover align-middle">
+                            <thead style={{ position: "sticky", top: 0, backgroundColor: "#f8f9fa" }}>
+                                <tr>
+                                    <th>Numéro</th>
+                                    <th>Devise</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {fetchData && fetchData.map((res, index) => (
+                                    <tr
+                                        key={index}
+                                        style={{ cursor: "pointer" }}
+                                          onClick={(
+                                                                        event,
+                                                                    ) =>
+                                                                        getAccountInfo(
+                                                                            event,
+                                                                        )
+                                                                    }
+                                        className="account-row"
+                                    >
+                                        <td className="fw-semibold" style={{ color: "teal" }}>{res.NumCompte}</td>
+                                        <td>
+                                            <span className="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">
+                                                {res.CodeMonnaie == 1 ? "USD" : "CDF"}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {/* Section 2 : Dépôt / Billetage */}
+    <div className="row g-4">
+        {/* Colonne Informations */}
+        <div className="col-md-4">
+            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                    <h6 className="section-title">
+                        <i className="fas fa-pen-alt me-2" style={{ color: "#6366f1" }}></i>
+                        Informations
+                    </h6>
+                </div>
+                <div className="card-body pt-2">
+                    <div className="mb-3">
+                        <label className="label-modern">Motif</label>
+                        <input
+                            type="text"
+                            className="form-control modern-input"
+                            value={motifDepot}
+                            onChange={(e) => setMotifDepot(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-3">
+                        <label className="label-modern">Nom du déposant</label>
+                        <input
+                            type="text"
+                            className="form-control modern-input"
+                            value={DeposantName}
+                            onChange={(e) => setDeposantName(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-3">
+                        <label className="label-modern">Téléphone</label>
+                        <input
+                            type="text"
+                            className="form-control modern-input"
+                            value={DeposantPhone}
+                            onChange={(e) => setDeposantPhone(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label className="label-modern">Montant</label>
+                        <input
+                            type="number"
+                            className="form-control modern-input"
+                            value={Montant}
+                            onChange={(e) => setMontant(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Colonne Billetage */}
+        <div className="col-md-6">
+            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                    <h6 className="section-title">
+                        <i className="fas fa-money-bill-wave me-2" style={{ color: "#6366f1" }}></i>
+                        Billetage
+                    </h6>
+                </div>
+                <div className="card-body pt-2">
+                    {fetchData2 && fetchData2.CodeMonnaie == 1 ? (
+                        <div className="table-responsive">
+                            <table className="table table-bordered table-sm">
+                                <thead className="table-light">
+                                    <tr>
+                                        <th>Coupures</th>
+                                        <th>Nbre billets</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {[
+                                        { label: "100 $", value: hundred, set: sethundred, mult: 100 },
+                                        { label: "50 $", value: fitfty, set: setfitfty, mult: 50 },
+                                        { label: "20 $", value: twenty, set: settwenty, mult: 20 },
+                                        { label: "10 $", value: ten, set: setten, mult: 10 },
+                                        { label: "5 $", value: five, set: setfive, mult: 5 },
+                                        { label: "1 $", value: oneDollar, set: setoneDollar, mult: 1 }
+                                    ].map((b, idx) => (
+                                        <tr key={idx}>
+                                            <td>{b.label}</td>
+                                            <td>
+                                                <input
+                                                    type="number"
+                                                    className="form-control form-control-sm"
+                                                    value={b.value}
+                                                    onChange={(e) => b.set(e.target.value)}
+                                                />
+                                            </td>
+                                            <td className="fw-bold text-end">{(b.value * b.mult).toLocaleString()}</td>
+                                        </tr>
+                                    ))}
+                                    <tr className="table-active">
+                                        <th>Total</th>
+                                        <th className="text-center">
+                                            {parseInt(hundred||0) + parseInt(fitfty||0) + parseInt(twenty||0) +
+                                             parseInt(ten||0) + parseInt(five||0) + parseInt(oneDollar||0)}
+                                        </th>
+                                        <th className="text-end text-success fw-bold">
+                                            {(hundred*100 + fitfty*50 + twenty*20 + ten*10 + five*5 + oneDollar*1).toLocaleString()} $
+                                        </th>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="table-responsive">
+                            <table className="table table-bordered table-sm">
+                                <thead className="table-light">
+                                    <tr>
+                                        <th>Coupures</th>
+                                        <th>Nbre billets</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {[
+                                        { label: "20000 FC", value: vightMille, set: setvightMille, mult: 20000 },
+                                        { label: "10000 FC", value: dixMille, set: setdixMille, mult: 10000 },
+                                        { label: "5000 FC", value: cinqMille, set: setcinqMille, mult: 5000 },
+                                        { label: "1000 FC", value: milleFranc, set: setmilleFranc, mult: 1000 },
+                                        { label: "500 FC", value: cinqCentFr, set: setcinqCentFr, mult: 500 },
+                                        { label: "200 FC", value: deuxCentFranc, set: setdeuxCentFranc, mult: 200 },
+                                        { label: "100 FC", value: centFranc, set: setcentFranc, mult: 100 },
+                                        { label: "50 FC", value: cinquanteFanc, set: setcinquanteFanc, mult: 50 }
+                                    ].map((b, idx) => (
+                                        <tr key={idx}>
+                                            <td>{b.label}</td>
+                                            <td>
+                                                <input
+                                                    type="number"
+                                                    className="form-control form-control-sm"
+                                                    value={b.value}
+                                                    onChange={(e) => b.set(e.target.value)}
+                                                />
+                                            </td>
+                                            <td className="fw-bold text-end">{(b.value * b.mult).toLocaleString()}</td>
+                                        </tr>
+                                    ))}
+                                    <tr className="table-active">
+                                        <th>Total</th>
+                                        <th className="text-center">
+                                            {parseInt(vightMille||0) + parseInt(dixMille||0) + parseInt(cinqMille||0) +
+                                             parseInt(milleFranc||0) + parseInt(cinqCentFr||0) + parseInt(deuxCentFranc||0) +
+                                             parseInt(centFranc||0) + parseInt(cinquanteFanc||0)}
+                                        </th>
+                                        <th className="text-end text-success fw-bold">
+                                            {(vightMille*20000 + dixMille*10000 + cinqMille*5000 + milleFranc*1000 +
+                                              cinqCentFr*500 + deuxCentFranc*200 + centFranc*100 + cinquanteFanc*50).toLocaleString()} FC
+                                        </th>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+
+        {/* Colonne Actions */}
+        <div className="col-md-2">
+            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                    <h6 className="section-title">
+                        <i className="fas fa-cogs me-2" style={{ color: "#6366f1" }}></i>
+                        Actions
+                    </h6>
+                </div>
+                <div className="card-body d-flex flex-column gap-3 justify-content-center">
+                    {(() => {
+                        const totalUSD = hundred*100 + fitfty*50 + twenty*20 + ten*10 + five*5 + oneDollar*1;
+                        const totalCDF = vightMille*20000 + dixMille*10000 + cinqMille*5000 + milleFranc*1000 +
+                                         cinqCentFr*500 + deuxCentFranc*200 + centFranc*100 + cinquanteFanc*50;
+                        const totalOK = (fetchData2?.CodeMonnaie == 1 && totalUSD == parseInt(Montant)) ||
+                                        (fetchData2?.CodeMonnaie == 2 && totalCDF == parseInt(Montant));
+                        return (
+                            <>
+                                <button
+                                    className="btn gradient-btn w-100 py-3"
+                                    onClick={saveOperation}
+                                    disabled={!totalOK || loading}
+                                >
+                                    {loading ? (
+                                        <span className="spinner-border spinner-border-sm"></span>
+                                    ) : (
+                                        <i className="fas fa-check me-2"></i>
+                                    )}
+                                    Valider
+                                </button>
+                                {/* <button className="btn btn-outline-secondary w-100 py-3">
+                                    <i className="fas fa-print me-2"></i>
+                                    Imprimer
+                                </button> */}
+                            </>
+                        );
+                    })()}
+                </div>
+            </div>
+        </div>
+
+         {/* Historique des opérations */}
+                            <div
+                                className="card border-0 shadow-sm rounded-3"
+                                style={{
+                                    maxHeight: "450px",
+                                    overflowY: "auto",
+                                }}
+                            >
+                                <div className="card-header bg-white border-0 pt-3  bg-white">
+                                    {/* sticky-top */}
+                                    <h6
+                                        className="fw-bold"
+                                        style={{ color: "steelblue" }}
+                                    >
+                                        <i className="fas fa-history me-2"></i>
+                                        Opérations récentes
+                                    </h6>
+                                </div>
+                                <div className="card-body p-0">
+                                    {getBilletageCDF &&
+                                        getBilletageCDF.length > 0 && (
+                                            <>
+                                                <div
+                                                    className="px-3 py-2"
+                                                    style={{
+                                                        backgroundColor:
+                                                            "#e6f2f9",
+                                                    }}
+                                                >
+                                                    <small
+                                                        className="fw-bold"
+                                                        style={{
+                                                            color: "steelblue",
+                                                        }}
+                                                    >
+                                                        CDF
+                                                    </small>
+                                                </div>
+                                                <div className="table-responsive">
+                                                    <table className="table table-sm table-hover mb-3">
+                                                        <thead>
+                                                            <tr
+                                                                style={{
+                                                                    color: "steelblue",
+                                                                }}
+                                                            >
+                                                                <th>Réf.</th>
+                                                                <th>Montant</th>
+                                                                <th>
+                                                                    Déposant
+                                                                </th>
+                                                                <th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {getBilletageCDF.map(
+                                                                (
+                                                                    res,
+                                                                    index,
+                                                                ) => (
+                                                                    <tr
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                    >
+                                                                        <td>
+                                                                            <small>
+                                                                                {
+                                                                                    res.refOperation
+                                                                                }
+                                                                            </small>
+                                                                        </td>
+                                                                        <td className="fw-bold">
+                                                                            {res.montantEntre?.toLocaleString()}
+                                                                        </td>
+                                                                        <td>
+                                                                            <small>
+                                                                                {
+                                                                                    res.Beneficiaire
+                                                                                }
+                                                                            </small>
+                                                                        </td>
+                                                                        <td>
+                                                                            <button
+                                                                onClick={() => handlePrintClick(res)}
+                                                                className="btn btn-primary rounded-10"
+                                                                data-toggle="modal"
+                                                                data-target="#modal-delestage-cdf"
+                                                                    
+                                                                style={{ background: "teal", color: "white", borderRadius: "6px", padding: "2px 8px", fontSize: "11px" }}
+                                                                
+                                                            >
+                                                                <i className="fas fa-print"></i> Imprimer
+                                                            </button>
+                                                                           
+                                                                        </td>
+                                                                    </tr>
+                                                                ),
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </>
+                                        )}
+
+                                    {getBilletageUSD &&
+                                        getBilletageUSD.length > 0 && (
+                                            <>
+                                                <div
+                                                    className="px-3 py-2 mt-2"
+                                                    style={{
+                                                        backgroundColor:
+                                                            "#e6f2f9",
+                                                    }}
+                                                >
+                                                    <small
+                                                        className="fw-bold"
+                                                        style={{
+                                                            color: "steelblue",
+                                                        }}
+                                                    >
+                                                        USD
+                                                    </small>
+                                                </div>
+                                                <div className="table-responsive">
+                                                    <table className="table table-sm table-hover">
+                                                        <thead>
+                                                            <tr
+                                                                style={{
+                                                                    color: "steelblue",
+                                                                }}
+                                                            >
+                                                                <th>Réf.</th>
+                                                                <th>Montant</th>
+                                                                <th>
+                                                                    Déposant
+                                                                </th>
+                                                                <th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {getBilletageUSD.map(
+                                                                (
+                                                                    res,
+                                                                    index,
+                                                                ) => (
+                                                                    <tr
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                    >
+                                                                        <td>
+                                                                            <small>
+                                                                                {
+                                                                                    res.refOperation
+                                                                                }
+                                                                            </small>
+                                                                        </td>
+                                                                        <td className="fw-bold">
+                                                                            {res.montantEntre?.toLocaleString()}
+                                                                        </td>
+                                                                        <td>
+                                                                            <small>
+                                                                                {
+                                                                                    res.Beneficiaire
+                                                                                }
+                                                                            </small>
+                                                                        </td>
+                                                                        <td>
+                                                                            <button
+                                                                                onClick={() =>
+                                                                                    handlePrintClick(
+                                                                                        res,
+                                                                                    )
+                                                                                }
+                                                                                data-toggle="modal"
+                                                                                data-target="#modal-delestage-cdf"
+                                                                                className="btn btn-primary rounded-10"
+                                                                                style={{
+                                                                                    background:
+                                                                                        "teal",
+                                                                                    color: "white",
+                                                                                    borderRadius:
+                                                                                        "6px",
+                                                                                    padding:
+                                                                                        "2px 8px",
+                                                                                    fontSize:
+                                                                                        "11px",
+                                                                                }}
+                                                                            >
+                                                                                <i className="fas fa-print"></i>
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                ),
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </>
+                                        )}
+
+                                    {(!getBilletageCDF ||
+                                        getBilletageCDF.length === 0) &&
+                                        (!getBilletageUSD ||
+                                            getBilletageUSD.length === 0) && (
+                                            <div className="text-center py-5 text-muted">
+                                                <i className="fas fa-inbox fa-3x mb-2 opacity-50"></i>
+                                                <p className="mb-0">
+                                                    Aucune opération récente
+                                                </p>
+                                            </div>
+                                        )}
+                                </div>
+                            </div>
+    </div>
+    {selectedData &&
+                        (GetRecuConfig === "Thermique" ? (
+                            <RecuDepot data={selectedData} />
+                        ) : GetRecuConfig === "A5" ? (
+                            <RecuDepotA5 data={selectedData} />
+                        ) : null)}
+
+</div>
     );
 };
 

@@ -32,6 +32,7 @@ const SommaireCompte = () => {
     const [total2, setTotal2] = useState(0);
     const [critereSolde, setCritereSolde] = useState(">");
     const [critereSoldeAmount, setCritereSoldeAmount] = useState(0);
+     const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
 
     useEffect(() => {
         // GET CURRENT DATE
@@ -82,6 +83,7 @@ const SommaireCompte = () => {
                     date_debut_balance: date_debut_balance,
                     date_fin_balance: date_fin_balance,
                     type: type, // Ajouter le paramètre type à la requête
+
                 },
                 {
                     headers: {
@@ -199,6 +201,7 @@ const SommaireCompte = () => {
                 date_fin_balance,
                 critereSolde,
                 critereSoldeAmount,
+                 agence_filter: agenceFilter,
             }
         );
         if (res.data.status == 1) {
@@ -570,147 +573,213 @@ const SommaireCompte = () => {
         </div>
     )}
 
-    {/* Filtres de recherche */}
-    <div className="row g-3 mb-4">
-        {/* Sous Groupe de compte */}
-        <div className="col-md-3">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-layer-group me-2"></i>Sous Groupe de compte
-                    </h6>
-                </div>
-                <div className="card-body">
-                    <div className="mb-2">
-                        <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>SG/Compte</label>
-                        <input
-                            ref={inputRef}
-                            id="type_compte"
-                            type="text"
-                            className="form-control"
-                            style={{ borderRadius: "8px", borderColor: "#20c997" }}
-                            name="sous_groupe_compte"
-                            value={sous_groupe_compte}
-                            onChange={(e) => setsous_groupe_compte(e.target.value)}
-                            placeholder="Ex: 3300 ou 3301"
-                        />
-                    </div>
-                    <div className="mt-2 p-2" style={{ background: "#e6f2f9", borderRadius: "8px" }}>
-                        <small style={{ color: "green", fontWeight: "500" }}>
-                            <i className="fas fa-info-circle me-1"></i>
-                            SG/Compte USD: 3300<br />
-                            SG/Compte CDF: 3301
-                        </small>
-                        {fetchAccountName && (
-                            <div className="mt-1 text-success fw-bold">
-                                <i className="fas fa-check-circle me-1"></i>
-                                {fetchAccountName}
-                            </div>
-                        )}
-                    </div>
-                </div>
+   {/* Filtres */}
+<div className="row g-4 mb-5">
+    {/* Sous-groupe de compte */}
+    <div className="col-md-2">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-layer-group me-2" style={{ color: "#6366f1" }}></i>
+                    Sous-groupe
+                </h6>
             </div>
-        </div>
-
-        {/* Période */}
-        <div className="col-md-3">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-calendar-alt me-2"></i>Période
-                    </h6>
-                </div>
-                <div className="card-body">
-                    <div className="mb-2">
-                        <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Période N-1</label>
-                        <input type="date" className="form-control" style={{ borderRadius: "8px", borderColor: "#20c997" }}
-                            onChange={(e) => setdate_debut_balance(e.target.value)} value={date_debut_balance} />
-                    </div>
-                    <div className="mb-2">
-                        <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Date Fin</label>
-                        <input type="date" className="form-control" style={{ borderRadius: "8px", borderColor: "#20c997" }}
-                            onChange={(e) => setdate_fin_balance(e.target.value)} value={date_fin_balance} />
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {/* Conversion */}
-        <div className="col-md-3">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-exchange-alt me-2"></i>Conversion
-                    </h6>
-                </div>
-                <div className="card-body">
-                    <div className="form-check mb-2">
-                        <input type="radio" className="form-check-input" id="rapport_non_converti" name="rapport_non_converti"
-                            value="rapport_non_converti" checked={radioValue === "rapport_non_converti"}
-                            onChange={handleRadioChange} />
-                        <label className="form-check-label" style={{ color: "steelblue" }}>Non Converti</label>
-                    </div>
-                    <div className="form-check mb-2">
-                        <input type="radio" disabled className="form-check-input" id="balance_convertie_cdf" name="balance_convertie_cdf"
-                            value="balance_convertie_cdf" checked={radioValue === "balance_convertie_cdf"}
-                            onChange={handleRadioChange} />
-                        <label className="form-check-label" style={{ color: "steelblue" }}>Converti en CDF</label>
-                    </div>
-                    <div className="form-check mb-2">
-                        <input type="radio" disabled className="form-check-input" id="balance_convertie_usd" name="balance_convertie_usd"
-                            value="balance_convertie_usd" checked={radioValue === "balance_convertie_usd"}
-                            onChange={handleRadioChange} />
-                        <label className="form-check-label" style={{ color: "steelblue" }}>Converti en USD</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {/* Critère solde */}
-        <div className="col-md-2">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-filter me-2"></i>Critère solde
-                    </h6>
-                </div>
-                <div className="card-body">
-                    <div className="d-flex align-items-center gap-2 flex-wrap">
-                        <select className="form-select" style={{ width: "70px", borderRadius: "8px", borderColor: "#20c997" }}
-                            name="Critere" onChange={(e) => setCritereSolde(e.target.value)}>
-                            <option value="=">=</option>
-                            <option selected value=">">{">"}</option>
-                            <option value="<">{"<"}</option>
-                            <option value="<=">{"<="}</option>
-                            <option value=">=">{">="}</option>
-                            <option value="<>">{"<>"}</option>
-                        </select>
-                        <label style={{ color: "steelblue" }}>à</label>
-                        <input type="text" className="form-control" style={{ width: "100px", borderRadius: "8px", borderColor: "#20c997" }}
-                            value={critereSoldeAmount} onChange={(e) => setCritereSoldeAmount(e.target.value)} />
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {/* Action */}
-        <div className="col-md-1">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-play me-2"></i>Action
-                    </h6>
-                </div>
-                <div className="card-body d-flex align-items-center justify-content-center">
-                    <button onClick={AfficherSommaire} className="btn w-100 py-2" 
-                        style={{ background: "linear-gradient(135deg, #20c997, #198764)", color: "white", borderRadius: "8px" }}>
-                        <i className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-desktop me-2"}`}></i>
-                        Afficher
-                    </button>
+            <div className="card-body pt-2">
+                <label className="label-modern">SG/Compte</label>
+                <input
+                    ref={inputRef}
+                    type="text"
+                    className="form-control modern-input mb-2"
+                    placeholder="Ex: 3300 ou 3301"
+                    value={sous_groupe_compte}
+                    onChange={(e) => setsous_groupe_compte(e.target.value)}
+                />
+                <div className="mt-2 p-2 bg-light rounded-3">
+                    <small className="text-success fw-semibold" style={{ fontSize:"11px" }}>
+                        <i className="fas fa-info-circle me-1"></i>
+                        USD: 3300 | CDF: 3301
+                    </small>
+                    {fetchAccountName && (
+                        <div className="mt-1 text-teal fw-bold small">
+                            <i className="fas fa-check-circle me-1"></i>
+                            {fetchAccountName}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     </div>
+
+    {/* Période */}
+    <div className="col-md-3">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-calendar-alt me-2" style={{ color: "#6366f1" }}></i>
+                    Période
+                </h6>
+            </div>
+            <div className="card-body pt-2">
+                <div className="mb-3">
+                    <label className="label-modern">Date début</label>
+                    <input
+                        type="date"
+                        className="form-control modern-input"
+                        value={date_debut_balance}
+                        onChange={(e) => setdate_debut_balance(e.target.value)}
+                    />
+                </div>
+                <div>
+                    <label className="label-modern">Date fin</label>
+                    <input
+                        type="date"
+                        className="form-control modern-input"
+                        value={date_fin_balance}
+                        onChange={(e) => setdate_fin_balance(e.target.value)}
+                    />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {/* Conversion */}
+    <div className="col-md-2">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-exchange-alt me-2" style={{ color: "#6366f1" }}></i>
+                    Conversion
+                </h6>
+            </div>
+            <div className="card-body pt-2">
+                <div className="form-check mb-2">
+                    <input
+                        type="radio"
+                        className="form-check-input modern-radio"
+                        id="rapport_non_converti"
+                        value="rapport_non_converti"
+                        checked={radioValue === "rapport_non_converti"}
+                        onChange={handleRadioChange}
+                    />
+                    <label className="form-check-label text-secondary" htmlFor="rapport_non_converti">
+                        Non converti
+                    </label>
+                </div>
+                <div className="form-check mb-2">
+                    <input
+                        type="radio"
+                        className="form-check-input modern-radio"
+                        id="balance_convertie_cdf"
+                        value="balance_convertie_cdf"
+                        checked={radioValue === "balance_convertie_cdf"}
+                        onChange={handleRadioChange}
+                        disabled
+                    />
+                    <label className="form-check-label text-secondary" htmlFor="balance_convertie_cdf">
+                        Converti en CDF
+                    </label>
+                </div>
+                <div className="form-check">
+                    <input
+                        type="radio"
+                        className="form-check-input modern-radio"
+                        id="balance_convertie_usd"
+                        value="balance_convertie_usd"
+                        checked={radioValue === "balance_convertie_usd"}
+                        onChange={handleRadioChange}
+                        disabled
+                    />
+                    <label className="form-check-label text-secondary" htmlFor="balance_convertie_usd">
+                        Converti en USD
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {/* Critère solde */}
+    <div className="col-md-2">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-filter me-2" style={{ color: "#6366f1" }}></i>
+                    Critère solde
+                </h6>
+            </div>
+            <div className="card-body pt-2">
+                <div className="d-flex align-items-center gap-2 flex-wrap">
+                    <select
+                        className="modern-select"
+                        style={{ width: "70px" }}
+                        value={critereSolde}
+                        onChange={(e) => setCritereSolde(e.target.value)}
+                    >
+                        <option value="=">=</option>
+                        <option value=">">{">"}</option>
+                        <option value="<">{"<"}</option>
+                        <option value="<=">{"<="}</option>
+                        <option value=">=">{">="}</option>
+                        <option value="<>">{"<>"}</option>
+                    </select>
+                    <label className="text-secondary">à</label>
+                    <input
+                        type="text"
+                        className="form-control modern-input"
+                        style={{ width: "100px" }}
+                        value={critereSoldeAmount}
+                        onChange={(e) => setCritereSoldeAmount(e.target.value)}
+                    />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {/* Agence + Action (fusionnées) */}
+    <div className="col-md-3">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-building me-2" style={{ color: "#6366f1" }}></i>
+                    Agence
+                </h6>
+            </div>
+            <div className="card-body pt-2">
+                <select
+                    className="modern-select w-100 mb-3"
+                    value={agenceFilter}
+                    onChange={(e) => setAgenceFilter(e.target.value)}
+                    disabled={userAgences.length <= 1}
+                >
+                    <option value="current">
+                        Agence courante ({currentAgence?.nom_agence || "Non définie"})
+                    </option>
+                    {userAgences.length > 1 && (
+                        <>
+                            <option value="all">📊 Toutes mes agences</option>
+                            {userAgences.map((agence) => (
+                                <option key={agence.id} value={agence.id}>
+                                    🏢 {agence.code_agence} - {agence.nom_agence}
+                                </option>
+                            ))}
+                        </>
+                    )}
+                </select>
+                <button
+                    onClick={AfficherSommaire}
+                    className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <span className="spinner-border spinner-border-sm" role="status"></span>
+                    ) : (
+                        <i className="fas fa-desktop"></i>
+                    )}
+                    <span>Afficher</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
     {/* Tableau des résultats */}
     {fetchData && fetchData.length != 0 && (

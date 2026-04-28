@@ -56,319 +56,238 @@ class ReportsController extends Controller
         return response()->json(["status" => 1, "dateDebut" => $NewDate1, "dateFin" => $NewDate2]);
     }
 
-    //GET JOURNAL DROP MENU
+    // //GET JOURNAL DROP MENU
+    // public function getJournalDropMenu()
+    // {
+    //     $data = DB::select("SELECT * FROM type_journal ORDER BY id");
+    //     $users = User::get();
+    //     return response()->json(["status" => 1, "data" => $data, "users" => $users]);
+    // }
+
     public function getJournalDropMenu()
-    {
-        $data = DB::select("SELECT * FROM type_journal ORDER BY id");
-        $users = User::get();
-        return response()->json(["status" => 1, "data" => $data, "users" => $users]);
+{
+    $data = DB::select("SELECT * FROM type_journal ORDER BY id");
+
+    $currentAgence = session('current_agence');
+    $currentAgenceId = $currentAgence['id'] ?? null;
+
+    if (!$currentAgenceId) {
+        // Aucune agence courante -> liste vide (ou selon votre besoin)
+        $users = collect();
+    } else {
+        $users = User::whereHas('agences', function ($q) use ($currentAgenceId) {
+            $q->where('agences.id', $currentAgenceId);
+        })->get();
     }
+
+    return response()->json([
+        "status" => 1,
+        "data" => $data,
+        "users" => $users
+    ]);
+}
     //GET SEARCHED JOURNAL
 
-    public function getSearchedJournal(Request $request)
-    {
-        $checkboxValues = $request->AutresCriteres;
-        // $userCheckbox = $checkboxValues['userCheckbox'];
-        $SuspensTransactions = $checkboxValues['SuspensTransactions'];
-        $givenCurrency = $checkboxValues['givenCurrency'];
-        $GivenJournal = $checkboxValues['GivenJournal'];
-        if (isset($request->UserName) and $SuspensTransactions == false) {
-            $check_dataCDF = DB::select('SELECT DISTINCT t1.NumTransaction, t1.DateTransaction, t1.CodeMonnaie, t1.NumCompte, t1.NumComptecp, t1.Debitfc, t1.Debitusd, t1.Creditfc, t1.Creditusd, t1.Libelle, c1.NomCompte AS NomCompte FROM transactions t1 JOIN transactions t2 ON t1.NumComptecp = t2.NumCompte AND t1.NumCompte = t2.NumComptecp AND t1.CodeMonnaie = t2.CodeMonnaie AND t1.DateTransaction = t2.DateTransaction AND t1.NumTransaction = t2.NumTransaction JOIN comptes c1 ON t1.NumCompte = c1.NumCompte WHERE t1.Debitfc = t2.Creditfc AND t1.Debitusd = t2.Creditusd AND t1.Creditfc = t2.Debitfc AND t1.Creditusd = t2.Debitusd AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND t1.CodeMonnaie = 2 AND t1.NomUtilisateur = "' . $request->UserName . '"');
-            $check_dataUSD = DB::select('SELECT DISTINCT t1.NumTransaction, t1.DateTransaction, t1.CodeMonnaie, t1.NumCompte, t1.NumComptecp, t1.Debitfc, t1.Debitusd, t1.Creditfc, t1.Creditusd, t1.Libelle, c1.NomCompte AS NomCompte FROM transactions t1 JOIN transactions t2 ON t1.NumComptecp = t2.NumCompte AND t1.NumCompte = t2.NumComptecp AND t1.CodeMonnaie = t2.CodeMonnaie AND t1.DateTransaction = t2.DateTransaction AND t1.NumTransaction = t2.NumTransaction JOIN comptes c1 ON t1.NumCompte = c1.NumCompte WHERE t1.Debitfc = t2.Creditfc AND t1.Debitusd = t2.Creditusd AND t1.Creditfc = t2.Debitfc AND t1.Creditusd = t2.Debitusd AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND t1.CodeMonnaie = 1 AND t1.NomUtilisateur = "' . $request->UserName . '"');
+public function getSearchedJournal(Request $request)
+{
+    $user = auth()->user();
 
-            if (count($check_dataCDF) != 0 or count($check_dataUSD) != 0) {
+    // =========================
+    // 🔹 Gestion CodeAgence (OBLIGATOIRE)
+    // =========================
+    $agenceFilter = $request->agence_filter ?? 'current';
+    $codeAgence = null;
 
-                $dataCDF = DB::select('SELECT DISTINCT t1.NumTransaction, t1.DateTransaction, t1.CodeMonnaie, t1.NumCompte, t1.NumComptecp, t1.Debitfc, t1.Debitusd, t1.Creditfc, t1.Creditusd, t1.Libelle, c1.NomCompte AS NomCompte FROM transactions t1 JOIN transactions t2 ON t1.NumComptecp = t2.NumCompte AND t1.NumCompte = t2.NumComptecp AND t1.CodeMonnaie = t2.CodeMonnaie AND t1.DateTransaction = t2.DateTransaction AND t1.NumTransaction = t2.NumTransaction JOIN comptes c1 ON t1.NumCompte = c1.NumCompte WHERE t1.Debitfc = t2.Creditfc AND t1.Debitusd = t2.Creditusd AND t1.Creditfc = t2.Debitfc AND t1.Creditusd = t2.Debitusd AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND t1.CodeMonnaie = 2 AND t1.NomUtilisateur = "' . $request->UserName . '"');
-                $dataUSD = DB::select('SELECT DISTINCT t1.NumTransaction, t1.DateTransaction, t1.CodeMonnaie, t1.NumCompte, t1.NumComptecp, t1.Debitfc, t1.Debitusd, t1.Creditfc, t1.Creditusd, t1.Libelle, c1.NomCompte AS NomCompte FROM transactions t1 JOIN transactions t2 ON t1.NumComptecp = t2.NumCompte AND t1.NumCompte = t2.NumComptecp AND t1.CodeMonnaie = t2.CodeMonnaie AND t1.DateTransaction = t2.DateTransaction AND t1.NumTransaction = t2.NumTransaction JOIN comptes c1 ON t1.NumCompte = c1.NumCompte WHERE t1.Debitfc = t2.Creditfc AND t1.Debitusd = t2.Creditusd AND t1.Creditfc = t2.Debitfc AND t1.Creditusd = t2.Debitusd AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND t1.CodeMonnaie = 1 AND t1.NomUtilisateur = "' . $request->UserName . '"');
+    if ($agenceFilter === 'current') {
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
 
-                $totUSD = DB::select('SELECT 
-                SUM(subquery.Debitfc) AS TotalDebitfc, 
-                SUM(subquery.Debitusd) AS TotalDebitusd, 
-                SUM(subquery.Creditfc) AS TotalCreditfc, 
-                SUM(subquery.Creditusd) AS TotalCreditusd
-                FROM (
-                    SELECT DISTINCT 
-                        t1.NumTransaction, 
-                        t1.DateTransaction, 
-                        t1.CodeMonnaie, 
-                        t1.NumCompte, 
-                        t1.NumComptecp, 
-                        t1.Debitfc, 
-                        t1.Debitusd, 
-                        t1.Creditfc, 
-                        t1.Creditusd
-                    FROM transactions t1
-                    JOIN transactions t2 
-                        ON t1.NumComptecp = t2.NumCompte
-                    AND t1.NumCompte = t2.NumComptecp
-                    AND t1.CodeMonnaie = t2.CodeMonnaie
-                    AND t1.DateTransaction = t2.DateTransaction
-                    AND t1.NumTransaction = t2.NumTransaction
-                    WHERE t1.Debitfc = t2.Creditfc
-                    AND t1.Debitusd = t2.Creditusd
-                    AND t1.Creditfc = t2.Debitfc
-                    AND t1.Creditusd = t2.Debitusd
-                    AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '"
-                    AND t1.CodeMonnaie = 1
-                    AND t1.NomUtilisateur = "' . $request->UserName . '"
-                ) AS subquery')[0];
-
-
-                $totCDF = DB::select('SELECT 
-                SUM(subquery.Debitfc) AS TotalDebitfc, 
-                SUM(subquery.Debitusd) AS TotalDebitusd, 
-                SUM(subquery.Creditfc) AS TotalCreditfc, 
-                SUM(subquery.Creditusd) AS TotalCreditusd
-                FROM (
-                SELECT DISTINCT 
-                    t1.NumTransaction, 
-                    t1.DateTransaction, 
-                    t1.CodeMonnaie, 
-                    t1.NumCompte, 
-                    t1.NumComptecp, 
-                    t1.Debitfc, 
-                    t1.Debitusd, 
-                    t1.Creditfc, 
-                    t1.Creditusd
-                FROM transactions t1
-                JOIN transactions t2 
-                    ON t1.NumComptecp = t2.NumCompte
-                AND t1.NumCompte = t2.NumComptecp
-                AND t1.CodeMonnaie = t2.CodeMonnaie
-                AND t1.DateTransaction = t2.DateTransaction
-                AND t1.NumTransaction = t2.NumTransaction
-                WHERE t1.Debitfc = t2.Creditfc
-                AND t1.Debitusd = t2.Creditusd
-                AND t1.Creditfc = t2.Debitfc
-                AND t1.Creditusd = t2.Debitusd
-                AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '"
-                AND t1.CodeMonnaie = 2
-                AND t1.NomUtilisateur = "' . $request->UserName . '"
-                ) AS subquery')[0];
-                // $totCreditCDF = DB::select('SELECT SUM(transactions.Creditfc) as totCreditCDF FROM transactions join comptes on transactions.NumCompte=comptes.NumCompte  WHERE transactions.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND transactions.CodeMonnaie=2   AND comptes.isBilanAccount!=1  AND transactions.NomUtilisateur="' . $request->UserName . '"AND comptes.RefCadre NOT IN (59,87,85) ')[0];
-                // $totDebitUSD = DB::select('SELECT SUM(transactions.Debitusd) as totDebitUSD FROM transactions join comptes on transactions.NumCompte=comptes.NumCompte  WHERE transactions.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '"   AND transactions.CodeMonnaie=1 AND comptes.isBilanAccount!=1  AND transactions.NomUtilisateur="' . $request->UserName . '" AND comptes.RefCadre NOT IN (59,87,85) ')[0];
-                // $totCreditUSD = DB::select('SELECT SUM(transactions.Creditusd) as totCreditUSD FROM transactions join comptes on transactions.NumCompte=comptes.NumCompte  WHERE transactions.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '"   AND transactions.CodeMonnaie=1  AND comptes.isBilanAccount!=1  AND transactions.NomUtilisateur="' . $request->UserName . '" AND comptes.RefCadre NOT IN (59,87,85) ')[0];
-            } else {
-                return response()->json([
-                    "status" => 0,
-                    "msg" => "Pas de données trouver"
-                ]);
-            }
-            return response()->json([
-                "dataCDF" => $dataCDF,
-                "dataUSD" => $dataUSD,
-                "totCDF" => $totCDF,
-                // "totCreditCDF" => $totCreditCDF,
-                "totUSD" => $totUSD,
-                // "totCreditUSD" => $totCreditUSD,
-
-                "status" => 1
-            ]);
+        if (!$codeAgence) {
+            return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
         }
-        if (isset($request->UserName) and $SuspensTransactions == true) {
+    } elseif ($agenceFilter !== 'all') {
+        $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
 
-            $check_dataCDF = DB::select('SELECT DISTINCT t1.NumTransaction, t1.DateTransaction, t1.CodeMonnaie, t1.NumCompte, t1.NumComptecp, t1.Debitfc, t1.Debitusd, t1.Creditfc, t1.Creditusd, t1.Libelle,t1.typeTransaction, c1.NomCompte AS NomCompte FROM transactions t1 JOIN transactions t2 ON t1.NumComptecp = t2.NumCompte AND t1.NumCompte = t2.NumComptecp AND t1.CodeMonnaie = t2.CodeMonnaie AND t1.DateTransaction = t2.DateTransaction AND t1.NumTransaction = t2.NumTransaction JOIN comptes c1 ON t1.NumCompte = c1.NumCompte WHERE t1.Debitfc = t2.Creditfc AND t1.Debitusd = t2.Creditusd AND t1.Creditfc = t2.Debitfc AND t1.Creditusd = t2.Debitusd AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND t1.CodeMonnaie = 2 AND t1.NomUtilisateur = "' . $request->UserName . '" AND t1.typeTransaction="suspens"');
-            $check_dataUSD = DB::select('SELECT DISTINCT t1.NumTransaction, t1.DateTransaction, t1.CodeMonnaie, t1.NumCompte, t1.NumComptecp, t1.Debitfc, t1.Debitusd, t1.Creditfc, t1.Creditusd, t1.Libelle,t1.typeTransaction, c1.NomCompte AS NomCompte FROM transactions t1 JOIN transactions t2 ON t1.NumComptecp = t2.NumCompte AND t1.NumCompte = t2.NumComptecp AND t1.CodeMonnaie = t2.CodeMonnaie AND t1.DateTransaction = t2.DateTransaction AND t1.NumTransaction = t2.NumTransaction JOIN comptes c1 ON t1.NumCompte = c1.NumCompte WHERE t1.Debitfc = t2.Creditfc AND t1.Debitusd = t2.Creditusd AND t1.Creditfc = t2.Debitfc AND t1.Creditusd = t2.Debitusd AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND t1.CodeMonnaie = 1 AND t1.NomUtilisateur = "' . $request->UserName . '" AND t1.typeTransaction="suspens"');
-
-            if (count($check_dataCDF) != 0 or count($check_dataUSD) != 0) {
-                $dataCDF = DB::select('SELECT DISTINCT t1.NumTransaction, t1.DateTransaction, t1.CodeMonnaie, t1.NumCompte, t1.NumComptecp, t1.Debitfc, t1.Debitusd, t1.Creditfc, t1.Creditusd, t1.Libelle,t1.typeTransaction, c1.NomCompte AS NomCompte FROM transactions t1 JOIN transactions t2 ON t1.NumComptecp = t2.NumCompte AND t1.NumCompte = t2.NumComptecp AND t1.CodeMonnaie = t2.CodeMonnaie AND t1.DateTransaction = t2.DateTransaction AND t1.NumTransaction = t2.NumTransaction JOIN comptes c1 ON t1.NumCompte = c1.NumCompte WHERE t1.Debitfc = t2.Creditfc AND t1.Debitusd = t2.Creditusd AND t1.Creditfc = t2.Debitfc AND t1.Creditusd = t2.Debitusd AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND t1.CodeMonnaie = 2 AND t1.NomUtilisateur = "' . $request->UserName . '" AND t1.typeTransaction="suspens"');
-                $dataUSD = DB::select('SELECT DISTINCT t1.NumTransaction, t1.DateTransaction, t1.CodeMonnaie, t1.NumCompte, t1.NumComptecp, t1.Debitfc, t1.Debitusd, t1.Creditfc, t1.Creditusd, t1.Libelle,t1.typeTransaction, c1.NomCompte AS NomCompte FROM transactions t1 JOIN transactions t2 ON t1.NumComptecp = t2.NumCompte AND t1.NumCompte = t2.NumComptecp AND t1.CodeMonnaie = t2.CodeMonnaie AND t1.DateTransaction = t2.DateTransaction AND t1.NumTransaction = t2.NumTransaction JOIN comptes c1 ON t1.NumCompte = c1.NumCompte WHERE t1.Debitfc = t2.Creditfc AND t1.Debitusd = t2.Creditusd AND t1.Creditfc = t2.Debitfc AND t1.Creditusd = t2.Debitusd AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND t1.CodeMonnaie = 1 AND t1.NomUtilisateur = "' . $request->UserName . '" AND t1.typeTransaction="suspens"');
-                $totUSD = DB::select('SELECT 
-                SUM(subquery.Debitfc) AS TotalDebitfc, 
-                SUM(subquery.Debitusd) AS TotalDebitusd, 
-                SUM(subquery.Creditfc) AS TotalCreditfc, 
-                SUM(subquery.Creditusd) AS TotalCreditusd
-                FROM (
-                    SELECT DISTINCT 
-                        t1.NumTransaction, 
-                        t1.DateTransaction, 
-                        t1.CodeMonnaie, 
-                        t1.NumCompte, 
-                        t1.NumComptecp, 
-                        t1.Debitfc, 
-                        t1.Debitusd, 
-                        t1.Creditfc, 
-                        t1.Creditusd
-                    FROM transactions t1
-                    JOIN transactions t2 
-                        ON t1.NumComptecp = t2.NumCompte
-                    AND t1.NumCompte = t2.NumComptecp
-                    AND t1.CodeMonnaie = t2.CodeMonnaie
-                    AND t1.DateTransaction = t2.DateTransaction
-                    AND t1.NumTransaction = t2.NumTransaction
-                    WHERE t1.Debitfc = t2.Creditfc
-                    AND t1.Debitusd = t2.Creditusd
-                    AND t1.Creditfc = t2.Debitfc
-                    AND t1.Creditusd = t2.Debitusd
-                    AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '"
-                    AND t1.CodeMonnaie = 1
-                    AND t1.NomUtilisateur = "' . $request->UserName . '"
-                    AND t1.typeTransaction="suspens"
-                ) AS subquery')[0];
-
-
-                $totCDF = DB::select('SELECT 
-                SUM(subquery.Debitfc) AS TotalDebitfc, 
-                SUM(subquery.Debitusd) AS TotalDebitusd, 
-                SUM(subquery.Creditfc) AS TotalCreditfc, 
-                SUM(subquery.Creditusd) AS TotalCreditusd
-                FROM (
-                SELECT DISTINCT 
-                    t1.NumTransaction, 
-                    t1.DateTransaction, 
-                    t1.CodeMonnaie, 
-                    t1.NumCompte, 
-                    t1.NumComptecp, 
-                    t1.Debitfc, 
-                    t1.Debitusd, 
-                    t1.Creditfc, 
-                    t1.Creditusd
-                FROM transactions t1
-                JOIN transactions t2 
-                    ON t1.NumComptecp = t2.NumCompte
-                AND t1.NumCompte = t2.NumComptecp
-                AND t1.CodeMonnaie = t2.CodeMonnaie
-                AND t1.DateTransaction = t2.DateTransaction
-                AND t1.NumTransaction = t2.NumTransaction
-                WHERE t1.Debitfc = t2.Creditfc
-                AND t1.Debitusd = t2.Creditusd
-                AND t1.Creditfc = t2.Debitfc
-                AND t1.Creditusd = t2.Debitusd
-                AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '"
-                AND t1.CodeMonnaie = 2
-                AND t1.NomUtilisateur = "' . $request->UserName . '"
-                AND t1.typeTransaction="suspens"
-                ) AS subquery')[0];
-            } else {
-                return response()->json([
-                    "status" => 0,
-                    "msg" => "Pas de données trouver"
-                ]);
-            }
-            return response()->json([
-                "dataCDF" => $dataCDF,
-                "dataUSD" => $dataUSD,
-                "totCDF" => $totCDF,
-                // "totCreditCDF" => $totCreditCDF,
-                "totUSD" => $totUSD,
-                // "totCreditUSD" => $totCreditUSD,
-
-                "status" => 1
-            ]);
+        if (!$agence) {
+            return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
         }
-        $check_dataCDF = DB::select('SELECT DISTINCT t1.NumTransaction, t1.DateTransaction, t1.CodeMonnaie, t1.NumCompte, t1.NumComptecp, t1.Debitfc, t1.Debitusd, t1.Creditfc, t1.Creditusd, t1.Libelle, c1.NomCompte AS NomCompte FROM transactions t1 JOIN transactions t2 ON t1.NumComptecp = t2.NumCompte AND t1.NumCompte = t2.NumComptecp AND t1.CodeMonnaie = t2.CodeMonnaie AND t1.DateTransaction = t2.DateTransaction AND t1.NumTransaction = t2.NumTransaction JOIN comptes c1 ON t1.NumCompte = c1.NumCompte WHERE t1.Debitfc = t2.Creditfc AND t1.Debitusd = t2.Creditusd AND t1.Creditfc = t2.Debitfc AND t1.Creditusd = t2.Debitusd AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND t1.CodeMonnaie = 2');
-        $check_dataUSD = DB::select('SELECT DISTINCT t1.NumTransaction, t1.DateTransaction, t1.CodeMonnaie, t1.NumCompte, t1.NumComptecp, t1.Debitfc, t1.Debitusd, t1.Creditfc, t1.Creditusd, t1.Libelle, c1.NomCompte AS NomCompte FROM transactions t1 JOIN transactions t2 ON t1.NumComptecp = t2.NumCompte AND t1.NumCompte = t2.NumComptecp AND t1.CodeMonnaie = t2.CodeMonnaie AND t1.DateTransaction = t2.DateTransaction AND t1.NumTransaction = t2.NumTransaction JOIN comptes c1 ON t1.NumCompte = c1.NumCompte WHERE t1.Debitfc = t2.Creditfc AND t1.Debitusd = t2.Creditusd AND t1.Creditfc = t2.Debitfc AND t1.Creditusd = t2.Debitusd AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND t1.CodeMonnaie = 1');
 
-        if (count($check_dataCDF) != 0 or count($check_dataUSD) != 0) {
+        $codeAgence = $agence->code_agence;
+    }
 
-            $dataCDF = DB::select('SELECT DISTINCT t1.NumTransaction, t1.DateTransaction, t1.CodeMonnaie, t1.NumCompte, t1.NumComptecp, t1.Debitfc, t1.Debitusd, t1.Creditfc, t1.Creditusd, t1.Libelle, c1.NomCompte AS NomCompte FROM transactions t1 JOIN transactions t2 ON t1.NumComptecp = t2.NumCompte AND t1.NumCompte = t2.NumComptecp AND t1.CodeMonnaie = t2.CodeMonnaie AND t1.DateTransaction = t2.DateTransaction AND t1.NumTransaction = t2.NumTransaction JOIN comptes c1 ON t1.NumCompte = c1.NumCompte WHERE t1.Debitfc = t2.Creditfc AND t1.Debitusd = t2.Creditusd AND t1.Creditfc = t2.Debitfc AND t1.Creditusd = t2.Debitusd AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND t1.CodeMonnaie = 2');
-            $dataUSD = DB::select('SELECT DISTINCT t1.NumTransaction, t1.DateTransaction, t1.CodeMonnaie, t1.NumCompte, t1.NumComptecp, t1.Debitfc, t1.Debitusd, t1.Creditfc, t1.Creditusd, t1.Libelle, c1.NomCompte AS NomCompte FROM transactions t1 JOIN transactions t2 ON t1.NumComptecp = t2.NumCompte AND t1.NumCompte = t2.NumComptecp AND t1.CodeMonnaie = t2.CodeMonnaie AND t1.DateTransaction = t2.DateTransaction AND t1.NumTransaction = t2.NumTransaction JOIN comptes c1 ON t1.NumCompte = c1.NumCompte WHERE t1.Debitfc = t2.Creditfc AND t1.Debitusd = t2.Creditusd AND t1.Creditfc = t2.Debitfc AND t1.Creditusd = t2.Debitusd AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND t1.CodeMonnaie = 1');
-            $totUSD = DB::select('SELECT 
-                SUM(subquery.Debitfc) AS TotalDebitfc, 
-                SUM(subquery.Debitusd) AS TotalDebitusd, 
-                SUM(subquery.Creditfc) AS TotalCreditfc, 
-                SUM(subquery.Creditusd) AS TotalCreditusd
-                FROM (
-                    SELECT DISTINCT 
-                        t1.NumTransaction, 
-                        t1.DateTransaction, 
-                        t1.CodeMonnaie, 
-                        t1.NumCompte, 
-                        t1.NumComptecp, 
-                        t1.Debitfc, 
-                        t1.Debitusd, 
-                        t1.Creditfc, 
-                        t1.Creditusd
-                    FROM transactions t1
-                    JOIN transactions t2 
-                        ON t1.NumComptecp = t2.NumCompte
-                    AND t1.NumCompte = t2.NumComptecp
-                    AND t1.CodeMonnaie = t2.CodeMonnaie
-                    AND t1.DateTransaction = t2.DateTransaction
-                    AND t1.NumTransaction = t2.NumTransaction
-                    WHERE t1.Debitfc = t2.Creditfc
-                    AND t1.Debitusd = t2.Creditusd
-                    AND t1.Creditfc = t2.Debitfc
-                    AND t1.Creditusd = t2.Debitusd
-                    AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '"
-                    AND t1.CodeMonnaie = 1
-                ) AS subquery')[0];
+    if (!$codeAgence) {
+        return response()->json(['status' => 0, 'msg' => 'Code agence requis']);
+    }
 
+    // =========================
+    // 🔹 Filtres optionnels
+    // =========================
+    $dateDebut = $request->DateDebut ?? null;
+    $dateFin   = $request->DateFin ?? null;
+    $userName  = $request->UserName ?? null;
+    $isSuspens = $request->AutresCriteres['SuspensTransactions'] ?? false;
 
-            $totCDF = DB::select('SELECT 
-                SUM(subquery.Debitfc) AS TotalDebitfc, 
-                SUM(subquery.Debitusd) AS TotalDebitusd, 
-                SUM(subquery.Creditfc) AS TotalCreditfc, 
-                SUM(subquery.Creditusd) AS TotalCreditusd
-                FROM (
-                SELECT DISTINCT 
-                    t1.NumTransaction, 
-                    t1.DateTransaction, 
-                    t1.CodeMonnaie, 
-                    t1.NumCompte, 
-                    t1.NumComptecp, 
-                    t1.Debitfc, 
-                    t1.Debitusd, 
-                    t1.Creditfc, 
-                    t1.Creditusd
-                FROM transactions t1
-                JOIN transactions t2 
-                    ON t1.NumComptecp = t2.NumCompte
-                AND t1.NumCompte = t2.NumComptecp
-                AND t1.CodeMonnaie = t2.CodeMonnaie
-                AND t1.DateTransaction = t2.DateTransaction
+    // =========================
+    // 🔹 Construction WHERE dynamique
+    // =========================
+    $conditions = [];
+
+    // obligatoire
+    $conditions[] = "t1.CodeAgence = '$codeAgence'";
+
+    // optionnels
+    if ($dateDebut && $dateFin) {
+        $conditions[] = "t1.DateTransaction BETWEEN '$dateDebut' AND '$dateFin'";
+    }
+
+    if ($userName) {
+        $conditions[] = "t1.NomUtilisateur = '$userName'";
+    }
+
+    // ✔️ CORRECTION ICI
+    if ($isSuspens) {
+        $conditions[] = "t1.isSuspens = 1";
+    }
+
+    // logique métier (matching débit/crédit)
+    $conditions[] = "t1.Debitfc = t2.Creditfc";
+    $conditions[] = "t1.Debitusd = t2.Creditusd";
+    $conditions[] = "t1.Creditfc = t2.Debitfc";
+    $conditions[] = "t1.Creditusd = t2.Debitusd";
+
+    $whereClause = implode(" AND ", $conditions);
+
+    // =========================
+    // 🔹 Fonction de génération requête
+    // =========================
+    $buildQuery = function ($codeMonnaie) use ($whereClause) {
+        return "
+            SELECT DISTINCT 
+                t1.NumTransaction,
+                t1.DateTransaction,
+                t1.CodeMonnaie,
+                t1.NumCompte,
+                t1.NumComptecp,
+                t1.Debitfc,
+                t1.Debitusd,
+                t1.Creditfc,
+                t1.Creditusd,
+                t1.Libelle,
+                c1.NomCompte AS NomCompte
+            FROM transactions t1
+            JOIN transactions t2 
+                ON t1.NumComptecp = t2.NumCompte 
+                AND t1.NumCompte = t2.NumComptecp 
+                AND t1.CodeMonnaie = t2.CodeMonnaie 
+                AND t1.DateTransaction = t2.DateTransaction 
                 AND t1.NumTransaction = t2.NumTransaction
-                WHERE t1.Debitfc = t2.Creditfc
-                AND t1.Debitusd = t2.Creditusd
-                AND t1.Creditfc = t2.Debitfc
-                AND t1.Creditusd = t2.Debitusd
-                AND t1.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '"
-                AND t1.CodeMonnaie = 2
-                ) AS subquery')[0];
-            // $totCreditCDF = DB::select('SELECT SUM(transactions.Creditfc) as totCreditCDF FROM transactions join comptes on transactions.NumCompte=comptes.NumCompte  WHERE transactions.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '" AND transactions.CodeMonnaie=2   AND comptes.isBilanAccount!=1  AND transactions.NomUtilisateur="' . $request->UserName . '"AND comptes.RefCadre NOT IN (59,87,85) ')[0];
-            // $totDebitUSD = DB::select('SELECT SUM(transactions.Debitusd) as totDebitUSD FROM transactions join comptes on transactions.NumCompte=comptes.NumCompte  WHERE transactions.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '"   AND transactions.CodeMonnaie=1 AND comptes.isBilanAccount!=1  AND transactions.NomUtilisateur="' . $request->UserName . '" AND comptes.RefCadre NOT IN (59,87,85) ')[0];
-            // $totCreditUSD = DB::select('SELECT SUM(transactions.Creditusd) as totCreditUSD FROM transactions join comptes on transactions.NumCompte=comptes.NumCompte  WHERE transactions.DateTransaction BETWEEN "' . $request->DateDebut . '" AND "' . $request->DateFin . '"   AND transactions.CodeMonnaie=1  AND comptes.isBilanAccount!=1  AND transactions.NomUtilisateur="' . $request->UserName . '" AND comptes.RefCadre NOT IN (59,87,85) ')[0];
-        } else {
-            return response()->json([
-                "status" => 0,
-                "msg" => "Pas de données trouver"
-            ]);
-        }
+            JOIN comptes c1 ON t1.NumCompte = c1.NumCompte
+            WHERE $whereClause
+            AND t1.CodeMonnaie = $codeMonnaie
+        ";
+    };
+
+    // =========================
+    // 🔹 Exécution
+    // =========================
+    $queryCDF = $buildQuery(2);
+    $queryUSD = $buildQuery(1);
+
+    $dataCDF = DB::select($queryCDF);
+    $dataUSD = DB::select($queryUSD);
+
+    if (empty($dataCDF) && empty($dataUSD)) {
         return response()->json([
-            "dataCDF" => $dataCDF,
-            "dataUSD" => $dataUSD,
-            "totCDF" => $totCDF,
-            // "totCreditCDF" => $totCreditCDF,
-            "totUSD" => $totUSD,
-            // "totCreditUSD" => $totCreditUSD,
-
-            "status" => 1
+            "status" => 0,
+            "msg" => "Pas de données trouvées"
         ]);
     }
 
- public function getSearchedRepertoire(Request $request)
+    // =========================
+    // 🔹 Totaux
+    // =========================
+    $buildTotalQuery = function ($codeMonnaie) use ($whereClause) {
+        return "
+            SELECT 
+                SUM(t1.Debitfc) AS TotalDebitfc,
+                SUM(t1.Debitusd) AS TotalDebitusd,
+                SUM(t1.Creditfc) AS TotalCreditfc,
+                SUM(t1.Creditusd) AS TotalCreditusd
+            FROM transactions t1
+            JOIN transactions t2 
+                ON t1.NumComptecp = t2.NumCompte 
+                AND t1.NumCompte = t2.NumComptecp 
+                AND t1.CodeMonnaie = t2.CodeMonnaie 
+                AND t1.DateTransaction = t2.DateTransaction 
+                AND t1.NumTransaction = t2.NumTransaction
+            WHERE $whereClause
+            AND t1.CodeMonnaie = $codeMonnaie
+        ";
+    };
+
+    $totUSD = DB::select($buildTotalQuery(1))[0];
+    $totCDF = DB::select($buildTotalQuery(2))[0];
+
+    // =========================
+    // 🔹 Retour
+    // =========================
+    return response()->json([
+        "status" => 1,
+        "dataCDF" => $dataCDF,
+        "dataUSD" => $dataUSD,
+        "totCDF" => $totCDF,
+        "totUSD" => $totUSD,
+    ]);
+}
+
+public function getSearchedRepertoire(Request $request)
 {
-    // Base de la requête commune à toutes les sous-requêtes
+    // 1. Gestion du filtre agence
+    $agenceFilter = $request->agence_filter ?? 'current';
+    $codeAgence = null;
+    $user = auth()->user();
+
+    if ($agenceFilter === 'current') {
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
+        if (!$codeAgence) {
+            return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
+        }
+    } elseif ($agenceFilter === 'all') {
+        $codeAgence = null;
+    } else {
+        $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
+        if (!$agence) {
+            return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
+        }
+        $codeAgence = $agence->code_agence;
+    }
+
+    // Base de la requête commune (on ajoute le filtre agence sur transactions et comptes)
     $baseQuery = DB::table('transactions')
         ->join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
         ->whereBetween('transactions.DateTransaction', [$request->DateDebut, $request->DateFin])
         ->where('comptes.RefGroupe', 330)
         ->when($request->filled('UserName'), function ($q) use ($request) {
             $q->where('transactions.NomUtilisateur', $request->UserName);
+        })
+        ->when($codeAgence, function ($q) use ($codeAgence) {
+            return $q->where('transactions.CodeAgence', $codeAgence)
+                     ->where('comptes.CodeAgence', $codeAgence);
         });
 
-    // Vérifier l'existence de données (CDF ou USD) sans le filtre NumCompte != 3300
+    // Vérification existence des données
     $hasCDF = (clone $baseQuery)->where('transactions.CodeMonnaie', 2)->exists();
     $hasUSD = (clone $baseQuery)->where('transactions.CodeMonnaie', 1)->exists();
 
     if (!$hasCDF && !$hasUSD) {
         return response()->json([
             "status" => 0,
-            "msg"    => "Pas de données trouver"
+            "msg"    => "Pas de données trouvées"
         ]);
     }
 
-    // Colonnes de base selon la devise
+    // Colonnes selon devise
     $columnsCDF = [
         'transactions.DateTransaction', 'transactions.NumTransaction',
         'transactions.NumCompte', 'comptes.NomCompte', 'transactions.Libelle',
@@ -386,7 +305,6 @@ class ReportsController extends Controller
         'transactions.CodeMonnaie'
     ];
 
-    // Si pas de UserName, on inclut la colonne NomUtilisateur dans les résultats
     if (!$request->filled('UserName')) {
         $columnsCDF[] = 'transactions.NomUtilisateur';
         $columnsUSD[] = 'transactions.NomUtilisateur';
@@ -439,403 +357,320 @@ class ReportsController extends Controller
     }
 
     //PERMET D'AFFICHER L'ECHEANCIER ET UN TABLEAU D'AMMORTISSMENT
+public function getEcheancier(Request $request)
+{
+    // ----- GESTION DU FILTRE AGENCE -----
+    $agenceFilter = $request->agence_filter ?? 'current';
+    $codeAgence = null;
+    $user = auth()->user();
 
-    public function getEcheancier(Request $request)
+    if ($agenceFilter === 'current') {
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
+        if (!$codeAgence) {
+            return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
+        }
+    } elseif ($agenceFilter === 'all') {
+        $codeAgence = null;
+    } else {
+        $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
+        if (!$agence) {
+            return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
+        }
+        $codeAgence = $agence->code_agence;
+    }
 
-    {
+    // Helper pour filtrer sur portefeuilles.CodeAgence
+    $addAgenceWhere = function($query) use ($codeAgence) {
+        if ($codeAgence) {
+            return $query->where('portefeuilles.CodeAgence', $codeAgence);
+        }
+        return $query;
+    };
 
-        //VERIFIE SI L'UTILISATEUR SOUHAITE AFFICHE QUE TYPE DE RAPPORT
-        if (isset($request->radioValue) and $request->radioValue == "echeancier") {
-            //VERIFIE SI LE NUMERO DE DOSSIER EXISTE 
-            if (isset($request->searched_num_dossier)) {
-                $checkNumDossier = Echeancier::where("NumDossier", "=", $request->searched_num_dossier)->first();
-                if ($checkNumDossier) {
-                    $data = Portefeuille::where("portefeuilles.NumDossier", "=", $request->searched_num_dossier)
-                        // ->where("echeanciers.CapAmmorti", ">", 0)
-                        // ->orWhere("portefeuilles.NumCompteEpargne", "=", $request->NumCompteEpargne)
-                        // ->orWhere("portefeuilles.NumCompteCredit", "=", $request->NumCompteCredit)
-                        ->join('echeanciers', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
-                        ->join('comptes', 'comptes.NumCompte', '=', 'portefeuilles.NumCompteEpargne')
-                        // ->select('echeanciers.*')
-                        ->get();
+    // ----- FIN GESTION AGENCE -----
 
-                    //RECUPERE LA SOMME DES INTERET A PAYER
-                    $dataSommeInter = Echeancier::select(
-                        DB::raw("SUM(echeanciers.Interet) as sommeInteret"),
-                    )->where("echeanciers.NumDossier", "=", $request->searched_num_dossier)
-                        // ->orWhere("portefeuilles.NumCompteEpargne", "=", $request->NumCompteEpargne)
-                        // ->orWhere("portefeuilles.NumCompteCredit", "=", $request->NumCompteCredit)
-                        ->join('portefeuilles', 'portefeuilles.NumDossier', '=', 'echeanciers.NumDossier')
-                        ->first();
-                    return response()->json(["status" => 1, "data" => $data, "msg" => "Resultat trouvé", "sommeInteret" => $dataSommeInter]);
-                } else {
-                    return response()->json([
-                        "status" => 0,
-                        "msg" => "Aucun écheancier n'est associé au numéro de dossier renseigné rassurez vous que vous avez entré un bon numéro de dossier ou que vous avez généré son écheancier merci !"
-                    ]);
-                }
+    //VERIFIE SI L'UTILISATEUR SOUHAITE AFFICHE QUE TYPE DE RAPPORT
+    if (isset($request->radioValue) and $request->radioValue == "echeancier") {
+        //VERIFIE SI LE NUMERO DE DOSSIER EXISTE 
+        if (isset($request->searched_num_dossier)) {
+            $checkNumDossier = Echeancier::where("NumDossier", "=", $request->searched_num_dossier)->first();
+            if ($checkNumDossier) {
+                $data = Portefeuille::where("portefeuilles.NumDossier", "=", $request->searched_num_dossier)
+                    ->join('echeanciers', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
+                    ->join('comptes', 'comptes.NumCompte', '=', 'portefeuilles.NumCompteEpargne')
+                    ->when($codeAgence, function($q) use ($codeAgence) {
+                        return $q->where('portefeuilles.CodeAgence', $codeAgence);
+                    })
+                    ->get();
+
+                $dataSommeInter = Echeancier::select(DB::raw("SUM(echeanciers.Interet) as sommeInteret"))
+                    ->where("echeanciers.NumDossier", "=", $request->searched_num_dossier)
+                    ->join('portefeuilles', 'portefeuilles.NumDossier', '=', 'echeanciers.NumDossier')
+                    ->when($codeAgence, function($q) use ($codeAgence) {
+                        return $q->where('portefeuilles.CodeAgence', $codeAgence);
+                    })
+                    ->first();
+                return response()->json(["status" => 1, "data" => $data, "msg" => "Resultat trouvé", "sommeInteret" => $dataSommeInter]);
             } else {
                 return response()->json([
                     "status" => 0,
-                    "msg" => "Vous devez renseigné le numero de dossier!"
+                    "msg" => "Aucun écheancier n'est associé au numéro de dossier renseigné rassurez vous que vous avez entré un bon numéro de dossier ou que vous avez généré son écheancier merci !"
                 ]);
             }
-        } else if (isset($request->radioValue) and $request->radioValue == "tableau_ammortiss") {
-            if (isset($request->searched_num_dossier)) {
-                $checkNumDossier = Echeancier::where("NumDossier", "=", $request->searched_num_dossier)->first();
-                if ($checkNumDossier) {
+        } else {
+            return response()->json([
+                "status" => 0,
+                "msg" => "Vous devez renseigné le numero de dossier!"
+            ]);
+        }
+    } else if (isset($request->radioValue) and $request->radioValue == "tableau_ammortiss") {
+        if (isset($request->searched_num_dossier)) {
+            $checkNumDossier = Echeancier::where("NumDossier", "=", $request->searched_num_dossier)->first();
+            if ($checkNumDossier) {
+                $data = Portefeuille::where("portefeuilles.NumDossier", "=", $request->searched_num_dossier)
+                    ->where("echeanciers.CapAmmorti", ">", 0)
+                    ->leftJoin('echeanciers', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
+                    ->leftJoin('remboursementcredits', 'remboursementcredits.RefEcheance', '=', 'echeanciers.ReferenceEch')
+                    ->when($codeAgence, function($q) use ($codeAgence) {
+                        return $q->where('portefeuilles.CodeAgence', $codeAgence);
+                    })
+                    ->get();
 
-                    $data = Portefeuille::where("portefeuilles.NumDossier", "=", $request->searched_num_dossier)
-                        ->where("echeanciers.CapAmmorti", ">", 0)
+                $dataSommeInter = Echeancier::select(DB::raw("SUM(echeanciers.Interet) as sommeInteret"))
+                    ->where("echeanciers.NumDossier", "=", $request->searched_num_dossier)
+                    ->join('portefeuilles', 'portefeuilles.NumDossier', '=', 'echeanciers.NumDossier')
+                    ->when($codeAgence, function($q) use ($codeAgence) {
+                        return $q->where('portefeuilles.CodeAgence', $codeAgence);
+                    })
+                    ->first();
 
-                        // ->orWhere("portefeuilles.NumCompteEpargne", "=", $request->NumCompteEpargne)
-                        // ->orWhere("portefeuilles.NumCompteCredit", "=", $request->NumCompteCredit)
-                        ->leftJoin('echeanciers', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
-                        ->leftJoin('remboursementcredits', 'remboursementcredits.RefEcheance', '=', 'echeanciers.ReferenceEch')
-                        //   ->select('echeanciers.*')
-                        ->get();
+                $NomCompte = Portefeuille::where("NumDossier", $request->searched_num_dossier)
+                    ->when($codeAgence, function($q) use ($codeAgence) {
+                        return $q->where('CodeAgence', $codeAgence);
+                    })
+                    ->first();
 
-                    //RECUPERE LA SOMME DES INTERET A PAYER
-                    $dataSommeInter = Echeancier::select(
-                        DB::raw("SUM(echeanciers.Interet) as sommeInteret"),
-                    )->where("echeanciers.NumDossier", "=", $request->searched_num_dossier)
-                        // ->orWhere("portefeuilles.NumCompteEpargne", "=", $request->NumCompteEpargne)
-                        // ->orWhere("portefeuilles.NumCompteCredit", "=", $request->NumCompteCredit)
-                        ->join('portefeuilles', 'portefeuilles.NumDossier', '=', 'echeanciers.NumDossier')
-                        ->first();
-
-                    //GET NAME 
-                    $NomCompte = Portefeuille::where("NumDossier", $request->searched_num_dossier)->first();
-
-                    //RECUPERE LE SOLDE RESTANT DU CREDIT
-                    // $soldeRestant = DB::select('SELECT SUM(echeanciers.CapAmmorti) as soldeRestant from echeanciers where echeanciers.NumDossier="' . $request->searched_num_dossier . '" and echeanciers.posted=!1 and echeanciers.statutPayement=!1 GROUP BY echeanciers.NumDossier')[0];
-                    // $SoldeCreditRestant = $soldeRestant->soldeRestant;
-
-                    $soldeRestant =  Echeancier::selectRaw('
-                     echeanciers.NumDossier,
-                    SUM(echeanciers.Interet) - SUM(COALESCE(remboursementcredits.InteretPaye, 0)) AS InteretRetard,
-                    SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS soldeRestant
-                ')
-                        ->leftJoin('remboursementcredits', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
-                        ->where('echeanciers.posted', '=!', 1)
-                        ->where('echeanciers.statutPayement', '=!', 1)
-                        ->where('echeanciers.NumDossier', $request->searched_num_dossier)
-                        ->groupBy('echeanciers.NumDossier')
-                        ->first();
-                    $SoldeCreditRestant = $soldeRestant->soldeRestant;
-                    // dd($soldeRestant);
-                    //RECUPERE LE CAPITAL REMBOURSE
-                    $capitalRembourse = DB::select('SELECT SUM(echeanciers.CapAmmorti) as capitalRembourse from echeanciers where echeanciers.NumDossier="' . $request->searched_num_dossier . '" and echeanciers.posted=1 and echeanciers.statutPayement=1 GROUP BY echeanciers.NumDossier');
-
-                    $capitalRembours = $capitalRembourse[0]->capitalRembourse ?? 0; // Retourne 0 si aucun résultat
-                    //RECUPERE LE SOLDE EN RETARD 
-                    // $soldeEnRetard = JourRetard::where("NumDossier", $request->searched_num_dossier)->first();
-                    // $soldeEnRetard = DB::select('SELECT SUM(echeanciers.MontantRetardInteret) as soldeIntRetard,SUM(echeanciers.MontantRetardCapital) soldeCapRetard from echeanciers where echeanciers.NumDossier="' . $request->searched_num_dossier . '" and echeanciers.RetardPayement=1 GROUP BY echeanciers.NumDossier')[0];
-
-                    $soldeEnRetard =  Echeancier::selectRaw('
-                     echeanciers.NumDossier,
-                    SUM(echeanciers.Interet) - SUM(COALESCE(remboursementcredits.InteretPaye, 0)) AS sommeInteretRetard,
-                    SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS sommeCapitalRetard
-                ')
-                        ->leftJoin('remboursementcredits', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
-                        ->where('echeanciers.RetardPayement', 1)
-                        ->where('echeanciers.NumDossier', $request->searched_num_dossier)
-                        ->groupBy('echeanciers.NumDossier')
-                        ->first();
-                    // dd($soldeEnRetard);
-                    //RECUPERE L'INTERET DEJA REMBOURSE 
-                    $InteretRembourse = DB::select('SELECT SUM(echeanciers.Interet) as intereRembourse from echeanciers where echeanciers.NumDossier="' . $request->searched_num_dossier . '" and echeanciers.posted=1 and echeanciers.statutPayement=1 GROUP BY echeanciers.NumDossier');
-                    $InteretRembourse = $InteretRembourse[0] ?? 0; // Retourne 0 si aucun résultat
-                    //RECUPERE L'INTERET L'INTERET RESTANT 
-                    $InteretRestant = DB::select('SELECT SUM(echeanciers.Interet) as intereRestant from echeanciers where echeanciers.NumDossier="' . $request->searched_num_dossier . '" and echeanciers.posted=!1 and echeanciers.statutPayement=!1 GROUP BY echeanciers.NumDossier');
-                    $InteretRestant = $InteretRestant[0] ?? 0; // Retourne 0 si aucun résultat
-                    return response()->json([
-                        "status" => 1,
-                        "data_ammortissement" => $data,
-                        "msg" => "Resultat trouvé",
-                        "sommeInteret_ammort" => $dataSommeInter,
-                        "NomCompte" => $NomCompte,
-                        "soldeRestant" => $SoldeCreditRestant,
-                        "soldeEnRetard" => $soldeEnRetard,
-                        "capitalRembourse" => $capitalRembours,
-                        "interetRembourse" => $InteretRembourse,
-                        "interetRestant" => $InteretRestant
-                    ]);
-                } else {
-                    return response()->json([
-                        "status" => 0,
-                        "msg" => "Aucun écheancier n'est associé au numéro de dossier renseigné rassurez vous que vous avez entré un bon numéro de dossier ou que vous avez généré son écheancier merci !"
-                    ]);
-                }
-            } else {
-                return response()->json([
-                    "status" => 0,
-                    "msg" => "Vous devez renseigné le numero de dossier!"
-                ]);
-            }
-        } else if (isset($request->radioValue) and $request->radioValue == "balance_agee") {
-            //
-            if (isset($request->devise) and isset($request->selectedDate)) {
-                $agentCreditName = $request->agent_credit_name;
-
-                if ($request->devise == "CDF") {
-                    // $dataBalanceAgee = Portefeuille::where("portefeuilles.CodeMonnaie", "=", $request->devise)
-                    //     ->join("comptes", "portefeuilles.NumCompteEpargne", "=", "comptes.NumCompte")
-                    //     ->leftJoin("jour_retards", "portefeuilles.NumCompteEpargne", "=", "jour_retards.NumcompteEpargne")
-                    //     ->orderBy("portefeuilles.NumDossier")->get();
-                    $dataBalanceAgee = Portefeuille::where("portefeuilles.CodeMonnaie", "=", $request->devise)
-                        ->where("portefeuilles.Octroye", 1)
-                        ->where("portefeuilles.Cloture", "!=", 1)
-                        ->when(!empty($request->selectedDate), function ($query) use ($request) {
-                            $query->whereDate("portefeuilles.DateOctroi", "<=", $request->selectedDate);
-                        })
-                        ->join("comptes", "portefeuilles.NumCompteEpargne", "=", "comptes.NumCompte")
-                        ->leftJoin("jour_retards", "portefeuilles.NumCompteEpargne", "=", "jour_retards.NumcompteEpargne")
-                        ->leftJoin("echeanciers", "portefeuilles.NumDossier", "=", "echeanciers.NumDossier")
-                        ->when(!empty($request->agent_credit_name), function ($query) use ($request) {
-                            $query->where("Gestionnaire", $request->agent_credit_name);
-                        })
-                        ->selectRaw('
-                         portefeuilles.NumDossier,
-                         portefeuilles.NumCompteEpargne,
-                         portefeuilles.CodeMonnaie,
-                         portefeuilles.NumDossier,
-                         portefeuilles.NumCompteCredit,
-                         portefeuilles.NomCompte,
-                         portefeuilles.DateOctroi,
-                         portefeuilles.DateEcheance,
-                         portefeuilles.MontantAccorde,
-                         portefeuilles.Duree,
-                         jour_retards.DateRetard,
-                         jour_retards.NbrJrRetard,
-
-                         SUM(CASE WHEN echeanciers.statutPayement = 1 AND echeanciers.posted = 1 THEN echeanciers.CapAmmorti ELSE 0 END) AS TotalCapitalRembourse,
-                         SUM(CASE WHEN echeanciers.statutPayement = 1 AND echeanciers.posted = 1 THEN echeanciers.Interet ELSE 0 END) AS TotalInteretRembourse,
-                         SUM(echeanciers.CapAmmorti) - SUM(CASE WHEN echeanciers.StatutPayement = 1 AND echeanciers.Posted = 1 THEN echeanciers.CapAmmorti ELSE 0 END) AS CapitalRestant,
-                         SUM(echeanciers.Interet) - SUM(CASE WHEN echeanciers.StatutPayement = 1 AND echeanciers.Posted = 1 THEN echeanciers.Interet ELSE 0 END) AS InteretRestant
-                                 ')
-                        ->groupBy(
-                            'portefeuilles.NumDossier',
-                            'portefeuilles.NumCompteEpargne',
-                            'portefeuilles.CodeMonnaie',
-                            'portefeuilles.NumCompteCredit',
-                            'portefeuilles.NomCompte',
-                            'portefeuilles.DateOctroi',
-                            'portefeuilles.DateEcheance',
-                            'portefeuilles.MontantAccorde',
-                            'portefeuilles.Duree',
-                            'jour_retards.DateRetard',
-                            'jour_retards.NbrJrRetard'
-                        )
-                        ->orderBy('portefeuilles.DateOctroi', 'desc')
-                        ->get();
-
-                    //SELECT p.NumDossier, p.NumCompteEpargne, p.CodeMonnaie, j.DateRetard, SUM(CASE WHEN e.statutPayement = 1 AND e.posted = 1 THEN e.CapAmmorti ELSE 0 END) AS TotalCapitalRembourse, SUM(CASE WHEN e.statutPayement = 1 AND e.posted = 1 THEN e.Interet ELSE 0 END) AS TotalInteretRembourse FROM portefeuilles p JOIN comptes c ON p.NumCompteEpargne = c.NumCompte LEFT JOIN jour_retards j ON p.NumCompteEpargne = j.NumcompteEpargne LEFT JOIN echeanciers e ON p.NumDossier = e.NumDossier WHERE p.CodeMonnaie = "CDF" GROUP BY p.NumDossier, p.NumCompteEpargne, p.CodeMonnaie, j.DateRetard ORDER BY p.NumDossier;
-                    // dd($dataBalanceAgee);
-
-                    //RECUPERE L'ENCOURS GLOBAL DE CREDIT
-
-                    //     $getSoldeEncoursCreditCDF = DB::select('SELECT SUM(transactions.Debitfc)-SUM(transactions.Creditfc) As SoldeEncoursCDF FROM  transactions
-                    //  WHERE transactions.CodeMonnaie=2 AND Libelle NOT LIKE "%Imputation%" AND transactions.NumCompte="' . $comptePretAuMembreCDF . '" ')[0];
-                    // Pour le solde des crédits normaux (groupe 320)
-                    $subQueryRemboursement = DB::table('remboursementcredits')
-                        ->selectRaw('NumDossie, SUM(CapitalPaye) as total_paye')
-                        ->groupBy('NumDossie');
-
-                    $queryCDF = DB::table('portefeuilles as p')
-                        ->leftJoinSub($subQueryRemboursement, 'r', function ($join) {
-                            $join->on('p.NumDossier', '=', 'r.NumDossie');
-                        })
-                        ->where('p.CodeMonnaie', 'CDF') // ✅ CDF
-                        ->selectRaw('
-        SUM(GREATEST(p.MontantAccorde - COALESCE(r.total_paye, 0), 0)) AS SoldeEncoursCDF
-    ');
-
-                    // ✅ Filtre agent
-                    if (!empty($agentCreditName)) {
-                        $queryCDF->where('p.Gestionnaire', $agentCreditName);
-                    }
-
-                    $resultCDF = $queryCDF->first();
-                    $soldeEncoursCDF = $resultCDF->SoldeEncoursCDF;
-
-                    // Pour le solde des crédits en retard (groupe 390)
-                    $queryCreditRetard = DB::table('transactions')
-                        ->join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
-                        ->selectRaw('SUM(transactions.Debitfc) - SUM(transactions.Creditfc) AS TotRetard')
-                        ->where('comptes.RefSousGroupe', 3900)
-                        ->where('comptes.CodeMonnaie', 2)
-                        ->when(!empty($request->selectedDate), function ($query) use ($request) {
-                            $query->whereDate('transactions.DateTransaction', '<=', $request->selectedDate);
+                $soldeRestant = Echeancier::selectRaw('
+                        echeanciers.NumDossier,
+                        SUM(echeanciers.Interet) - SUM(COALESCE(remboursementcredits.InteretPaye, 0)) AS InteretRetard,
+                        SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS soldeRestant
+                    ')
+                    ->leftJoin('remboursementcredits', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
+                    ->where('echeanciers.posted', '=!', 1)
+                    ->where('echeanciers.statutPayement', '=!', 1)
+                    ->where('echeanciers.NumDossier', $request->searched_num_dossier)
+                    ->when($codeAgence, function($q) use ($codeAgence) {
+                        return $q->whereExists(function($sub) use ($codeAgence) {
+                            $sub->select(DB::raw(1))
+                                ->from('portefeuilles')
+                                ->whereColumn('portefeuilles.NumDossier', 'echeanciers.NumDossier')
+                                ->where('portefeuilles.CodeAgence', $codeAgence);
                         });
+                    })
+                    ->groupBy('echeanciers.NumDossier')
+                    ->first();
+                $SoldeCreditRestant = $soldeRestant->soldeRestant ?? 0;
 
-                    if (!empty($agentCreditName)) {
-                        $queryCreditRetard->where('transactions.Operant', $agentCreditName);
-                    }
+                $capitalRembourse = DB::select('SELECT SUM(echeanciers.CapAmmorti) as capitalRembourse from echeanciers 
+                    where echeanciers.NumDossier="' . $request->searched_num_dossier . '" 
+                    and echeanciers.posted=1 and echeanciers.statutPayement=1 
+                    GROUP BY echeanciers.NumDossier');
+                $capitalRembours = $capitalRembourse[0]->capitalRembourse ?? 0;
 
-                    $soldeCreditRetard = $queryCreditRetard->first();
-
-                    // $PAR = ($getSoldeCapRetardCDF->TotRetard) / ($getSoldeEncoursCreditCDF->SoldeEncoursCDF + $getSoldeCapRetardCDF->TotRetard) * 100;
-
-                    $denominator = $soldeEncoursCDF + $soldeCreditRetard->TotRetard;
-
-                    if ($denominator != 0) {
-                        $PAR = ($soldeCreditRetard->TotRetard / $denominator) * 100;
-                    } else {
-                        $PAR = 0; // Ou une valeur par défaut
-                    }
-
-                    return response()->json([
-                        "status" => 1,
-                        "data_balance_agee" => $dataBalanceAgee,
-                        "soldeEncourCDF" => $soldeEncoursCDF,
-                        "totRetardCDF" => $PAR
-                    ]);
-                } else if ($request->devise == "USD") {
-                    $dataBalanceAgee = Portefeuille::where("portefeuilles.CodeMonnaie", "=", $request->devise)
-                        ->where("portefeuilles.Octroye", 1)
-                        ->where("portefeuilles.Cloture", "!=", 1)
-                        ->when(!empty($request->selectedDate), function ($query) use ($request) {
-                            $query->whereDate("portefeuilles.DateOctroi", "<=", $request->selectedDate);
-                        })
-                        ->join("comptes", "portefeuilles.NumCompteEpargne", "=", "comptes.NumCompte")
-                        ->leftJoin("jour_retards", "portefeuilles.NumCompteEpargne", "=", "jour_retards.NumcompteEpargne")
-                        ->leftJoin("echeanciers", "portefeuilles.NumDossier", "=", "echeanciers.NumDossier")
-                        ->when(!empty($request->agent_credit_name), function ($query) use ($request) {
-                            $query->where("portefeuilles.Gestionnaire", $request->agent_credit_name);
-                        })
-                        ->selectRaw('
-                     portefeuilles.NumDossier,
-                     portefeuilles.NumCompteEpargne,
-                     portefeuilles.CodeMonnaie,
-                     portefeuilles.NumDossier,
-                     portefeuilles.NumCompteCredit,
-                     portefeuilles.NomCompte,
-                     portefeuilles.DateOctroi,
-                     portefeuilles.DateEcheance,
-                     portefeuilles.MontantAccorde,
-                     portefeuilles.Duree,
-                     jour_retards.DateRetard,
-                     jour_retards.NbrJrRetard,
-
-                     SUM(CASE WHEN echeanciers.statutPayement = 1 AND echeanciers.posted = 1 THEN echeanciers.CapAmmorti ELSE 0 END) AS TotalCapitalRembourse,
-                     SUM(CASE WHEN echeanciers.statutPayement = 1 AND echeanciers.posted = 1 THEN echeanciers.Interet ELSE 0 END) AS TotalInteretRembourse,
-                     SUM(echeanciers.CapAmmorti) - SUM(CASE WHEN echeanciers.StatutPayement = 1 AND echeanciers.Posted = 1 THEN echeanciers.CapAmmorti ELSE 0 END) AS CapitalRestant,
-                     SUM(echeanciers.Interet) - SUM(CASE WHEN echeanciers.StatutPayement = 1 AND echeanciers.Posted = 1 THEN echeanciers.Interet ELSE 0 END) AS InteretRestant
-                             ')
-                        ->groupBy(
-                            'portefeuilles.NumDossier',
-                            'portefeuilles.NumCompteEpargne',
-                            'portefeuilles.CodeMonnaie',
-                            'portefeuilles.NumCompteCredit',
-                            'portefeuilles.NomCompte',
-                            'portefeuilles.DateOctroi',
-                            'portefeuilles.DateEcheance',
-                            'portefeuilles.MontantAccorde',
-                            'portefeuilles.Duree',
-                            'jour_retards.DateRetard',
-                            'jour_retards.NbrJrRetard'
-                        )
-                        ->orderBy('portefeuilles.DateOctroi', 'desc')
-                        ->get();
-
-                    //SELECT p.NumDossier, p.NumCompteEpargne, p.CodeMonnaie, j.DateRetard, SUM(CASE WHEN e.statutPayement = 1 AND e.posted = 1 THEN e.CapAmmorti ELSE 0 END) AS TotalCapitalRembourse, SUM(CASE WHEN e.statutPayement = 1 AND e.posted = 1 THEN e.Interet ELSE 0 END) AS TotalInteretRembourse FROM portefeuilles p JOIN comptes c ON p.NumCompteEpargne = c.NumCompte LEFT JOIN jour_retards j ON p.NumCompteEpargne = j.NumcompteEpargne LEFT JOIN echeanciers e ON p.NumDossier = e.NumDossier WHERE p.CodeMonnaie = "CDF" GROUP BY p.NumDossier, p.NumCompteEpargne, p.CodeMonnaie, j.DateRetard ORDER BY p.NumDossier;
-                    // dd($dataBalanceAgee);
-
-                    //RECUPERE L'ENCOURS GLOBAL DE CREDIT
-
-                    //         $getSoldeEncoursCreditUSD = DB::select('SELECT SUM(transactions.Debitusd)-SUM(transactions.Creditusd) As SoldeEncoursUSD FROM  transactions
-                    //  WHERE transactions.CodeMonnaie=1 AND Libelle NOT LIKE "%Imputation%" AND transactions.NumCompte="' . $comptePretAuMembreUSD . '"')[0];
-
-                    // Pour le solde des crédits normaux (groupe 320)
-                    $subQueryRemboursement = DB::table('remboursementcredits')
-                        ->selectRaw('NumDossie, SUM(CapitalPaye) as total_paye')
-                        ->groupBy('NumDossie');
-
-                    $queryUSD = DB::table('portefeuilles as p')
-                        ->leftJoinSub($subQueryRemboursement, 'r', function ($join) {
-                            $join->on('p.NumDossier', '=', 'r.NumDossie');
-                        })
-                        ->where('p.CodeMonnaie', 'USD') // ✅ USD
-                        ->selectRaw('
-        SUM(GREATEST(p.MontantAccorde - COALESCE(r.total_paye, 0), 0)) AS SoldeEncoursUSD
-    ');
-
-                    // ✅ Filtre agent
-                    if (!empty($agentCreditName)) {
-                        $queryUSD->where('p.Gestionnaire', $agentCreditName);
-                    }
-
-                    $resultUSD = $queryUSD->first();
-                    $soldeEncoursUSD = $resultUSD->SoldeEncoursUSD;
-
-
-
-                    // Pour le solde des crédits en retard (groupe 390)
-                    $queryCreditRetard = DB::table('transactions')
-                        ->join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
-                        ->selectRaw('SUM(transactions.Debitusd) - SUM(transactions.Creditusd) AS TotRetard')
-                        ->where('comptes.RefSousGroupe', 3900)
-                        ->where('comptes.CodeMonnaie', 1)
-                        ->when(!empty($request->selectedDate), function ($query) use ($request) {
-                            $query->whereDate('transactions.DateTransaction', '<=', $request->selectedDate);
+                $soldeEnRetard = Echeancier::selectRaw('
+                        echeanciers.NumDossier,
+                        SUM(echeanciers.Interet) - SUM(COALESCE(remboursementcredits.InteretPaye, 0)) AS sommeInteretRetard,
+                        SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS sommeCapitalRetard
+                    ')
+                    ->leftJoin('remboursementcredits', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
+                    ->where('echeanciers.RetardPayement', 1)
+                    ->where('echeanciers.NumDossier', $request->searched_num_dossier)
+                    ->when($codeAgence, function($q) use ($codeAgence) {
+                        return $q->whereExists(function($sub) use ($codeAgence) {
+                            $sub->select(DB::raw(1))
+                                ->from('portefeuilles')
+                                ->whereColumn('portefeuilles.NumDossier', 'echeanciers.NumDossier')
+                                ->where('portefeuilles.CodeAgence', $codeAgence);
                         });
+                    })
+                    ->groupBy('echeanciers.NumDossier')
+                    ->first();
 
-                    if (!empty($agentCreditName)) {
-                        $queryCreditRetard->where('transactions.Operant', $agentCreditName);
-                    }
+                $InteretRembourse = DB::select('SELECT SUM(echeanciers.Interet) as intereRembourse from echeanciers 
+                    where echeanciers.NumDossier="' . $request->searched_num_dossier . '" 
+                    and echeanciers.posted=1 and echeanciers.statutPayement=1 
+                    GROUP BY echeanciers.NumDossier');
+                $InteretRembourse = $InteretRembourse[0] ?? 0;
 
-                    $soldeCreditRetard = $queryCreditRetard->first();
+                $InteretRestant = DB::select('SELECT SUM(echeanciers.Interet) as intereRestant from echeanciers 
+                    where echeanciers.NumDossier="' . $request->searched_num_dossier . '" 
+                    and echeanciers.posted=!1 and echeanciers.statutPayement=!1 
+                    GROUP BY echeanciers.NumDossier');
+                $InteretRestant = $InteretRestant[0] ?? 0;
 
-
-                    // $PAR = ($getSoldeCapRetardCDF->TotRetard) / ($getSoldeEncoursCreditCDF->SoldeEncoursCDF + $getSoldeCapRetardCDF->TotRetard) * 100;
-
-                    $denominator = $soldeEncoursUSD + $soldeCreditRetard->TotRetard;
-                    
-                    if ($denominator != 0 and $denominator > 0) {
-                        $PAR = ($soldeCreditRetard->TotRetard / $denominator) * 100;
-                    } else {
-                        $PAR = 0; // Ou une valeur par défaut
-                    }
-
-
-                    return response()->json([
-                        "status" => 1,
-                        "data_balance_agee" => $dataBalanceAgee,
-                        "soldeEncourUSD" => $soldeEncoursUSD,
-                        "totRetardUSD" => $PAR
-                    ]);
-                }
+                return response()->json([
+                    "status" => 1,
+                    "data_ammortissement" => $data,
+                    "msg" => "Resultat trouvé",
+                    "sommeInteret_ammort" => $dataSommeInter,
+                    "NomCompte" => $NomCompte,
+                    "soldeRestant" => $SoldeCreditRestant,
+                    "soldeEnRetard" => $soldeEnRetard,
+                    "capitalRembourse" => $capitalRembours,
+                    "interetRembourse" => $InteretRembourse,
+                    "interetRestant" => $InteretRestant
+                ]);
             } else {
                 return response()->json([
                     "status" => 0,
-                    "msg" => "Vous devez sélectionner la devise pour affiche la balance"
+                    "msg" => "Aucun écheancier n'est associé au numéro de dossier renseigné rassurez vous que vous avez entré un bon numéro de dossier ou que vous avez généré son écheancier merci !"
                 ]);
             }
-        } else if ($request->radioValue == "par") {
+        } else {
+            return response()->json([
+                "status" => 0,
+                "msg" => "Vous devez renseigné le numero de dossier!"
+            ]);
+        }
+    } else if (isset($request->radioValue) and $request->radioValue == "balance_agee") {
+        if (isset($request->devise) and isset($request->selectedDate)) {
+            $agentCreditName = $request->agent_credit_name;
+            $devise = $request->devise;
 
-            $date = $request->date_par ?? now()->toDateString();
-            $devise = $request->devise_par;
-            $gestionnaire = $request->gestionnaire_par;
+            // Requête commune pour la balance âgée (CDF ou USD)
+            $balanceQuery = Portefeuille::where("portefeuilles.CodeMonnaie", "=", $devise)
+                ->where("portefeuilles.Octroye", 1)
+                ->where("portefeuilles.Cloture", "!=", 1)
+                ->when(!empty($request->selectedDate), function ($query) use ($request) {
+                    $query->whereDate("portefeuilles.DateOctroi", "<=", $request->selectedDate);
+                })
+                ->join("comptes", "portefeuilles.NumCompteEpargne", "=", "comptes.NumCompte")
+                ->leftJoin("jour_retards", "portefeuilles.NumCompteEpargne", "=", "jour_retards.NumcompteEpargne")
+                ->leftJoin("echeanciers", "portefeuilles.NumDossier", "=", "echeanciers.NumDossier")
+                ->when(!empty($agentCreditName), function ($query) use ($agentCreditName) {
+                    $query->where("portefeuilles.Gestionnaire", $agentCreditName);
+                })
+                ->when($codeAgence, function($q) use ($codeAgence) {
+                    return $q->where('portefeuilles.CodeAgence', $codeAgence);
+                })
+                ->selectRaw('
+                    portefeuilles.NumDossier,
+                    portefeuilles.NumCompteEpargne,
+                    portefeuilles.CodeMonnaie,
+                    portefeuilles.NumCompteCredit,
+                    portefeuilles.NomCompte,
+                    portefeuilles.DateOctroi,
+                    portefeuilles.DateEcheance,
+                    portefeuilles.MontantAccorde,
+                    portefeuilles.Duree,
+                    jour_retards.DateRetard,
+                    jour_retards.NbrJrRetard,
+                    SUM(CASE WHEN echeanciers.statutPayement = 1 AND echeanciers.posted = 1 THEN echeanciers.CapAmmorti ELSE 0 END) AS TotalCapitalRembourse,
+                    SUM(CASE WHEN echeanciers.statutPayement = 1 AND echeanciers.posted = 1 THEN echeanciers.Interet ELSE 0 END) AS TotalInteretRembourse,
+                    SUM(echeanciers.CapAmmorti) - SUM(CASE WHEN echeanciers.StatutPayement = 1 AND echeanciers.Posted = 1 THEN echeanciers.CapAmmorti ELSE 0 END) AS CapitalRestant,
+                    SUM(echeanciers.Interet) - SUM(CASE WHEN echeanciers.StatutPayement = 1 AND echeanciers.Posted = 1 THEN echeanciers.Interet ELSE 0 END) AS InteretRestant
+                ')
+                ->groupBy(
+                    'portefeuilles.NumDossier',
+                    'portefeuilles.NumCompteEpargne',
+                    'portefeuilles.CodeMonnaie',
+                    'portefeuilles.NumCompteCredit',
+                    'portefeuilles.NomCompte',
+                    'portefeuilles.DateOctroi',
+                    'portefeuilles.DateEcheance',
+                    'portefeuilles.MontantAccorde',
+                    'portefeuilles.Duree',
+                    'jour_retards.DateRetard',
+                    'jour_retards.NbrJrRetard'
+                )
+                ->orderBy('portefeuilles.DateOctroi', 'desc');
 
-            // Sous‑requête : total payé par échéance
-            $subRemboursement = DB::table('remboursementcredits')
-                ->selectRaw('RefEcheance, SUM(CapitalPaye) as total_paye')
-                ->groupBy('RefEcheance');
+            $dataBalanceAgee = $balanceQuery->get();
 
-            // Sous‑requête : total remboursé par dossier
-            $subRemboursementGlobal = DB::table('remboursementcredits')
-                ->selectRaw('NumDossie as NumDossier, SUM(CapitalPaye) as total_rembourse')
+            // Calcul de l'encours global et du PAR
+            $subQueryRemboursement = DB::table('remboursementcredits')
+                ->selectRaw('NumDossie, SUM(CapitalPaye) as total_paye')
                 ->groupBy('NumDossie');
 
-            $query = DB::table('echeanciers as e')
-                ->join('portefeuilles as p', 'e.NumDossier', '=', 'p.NumDossier')
-                ->leftJoinSub($subRemboursement, 'r', fn($join) => $join->on('e.ReferenceEch', '=', 'r.RefEcheance'))
-                ->leftJoinSub($subRemboursementGlobal, 'rg', fn($join) => $join->on('p.NumDossier', '=', 'rg.NumDossier'))
-                ->where(fn($q) => $q->where('p.Cloture', '!=', 1)->orWhereNull('p.Cloture'))
-                ->where(fn($q) => $q->where('p.Accorde', '=', 1)->orWhereNull('p.Accorde'))
-                ->where(fn($q) => $q->where('p.Octroye', '=', 1)->orWhereNull('p.Octroye'))
-                ->selectRaw("
+            $encoursQuery = DB::table('portefeuilles as p')
+                ->leftJoinSub($subQueryRemboursement, 'r', function ($join) {
+                    $join->on('p.NumDossier', '=', 'r.NumDossie');
+                })
+                ->where('p.CodeMonnaie', $devise)
+                ->when(!empty($agentCreditName), function ($q) use ($agentCreditName) {
+                    $q->where('p.Gestionnaire', $agentCreditName);
+                })
+                ->when($codeAgence, function($q) use ($codeAgence) {
+                    return $q->where('p.CodeAgence', $codeAgence);
+                })
+                ->selectRaw('SUM(GREATEST(p.MontantAccorde - COALESCE(r.total_paye, 0), 0)) AS SoldeEncours');
+
+            $resultEncours = $encoursQuery->first();
+            $soldeEncours = $resultEncours->SoldeEncours ?? 0;
+
+            $debitCol = $devise === 'USD' ? 'Debitusd' : 'Debitfc';
+            $creditCol = $devise === 'USD' ? 'Creditusd' : 'Creditfc';
+            $codeMonnaie = $devise === 'USD' ? 1 : 2;
+
+            $queryCreditRetard = DB::table('transactions')
+                ->join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
+                ->selectRaw("SUM(transactions.$debitCol) - SUM(transactions.$creditCol) AS TotRetard")
+                ->where('comptes.RefSousGroupe', 3900)
+                ->where('comptes.CodeMonnaie', $codeMonnaie)
+                ->when(!empty($request->selectedDate), function ($query) use ($request) {
+                    $query->whereDate('transactions.DateTransaction', '<=', $request->selectedDate);
+                })
+                ->when(!empty($agentCreditName), function ($query) use ($agentCreditName) {
+                    $query->where('transactions.Operant', $agentCreditName);
+                });
+
+            $soldeCreditRetard = $queryCreditRetard->first();
+
+            $denominator = $soldeEncours + ($soldeCreditRetard->TotRetard ?? 0);
+            if ($denominator != 0 && $denominator > 0) {
+                $PAR = ($soldeCreditRetard->TotRetard / $denominator) * 100;
+            } else {
+                $PAR = 0;
+            }
+
+            return response()->json([
+                "status" => 1,
+                "data_balance_agee" => $dataBalanceAgee,
+                "soldeEncour".($devise === 'USD' ? 'USD' : 'CDF') => $soldeEncours,
+                "totRetard".($devise === 'USD' ? 'USD' : 'CDF') => $PAR
+            ]);
+        } else {
+            return response()->json([
+                "status" => 0,
+                "msg" => "Vous devez sélectionner la devise pour afficher la balance"
+            ]);
+        }
+    } else if ($request->radioValue == "par") {
+        $date = $request->date_par ?? now()->toDateString();
+        $devise = $request->devise_par;
+        $gestionnaire = $request->gestionnaire_par;
+
+        // Sous‑requête : total payé par échéance
+        $subRemboursement = DB::table('remboursementcredits')
+            ->selectRaw('RefEcheance, SUM(CapitalPaye) as total_paye')
+            ->groupBy('RefEcheance');
+
+        $subRemboursementGlobal = DB::table('remboursementcredits')
+            ->selectRaw('NumDossie as NumDossier, SUM(CapitalPaye) as total_rembourse')
+            ->groupBy('NumDossie');
+
+        $query = DB::table('echeanciers as e')
+            ->join('portefeuilles as p', 'e.NumDossier', '=', 'p.NumDossier')
+            ->leftJoinSub($subRemboursement, 'r', fn($join) => $join->on('e.ReferenceEch', '=', 'r.RefEcheance'))
+            ->leftJoinSub($subRemboursementGlobal, 'rg', fn($join) => $join->on('p.NumDossier', '=', 'rg.NumDossier'))
+            ->where(fn($q) => $q->where('p.Cloture', '!=', 1)->orWhereNull('p.Cloture'))
+            ->where(fn($q) => $q->where('p.Accorde', '=', 1)->orWhereNull('p.Accorde'))
+            ->where(fn($q) => $q->where('p.Octroye', '=', 1)->orWhereNull('p.Octroye'))
+            ->when($codeAgence, function($q) use ($codeAgence) {
+                return $q->where('p.CodeAgence', $codeAgence);
+            })
+            ->selectRaw("
                 p.Gestionnaire,
                 COUNT(DISTINCT p.NumDossier) AS NbrCredits,
                 SUM(p.MontantAccorde) AS TotalAccorde,
@@ -854,94 +689,91 @@ class ReportsController extends Controller
                 SUM(CASE WHEN DATEDIFF('$date', e.DateTranch) > 180
                     THEN (e.CapAmmorti - COALESCE(r.total_paye,0)) ELSE 0 END) AS PAR_PLUS_180
             ")
-                ->groupBy('p.Gestionnaire');
+            ->groupBy('p.Gestionnaire');
 
-            // Appliquer les filtres
-            if (!empty($devise)) {
-                $query->where('p.CodeMonnaie', $devise);
-            }
-            if (!empty($gestionnaire) && $gestionnaire !== 'Tous') {
-                $query->where('p.Gestionnaire', $gestionnaire);
-            }
-
-            $parData = $query->get()->keyBy('Gestionnaire');
-
-            // Données du portefeuille (pour les totaux)
-            $portefeuilleQuery = DB::table('portefeuilles')
-                ->selectRaw("Gestionnaire, COUNT(DISTINCT NumDossier) AS NbrCredits, SUM(MontantAccorde) AS TotalAccorde")
-                ->groupBy('Gestionnaire');
-            if (!empty($devise)) $portefeuilleQuery->where('CodeMonnaie', $devise);
-            if (!empty($gestionnaire) && $gestionnaire !== 'Tous') $portefeuilleQuery->where('Gestionnaire', $gestionnaire);
-            $portefeuilleData = $portefeuilleQuery->get()->keyBy('Gestionnaire');
-
-            // Fusion et calcul des indicateurs PAR
-            $data = $parData->map(function ($row, $gestionnaire) use ($portefeuilleData) {
-                $p = $portefeuilleData[$gestionnaire] ?? null;
-                $row->NbrCredits = $p->NbrCredits ?? 0;
-                $row->TotalAccorde = $p->TotalAccorde ?? 0;
-
-                $row->PAR_SUP_1 = $row->PAR_1_30 + $row->PAR_31_60 + $row->PAR_61_90 + $row->PAR_91_180 + $row->PAR_PLUS_180;
-                $row->PAR_SUP_30 = $row->PAR_31_60 + $row->PAR_61_90 + $row->PAR_91_180 + $row->PAR_PLUS_180;
-                $row->PAR_SUP_60 = $row->PAR_61_90 + $row->PAR_91_180 + $row->PAR_PLUS_180;
-                $row->PAR_SUP_90 = $row->PAR_91_180 + $row->PAR_PLUS_180;
-
-                $encours = max($row->EncoursTotal, 0.0001);
-                $row->TAUX_PAR_INTERNE = round(($row->PAR_SUP_1 / $encours) * 100, 2);
-                return $row;
-            });
-
-            // Total général
-            $total = [
-                'Gestionnaire'   => 'TOTAL GENERAL',
-                'NbrCredits'     => $data->sum('NbrCredits'),
-                'TotalAccorde'   => $data->sum('TotalAccorde'),
-                'EncoursReel'    => $data->sum('EncoursReel'),
-                'EncoursTotal'   => $data->sum('EncoursTotal'),
-                'EncoursSain'    => $data->sum('EncoursSain'),
-                'PAR_1_30'       => $data->sum('PAR_1_30'),
-                'PAR_31_60'      => $data->sum('PAR_31_60'),
-                'PAR_61_90'      => $data->sum('PAR_61_90'),
-                'PAR_91_180'     => $data->sum('PAR_91_180'),
-                'PAR_PLUS_180'   => $data->sum('PAR_PLUS_180'),
-                'PAR_SUP_1'      => $data->sum('PAR_SUP_1'),
-                'PAR_SUP_30'     => $data->sum('PAR_SUP_30'),
-                'PAR_SUP_60'     => $data->sum('PAR_SUP_60'),
-                'PAR_SUP_90'     => $data->sum('PAR_SUP_90'),
-            ];
-            $total['TAUX_PAR_INTERNE'] = round(($total['PAR_SUP_1'] / max($total['EncoursTotal'], 0.0001)) * 100, 2);
-
-            // Pourcentage global du PAR (tous gestionnaires confondus)
-            $encoursGlobal = DB::table('portefeuilles')->when($devise, fn($q) => $q->where('CodeMonnaie', $devise))->sum('MontantAccorde');
-            $parGlobal = $data->sum('PAR_SUP_1');
-            $parGlobalPercent = round(($parGlobal / max($encoursGlobal, 0.0001)) * 100, 2);
-
-
-            // Pourcentages globaux (basés sur l'encours global)
-            $globalPercentages = [
-                'Sain'      => $encoursGlobal > 0 ? round(($total['EncoursSain'] / $encoursGlobal) * 100, 2) : 0,
-                '1_30'      => $encoursGlobal > 0 ? round(($total['PAR_1_30'] / $encoursGlobal) * 100, 2) : 0,
-                '31_60'     => $encoursGlobal > 0 ? round(($total['PAR_31_60'] / $encoursGlobal) * 100, 2) : 0,
-                '61_90'     => $encoursGlobal > 0 ? round(($total['PAR_61_90'] / $encoursGlobal) * 100, 2) : 0,
-                '91_180'    => $encoursGlobal > 0 ? round(($total['PAR_91_180'] / $encoursGlobal) * 100, 2) : 0,
-                'Plus180'   => $encoursGlobal > 0 ? round(($total['PAR_PLUS_180'] / $encoursGlobal) * 100, 2) : 0,
-                'PAR_SUP_1' => $encoursGlobal > 0 ? round(($total['PAR_SUP_1'] / $encoursGlobal) * 100, 2) : 0,
-                'PAR_SUP_30' => $encoursGlobal > 0 ? round(($total['PAR_SUP_30'] / $encoursGlobal) * 100, 2) : 0,
-                'PAR_SUP_60' => $encoursGlobal > 0 ? round(($total['PAR_SUP_60'] / $encoursGlobal) * 100, 2) : 0,
-                'PAR_SUP_90' => $encoursGlobal > 0 ? round(($total['PAR_SUP_90'] / $encoursGlobal) * 100, 2) : 0,
-            ];
-            return response()->json([
-                'status' => 1,
-                'data'   => $data->values(),
-                'total'  => $total,
-                'par_global_percent' => $parGlobalPercent,
-                'global_percentages' => $globalPercentages,  // <-- NOUVEAU
-                'encours_global' => $encoursGlobal
-            ]);
+        if (!empty($devise)) {
+            $query->where('p.CodeMonnaie', $devise);
+        }
+        if (!empty($gestionnaire) && $gestionnaire !== 'Tous') {
+            $query->where('p.Gestionnaire', $gestionnaire);
         }
 
-        return response()->json(['status' => 0, 'msg' => 'Type de rapport non reconnu']);
+        $parData = $query->get()->keyBy('Gestionnaire');
+
+        $portefeuilleQuery = DB::table('portefeuilles')
+            ->selectRaw("Gestionnaire, COUNT(DISTINCT NumDossier) AS NbrCredits, SUM(MontantAccorde) AS TotalAccorde")
+            ->groupBy('Gestionnaire')
+            ->when($codeAgence, function($q) use ($codeAgence) {
+                return $q->where('CodeAgence', $codeAgence);
+            });
+        if (!empty($devise)) $portefeuilleQuery->where('CodeMonnaie', $devise);
+        if (!empty($gestionnaire) && $gestionnaire !== 'Tous') $portefeuilleQuery->where('Gestionnaire', $gestionnaire);
+        $portefeuilleData = $portefeuilleQuery->get()->keyBy('Gestionnaire');
+
+        $data = $parData->map(function ($row, $gestionnaire) use ($portefeuilleData) {
+            $p = $portefeuilleData[$gestionnaire] ?? null;
+            $row->NbrCredits = $p->NbrCredits ?? 0;
+            $row->TotalAccorde = $p->TotalAccorde ?? 0;
+            $row->PAR_SUP_1 = $row->PAR_1_30 + $row->PAR_31_60 + $row->PAR_61_90 + $row->PAR_91_180 + $row->PAR_PLUS_180;
+            $row->PAR_SUP_30 = $row->PAR_31_60 + $row->PAR_61_90 + $row->PAR_91_180 + $row->PAR_PLUS_180;
+            $row->PAR_SUP_60 = $row->PAR_61_90 + $row->PAR_91_180 + $row->PAR_PLUS_180;
+            $row->PAR_SUP_90 = $row->PAR_91_180 + $row->PAR_PLUS_180;
+            $encours = max($row->EncoursTotal, 0.0001);
+            $row->TAUX_PAR_INTERNE = round(($row->PAR_SUP_1 / $encours) * 100, 2);
+            return $row;
+        });
+
+        $total = [
+            'Gestionnaire'   => 'TOTAL GENERAL',
+            'NbrCredits'     => $data->sum('NbrCredits'),
+            'TotalAccorde'   => $data->sum('TotalAccorde'),
+            'EncoursReel'    => $data->sum('EncoursReel'),
+            'EncoursTotal'   => $data->sum('EncoursTotal'),
+            'EncoursSain'    => $data->sum('EncoursSain'),
+            'PAR_1_30'       => $data->sum('PAR_1_30'),
+            'PAR_31_60'      => $data->sum('PAR_31_60'),
+            'PAR_61_90'      => $data->sum('PAR_61_90'),
+            'PAR_91_180'     => $data->sum('PAR_91_180'),
+            'PAR_PLUS_180'   => $data->sum('PAR_PLUS_180'),
+            'PAR_SUP_1'      => $data->sum('PAR_SUP_1'),
+            'PAR_SUP_30'     => $data->sum('PAR_SUP_30'),
+            'PAR_SUP_60'     => $data->sum('PAR_SUP_60'),
+            'PAR_SUP_90'     => $data->sum('PAR_SUP_90'),
+        ];
+        $total['TAUX_PAR_INTERNE'] = round(($total['PAR_SUP_1'] / max($total['EncoursTotal'], 0.0001)) * 100, 2);
+
+        $encoursGlobal = DB::table('portefeuilles')
+            ->when($devise, fn($q) => $q->where('CodeMonnaie', $devise))
+            ->when($codeAgence, fn($q) => $q->where('CodeAgence', $codeAgence))
+            ->sum('MontantAccorde');
+        $parGlobal = $data->sum('PAR_SUP_1');
+        $parGlobalPercent = round(($parGlobal / max($encoursGlobal, 0.0001)) * 100, 2);
+
+        $globalPercentages = [
+            'Sain'      => $encoursGlobal > 0 ? round(($total['EncoursSain'] / $encoursGlobal) * 100, 2) : 0,
+            '1_30'      => $encoursGlobal > 0 ? round(($total['PAR_1_30'] / $encoursGlobal) * 100, 2) : 0,
+            '31_60'     => $encoursGlobal > 0 ? round(($total['PAR_31_60'] / $encoursGlobal) * 100, 2) : 0,
+            '61_90'     => $encoursGlobal > 0 ? round(($total['PAR_61_90'] / $encoursGlobal) * 100, 2) : 0,
+            '91_180'    => $encoursGlobal > 0 ? round(($total['PAR_91_180'] / $encoursGlobal) * 100, 2) : 0,
+            'Plus180'   => $encoursGlobal > 0 ? round(($total['PAR_PLUS_180'] / $encoursGlobal) * 100, 2) : 0,
+            'PAR_SUP_1' => $encoursGlobal > 0 ? round(($total['PAR_SUP_1'] / $encoursGlobal) * 100, 2) : 0,
+            'PAR_SUP_30' => $encoursGlobal > 0 ? round(($total['PAR_SUP_30'] / $encoursGlobal) * 100, 2) : 0,
+            'PAR_SUP_60' => $encoursGlobal > 0 ? round(($total['PAR_SUP_60'] / $encoursGlobal) * 100, 2) : 0,
+            'PAR_SUP_90' => $encoursGlobal > 0 ? round(($total['PAR_SUP_90'] / $encoursGlobal) * 100, 2) : 0,
+        ];
+
+        return response()->json([
+            'status' => 1,
+            'data'   => $data->values(),
+            'total'  => $total,
+            'par_global_percent' => $parGlobalPercent,
+            'global_percentages' => $globalPercentages,
+            'encours_global' => $encoursGlobal
+        ]);
     }
 
+    return response()->json(['status' => 0, 'msg' => 'Type de rapport non reconnu']);
+}
 
 
     //GET BALANCE HOME PAGE 
@@ -1943,102 +1775,137 @@ class ReportsController extends Controller
 
     //PERMET DE RECUPERER LE REMBOURSEMENT ATTENDU
 
-    public function getRemboursAttendu(Request $request)
-    {
-        // dd($request->all());
-        // $nombreSemaine = 1;
-        $date1 = $request->dateToSearch1;
-        $date2 = $request->dateToSearch2;
-        if (isset($date1) and isset($date2)) {
-            if ($request->devise == "CDF") {
+   public function getRemboursAttendu(Request $request)
+{
+    $date1 = $request->dateToSearch1;
+    $date2 = $request->dateToSearch2;
+    if (isset($date1) and isset($date2)) {
+        // ----- GESTION DU FILTRE AGENCE -----
+        $agenceFilter = $request->agence_filter ?? 'current';
+        $codeAgence = null;
+        $user = auth()->user();
 
+        if ($agenceFilter === 'current') {
+            $currentAgence = session('current_agence');
+            $codeAgence = $currentAgence['code_agence'] ?? null;
+            if (!$codeAgence) {
+                return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
+            }
+        } elseif ($agenceFilter === 'all') {
+            $codeAgence = null;
+        } else {
+            $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
+            if (!$agence) {
+                return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
+            }
+            $codeAgence = $agence->code_agence;
+        }
 
-                $data = DB::table('echeanciers')
-                    ->leftJoin('portefeuilles', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
-                    ->select(
-                        'echeanciers.*',
-                        'portefeuilles.*',
-                        DB::raw('IFNULL((SELECT SUM(transactions.Creditfc) - SUM(transactions.Debitfc) 
-          FROM transactions 
-          WHERE transactions.NumCompte = portefeuilles.NumCompteEpargne 
-          AND transactions.extourner != 1), 0) AS soldeMembreCDF')
-                    )
+        if ($request->devise == "CDF") {
+            $data = DB::table('echeanciers')
+                ->leftJoin('portefeuilles', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
+                ->select(
+                    'echeanciers.*',
+                    'portefeuilles.*',
+                    DB::raw('IFNULL((SELECT SUM(transactions.Creditfc) - SUM(transactions.Debitfc) 
+                      FROM transactions 
+                      WHERE transactions.NumCompte = portefeuilles.NumCompteEpargne 
+                      AND transactions.extourner != 1
+                      ' . ($codeAgence ? "AND transactions.CodeAgence = '{$codeAgence}'" : '') . '), 0) AS soldeMembreCDF')
+                )
+                ->whereBetween('echeanciers.DateTranch', [$date1, $date2])
+                ->where('portefeuilles.CodeMonnaie', 'CDF')
+                ->where('portefeuilles.Cloture', '!=', 1)
+                ->where('portefeuilles.Accorde', 1)
+                ->where('portefeuilles.Octroye', 1)
+                ->where(function ($query) {
+                    $query->where('echeanciers.CapAmmorti', '>', 0)
+                        ->orWhere('echeanciers.Interet', '>', 0);
+                })
+                ->when(!empty($request->agent_credit_name), function ($query) use ($request) {
+                    $query->where('portefeuilles.Gestionnaire', $request->agent_credit_name);
+                })
+                ->when($codeAgence, function ($query) use ($codeAgence) {
+                    $query->where('portefeuilles.CodeAgence', $codeAgence);
+                })
+                ->orderBy('echeanciers.DateTranch')
+                ->get();
+
+            if (count($data) != 0) {
+                $sommeQuery = DB::table('echeanciers')
+                    ->join('portefeuilles', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
                     ->whereBetween('echeanciers.DateTranch', [$date1, $date2])
                     ->where('portefeuilles.CodeMonnaie', 'CDF')
                     ->where('portefeuilles.Cloture', '!=', 1)
                     ->where('portefeuilles.Accorde', 1)
                     ->where('portefeuilles.Octroye', 1)
-                    ->where(function ($query) {
-                        $query->where('echeanciers.CapAmmorti', '>', 0)
-                            ->orWhere('echeanciers.Interet', '>', 0);
+                    ->when(!empty($request->agent_credit_name), function ($q) use ($request) {
+                        $q->where('portefeuilles.Gestionnaire', $request->agent_credit_name);
                     })
-                    ->when(!empty($request->agent_credit_name), function ($query) use ($request) {
-                        $query->where('portefeuilles.Gestionnaire', $request->agent_credit_name);
+                    ->when($codeAgence, function ($q) use ($codeAgence) {
+                        $q->where('portefeuilles.CodeAgence', $codeAgence);
                     })
-                    ->orderBy('echeanciers.DateTranch')
-                    ->get();
-
-
-
-
-
-
-                //RECUPERE LA SOMME
-                if (count($data) != 0) {
-                    $dataSomme = DB::select('SELECT SUM(CapAmmorti) as sommeCapApayer,SUM(Interet) as sommeInteretApayer FROM echeanciers  WHERE echeanciers.DateTranch BETWEEN "' . $date1 . '" AND "' . $date2 . '"')[0];
-                    return response()->json(["status" => 1, "data" => $data, "dataSomme" => $dataSomme]);
-                } else {
-                    return response()->json(["status" => 0, "msg" => "Pas des données trouvées"]);
-                }
+                    ->selectRaw('SUM(echeanciers.CapAmmorti) as sommeCapApayer, SUM(echeanciers.Interet) as sommeInteretApayer');
+                $dataSomme = $sommeQuery->first();
+                return response()->json(["status" => 1, "data" => $data, "dataSomme" => $dataSomme]);
+            } else {
+                return response()->json(["status" => 0, "msg" => "Pas de données trouvées"]);
             }
-            if ($request->devise == "USD") {
-
-
-                // $data = DB::select('SELECT * FROM echeanciers 
-                // LEFT JOIN portefeuilles 
-                // ON echeanciers.NumDossier=portefeuilles.NumDossier 
-                // WHERE echeanciers.DateTranch 
-                // BETWEEN "' . $date1 . '" AND "' . $date2 . '" 
-                // AND portefeuilles.CodeMonnaie="USD" AND portefeuilles.Cloture!=1 
-                // AND portefeuilles.Accorde=1 AND portefeuilles.Octroye=1  
-                // AND (echeanciers.CapAmmorti>0 OR echeanciers.Interet>0) 
-                // ORDER BY echeanciers.DateTranch');
-                $data = DB::table('echeanciers')
-                    ->leftJoin('portefeuilles', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
-                    ->select(
-                        'echeanciers.*',
-                        'portefeuilles.*',
-                        DB::raw('IFNULL((SELECT SUM(transactions.Creditusd) - SUM(transactions.Debitusd) 
+        }
+        if ($request->devise == "USD") {
+            $data = DB::table('echeanciers')
+                ->leftJoin('portefeuilles', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
+                ->select(
+                    'echeanciers.*',
+                    'portefeuilles.*',
+                    DB::raw('IFNULL((SELECT SUM(transactions.Creditusd) - SUM(transactions.Debitusd) 
                       FROM transactions 
-                      WHERE transactions.NumCompte = portefeuilles.NumCompteEpargne AND transactions.extourner != 1), 0) AS soldeMembreUSD')
-                    )
+                      WHERE transactions.NumCompte = portefeuilles.NumCompteEpargne AND transactions.extourner != 1
+                      ' . ($codeAgence ? "AND transactions.CodeAgence = '{$codeAgence}'" : '') . '), 0) AS soldeMembreUSD')
+                )
+                ->whereBetween('echeanciers.DateTranch', [$date1, $date2])
+                ->where('portefeuilles.CodeMonnaie', 'USD')
+                ->where('portefeuilles.Cloture', '!=', 1)
+                ->where('portefeuilles.Accorde', 1)
+                ->where('portefeuilles.Octroye', 1)
+                ->where(function ($query) {
+                    $query->where('echeanciers.CapAmmorti', '>', 0)
+                        ->orWhere('echeanciers.Interet', '>', 0);
+                })
+                ->when(!empty($request->agent_credit_name), function ($query) use ($request) {
+                    $query->where('portefeuilles.Gestionnaire', $request->agent_credit_name);
+                })
+                ->when($codeAgence, function ($query) use ($codeAgence) {
+                    $query->where('portefeuilles.CodeAgence', $codeAgence);
+                })
+                ->orderBy('echeanciers.DateTranch')
+                ->get();
+
+            if (count($data) != 0) {
+                $sommeQuery = DB::table('echeanciers')
+                    ->join('portefeuilles', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
                     ->whereBetween('echeanciers.DateTranch', [$date1, $date2])
                     ->where('portefeuilles.CodeMonnaie', 'USD')
                     ->where('portefeuilles.Cloture', '!=', 1)
                     ->where('portefeuilles.Accorde', 1)
                     ->where('portefeuilles.Octroye', 1)
-                    ->where(function ($query) {
-                        $query->where('echeanciers.CapAmmorti', '>', 0)
-                            ->orWhere('echeanciers.Interet', '>', 0);
+                    ->when(!empty($request->agent_credit_name), function ($q) use ($request) {
+                        $q->where('portefeuilles.Gestionnaire', $request->agent_credit_name);
                     })
-                    ->when(!empty($request->agent_credit_name), function ($query) use ($request) {
-                        $query->where('portefeuilles.Gestionnaire', $request->agent_credit_name);
+                    ->when($codeAgence, function ($q) use ($codeAgence) {
+                        $q->where('portefeuilles.CodeAgence', $codeAgence);
                     })
-                    ->orderBy('echeanciers.DateTranch')
-                    ->get();
-
-                //RECUPERE LA SOMME
-                if (count($data) != 0) {
-                    $dataSomme = DB::select('SELECT SUM(CapAmmorti) as sommeCapApayer,SUM(Interet) as sommeInteretApayer FROM echeanciers  WHERE echeanciers.DateTranch BETWEEN "' . $date1 . '" AND "' . $date2 . '"')[0];
-                    return response()->json(["status" => 1, "data" => $data, "dataSomme" => $dataSomme]);
-                } else {
-                    return response()->json(["status" => 0, "msg" => "Pas des données trouvées"]);
-                }
+                    ->selectRaw('SUM(echeanciers.CapAmmorti) as sommeCapApayer, SUM(echeanciers.Interet) as sommeInteretApayer');
+                $dataSomme = $sommeQuery->first();
+                return response()->json(["status" => 1, "data" => $data, "dataSomme" => $dataSomme]);
+            } else {
+                return response()->json(["status" => 0, "msg" => "Pas de données trouvées"]);
             }
-        } else {
-            return response()->json(["status" => 0, "msg" => "Veuillez renseigner la date de début et la date de fin"]);
         }
+    } else {
+        return response()->json(["status" => 0, "msg" => "Veuillez renseigner la date de début et la date de fin"]);
     }
+}
 
     public function getSommaireCompteHomePage()
     {
@@ -2066,88 +1933,104 @@ class ReportsController extends Controller
         }
     }
 
-    //PERMET D'AFFICHER LE SOMMAIRE DE COMPTES
-    public function getSommaireCompte(Request $request)
-    {
-        $date1 = $request->date_debut_balance;
-        $date2 = $request->date_fin_balance;
-        $sousGroupeCompte = $request->sous_groupe_compte;
+   public function getSommaireCompte(Request $request)
+{
+    $date1 = $request->date_debut_balance;
+    $date2 = $request->date_fin_balance;
+    $sousGroupeCompte = $request->sous_groupe_compte;
 
-        // Déterminer le CodeMonnaie et les colonnes en fonction de la valeur entrée
-        // RefSousGroupe est TOUJOURS '3300' pour les deux devises
-        $refSousGroupe = '3300';
+    // ----- Gestion du filtre agence -----
+    $agenceFilter = $request->agence_filter ?? 'current';
+    $codeAgence = null;
+    $user = auth()->user();
 
-        if ($sousGroupeCompte == 3300) {
-            // USD
-            $codeMonnaie = 1;
-            $debitCol = 'Debitusd';
-            $creditCol = 'Creditusd';
-        } elseif ($sousGroupeCompte == 3301) {
-            // CDF
-            $codeMonnaie = 2;
-            $debitCol = 'Debitfc';
-            $creditCol = 'Creditfc';
-        } else {
-            return response()->json(["status" => 0, "msg" => "Code invalide. Utilisez 3300 pour USD ou 3301 pour CDF"]);
+    if ($agenceFilter === 'current') {
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
+        if (!$codeAgence) {
+            return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
         }
+    } elseif ($agenceFilter === 'all') {
+        $codeAgence = null;
+    } else {
+        $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
+        if (!$agence) {
+            return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
+        }
+        $codeAgence = $agence->code_agence;
+    }
+    // ----- Fin gestion agence -----
 
-        // Pour le rapport non converti
-        if (isset($request->radioValue) && $request->radioValue == "rapport_non_converti") {
-            $getSoldeCompte = DB::table('comptes as c')
-                ->leftJoin('transactions as t', 'c.NumCompte', '=', 't.NumCompte')
-                ->select(
-                    'c.NumCompte',
-                    'c.NomCompte',
-                    DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN t.$creditCol - t.$debitCol ELSE 0 END), 0) as soldeDebut"),
-                    DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN t.$creditCol - t.$debitCol ELSE 0 END), 0) as soldeFin")
-                )
-                ->where('c.RefSousGroupe', $refSousGroupe)  // Toujours '3300'
-                ->where('c.CodeMonnaie', $codeMonnaie)      // 1 pour USD, 2 pour CDF
-                ->where('c.niveau', 5)
-                ->where('c.est_classe', 0)
-                ->whereNotNull('c.NumCompte')
-                ->whereNotNull('c.NomCompte')
-                ->groupBy('c.NumCompte', 'c.NomCompte')
-                ->orderBy('c.NomCompte')
-                ->when(
-                    $request->has('critereSolde') && $request->has('critereSoldeAmount'),
-                    function ($query) use ($request) {
-                        $critere = $request->critereSolde;
-                        $amount = $request->critereSoldeAmount;
-                        switch ($critere) {
-                            case '>':
-                                return $query->havingRaw('soldeFin > ?', [$amount]);
-                            case '>=':
-                                return $query->havingRaw('soldeFin >= ?', [$amount]);
-                            case '<':
-                                return $query->havingRaw('soldeFin < ?', [$amount]);
-                            case '<=':
-                                return $query->havingRaw('soldeFin <= ?', [$amount]);
-                            case '=':
-                                return $query->havingRaw('soldeFin = ?', [$amount]);
-                            case '<>':
-                                return $query->havingRaw('soldeFin <> ?', [$amount]);
-                            default:
-                                return $query;
-                        }
+    $refSousGroupe = '3300';
+
+    if ($sousGroupeCompte == 3300) {
+        $codeMonnaie = 1;
+        $debitCol = 'Debitusd';
+        $creditCol = 'Creditusd';
+    } elseif ($sousGroupeCompte == 3301) {
+        $codeMonnaie = 2;
+        $debitCol = 'Debitfc';
+        $creditCol = 'Creditfc';
+    } else {
+        return response()->json(["status" => 0, "msg" => "Code invalide. Utilisez 3300 pour USD ou 3301 pour CDF"]);
+    }
+
+    // Rapport non converti
+    if (isset($request->radioValue) && $request->radioValue == "rapport_non_converti") {
+        $getSoldeCompte = DB::table('comptes as c')
+            ->leftJoin('transactions as t', 'c.NumCompte', '=', 't.NumCompte')
+            ->select(
+                'c.NumCompte',
+                'c.NomCompte',
+                DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN t.$creditCol - t.$debitCol ELSE 0 END), 0) as soldeDebut"),
+                DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN t.$creditCol - t.$debitCol ELSE 0 END), 0) as soldeFin")
+            )
+            ->where('c.RefSousGroupe', $refSousGroupe)
+            ->where('c.CodeMonnaie', $codeMonnaie)
+            ->where('c.niveau', 5)
+            ->where('c.est_classe', 0)
+            ->whereNotNull('c.NumCompte')
+            ->whereNotNull('c.NomCompte')
+            ->when($codeAgence, function($q) use ($codeAgence) {
+                return $q->where('c.CodeAgence', $codeAgence);
+            })
+            ->groupBy('c.NumCompte', 'c.NomCompte')
+            ->orderBy('c.NomCompte')
+            ->when(
+                $request->has('critereSolde') && $request->has('critereSoldeAmount'),
+                function ($query) use ($request) {
+                    $critere = $request->critereSolde;
+                    $amount = $request->critereSoldeAmount;
+                    switch ($critere) {
+                        case '>': return $query->havingRaw('soldeFin > ?', [$amount]);
+                        case '>=': return $query->havingRaw('soldeFin >= ?', [$amount]);
+                        case '<': return $query->havingRaw('soldeFin < ?', [$amount]);
+                        case '<=': return $query->havingRaw('soldeFin <= ?', [$amount]);
+                        case '=': return $query->havingRaw('soldeFin = ?', [$amount]);
+                        case '<>': return $query->havingRaw('soldeFin <> ?', [$amount]);
+                        default: return $query;
                     }
-                )
-                ->get();
+                }
+            )
+            ->get();
 
-            return response()->json(["status" => 1, "data" => $getSoldeCompte]);
-        }
+        return response()->json(["status" => 1, "data" => $getSoldeCompte]);
+    }
 
-        // Pour le rapport converti en CDF
-        if (isset($request->radioValue) && $request->radioValue == "balance_convertie_cdf") {
-            $getSoldeCompte = DB::table('comptes as c')
-                ->leftJoin('transactions as t', function ($join) use ($date2) {
-                    $join->on('c.NumCompte', '=', 't.NumCompte')
-                        ->where('t.DateTransaction', '<=', $date2);
-                })
-                ->select(
-                    'c.NumCompte',
-                    'c.NomCompte',
-                    DB::raw("
+    // Rapport converti en CDF
+    if (isset($request->radioValue) && $request->radioValue == "balance_convertie_cdf") {
+        $getSoldeCompte = DB::table('comptes as c')
+            ->leftJoin('transactions as t', function ($join) use ($date2, $codeAgence) {
+                $join->on('c.NumCompte', '=', 't.NumCompte')
+                    ->where('t.DateTransaction', '<=', $date2);
+                if ($codeAgence) {
+                    $join->where('t.CodeAgence', '=', $codeAgence);
+                }
+            })
+            ->select(
+                'c.NumCompte',
+                'c.NomCompte',
+                DB::raw("
                     COALESCE(SUM(
                         CASE 
                             WHEN t.CodeMonnaie = 2 AND t.DateTransaction <= '$date2' 
@@ -2158,53 +2041,52 @@ class ReportsController extends Controller
                         END
                     ), 0) as solde_consolide_cdf
                 ")
-                )
-                ->where('c.RefSousGroupe', $refSousGroupe)  // Toujours '3300'
-                ->where('c.niveau', 5)
-                ->where('c.est_classe', 0)
-                ->whereNotNull('c.NumCompte')
-                ->whereNotNull('c.NomCompte')
-                ->groupBy('c.NumCompte', 'c.NomCompte')
-                ->orderBy('c.NomCompte')
-                ->when(
-                    $request->has('critereSolde') && $request->has('critereSoldeAmount'),
-                    function ($query) use ($request) {
-                        $critere = $request->critereSolde;
-                        $amount = $request->critereSoldeAmount;
-                        switch ($critere) {
-                            case '>':
-                                return $query->havingRaw('solde_consolide_cdf > ?', [$amount]);
-                            case '>=':
-                                return $query->havingRaw('solde_consolide_cdf >= ?', [$amount]);
-                            case '<':
-                                return $query->havingRaw('solde_consolide_cdf < ?', [$amount]);
-                            case '<=':
-                                return $query->havingRaw('solde_consolide_cdf <= ?', [$amount]);
-                            case '=':
-                                return $query->havingRaw('solde_consolide_cdf = ?', [$amount]);
-                            case '<>':
-                                return $query->havingRaw('solde_consolide_cdf <> ?', [$amount]);
-                            default:
-                                return $query;
-                        }
+            )
+            ->where('c.RefSousGroupe', $refSousGroupe)
+            ->where('c.niveau', 5)
+            ->where('c.est_classe', 0)
+            ->whereNotNull('c.NumCompte')
+            ->whereNotNull('c.NomCompte')
+            ->when($codeAgence, function($q) use ($codeAgence) {
+                return $q->where('c.CodeAgence', $codeAgence);
+            })
+            ->groupBy('c.NumCompte', 'c.NomCompte')
+            ->orderBy('c.NomCompte')
+            ->when(
+                $request->has('critereSolde') && $request->has('critereSoldeAmount'),
+                function ($query) use ($request) {
+                    $critere = $request->critereSolde;
+                    $amount = $request->critereSoldeAmount;
+                    switch ($critere) {
+                        case '>': return $query->havingRaw('solde_consolide_cdf > ?', [$amount]);
+                        case '>=': return $query->havingRaw('solde_consolide_cdf >= ?', [$amount]);
+                        case '<': return $query->havingRaw('solde_consolide_cdf < ?', [$amount]);
+                        case '<=': return $query->havingRaw('solde_consolide_cdf <= ?', [$amount]);
+                        case '=': return $query->havingRaw('solde_consolide_cdf = ?', [$amount]);
+                        case '<>': return $query->havingRaw('solde_consolide_cdf <> ?', [$amount]);
+                        default: return $query;
                     }
-                )
-                ->get();
+                }
+            )
+            ->get();
 
-            return response()->json(["status" => 1, "data" => $getSoldeCompte]);
-        }
+        return response()->json(["status" => 1, "data" => $getSoldeCompte]);
+    }
 
-        // Pour le rapport converti en USD
-        if (isset($request->radioValue) && $request->radioValue == "balance_convertie_usd") {
-            $getSoldeCompte = DB::table('comptes as c')
-                ->leftJoin('transactions as t', function ($join) use ($date2) {
-                    $join->on('c.NumCompte', '=', 't.NumCompte')
-                        ->where('t.DateTransaction', '<=', $date2);
-                })
-                ->select(
-                    'c.NumCompte',
-                    'c.NomCompte',
-                    DB::raw("
+    // Rapport converti en USD
+    if (isset($request->radioValue) && $request->radioValue == "balance_convertie_usd") {
+        $getSoldeCompte = DB::table('comptes as c')
+            ->leftJoin('transactions as t', function ($join) use ($date2, $codeAgence) {
+                $join->on('c.NumCompte', '=', 't.NumCompte')
+                    ->where('t.DateTransaction', '<=', $date2);
+                if ($codeAgence) {
+                    $join->where('t.CodeAgence', '=', $codeAgence);
+                }
+            })
+            ->select(
+                'c.NumCompte',
+                'c.NomCompte',
+                DB::raw("
                     COALESCE(SUM(
                         CASE 
                             WHEN t.CodeMonnaie = 1 AND t.DateTransaction <= '$date2' 
@@ -2215,44 +2097,40 @@ class ReportsController extends Controller
                         END
                     ), 0) as solde_consolide_usd
                 ")
-                )
-                ->where('c.RefSousGroupe', $refSousGroupe)  // Toujours '3300'
-                ->where('c.niveau', 5)
-                ->where('c.est_classe', 0)
-                ->whereNotNull('c.NumCompte')
-                ->whereNotNull('c.NomCompte')
-                ->groupBy('c.NumCompte', 'c.NomCompte')
-                ->orderBy('c.NomCompte')
-                ->when(
-                    $request->has('critereSolde') && $request->has('critereSoldeAmount'),
-                    function ($query) use ($request) {
-                        $critere = $request->critereSolde;
-                        $amount = $request->critereSoldeAmount;
-                        switch ($critere) {
-                            case '>':
-                                return $query->havingRaw('solde_consolide_usd > ?', [$amount]);
-                            case '>=':
-                                return $query->havingRaw('solde_consolide_usd >= ?', [$amount]);
-                            case '<':
-                                return $query->havingRaw('solde_consolide_usd < ?', [$amount]);
-                            case '<=':
-                                return $query->havingRaw('solde_consolide_usd <= ?', [$amount]);
-                            case '=':
-                                return $query->havingRaw('solde_consolide_usd = ?', [$amount]);
-                            case '<>':
-                                return $query->havingRaw('solde_consolide_usd <> ?', [$amount]);
-                            default:
-                                return $query;
-                        }
+            )
+            ->where('c.RefSousGroupe', $refSousGroupe)
+            ->where('c.niveau', 5)
+            ->where('c.est_classe', 0)
+            ->whereNotNull('c.NumCompte')
+            ->whereNotNull('c.NomCompte')
+            ->when($codeAgence, function($q) use ($codeAgence) {
+                return $q->where('c.CodeAgence', $codeAgence);
+            })
+            ->groupBy('c.NumCompte', 'c.NomCompte')
+            ->orderBy('c.NomCompte')
+            ->when(
+                $request->has('critereSolde') && $request->has('critereSoldeAmount'),
+                function ($query) use ($request) {
+                    $critere = $request->critereSolde;
+                    $amount = $request->critereSoldeAmount;
+                    switch ($critere) {
+                        case '>': return $query->havingRaw('solde_consolide_usd > ?', [$amount]);
+                        case '>=': return $query->havingRaw('solde_consolide_usd >= ?', [$amount]);
+                        case '<': return $query->havingRaw('solde_consolide_usd < ?', [$amount]);
+                        case '<=': return $query->havingRaw('solde_consolide_usd <= ?', [$amount]);
+                        case '=': return $query->havingRaw('solde_consolide_usd = ?', [$amount]);
+                        case '<>': return $query->havingRaw('solde_consolide_usd <> ?', [$amount]);
+                        default: return $query;
                     }
-                )
-                ->get();
+                }
+            )
+            ->get();
 
-            return response()->json(["status" => 1, "data" => $getSoldeCompte]);
-        }
-
-        return response()->json(["status" => 0, "msg" => "Type de rapport non reconnu"]);
+        return response()->json(["status" => 1, "data" => $getSoldeCompte]);
     }
+
+    return response()->json(["status" => 0, "msg" => "Type de rapport non reconnu"]);
+}
 
     //RECUPERE LES APPRO JOURNALIERE 
 
@@ -2324,20 +2202,46 @@ class ReportsController extends Controller
     //     ->get();
 
 
-    public function getAgentCredit()
-    {
-        $getAgentCreditNames = DB::select("
-        SELECT DISTINCT users.id, users.name, users.email
-        FROM users
-        INNER JOIN profils_users ON users.id = profils_users.user_id
-        INNER JOIN profiles ON profils_users.profil_id = profiles.id
-    ");
+    // public function getAgentCredit()
+    // {
+    //     $getAgentCreditNames = DB::select("
+    //     SELECT DISTINCT users.id, users.name, users.email
+    //     FROM users
+    //     INNER JOIN profils_users ON users.id = profils_users.user_id
+    //     INNER JOIN profiles ON profils_users.profil_id = profiles.id
+    //     WHERE profiles.nom_profile='Agent de crédit'
+    // ");
 
-        return response()->json([
-            "get_agent_credit" => $getAgentCreditNames,
-            "status" => 1
-        ]);
+    //     return response()->json([
+    //         "get_agent_credit" => $getAgentCreditNames,
+    //         "status" => 1
+    //     ]);
+    // }
+
+    public function getAgentCredit()
+{
+    $currentAgence = session('current_agence');
+    $currentAgenceId = $currentAgence['id'] ?? null;
+
+    if (!$currentAgenceId) {
+        return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
     }
+
+    $getAgentCreditNames = User::select('users.id', 'users.name', 'users.email')
+        ->join('profils_users', 'users.id', '=', 'profils_users.user_id')
+        ->join('profiles', 'profils_users.profil_id', '=', 'profiles.id')
+        ->where('profiles.nom_profile', 'Agent de crédit')
+        ->whereHas('agences', function ($q) use ($currentAgenceId) {
+            $q->where('agences.id', $currentAgenceId);
+        })
+        ->distinct()
+        ->get();
+
+    return response()->json([
+        "get_agent_credit" => $getAgentCreditNames,
+        "status" => 1
+    ]);
+}
 
 
 

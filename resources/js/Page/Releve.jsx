@@ -26,9 +26,10 @@ const Releve = () => {
     const [getDevise, setGetDevise] = useState();
     const [getSoldeInfo, setGetSoldeInfo] = useState();
     const [getOtherInfo, setGetOtherInfo] = useState();
+    const [getAdresse, setGetAdresse] = useState();
     const [fileName, setfileName] = useState(".xlsx");
     const [loadingData, setloadingData] = useState(false);
-
+    const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
     const saveOperation = (e) => {
         e.preventDefault();
         setloading(true);
@@ -118,18 +119,20 @@ const Releve = () => {
             NumCompte: getSelectedAccount,
             DateDebut: dateDebut ? dateDebut : getdefaultDateDebut,
             DateFin: dateFin ? dateFin : getdefaultDateFin,
+            agence_filter: agenceFilter,
         });
         if (res.data.status == 1) {
             setloading(false);
             setGetReleveData(res.data.dataReleve);
             setGetSoldeReport(
-                res.data.dataSoldeReport== undefined
+                res.data.dataSoldeReport == undefined
                     ? 0
                     : res.data.dataSoldeReport,
             );
             setGetDevise(res.data.devise);
             setGetSoldeInfo(res.data.soldeInfo);
             setGetOtherInfo(res.data.getCompteInfo);
+            setGetAdresse(res.data.adresseMembre);
             console.log(res.data.dataSoldeReport);
         } else {
             setloading(false);
@@ -323,6 +326,23 @@ const Releve = () => {
         marginTop: "180px",
         border: "0px",
         height: "200px",
+    };
+
+    const labelStyle = {
+        // background: "#0d47a1",
+        background: "#1a2632",
+        color: "white",
+        padding: "6px 10px",
+        fontSize: "13px",
+        borderBottom: "1px solid #138496",
+        minWidth: "200px",
+    };
+
+    const valueStyle = {
+        padding: "6px 15px",
+        fontSize: "13px",
+        borderBottom: "1px solid #ddd",
+        minWidth: "180px",
     };
     return (
         <>
@@ -629,82 +649,124 @@ const Releve = () => {
                         </div>
                     </div>
 
-                    {/* Sélecteur de dates */}
-                    <div className="row g-3 mb-4">
+                    {/* Filtres */}
+                    <div className="row g-4 mb-4">
+                        {/* Carte Période */}
                         <div className="col-md-12">
-                            <div className="card border-0 shadow-sm rounded-3">
-                                <div className="card-header bg-white border-0 pt-3">
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-calendar-alt me-2"></i>
-                                        Période
+                            <div className="card border-0 shadow-sm rounded-4 dashboard-card">
+                                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                                    <h6 className="section-title">
+                                        <i
+                                            className="fas fa-calendar-alt me-2"
+                                            style={{ color: "#6366f1" }}
+                                        ></i>
+                                        Période et filtres
                                     </h6>
                                 </div>
-                                <div className="card-body">
+                                <div className="card-body pt-2">
                                     <div className="row g-3 align-items-end">
+                                        {/* Date début */}
                                         <div className="col-md-3">
-                                            <label
-                                                style={{
-                                                    color: "steelblue",
-                                                    fontWeight: "500",
-                                                }}
-                                            >
-                                                Date Début
+                                            <label className="label-modern">
+                                                Date début
                                             </label>
                                             <input
                                                 type="date"
-                                                className="form-control"
-                                                style={{ borderRadius: "8px" }}
+                                                className="form-control modern-input"
+                                                value={
+                                                    dateDebut ||
+                                                    getdefaultDateDebut
+                                                }
                                                 onChange={(e) =>
                                                     setDateDebut(e.target.value)
                                                 }
-                                                value={
-                                                    dateDebut
-                                                        ? dateDebut
-                                                        : getdefaultDateDebut
-                                                }
                                             />
                                         </div>
+                                        {/* Date fin */}
                                         <div className="col-md-3">
-                                            <label
-                                                style={{
-                                                    color: "steelblue",
-                                                    fontWeight: "500",
-                                                }}
-                                            >
-                                                Date Fin
+                                            <label className="label-modern">
+                                                Date fin
                                             </label>
                                             <input
                                                 type="date"
-                                                className="form-control"
-                                                style={{ borderRadius: "8px" }}
+                                                className="form-control modern-input"
+                                                value={
+                                                    dateFin || getdefaultDateFin
+                                                }
                                                 onChange={(e) =>
                                                     setDateFin(e.target.value)
                                                 }
-                                                value={
-                                                    dateFin
-                                                        ? dateFin
-                                                        : getdefaultDateFin
-                                                }
                                             />
                                         </div>
-                                        <div className="col-md-2">
-                                            <button
-                                                className="btn w-100"
-                                                style={{
-                                                    background:
-                                                        "linear-gradient(135deg, #20c997, #198764)",
-                                                    color: "white",
-                                                    borderRadius: "8px",
-                                                }}
-                                                onClick={AfficherReleve}
+                                        {/* Agence */}
+                                        <div className="col-md-3">
+                                            <label className="label-modern">
+                                                Agence
+                                            </label>
+                                            <select
+                                                className="modern-select w-100"
+                                                value={agenceFilter}
+                                                onChange={(e) =>
+                                                    setAgenceFilter(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                disabled={
+                                                    userAgences.length <= 1
+                                                }
                                             >
-                                                <i
-                                                    className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-desktop me-2"}`}
-                                                ></i>
-                                                Afficher
+                                                <option value="current">
+                                                    Agence courante (
+                                                    {currentAgence?.nom_agence ||
+                                                        "Non définie"}
+                                                    )
+                                                </option>
+                                                {userAgences.length > 1 && (
+                                                    <>
+                                                        <option value="all">
+                                                            Toutes mes agences
+                                                        </option>
+                                                        {userAgences.map(
+                                                            (agence) => (
+                                                                <option
+                                                                    key={
+                                                                        agence.id
+                                                                    }
+                                                                    value={
+                                                                        agence.id
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        agence.code_agence
+                                                                    }{" "}
+                                                                    -{" "}
+                                                                    {
+                                                                        agence.nom_agence
+                                                                    }
+                                                                </option>
+                                                            ),
+                                                        )}
+                                                    </>
+                                                )}
+                                            </select>
+                                        </div>
+                                        {/* Bouton action */}
+                                        <div className="col-md-3">
+                                            <button
+                                                className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
+                                                onClick={AfficherReleve}
+                                                disabled={loading}
+                                            >
+                                                {loading ? (
+                                                    <span
+                                                        className="spinner-border spinner-border-sm"
+                                                        role="status"
+                                                        aria-hidden="true"
+                                                    ></span>
+                                                ) : (
+                                                    <i className="fas fa-desktop"></i>
+                                                )}
+                                                <span>Afficher</span>
                                             </button>
                                         </div>
                                     </div>
@@ -740,7 +802,7 @@ const Releve = () => {
                                         </div>
 
                                         {/* Informations du compte */}
-                                        <div className="row mb-4">
+                                        {/* <div className="row mb-4">
                                             <div className="col-md-6">
                                                 <div
                                                     className="card border-0"
@@ -933,10 +995,238 @@ const Releve = () => {
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div> */}
+
+                                        <div
+                                            style={{
+                                                width: "100%",
+                                                marginBottom: "25px",
+                                            }}
+                                        >
+                                            {/* ===== TITRE ===== */}
+
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "flex-start",
+                                                }}
+                                            >
+                                                {/* ===== COLONNE LIBELLES (BLEU) ===== */}
+                                                <table
+                                                    style={{
+                                                        borderCollapse:
+                                                            "collapse",
+                                                    }}
+                                                >
+                                                    <tbody>
+                                                        {[
+                                                            "Numéro de compte",
+                                                            "Devise",
+                                                            "Solde d'ouverture",
+                                                            "Solde de clôture",
+                                                            "Solde disponible",
+                                                            "Effets en instance",
+                                                            "Total débit",
+                                                            "Total Crédit",
+                                                            "Période",
+                                                        ].map((label, i) => (
+                                                            <tr key={i}>
+                                                                <td
+                                                                    style={
+                                                                        labelStyle
+                                                                    }
+                                                                >
+                                                                    {label}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+
+                                                {/* ===== COLONNE VALEURS ===== */}
+                                                <table
+                                                    style={{
+                                                        borderCollapse:
+                                                            "collapse",
+                                                        border: "1px solid #ccc", // 👈 bordure
+                                                    }}
+                                                >
+                                                    <tbody>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {
+                                                                    getOtherInfo?.NumCompte
+                                                                }
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {getDevise}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {numberWithSpaces(
+                                                                    getSoldeReport?.toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {numberWithSpaces(
+                                                                    (
+                                                                        Number(
+                                                                            getSoldeReport ||
+                                                                                0,
+                                                                        ) +
+                                                                        Number(
+                                                                            getSoldeInfo?.soldeDispo ||
+                                                                                0,
+                                                                        )
+                                                                    ).toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {numberWithSpaces(
+                                                                    getSoldeInfo?.soldeDispo?.toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {numberWithSpaces(
+                                                                    getSoldeInfo?.effetsInstance?.toFixed(
+                                                                        2,
+                                                                    ) || 0,
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {numberWithSpaces(
+                                                                    getSoldeInfo?.TotalDebit?.toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {numberWithSpaces(
+                                                                    getSoldeInfo?.TotalCredit?.toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {dateParser(
+                                                                    dateDebut ||
+                                                                        getdefaultDateDebut,
+                                                                )}{" "}
+                                                                à{" "}
+                                                                {dateParser(
+                                                                    dateFin ||
+                                                                        getdefaultDateFin,
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+
+                                                {/* ===== COLONNE DROITE (AGENCE) ===== */}
+                                                {/* ===== DROITE : INFO COMPTE ===== */}
+                                                <div
+                                                    style={{
+                                                        flex: 1,
+                                                        display: "flex",
+                                                        justifyContent:
+                                                            "center", // 👈 centre horizontalement
+                                                    }}
+                                                >
+                                                    <div
+                                                        style={{
+                                                            textAlign: "center",
+                                                            fontWeight: "bold",
+                                                            //   border: "1px solid #ccc", // 👈 bordure
+                                                            padding:
+                                                                "10px 15px",
+                                                            borderRadius: "8px",
+                                                            minWidth: "200px",
+                                                        }}
+                                                    >
+                                                        <h4
+                                                            style={{
+                                                                margin: 0,
+                                                            }}
+                                                        >
+                                                            {
+                                                                getOtherInfo?.NomCompte
+                                                            }
+                                                        </h4>
+
+                                                        {getAdresse && (
+                                                            <>
+                                                                <br />
+                                                                <br />
+                                                            </>
+                                                        )}
+                                                        <h6>{getAdresse}</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         {/* Tableau des mouvements */}
-                                        <div className="table-responsive">
+                                        <div
+                                            className="table-responsive"
+                                            style={{ marginTop: "-25px" }}
+                                        >
                                             <table
                                                 className="table table-bordered table-striped"
                                                 style={{ fontSize: "13px" }}
@@ -1079,7 +1369,7 @@ const Releve = () => {
                                         </div>
 
                                         {/* Informations du compte USD */}
-                                        <div className="row mb-4">
+                                        {/* <div className="row mb-4">
                                             <div className="col-md-6">
                                                 <div
                                                     className="card border-0"
@@ -1180,6 +1470,8 @@ const Releve = () => {
                                                                 </tr>
                                                             </tbody>
                                                         </table>
+
+       
                                                     </div>
                                                 </div>
                                             </div>
@@ -1272,10 +1564,232 @@ const Releve = () => {
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div> */}
+
+                                        <div
+                                            style={{
+                                                width: "100%",
+                                                marginBottom: "25px",
+                                            }}
+                                        >
+                                            {/* ===== TITRE ===== */}
+
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "flex-start",
+                                                }}
+                                            >
+                                                {/* ===== COLONNE LIBELLES (BLEU) ===== */}
+                                                <table
+                                                    style={{
+                                                        borderCollapse:
+                                                            "collapse",
+                                                    }}
+                                                >
+                                                    <tbody>
+                                                        {[
+                                                            "Numéro de compte",
+                                                            "Devise",
+                                                            "Solde d'ouverture",
+                                                            "Solde de clôture",
+                                                            "Solde disponible",
+                                                            "Effets en instance",
+                                                            "Total débit",
+                                                            "Total Crédit",
+                                                            "Période",
+                                                        ].map((label, i) => (
+                                                            <tr key={i}>
+                                                                <td
+                                                                    style={
+                                                                        labelStyle
+                                                                    }
+                                                                >
+                                                                    {label}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+
+                                                {/* ===== COLONNE VALEURS ===== */}
+                                                <table
+                                                    style={{
+                                                        borderCollapse:
+                                                            "collapse",
+                                                        border: "1px solid #ccc", // 👈 bordure
+                                                    }}
+                                                >
+                                                    <tbody>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {
+                                                                    getOtherInfo?.NumCompte
+                                                                }
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {getDevise}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {numberWithSpaces(
+                                                                    getSoldeReport?.toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {numberWithSpaces(
+                                                                    (
+                                                                        Number(
+                                                                            getSoldeReport ||
+                                                                                0,
+                                                                        ) +
+                                                                        Number(
+                                                                            getSoldeInfo?.soldeDispo ||
+                                                                                0,
+                                                                        )
+                                                                    ).toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {numberWithSpaces(
+                                                                    getSoldeInfo?.soldeDispo?.toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {numberWithSpaces(
+                                                                    getSoldeInfo?.effetsInstance?.toFixed(
+                                                                        2,
+                                                                    ) || 0,
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {numberWithSpaces(
+                                                                    getSoldeInfo?.TotalDebit?.toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {numberWithSpaces(
+                                                                    getSoldeInfo?.TotalCredit?.toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={
+                                                                    valueStyle
+                                                                }
+                                                            >
+                                                                {dateParser(
+                                                                    dateDebut ||
+                                                                        getdefaultDateDebut,
+                                                                )}{" "}
+                                                                à{" "}
+                                                                {dateParser(
+                                                                    dateFin ||
+                                                                        getdefaultDateFin,
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+
+                                                {/* ===== COLONNE DROITE (AGENCE) ===== */}
+                                                {/* ===== DROITE : INFO COMPTE ===== */}
+                                                <div
+                                                    style={{
+                                                        flex: 1,
+                                                        display: "flex",
+                                                        justifyContent:
+                                                            "center", // 👈 centre horizontalement
+                                                    }}
+                                                >
+                                                    <div
+                                                        style={{
+                                                            textAlign: "center",
+                                                            fontWeight: "bold",
+                                                            //   border: "1px solid #ccc", // 👈 bordure
+                                                            padding:
+                                                                "10px 15px",
+                                                            borderRadius: "8px",
+                                                            minWidth: "200px",
+                                                        }}
+                                                    >
+                                                        <h4
+                                                            style={{
+                                                                margin: 0,
+                                                            }}
+                                                        >
+                                                            {
+                                                                getOtherInfo?.NomCompte
+                                                            }
+                                                        </h4>
+                                                        <br /> <br />
+                                                        <h6>{getAdresse}</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         {/* Tableau des mouvements USD */}
-                                        <div className="table-responsive">
+                                        <div
+                                            className="table-responsive"
+                                            style={{ marginTop: "-25px" }}
+                                        >
                                             <table
                                                 className="table table-bordered table-striped"
                                                 style={{ fontSize: "13px" }}
@@ -1452,6 +1966,16 @@ const Releve = () => {
                         )}
                 </div>
             )}
+
+            <style>
+                {`
+                @media print {
+               body {
+               zoom: 0.9;
+                 }
+                 }
+                `}
+            </style>
         </>
     );
 };

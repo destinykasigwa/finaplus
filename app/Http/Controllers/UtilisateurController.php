@@ -182,42 +182,48 @@ class UtilisateurController extends Controller
     public function createNewCaissierAccount(Request $request)
     {
         if (isset($request->userId)) {
+             $currentAgence = session('current_agence');
+             $codeAgence = $currentAgence['code_agence'] ?? null;
+
+    if (!$codeAgence) {
+        return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
+    }
             $userData = User::where("id", $request->userId)->first();
             //CREATE USD ACCOUNT
             Comptes::create([
-                'CodeAgence' => 20,
-                'NumCompte' => "5700" . $request->userId . "201",
+                'CodeAgence' => $codeAgence,
+                'NumCompte' => "5700" . $request->userId . $codeAgence. "1",
                 'NomCompte' => $userData->name,
                 'RefTypeCompte' => "5",
                 'RefCadre' => "57",
                 'RefGroupe' => "570",
                 'RefSousGroupe' => "5700",
                 'CodeMonnaie' => 1,
-                'NumAdherant' => "5700" . $request->userId . "201",
+                'NumAdherant' => "5700" . $request->userId . $codeAgence."1",
                 'isCaissier' => 1,
                 'caissierId' => $request->userId,
                 'nature_compte' => "ACTIF",
                 'niveau' => "5",
                 'est_classe' => 0,
-                'compte_parent' => "5710",
+                'compte_parent' => "5700",
             ]);
             //CREATE CDF ACCOUNT
             Comptes::create([
-                'CodeAgence' => 20,
-                'NumCompte' => "5700" . $request->userId . "202",
+                'CodeAgence' => $codeAgence,
+                'NumCompte' => "5700" . $request->userId . $codeAgence."2",
                 'NomCompte' => $userData->name,
                 'RefTypeCompte' => "5",
                 'RefCadre' => "57",
                 'RefGroupe' => "570",
                 'RefSousGroupe' => "5700",
                 'CodeMonnaie' => 2,
-                'NumAdherant' => "5700" . $request->userId . "202",
+                'NumAdherant' => "5700" . $request->userId .$codeAgence. "2",
                 'isCaissier' => 1,
                 'caissierId' => $request->userId,
                 'nature_compte' => "ACTIF",
                 'niveau' => "5",
                 'est_classe' => 0,
-                'compte_parent' => "5710",
+                'compte_parent' => "5700",
 
             ]);
             return response()->json(["status" => 1, "msg" => "Compte caisse bien crée pour l'utilsateur " . $userData->name]);

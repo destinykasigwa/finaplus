@@ -268,46 +268,46 @@ class SuiviCreditController extends Controller
                 }
                 $data_numdossier = DB::select("SELECT * FROM compteur_dossier_credits ORDER BY id DESC")[0];
                 $data = Comptes::where("NumAdherant", $request->seachedAccount)->orWhere("NumCompte", $request->seachedAccount)->first();
-
+                $codeAgence=$data->CodeAgence;
                 if ($data->CodeMonnaie == 2) {
                     if ($data->NumAdherant < 10) {
-                        $compteCreditEnFranc = "320100000" . $data->NumAdherant . "202";
-                        $epargneCautionCDF = "334100000" . $data->NumAdherant . "202";
+                        $compteCreditEnFranc = "320100000" . $data->NumAdherant .$codeAgence. "2";
+                        $epargneCautionCDF = "334100000" . $data->NumAdherant . $codeAgence. "2";
                     } else if ($data->NumAdherant >= 10 && $data->NumAdherant < 100) {
-                        $epargneCautionCDF = "33410000" . $data->NumAdherant . "202";
-                        $compteCreditEnFranc = "32010000" . $data->NumAdherant . "202";
+                        $epargneCautionCDF = "33410000" . $data->NumAdherant . $codeAgence. "2";
+                        $compteCreditEnFranc = "32010000" . $data->NumAdherant . $codeAgence. "2";
                     } else if ($data->NumAdherant >= 100 && $data->NumAdherant < 1000) {
-                        $epargneCautionCDF = "3341000" . $data->NumAdherant . "202";
-                        $compteCreditEnFranc = "3201000" . $data->NumAdherant . "202";
+                        $epargneCautionCDF = "3341000" . $data->NumAdherant . $codeAgence. "2";
+                        $compteCreditEnFranc = "3201000" . $data->NumAdherant . $codeAgence. "2";
                     } else if ($data->NumAdherant >= 1000 && $data->NumAdherant < 10000) {
-                        $epargneCautionCDF = "334100" . $data->NumAdherant . "202";
-                        $compteCreditEnFranc = "320100" . $data->NumAdherant . "202";
+                        $epargneCautionCDF = "334100" . $data->NumAdherant . $codeAgence. "2";
+                        $compteCreditEnFranc = "320100" . $data->NumAdherant . $codeAgence. "2";
                     } else if ($data->NumAdherant >= 10000 && $data->NumAdherant < 100000) {
-                        $epargneCautionCDF = "33410" . $data->NumAdherant . "201";
-                        $compteCreditEnFranc = "32010" . $data->NumAdherant . "201";
+                        $epargneCautionCDF = "33410" . $data->NumAdherant . $codeAgence. "2";
+                        $compteCreditEnFranc = "32010" . $data->NumAdherant . $codeAgence. "2";
                     } else if ($data->NumAdherant >= 100000 && $data->NumAdherant < 1000000) {
-                        $epargneCautionCDF = "3341" . $data->NumAdherant . "202";
-                        $compteCreditEnFranc = "3201" . $data->NumAdherant . "202";
+                        $epargneCautionCDF = "3341" . $data->NumAdherant . $codeAgence. "2";
+                        $compteCreditEnFranc = "3201" . $data->NumAdherant . $codeAgence. "2";
                     }
                 } else if ($data->CodeMonnaie == 1) {
                     if ($data->NumAdherant < 10) {
-                        $compteCreditEnUSD = "320000000" . $data->NumAdherant . "201";
-                        $epargneCautionUSD = "334000000" . $data->NumAdherant . "201";
+                        $compteCreditEnUSD = "320000000" . $data->NumAdherant . $codeAgence. "1";
+                        $epargneCautionUSD = "334000000" . $data->NumAdherant . $codeAgence. "1";
                     } else if ($data->NumAdherant >= 10 && $data->NumAdherant < 100) {
-                        $epargneCautionUSD = "33400000" . $data->NumAdherant . "201";
-                        $compteCreditEnUSD = "32000000" . $data->NumAdherant . "201";
+                        $epargneCautionUSD = "33400000" . $data->NumAdherant . $codeAgence. "1";
+                        $compteCreditEnUSD = "32000000" . $data->NumAdherant . $codeAgence. "1";
                     } else if ($data->NumAdherant >= 100 && $data->NumAdherant < 1000) {
-                        $epargneCautionUSD = "3340000" . $data->NumAdherant . "201";
-                        $compteCreditEnUSD = "3200000" . $data->NumAdherant . "201";
+                        $epargneCautionUSD = "3340000" . $data->NumAdherant . $codeAgence. "1";
+                        $compteCreditEnUSD = "3200000" . $data->NumAdherant . $codeAgence. "1";
                     } else if ($data->NumAdherant >= 1000 && $data->NumAdherant < 10000) {
-                        $epargneCautionUSD = "334000" . $data->NumAdherant . "201";
-                        $compteCreditEnUSD = "320000" . $data->NumAdherant . "201";
+                        $epargneCautionUSD = "334000" . $data->NumAdherant . $codeAgence. "1";
+                        $compteCreditEnUSD = "320000" . $data->NumAdherant . $codeAgence. "1";
                     } else if ($data->NumAdherant >= 10000 && $data->NumAdherant < 100000) {
-                        $epargneCautionUSD = "33400" . $data->NumAdherant . "201";
-                        $compteCreditEnUSD = "32000" . $data->NumAdherant . "201";
+                        $epargneCautionUSD = "33400" . $data->NumAdherant . $codeAgence. "1";
+                        $compteCreditEnUSD = "32000" . $data->NumAdherant . $codeAgence. "1";
                     } else if ($data->NumAdherant >= 100000 && $data->NumAdherant < 1000000) {
-                        $epargneCautionUSD = "3340" . $data->NumAdherant . "201";
-                        $compteCreditEnUSD = "3200" . $data->NumAdherant . "201";
+                        $epargneCautionUSD = "3340" . $data->NumAdherant . $codeAgence. "1";
+                        $compteCreditEnUSD = "3200" . $data->NumAdherant . $codeAgence. "1";
                     }
                 }
                 return response()->json([

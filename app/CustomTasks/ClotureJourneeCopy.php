@@ -2076,26 +2076,26 @@ class ClotureJourneeCopy
 
         if ($devise == 2) {
             if ($refCompteMembre < 10) {
-                $compteProvisionCDF = "38010000" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . "202";
+                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre .$CodeAgence."2";
             } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
-                $compteProvisionCDF = "38010000" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . "202";
+                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence."2";
             } else if ($refCompteMembre >= 100 && $refCompteMembre < 1000) {
-                $compteProvisionCDF = "3801000" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "3901000" . $refCompteMembre . "202";
+                $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "3901000" . $refCompteMembre . $CodeAgence."2";
             } else if ($refCompteMembre >= 1000 && $refCompteMembre < 10000) {
-                $compteProvisionCDF = "3801000" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "390100" . $refCompteMembre . "202";
+                $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "390100" . $refCompteMembre . $CodeAgence."2";
             } else if ($refCompteMembre >= 10000 && $refCompteMembre < 100000) {
-                $compteProvisionCDF = "38010" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "39010" . $refCompteMembre . "202";
+                $compteProvisionCDF = "38010" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "39010" . $refCompteMembre . $CodeAgence."2";
             } else if ($refCompteMembre >= 100000 && $refCompteMembre < 1000000) {
-                $compteProvisionCDF = "3801" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . "202";
+                $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence."2";
             } else {
-                $compteProvisionCDF = "3801" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . "202";
+                $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence."2";
             }
 
 
@@ -2179,26 +2179,26 @@ class ClotureJourneeCopy
         } else if ($devise == 1) {
 
             if ($refCompteMembre < 10) {
-                $compteProvisionUSD = "38000000" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . "201";
+                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence."1";
             } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
-                $compteProvisionUSD = "38000000" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . "201";
+                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence."1";
             } else if ($refCompteMembre >= 100 && $refCompteMembre < 1000) {
-                $compteProvisionUSD = "3800000" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "3900000" . $refCompteMembre . "201";
+                $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "3900000" . $refCompteMembre . $CodeAgence."1";
             } else if ($refCompteMembre >= 1000 && $refCompteMembre < 10000) {
-                $compteProvisionUSD = "3800000" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "390000" . $refCompteMembre . "201";
+                $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "390000" . $refCompteMembre . $CodeAgence."1";
             } else if ($refCompteMembre >= 10000 && $refCompteMembre < 100000) {
-                $compteProvisionUSD = "38000" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "39000" . $refCompteMembre . "201";
+                $compteProvisionUSD = "38000" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "39000" . $refCompteMembre . $CodeAgence."1";
             } else if ($refCompteMembre >= 100000 && $refCompteMembre < 1000000) {
-                $compteProvisionUSD = "3800" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . "201";
+                $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence."1";
             } else {
-                $compteProvisionUSD = "3800" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . "201";
+                $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence."1";
             }
 
 
@@ -3414,6 +3414,7 @@ class ClotureJourneeCopy
             $getMonnaie = Portefeuille::where("NumDossier", $NumDossier)->first();
             $CodeMonnaie = $getMonnaie->CodeMonnaie;
             $refCompteMembre = $getMonnaie->numAdherant;
+            $CodeAgence=$getMonnaie->CodeAgence;
             if ($record) {
                 // Vérifie si la DateRetard est différente de la date actuelle
                 if ($record->DateRetard !== $dateSystem) {
@@ -3444,50 +3445,50 @@ class ClotureJourneeCopy
 
                 if ($devise == 2) {
                     if ($refCompteMembre < 10) {
-                        $compteProvisionCDF = "38010000" . $refCompteMembre . "202";
-                        $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . "202";
+                        $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence."2";
+                        $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence."2";
                     } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
-                        $compteProvisionCDF = "38010000" . $refCompteMembre . "202";
-                        $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . "202";
+                        $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence."2";
+                        $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence."2";
                     } else if ($refCompteMembre >= 100 && $refCompteMembre < 1000) {
-                        $compteProvisionCDF = "3801000" . $refCompteMembre . "202";
-                        $compteCreanceLitigieuseCDF = "3901000" . $refCompteMembre . "202";
+                        $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence."2";
+                        $compteCreanceLitigieuseCDF = "3901000" . $refCompteMembre . $CodeAgence."2";
                     } else if ($refCompteMembre >= 1000 && $refCompteMembre < 10000) {
-                        $compteProvisionCDF = "3801000" . $refCompteMembre . "202";
-                        $compteCreanceLitigieuseCDF = "390100" . $refCompteMembre . "202";
+                        $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence."2";
+                        $compteCreanceLitigieuseCDF = "390100" . $refCompteMembre . $CodeAgence."2";
                     } else if ($refCompteMembre >= 10000 && $refCompteMembre < 100000) {
-                        $compteProvisionCDF = "38010" . $refCompteMembre . "202";
-                        $compteCreanceLitigieuseCDF = "39010" . $refCompteMembre . "202";
+                        $compteProvisionCDF = "38010" . $refCompteMembre . $CodeAgence."2";
+                        $compteCreanceLitigieuseCDF = "39010" . $refCompteMembre . $CodeAgence."2";
                     } else if ($refCompteMembre >= 100000 && $refCompteMembre < 1000000) {
-                        $compteProvisionCDF = "3801" . $refCompteMembre . "202";
-                        $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . "202";
+                        $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence."2";
+                        $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence."2";
                     } else {
-                        $compteProvisionCDF = "3801" . $refCompteMembre . "202";
-                        $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . "202";
+                        $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence."2";
+                        $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence."2";
                     }
                 } else if ($devise == 1) {
 
                     if ($refCompteMembre < 10) {
-                        $compteProvisionUSD = "38000000" . $refCompteMembre . "201";
-                        $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . "201";
+                        $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence."1";
+                        $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence."1";
                     } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
-                        $compteProvisionUSD = "38000000" . $refCompteMembre . "201";
-                        $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . "201";
+                        $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence."1";
+                        $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence."1";
                     } else if ($refCompteMembre >= 100 && $refCompteMembre < 1000) {
-                        $compteProvisionUSD = "3800000" . $refCompteMembre . "201";
-                        $compteCreanceLitigieuseUSD = "3900000" . $refCompteMembre . "201";
+                        $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence."1";
+                        $compteCreanceLitigieuseUSD = "3900000" . $refCompteMembre . $CodeAgence."1";
                     } else if ($refCompteMembre >= 1000 && $refCompteMembre < 10000) {
-                        $compteProvisionUSD = "3800000" . $refCompteMembre . "201";
-                        $compteCreanceLitigieuseUSD = "390000" . $refCompteMembre . "201";
+                        $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence."1";
+                        $compteCreanceLitigieuseUSD = "390000" . $refCompteMembre . $CodeAgence."1";
                     } else if ($refCompteMembre >= 10000 && $refCompteMembre < 100000) {
-                        $compteProvisionUSD = "38000" . $refCompteMembre . "201";
-                        $compteCreanceLitigieuseUSD = "39000" . $refCompteMembre . "201";
+                        $compteProvisionUSD = "38000" . $refCompteMembre . $CodeAgence."1";
+                        $compteCreanceLitigieuseUSD = "39000" . $refCompteMembre . $CodeAgence."1";
                     } else if ($refCompteMembre >= 100000 && $refCompteMembre < 1000000) {
-                        $compteProvisionUSD = "3800" . $refCompteMembre . "201";
-                        $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . "201";
+                        $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence."1";
+                        $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence."1";
                     } else {
-                        $compteProvisionUSD = "3800" . $refCompteMembre . "201";
-                        $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . "201";
+                        $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence."1";
+                        $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence."1";
                     }
                 }
                 $dateMinusOneDay = Carbon::parse($dateSystem)->subDay();
@@ -3616,26 +3617,26 @@ class ClotureJourneeCopy
 
         if ($devise == 2) {
             if ($refCompteMembre < 10) {
-                $compteProvisionCDF = "38010000" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . "202";
+                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence."2";
             } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
-                $compteProvisionCDF = "38010000" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . "202";
+                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence."2";
             } else if ($refCompteMembre >= 100 && $refCompteMembre < 1000) {
-                $compteProvisionCDF = "3801000" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "3901000" . $refCompteMembre . "202";
+                $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "3901000" . $refCompteMembre . $CodeAgence."2";
             } else if ($refCompteMembre >= 1000 && $refCompteMembre < 10000) {
-                $compteProvisionCDF = "3801000" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "390100" . $refCompteMembre . "202";
+                $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "390100" . $refCompteMembre . $CodeAgence."2";
             } else if ($refCompteMembre >= 10000 && $refCompteMembre < 100000) {
-                $compteProvisionCDF = "38010" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "39010" . $refCompteMembre . "202";
+                $compteProvisionCDF = "38010" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "39010" . $refCompteMembre . $CodeAgence."2";
             } else if ($refCompteMembre >= 100000 && $refCompteMembre < 1000000) {
-                $compteProvisionCDF = "3801" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . "202";
+                $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence."2";
             } else {
-                $compteProvisionCDF = "3801" . $refCompteMembre . "202";
-                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . "202";
+                $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence."2";
+                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence."2";
             }
 
 
@@ -3700,26 +3701,26 @@ class ClotureJourneeCopy
         } else if ($devise == 1) {
 
             if ($refCompteMembre < 10) {
-                $compteProvisionUSD = "38000000" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . "201";
+                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence."1";
             } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
-                $compteProvisionUSD = "38000000" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . "201";
+                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence."1";
             } else if ($refCompteMembre >= 100 && $refCompteMembre < 1000) {
-                $compteProvisionUSD = "3800000" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "3900000" . $refCompteMembre . "201";
+                $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "3900000" . $refCompteMembre . $CodeAgence."1";
             } else if ($refCompteMembre >= 1000 && $refCompteMembre < 10000) {
-                $compteProvisionUSD = "3800000" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "390000" . $refCompteMembre . "201";
+                $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "390000" . $refCompteMembre . $CodeAgence."1";
             } else if ($refCompteMembre >= 10000 && $refCompteMembre < 100000) {
-                $compteProvisionUSD = "38000" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "39000" . $refCompteMembre . "201";
+                $compteProvisionUSD = "38000" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "39000" . $refCompteMembre . $CodeAgence."1";
             } else if ($refCompteMembre >= 100000 && $refCompteMembre < 1000000) {
-                $compteProvisionUSD = "3800" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . "201";
+                $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence."1";
             } else {
-                $compteProvisionUSD = "3800" . $refCompteMembre . "201";
-                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . "201";
+                $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence."1";
+                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence."1";
             }
 
 

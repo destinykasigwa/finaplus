@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 const Adhesion = () => {
     const [adhesion, setAdhesion] = useState({
-        agence: "",
+        agenceFilter: "",
         code_monnaie: "CDF",
         type_epargne: "",
         type_client: "",
@@ -32,10 +32,12 @@ const Adhesion = () => {
         quartier: "",
         type_de_gestion: "",
         critere: "",
+        suiteAdresse: "",
     });
     const [isLoading1, setIsloading1] = useState(false);
     const [isLoading2, setIsloading2] = useState(false);
     const [error, setError] = useState([]);
+    const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
 
     ///UPDATE ATTRIBUTE
 
@@ -83,6 +85,30 @@ const Adhesion = () => {
         if (res.data.status == 1) {
             setIsloading1(false);
             adhesion.intitule_compte = "";
+            adhesion.type_epargne = "";
+            adhesion.type_client = "";
+            adhesion.lieu_naissance = "";
+            adhesion.date_naissance = "";
+            adhesion.etat_civile = "";
+            adhesion.nom_condjoint = "";
+            adhesion.nom_pere = "";
+            adhesion.nom_mere = "";
+            adhesion.profession = "";
+            adhesion.lieu_travail = "";
+            adhesion.civilite = "";
+            adhesion.sexe = "";
+            adhesion.email = "";
+            adhesion.telephone = "";
+            adhesion.type_piece = "";
+            adhesion.num_piece = "";
+            adhesion.lieu_devivraison_piece = "";
+            adhesion.province = "";
+            adhesion.territoire_ou_ville = "";
+            adhesion.commune = "";
+            adhesion.quartier = "";
+            adhesion.type_de_gestion = "";
+            adhesion.critere = "";
+            adhesion.suiteAdresse="";
             Swal.fire({
                 title: "Succès",
                 text: res.data.msg,
@@ -512,7 +538,7 @@ const Adhesion = () => {
                                                                         "6px",
                                                                 }}
                                                             >
-                                                                <select
+                                                                {/* <select
                                                                     className={`form-control ${error.agence ? "is-invalid" : ""}`}
                                                                     style={{
                                                                         borderRadius:
@@ -539,14 +565,86 @@ const Adhesion = () => {
                                                                     <option value="SIEGE">
                                                                         SIEGE
                                                                     </option>
-                                                                </select>
-                                                                {error.agence && (
+                                                                </select> */}
+                                                                {error.agenceFilter && (
                                                                     <small className="text-danger">
                                                                         {
-                                                                            error.agence
+                                                                            error.agenceFilter
                                                                         }
                                                                     </small>
                                                                 )}
+
+                                                                <select
+                                                                    className={`form-control ${error.agenceFilter ? "is-invalid" : ""}`}
+                                                                    style={{
+                                                                        borderRadius:
+                                                                            "8px",
+                                                                    }}
+                                                                    // value={agenceFilter}
+
+                                                                    // onChange={(e) =>
+                                                                    //     setAgenceFilter(
+                                                                    //         e.target.value,
+                                                                    //     )
+
+                                                                    // }
+
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setAdhesion(
+                                                                            (
+                                                                                p,
+                                                                            ) => ({
+                                                                                ...p,
+                                                                                agenceFilter:
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                            }),
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        userAgences.length <=
+                                                                        1
+                                                                    }
+                                                                >
+                                                                    <option value="current">
+                                                                        Agence
+                                                                        courante
+                                                                        (
+                                                                        {currentAgence?.nom_agence ||
+                                                                            "Non définie"}
+                                                                        )
+                                                                    </option>
+                                                                    {userAgences.length >
+                                                                        1 && (
+                                                                        <>
+                                                                            {userAgences.map(
+                                                                                (
+                                                                                    agence,
+                                                                                ) => (
+                                                                                    <option
+                                                                                        key={
+                                                                                            agence.id
+                                                                                        }
+                                                                                        value={
+                                                                                            agence.code_agence
+                                                                                        }
+                                                                                    >
+                                                                                        {
+                                                                                            agence.code_agence
+                                                                                        }{" "}
+                                                                                        -{" "}
+                                                                                        {
+                                                                                            agence.nom_agence
+                                                                                        }
+                                                                                    </option>
+                                                                                ),
+                                                                            )}
+                                                                        </>
+                                                                    )}
+                                                                </select>
                                                             </td>
                                                         </tr>
                                                         <tr>
@@ -1488,6 +1586,55 @@ const Adhesion = () => {
                                                                 />
                                                             </td>
                                                         </tr>
+                                                        <tr>
+                                                            <td
+                                                                style={{
+                                                                    padding:
+                                                                        "6px",
+                                                                }}
+                                                            >
+                                                                <label
+                                                                    style={{
+                                                                        color: "steelblue",
+                                                                        fontWeight:
+                                                                            "500",
+                                                                    }}
+                                                                >
+                                                                    Suite
+                                                                    Adresse
+                                                                </label>
+                                                            </td>
+                                                            <td
+                                                                style={{
+                                                                    padding:
+                                                                        "6px",
+                                                                }}
+                                                            >
+                                                                <textarea
+                                                                    type="text"
+                                                                    className={`form-control ${error.suiteAdresse ? "is-invalid" : ""}`}
+                                                                    style={{
+                                                                        borderRadius:
+                                                                            "6px",
+                                                                    }}
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setAdhesion(
+                                                                            (
+                                                                                p,
+                                                                            ) => ({
+                                                                                ...p,
+                                                                                suiteAdresse:
+                                                                                    e
+                                                                                        .target
+                                                                                        .value,
+                                                                            }),
+                                                                        )
+                                                                    }
+                                                                ></textarea>
+                                                            </td>
+                                                        </tr>
                                                     </tbody>
                                                 </table>
                                             </form>
@@ -1773,7 +1920,7 @@ const Adhesion = () => {
                                                                         }
                                                                     >
                                                                         <i className="fas fa-search me-1"></i>
-                                                                        Rechercher
+                                                                        {/* Rechercher */}
                                                                     </button>
                                                                 </div>
                                                             </td>

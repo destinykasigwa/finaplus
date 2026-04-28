@@ -205,7 +205,7 @@ class ComptesParamController extends Controller
     //UPDATE THE DAYS OF USERS PASSWORD EXPIRATION
     public function UpdateExpirateDateConfig(Request $request)
     {
-        
+
         if (isset($request->password_expired_days_user_id)) {
             ExpirateDateConfig::where("id", $request->password_expired_days_user_id)->update([
                 "password_expired_days" => $request->password_expired_days,
@@ -391,9 +391,17 @@ class ComptesParamController extends Controller
 
     private function creerHierarchieComptes($request, $date)
     {
+
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
+
+    if (!$codeAgence) {
+        return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
+    }
         // Niveau 1: Classe
         if (!Comptes::where('NumCompte', $request->RefTypeCompte)->exists()) {
             Comptes::create([
+                "CodeAgence"=>$codeAgence,
                 "NumCompte" => $request->RefTypeCompte,
                 "NomCompte" => $this->getNomClasse($request->RefTypeCompte),
                 "RefTypeCompte" => $request->RefTypeCompte,
@@ -419,6 +427,7 @@ class ComptesParamController extends Controller
         // Niveau 2: Cadre
         if (!Comptes::where('NumCompte', $request->RefCadre)->exists()) {
             Comptes::create([
+                "CodeAgence"=>$codeAgence,
                 "NumCompte" => $request->RefCadre,
                 "NomCompte" => $request->IntituleCompteNew,
                 "RefTypeCompte" => $request->RefTypeCompte,
@@ -444,6 +453,7 @@ class ComptesParamController extends Controller
         // Niveau 3: Groupe
         if (!Comptes::where('NumCompte', $request->RefGroupe)->exists()) {
             Comptes::create([
+                "CodeAgence"=>$codeAgence,
                 "NumCompte" => $request->RefGroupe,
                 "NomCompte" => $request->IntituleCompteNew,
                 "RefTypeCompte" => $request->RefTypeCompte,
@@ -469,6 +479,7 @@ class ComptesParamController extends Controller
         // Niveau 4: Sous-groupe
         if (!Comptes::where('NumCompte', $request->RefSousGroupe)->exists()) {
             Comptes::create([
+                "CodeAgence"=>$codeAgence,
                 "NumCompte" => $request->RefSousGroupe,
                 "NomCompte" => $request->IntituleCompteNew,
                 "RefTypeCompte" => $request->RefTypeCompte,
@@ -494,9 +505,17 @@ class ComptesParamController extends Controller
 
     private function creerComptesIndividuels($request, $date)
     {
+
+       $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
+
+    if (!$codeAgence) {
+        return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
+    }
         // Compte CDF (202)
         Comptes::create([
-            "NumCompte" => $request->RefSousGroupe . "202",
+            "CodeAgence"=>$codeAgence,
+            "NumCompte" => $request->RefSousGroupe . $codeAgence."2",
             "NomCompte" => $request->IntituleCompteNew,
             "RefTypeCompte" => $request->RefTypeCompte,
             "RefCadre" => $request->RefCadre,
@@ -504,7 +523,7 @@ class ComptesParamController extends Controller
             "RefSousGroupe" => $request->RefSousGroupe,
             "CodeMonnaie" => 2,
             "DateOuverture" => $date,
-            "NumAdherant" => $request->RefSousGroupe . "202",
+            "NumAdherant" => $request->RefSousGroupe . $codeAgence."2",
             // "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
             // "nature_compte" => $request->nature_compte ?? $this->getNatureClasse($request->RefTypeCompte),
             "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
@@ -519,7 +538,8 @@ class ComptesParamController extends Controller
 
         // Compte USD (201)
         Comptes::create([
-            "NumCompte" => $request->RefSousGroupe . "201",
+            "CodeAgence"=>$codeAgence,
+            "NumCompte" => $request->RefSousGroupe . $codeAgence."1",
             "NomCompte" => $request->IntituleCompteNew,
             "RefTypeCompte" => $request->RefTypeCompte,
             "RefCadre" => $request->RefCadre,
@@ -527,7 +547,7 @@ class ComptesParamController extends Controller
             "RefSousGroupe" => $request->RefSousGroupe,
             "CodeMonnaie" => 1,
             "DateOuverture" => $date,
-            "NumAdherant" => $request->RefSousGroupe . "201",
+            "NumAdherant" => $request->RefSousGroupe . $codeAgence."1",
             // "nature_compte" => $this->getNatureClasse($request->RefTypeCompte),
             // "nature_compte" => $request->nature_compte ?? $this->getNatureClasse($request->RefTypeCompte),
             "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {

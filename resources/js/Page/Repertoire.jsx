@@ -19,6 +19,7 @@ const Repertoire = () => {
     const [getdefaultDateFin, setGetdefaultDateFin] = useState();
     const [dateDebut, setDateDebut] = useState();
     const [dateFin, setDateFin] = useState();
+       const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
     // const [getTypeJournal, setGetTypeJournal] = useState();
     // const [checkboxValue, setCheckboxValue] = useState(false);
     // const [radioValue, setRadioValue] = useState("");
@@ -71,6 +72,7 @@ const Repertoire = () => {
                 DateDebut: dateDebut ? dateDebut : getdefaultDateDebut,
                 DateFin: dateFin ? dateFin : getdefaultDateFin,
                 UserName: UserName,
+                agence_filter: agenceFilter
             }
         );
         if (res.data.status == 1) {
@@ -268,71 +270,125 @@ const Repertoire = () => {
     </div>
 
     {/* Filtres */}
-    <div className="row g-3 mb-4">
-        {/* Période */}
-        <div className="col-md-3">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-calendar-alt me-2"></i>Période
-                    </h6>
-                </div>
-                <div className="card-body">
-                    <div className="mb-3">
-                        <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Date Début</label>
-                        <input type="date" className="form-control" style={{ borderRadius: "8px", borderColor: "#20c997" }}
-                            onChange={(e) => setDateDebut(e.target.value)}
-                            value={dateDebut ? dateDebut : getdefaultDateDebut} />
-                    </div>
-                    <div className="mb-2">
-                        <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Date Fin</label>
-                        <input type="date" className="form-control" style={{ borderRadius: "8px", borderColor: "#20c997" }}
-                            onChange={(e) => setDateFin(e.target.value)}
-                            value={dateFin ? dateFin : getdefaultDateFin} />
-                    </div>
-                </div>
+    {/* Filtres */}
+<div className="row g-4 mb-4">
+    {/* Période */}
+    <div className="col-md-3">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-calendar-alt me-2" style={{ color: "#6366f1" }}></i>
+                    Période
+                </h6>
             </div>
-        </div>
-
-        {/* Utilisateur */}
-        <div className="col-md-4">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-user-circle me-2"></i>Utilisateur
-                    </h6>
+            <div className="card-body pt-2">
+                <div className="mb-3">
+                    <label className="label-modern">Date début</label>
+                    <input
+                        type="date"
+                        className="form-control modern-input"
+                        value={dateDebut || getdefaultDateDebut}
+                        onChange={(e) => setDateDebut(e.target.value)}
+                    />
                 </div>
-                <div className="card-body">
-                    <label style={{ color: "steelblue", fontWeight: "500", fontSize: "13px" }}>Sélectionner un caissier</label>
-                    <select className="form-control" style={{ borderRadius: "8px", borderColor: "#20c997" }}
-                        id="user" onChange={(e) => setUserName(e.target.value)}>
-                        <option value="">Tous les caissiers</option>
-                        {getAllUsers && getAllUsers.map((res, index) => (
-                            <option key={index} value={res.name}>{res.name}</option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        {/* Action */}
-        <div className="col-md-2">
-            <div className="card border-0 shadow-sm rounded-3 h-100">
-                <div className="card-header bg-white border-0 pt-3">
-                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                        <i className="fas fa-play me-2"></i>Action
-                    </h6>
-                </div>
-                <div className="card-body d-flex align-items-center justify-content-center">
-                    <button onClick={GetRepertoire} className="btn w-100 py-2" 
-                        style={{ background: "linear-gradient(135deg, #20c997, #198764)", color: "white", borderRadius: "8px" }}>
-                        <i className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-desktop me-2"}`}></i>
-                        Afficher
-                    </button>
+                <div>
+                    <label className="label-modern">Date fin</label>
+                    <input
+                        type="date"
+                        className="form-control modern-input"
+                        value={dateFin || getdefaultDateFin}
+                        onChange={(e) => setDateFin(e.target.value)}
+                    />
                 </div>
             </div>
         </div>
     </div>
+
+    {/* Utilisateur */}
+    <div className="col-md-3">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-user me-2" style={{ color: "#6366f1" }}></i>
+                    Utilisateur
+                </h6>
+            </div>
+            <div className="card-body pt-2">
+                <label className="label-modern">Sélectionner un caissier</label>
+                <select
+                    className="modern-select w-100"
+                    value={UserName}
+                    onChange={(e) => setUserName(e.target.value)}
+                >
+                    <option value="">Tous les caissiers</option>
+                    {getAllUsers?.map((user, idx) => (
+                        <option key={idx} value={user.name}>{user.name}</option>
+                    ))}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    {/* Agence */}
+    <div className="col-md-3">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-building me-2" style={{ color: "#6366f1" }}></i>
+                    Agence
+                </h6>
+            </div>
+            <div className="card-body pt-2">
+                <select
+                    className="modern-select w-100"
+                    value={agenceFilter}
+                    onChange={(e) => setAgenceFilter(e.target.value)}
+                    disabled={userAgences.length <= 1}
+                >
+                    <option value="current">
+                        Agence courante ({currentAgence?.nom_agence || "Non définie"})
+                    </option>
+                    {userAgences.length > 1 && (
+                        <>
+                            <option value="all">Toutes mes agences</option>
+                            {userAgences.map((agence) => (
+                                <option key={agence.id} value={agence.id}>
+                                    {agence.code_agence} - {agence.nom_agence}
+                                </option>
+                            ))}
+                        </>
+                    )}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    {/* Action */}
+    <div className="col-md-3">
+        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                <h6 className="section-title">
+                    <i className="fas fa-play me-2" style={{ color: "#6366f1" }}></i>
+                    Action
+                </h6>
+            </div>
+            <div className="card-body d-flex align-items-center justify-content-center pt-2">
+                <button
+                    onClick={GetRepertoire}
+                    className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    ) : (
+                        <i className="fas fa-desktop"></i>
+                    )}
+                    <span>Afficher</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
     {/* Tableau des résultats */}
     {(getDataCDF && getDataCDF.length > 0) || (getDataUSD && getDataUSD.length > 0) ? (
@@ -469,6 +525,56 @@ const Repertoire = () => {
     )}
 
     <div style={{ height: "30px" }}></div>
+     <style>
+        {`
+        .modern-input {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+.modern-input:focus {
+    border-color: #20c997;
+    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+}
+.modern-select {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    background-color: white;
+    transition: all 0.2s ease;
+}
+.modern-select:focus {
+    border-color: #20c997;
+    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+}
+.label-modern {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 6px;
+    display: block;
+}
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+.gradient-btn {
+    background: linear-gradient(135deg, #20c997, #198764);
+    border: none;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+.gradient-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(32, 201, 151, 0.3);
+}
+        `}
+    </style>
 </div>
     );
 };

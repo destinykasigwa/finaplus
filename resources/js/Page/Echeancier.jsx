@@ -48,6 +48,7 @@ const Echeancier = () => {
     );
     const [parGlobalPercent, setParGlobalPercent] = useState(0);
     const [globalPercentages, setGlobalPercentages] = useState(null);
+    const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
 
     useEffect(() => {
         const today = new Date();
@@ -92,6 +93,7 @@ const Echeancier = () => {
             selectedDate,
             devise,
             agent_credit_name,
+            agence_filter: agenceFilter,
         };
         // AJOUT PAR - ajouter les paramètres spécifiques au PAR
         if (radioValue === "par") {
@@ -530,194 +532,205 @@ const Echeancier = () => {
             {/* Section Formulaire de recherche - version stylée pleine largeur */}
 <div className="row g-4 mb-5">
     <div className="col-12">
-        <div className="card border-0 shadow rounded-4">
-            <div className="card-header bg-white border-0 pt-4 pb-2">
-                <h6 className="fw-bold fs-5 mb-0" style={{ color: "#1a4d8c" }}>
-                    <i className="fas fa-search me-2"></i>Type de rapport
-                </h6>
-                <p className="text-muted small mt-1 mb-0">Sélectionnez le rapport et affinez les filtres</p>
-            </div>
-            <div className="card-body pt-0">
-                <form>
-                    {/* Ligne 1 : Numéro dossier + boutons radio */}
-                    <div className="row g-3 align-items-end">
-                        <div className="col-md-5">
-                            <label className="form-label fw-semibold small text-secondary">
-                                <i className="fas fa-folder-open me-1"></i> Numéro dossier
-                            </label>
-                            <div className="input-group">
-                                <span className="input-group-text bg-transparent border-end-0">
-                                    <i className="fas fa-hashtag text-muted"></i>
-                                </span>
-                                <input
-                                    type="text"
-                                    className="form-control border-start-0 ps-0"
-                                    placeholder="Ex: D2025-001"
-                                    onChange={(e) => setsearched_num_dossier(e.target.value)}
-                                />
-                            </div>
-                        </div>
-                        <div className="col-md-7">
-                            <label className="form-label fw-semibold small text-secondary mb-2">
-                                <i className="fas fa-chart-line me-1"></i> Type de rapport
-                            </label>
-                            <div className="d-flex flex-wrap gap-2">
-                                {[
-                                    { id: "echeancier_", value: "echeancier", icon: "fa-calendar-alt", label: "Échéancier" },
-                                    { id: "tableau_ammortiss", value: "tableau_ammortiss", icon: "fa-table", label: "Tableau d'amortissement" },
-                                    { id: "balance_agee", value: "balance_agee", icon: "fa-balance-scale", label: "Balance âgée" },
-                                    { id: "par_report", value: "par", icon: "fa-chart-pie", label: "PAR" }
-                                ].map(opt => (
-                                    <div className="form-check" key={opt.id}>
-                                        <input
-                                            type="radio"
-                                            className="form-check-input"
-                                            id={opt.id}
-                                            name="reportType"
-                                            value={opt.value}
-                                            checked={radioValue === opt.value}
-                                            onChange={handleRadioChange}
-                                        />
-                                        <label className="form-check-label" htmlFor={opt.id}>
-                                            <i className={`fas ${opt.icon} me-1 text-primary`}></i>
-                                            {opt.label}
-                                        </label>
-                                    </div>
-                                ))}
-                            </div>
+        <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
+
+            <div className="card-body p-4">
+                {/* Ligne 1 : Tous les filtres principaux sur une ligne */}
+                <div className="row g-3 align-items-end mb-4">
+                    {/* N° dossier - largeur réduite */}
+                    <div className="col-md-2">
+                        <label className="form-label fw-semibold small text-secondary">
+                            <i className="fas fa-folder-open me-1"></i> N° dossier
+                        </label>
+                        <input
+                            type="text"
+                            className="form-control rounded-3"
+                            placeholder="Ex: D2025-001"
+                            value={searched_num_dossier}
+                            onChange={(e) => setsearched_num_dossier(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Type rapport */}
+                    <div className="col-md-5">
+                        <label className="form-label fw-semibold small text-secondary mb-2">
+                            <i className="fas fa-chart-line me-1"></i> Type rapport
+                        </label>
+                        <div className="d-flex flex-wrap gap-2">
+                            {[
+                                { id: "echeancier_", value: "echeancier", icon: "fa-calendar-alt", label: "Échéancier" },
+                                { id: "tableau_ammortiss", value: "tableau_ammortiss", icon: "fa-table", label: "Tableau amort." },
+                                { id: "balance_agee", value: "balance_agee", icon: "fa-balance-scale", label: "Balance âgée" },
+                                { id: "par_report", value: "par", icon: "fa-chart-pie", label: "PAR" }
+                            ].map(opt => (
+                                <div className="form-check" key={opt.id}>
+                                    <input
+                                        type="radio"
+                                        className="form-check-input"
+                                        id={opt.id}
+                                        name="reportType"
+                                        value={opt.value}
+                                        checked={radioValue === opt.value}
+                                        onChange={handleRadioChange}
+                                    />
+                                    <label className="form-check-label small" htmlFor={opt.id}>
+                                        <i className={`fas ${opt.icon} me-1 text-primary`}></i>
+                                        {opt.label}
+                                    </label>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Filtres conditionnels : Balance âgée */}
-                    {radioValue === "balance_agee" && (
-                        <div className="row g-3 mt-4 pt-2 border-top">
-                            <div className="col-md-3">
-                                <label className="form-label fw-semibold small text-secondary">
-                                    <i className="far fa-calendar-alt me-1"></i> Date
-                                </label>
-                                <input
-                                    type="date"
-                                    className="form-control"
-                                    value={selectedDate}
-                                    onChange={(e) => {
-                                        setSelectedDate(e.target.value);
-                                        setdate_balance_agee(e.target.value);
-                                    }}
-                                />
-                            </div>
-                            <div className="col-md-3">
-                                <label className="form-label fw-semibold small text-secondary">
-                                    <i className="fas fa-money-bill-wave me-1"></i> Devise
-                                </label>
-                                <select className="form-select" onChange={(e) => setdevise(e.target.value)}>
-                                    <option value="">Dévise</option>
-                                    <option value="CDF">CDF</option>
-                                    <option value="USD">USD</option>
-                                </select>
-                            </div>
-                            <div className="col-md-3">
-                                <label className="form-label fw-semibold small text-secondary">
-                                    <i className="fas fa-user-tie me-1"></i> Agent de crédit
-                                </label>
-                                <select className="form-select" onChange={(e) => setagent_credit_name(e.target.value)}>
-                                    <option value="">Tous</option>
-                                    {fetchAgentCredit?.map((res, idx) => (
-                                        <option key={idx} value={res.name}>{res.name}</option>
+                    {/* Agence */}
+                    <div className="col-md-3">
+                        <label className="form-label fw-semibold small text-secondary">
+                            <i className="fas fa-building me-1"></i> Agence
+                        </label>
+                        <select
+                            className="form-select rounded-3"
+                            value={agenceFilter}
+                            onChange={(e) => setAgenceFilter(e.target.value)}
+                            disabled={userAgences.length <= 1}
+                        >
+                            <option value="current">
+                                Courante ({currentAgence?.nom_agence || "?"})
+                            </option>
+                            {userAgences.length > 1 && (
+                                <>
+                                    <option value="all">📊 Toutes les Agences</option>
+                                    {userAgences.map((agence) => (
+                                        <option key={agence.id} value={agence.id}>
+                                            🏢 {agence.code_agence} - {agence.nom_agence}
+                                        </option>
                                     ))}
-                                </select>
-                            </div>
-                            <div className="col-md-3 d-flex align-items-end">
-                                <button
-                                    className="btn btn-success w-100 shadow-sm"
-                                    onClick={getSeachedData}
-                                    disabled={loading}
-                                    style={{ background: "linear-gradient(135deg, #20c997, #198764)", border: "none" }}
-                                >
-                                    {loading ? (
-                                        <span className="spinner-border spinner-border-sm me-2"></span>
-                                    ) : (
-                                        <i className="fas fa-desktop me-2"></i>
-                                    )}
-                                    Afficher
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                                </>
+                            )}
+                        </select>
+                    </div>
 
-                    {/* Filtres conditionnels : PAR */}
-                    {radioValue === "par" && (
-                        <div className="row g-3 mt-4 pt-2 border-top">
-                            <div className="col-md-3">
-                                <label className="form-label fw-semibold small text-secondary">
-                                    <i className="far fa-calendar-check me-1"></i> Date de référence
-                                </label>
-                                <input
-                                    type="date"
-                                    className="form-control"
-                                    value={datePar}
-                                    onChange={(e) => setDatePar(e.target.value)}
-                                />
-                            </div>
-                            <div className="col-md-3">
-                                <label className="form-label fw-semibold small text-secondary">
-                                    <i className="fas fa-coins me-1"></i> Devise
-                                </label>
-                                <select className="form-select" onChange={(e) => setdevise(e.target.value)}>
-                                    <option value="">Toutes</option>
-                                    <option value="CDF">CDF</option>
-                                    <option value="USD">USD</option>
-                                </select>
-                            </div>
-                            <div className="col-md-3">
-                                <label className="form-label fw-semibold small text-secondary">
-                                    <i className="fas fa-users me-1"></i> Gestionnaire
-                                </label>
-                                <select className="form-select" onChange={(e) => setagent_credit_name(e.target.value)}>
-                                    <option value="">Tous</option>
-                                    {fetchAgentCredit?.map((res, idx) => (
-                                        <option key={idx} value={res.name}>{res.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className="col-md-3 d-flex align-items-end">
-                                <button
-                                    className="btn btn-success w-100 shadow-sm"
-                                    onClick={getSeachedData}
-                                    disabled={loading}
-                                    style={{ background: "linear-gradient(135deg, #20c997, #198764)", border: "none" }}
-                                >
-                                    {loading ? (
-                                        <span className="spinner-border spinner-border-sm me-2"></span>
-                                    ) : (
-                                        <i className="fas fa-chart-pie me-2"></i>
-                                    )}
-                                    Afficher
-                                </button>
-                            </div>
-                        </div>
-                    )}
+                    {/* Bouton Afficher */}
+                    <div className="col-md-2">
+                        <label className="form-label fw-semibold small text-secondary invisible">
+                            Action
+                        </label>
+                        <button
+                            className="btn gradient-btn w-100 py-2 text-white d-flex align-items-center justify-content-center gap-2"
+                            onClick={getSeachedData}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <span className="spinner-border spinner-border-sm"></span>
+                            ) : (
+                                <i className="fas fa-desktop"></i>
+                            )}
+                            <span>Afficher</span>
+                        </button>
+                    </div>
+                </div>
 
-                    {/* Bouton simple pour Échéancier / Amortissement */}
-                    {radioValue && radioValue !== "balance_agee" && radioValue !== "par" && (
-                        <div className="row mt-4 pt-2 border-top">
-                            <div className="col-md-4 mx-auto">
-                                <button
-                                    className="btn btn-success w-100 shadow-sm"
-                                    onClick={getSeachedData}
-                                    disabled={loading}
-                                    style={{ background: "linear-gradient(135deg, #20c997, #198764)", border: "none" }}
-                                >
-                                    {loading ? (
-                                        <span className="spinner-border spinner-border-sm me-2"></span>
-                                    ) : (
-                                        <i className="fas fa-download me-2"></i>
-                                    )}
-                                    Afficher
-                                </button>
-                            </div>
+                {/* ========== FILTRES CONDITIONNELS ========== */}
+
+                {/* Balance âgée */}
+                {radioValue === "balance_agee" && (
+                    <div className="row g-3 mb-4 pb-2 border-top pt-3">
+                        <div className="col-md-3">
+                            <label className="form-label fw-semibold small text-secondary">
+                                <i className="far fa-calendar-alt me-1"></i> Date
+                            </label>
+                            <input
+                                type="date"
+                                className="form-control rounded-3"
+                                value={selectedDate}
+                                onChange={(e) => {
+                                    setSelectedDate(e.target.value);
+                                    setdate_balance_agee(e.target.value);
+                                }}
+                            />
                         </div>
-                    )}
-                </form>
+                        <div className="col-md-3">
+                            <label className="form-label fw-semibold small text-secondary">
+                                <i className="fas fa-money-bill-wave me-1"></i> Devise
+                            </label>
+                            <select
+                                className="form-select rounded-3"
+                                value={devise}
+                                onChange={(e) => setdevise(e.target.value)}
+                            >
+                                <option value="">Toutes</option>
+                                <option value="CDF">CDF</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                        <div className="col-md-3">
+                            <label className="form-label fw-semibold small text-secondary">
+                                <i className="fas fa-user-tie me-1"></i> Agent crédit
+                            </label>
+                            <select
+                                className="form-select rounded-3"
+                                value={agent_credit_name}
+                                onChange={(e) => setagent_credit_name(e.target.value)}
+                            >
+                                <option value="">Tous</option>
+                                {fetchAgentCredit?.map((res, idx) => (
+                                    <option key={idx} value={res.name}>{res.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="col-md-3 d-flex align-items-end">
+                            {/* Bouton déjà présent, on le laisse vide pour éviter doublon */}
+                        </div>
+                    </div>
+                )}
+
+                {/* PAR */}
+                {radioValue === "par" && (
+                    <div className="row g-3 mb-4 pb-2 border-top pt-3">
+                        <div className="col-md-3">
+                            <label className="form-label fw-semibold small text-secondary">
+                                <i className="far fa-calendar-check me-1"></i> Date référence
+                            </label>
+                            <input
+                                type="date"
+                                className="form-control rounded-3"
+                                value={datePar}
+                                onChange={(e) => setDatePar(e.target.value)}
+                            />
+                        </div>
+                        <div className="col-md-3">
+                            <label className="form-label fw-semibold small text-secondary">
+                                <i className="fas fa-coins me-1"></i> Devise
+                            </label>
+                            <select
+                                className="form-select rounded-3"
+                                value={devise}
+                                onChange={(e) => setdevise(e.target.value)}
+                            >
+                                <option value="">Toutes</option>
+                                <option value="CDF">CDF</option>
+                                <option value="USD">USD</option>
+                            </select>
+                        </div>
+                        <div className="col-md-3">
+                            <label className="form-label fw-semibold small text-secondary">
+                                <i className="fas fa-users me-1"></i> Gestionnaire
+                            </label>
+                            <select
+                                className="form-select rounded-3"
+                                value={agent_credit_name}
+                                onChange={(e) => setagent_credit_name(e.target.value)}
+                            >
+                                <option value="">Tous</option>
+                                {fetchAgentCredit?.map((res, idx) => (
+                                    <option key={idx} value={res.name}>{res.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="col-md-3 d-flex align-items-end"></div>
+                    </div>
+                )}
+
+                {/* Cas Échéancier / Amortissement : pas de filtres supplémentaires */}
             </div>
         </div>
     </div>

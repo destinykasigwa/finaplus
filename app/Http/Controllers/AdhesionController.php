@@ -6,6 +6,7 @@ use App\Models\Comptes;
 use App\Models\Mandataires;
 use Illuminate\Http\Request;
 use App\Models\AdhesionMembre;
+use App\Models\Agences;
 use App\Models\CompteurCompte;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -29,41 +30,42 @@ class AdhesionController extends Controller
     public function RegisterNewMember(Request $request)
     {
         $validator = validator::make($request->all(), [
-            'agence' => 'required',
+            'agenceFilter' => 'required',
             'code_monnaie' => 'required',
             'type_epargne' => 'required',
             'type_client' => 'required',
             'intitule_compte' => 'required',
             'critere' => 'required',
+            'suiteAdresse'  => 'required',
         ]);
         if ($validator->fails()) {
             return response()->json([
                 'validate_error' => $validator->messages()
             ]);
         }
+        $getAgence = Agences::where("code_agence", $request->agenceFilter)->first();
+        $NomAgence = $getAgence ? $getAgence->nom_agence : null;
+        $codeAgence = $request->agenceFilter;
         //CREATE AN ACCOUNT REF
         CompteurCompte::create([
             "default_value" => "0000"
         ]);
         //GET LAST ROW CREATED
         $refCompte = CompteurCompte::latest()->first()->id;
-        if ($request->agence == "SIEGE") {
-            $codeAgence = "20";
-        }
         if ($refCompte < 10) {
-            $compteEnFranc = "330100000" . $refCompte . "202";
+            $compteEnFranc = "330100000" . $refCompte . $codeAgence . "2";
         } else if ($refCompte >= 10 && $refCompte < 100) {
-            $compteEnFranc = "33010000" . $refCompte . "202";
+            $compteEnFranc = "33010000" . $refCompte . $codeAgence . "2";
         } else if ($refCompte >= 100 && $refCompte < 1000) {
-            $compteEnFranc = "3301000" . $refCompte . "202";
+            $compteEnFranc = "3301000" . $refCompte . $codeAgence . "2";
         } else if ($refCompte >= 1000 && $refCompte < 10000) {
-            $compteEnFranc = "330100" . $refCompte . "202";
+            $compteEnFranc = "330100" . $refCompte . $codeAgence . "2";
         }
         AdhesionMembre::create([
             "num_compte" => $compteEnFranc,
             "compte_abrege" => $refCompte,
-            "agence" => $request->agence,
-            "code_agence" => $codeAgence,
+            "agence" => $NomAgence,
+            "code_agence" => $request->agenceFilter,
             "code_monnaie" => "CDF",
             "type_epargne" => $request->type_epargne,
             "type_client" => $request->type_client,
@@ -89,6 +91,7 @@ class AdhesionController extends Controller
             "quartier" => $request->quartier,
             "type_de_gestion" => $request->type_de_gestion,
             "critere" => $request->critere,
+            "suiteAdresse" => $request->suiteAdresse
         ]);
 
         // $lastId = AdhesionMembre::latest()->first();
@@ -230,10 +233,10 @@ class AdhesionController extends Controller
                         'NumeTelephone' => $data->telephone,
                         'DateNaissance' => $data->date_naissance,
                         'NumAdherant' => $data->compte_abrege,
-                        'nature_compte'=>"PASSIF",
-                        'niveau'=>"5",
-                        'est_classe'=>0,
-                        'compte_parent'=> "3300",
+                        'nature_compte' => "PASSIF",
+                        'niveau' => "5",
+                        'est_classe' => 0,
+                        'compte_parent' => "3300",
                     ]);
                     return response()->json(["status" => 1, "msg" => "Compte bien crée"]);
                 } else {
@@ -242,15 +245,18 @@ class AdhesionController extends Controller
             } else if ($request->devise_compte == "USD") {
                 //CHECK IF THE ACCOUNT NOT ALREADY CREATED
                 $checkCompteExist = Comptes::where("NumAdherant", $request->compteAbrege)->where("CodeMonnaie", 1)->first();
+
                 if (!$checkCompteExist) {
-                    if ($request->compteAbrege     < 10) {
-                        $compteEnDollars = "330000000" . $request->compteAbrege     . "201";
+                    $getCodeAgence = AdhesionMembre::where("compte_abrege", $request->compteAbrege)->first();
+                    $codeAgence = $getCodeAgence ? $getCodeAgence->code_agence : null;
+                    if ($request->compteAbrege < 10) {
+                        $compteEnDollars = "330000000" . $request->compteAbrege     . $codeAgence . "1";
                     } else if ($request->compteAbrege >= 10 && $request->compteAbrege < 100) {
-                        $compteEnDollars = "33000000" . $request->compteAbrege . "201";
+                        $compteEnDollars = "33000000" . $request->compteAbrege  . $codeAgence . "1";
                     } else if ($request->compteAbrege >= 100 && $request->compteAbrege < 1000) {
-                        $compteEnDollars = "3300000" . $request->compteAbrege . "201";
+                        $compteEnDollars = "3300000" . $request->compteAbrege  . $codeAgence . "1";
                     } else if ($request->compteAbrege >= 1000 && $request->compteAbrege < 10000) {
-                        $compteEnDollars = "330000" . $request->compteAbrege . "201";
+                        $compteEnDollars = "330000" . $request->compteAbrege  . $codeAgence . "1";
                     }
                     $data = AdhesionMembre::where("compte_abrege", $request->compteAbrege)->first();
                     Comptes::create([
@@ -265,10 +271,10 @@ class AdhesionController extends Controller
                         'NumeTelephone' => $data->telephone,
                         'DateNaissance' => $data->date_naissance,
                         'NumAdherant' => $data->compte_abrege,
-                        'nature_compte'=>"PASSIF",
-                        'niveau'=>"5",
-                        'est_classe'=>0,
-                        'compte_parent'=> "3300",
+                        'nature_compte' => "PASSIF",
+                        'niveau' => "5",
+                        'est_classe' => 0,
+                        'compte_parent' => "3300",
                     ]);
                     return response()->json(["status" => 1, "msg" => "Compte bien crée"]);
                 } else {

@@ -1,16 +1,16 @@
-*{
-margin: 0;
-padding: 0;
+* {
+    margin: 0;
+    padding: 0;
 }
 
-.header-section{
+.header-section {
     /* background-color: steelblue; */
     height: 50px;
     position: absolute;
     top: 0px;
 }
 
-.footer-section{
+.footer-section {
     /* background-color: steelblue; */
     /* height: 50px;
     position: absolute; */
@@ -19,75 +19,63 @@ padding: 0;
     width: 83.5% !important;
     float: right !important;
     margin-top: 10px;
-    
-    
-   
-    
 }
 
 .timeline {
-    display:flex;
+    display: flex;
     /* background-color:#eee; */
-    flex-wrap: nowrap
-
- 
+    flex-wrap: nowrap;
 }
-.timeline a{
+.timeline a {
     text-decoration: none;
     margin: 2px;
     color: #000;
     font-size: 18px;
-    
 }
 .colonne {
-    background:teal;
-    width:auto;
-    margin-right:10px;
+    background: teal;
+    width: auto;
+    margin-right: 10px;
     position: relative;
     padding: 50px;
     border-radius: 15px;
     /* border-radius: 15px 50px 30px; */
-    
-   
 }
 .colonne:last-child {
-    margin:0;
+    margin: 0;
 }
 .colonne > div {
-    margin:10px;
-    height:30px;
-    background:#ddd;
-    display:flex;
-   
-    align-items:center;
-    justify-content:center;
+    margin: 10px;
+    height: 30px;
+    background: #ddd;
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
     padding: 5px;
     border-radius: 5px;
 }
 .colonne > div:nth-child(2) {
-    border-radius:50%;
-    height:100px;
-    width:100px;
-    
+    border-radius: 50%;
+    height: 100px;
+    width: 100px;
 }
-.choisir{
-    background:#ddd;
-    border-radius:50%;
-    height:90px;
-    width:90px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+.choisir {
+    background: #ddd;
+    border-radius: 50%;
+    height: 90px;
+    width: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.colonne > div:nth-child(2):not(.last):after  {
-    content: '\2014\2014';
+.colonne > div:nth-child(2):not(.last):after {
+    content: "\2014\2014";
     color: red;
-    left:  60px;
+    left: 60px;
     position: absolute;
     z-index: 10;
 }
-
-
 
 .circle-container {
     position: relative;
@@ -102,46 +90,100 @@ padding: 0;
 .circle-container a {
     display: block;
     position: absolute;
-    top: 50%; left: 50%;
-    width: 5em; height: 5em;
+    top: 50%;
+    left: 50%;
+    width: 5em;
+    height: 5em;
     margin: -2em;
 }
-.circle-container img { display: block; width: 100%; }
-.deg0 { transform: translate(12em);border:2px solid grey;border-radius: 100px;background: grey;padding: 5px; } /* 12em = half the width of the wrapper */
-.deg45 { transform: rotate(45deg) translate(12em) rotate(-45deg);border:2px solid grey;border-radius: 100px;background: grey;padding: 5px; }
-.deg135 { transform: rotate(135deg) translate(12em) rotate(-135deg);border:2px solid grey;border-radius: 100px;background: grey;padding: 5px; }
-.deg180 { transform: translate(-12em);border:2px solid grey;border-radius: 100px;background: grey;padding: 5px; }
-.deg225 { transform: rotate(225deg) translate(12em) rotate(-225deg);border:2px solid grey;border-radius: 100px;background: grey;padding: 5px; }
-.deg315 { transform: rotate(315deg) translate(12em) rotate(-315deg);border:2px solid grey;border-radius: 100px;background: grey;padding: 5px; }
-.deg270 { transform: rotate(270deg) translate(12em) rotate(-270deg);border:2px solid grey;border-radius: 100px;background: grey;padding: 5px; }
-.deg100 { transform: rotate(100deg) translate(12em) rotate(-100deg);border:2px solid grey;border-radius: 100px;background: grey;padding: 5px; }
-.deg150 { transform: rotate(140deg) translate(12em) rotate(-140deg);border:2px solid grey;border-radius: 100px;background: grey;padding: 5px; }
+.circle-container img {
+    display: block;
+    width: 100%;
+}
+.deg0 {
+    transform: translate(12em);
+    border: 2px solid grey;
+    border-radius: 100px;
+    background: grey;
+    padding: 5px;
+} /* 12em = half the width of the wrapper */
+.deg45 {
+    transform: rotate(45deg) translate(12em) rotate(-45deg);
+    border: 2px solid grey;
+    border-radius: 100px;
+    background: grey;
+    padding: 5px;
+}
+.deg135 {
+    transform: rotate(135deg) translate(12em) rotate(-135deg);
+    border: 2px solid grey;
+    border-radius: 100px;
+    background: grey;
+    padding: 5px;
+}
+.deg180 {
+    transform: translate(-12em);
+    border: 2px solid grey;
+    border-radius: 100px;
+    background: grey;
+    padding: 5px;
+}
+.deg225 {
+    transform: rotate(225deg) translate(12em) rotate(-225deg);
+    border: 2px solid grey;
+    border-radius: 100px;
+    background: grey;
+    padding: 5px;
+}
+.deg315 {
+    transform: rotate(315deg) translate(12em) rotate(-315deg);
+    border: 2px solid grey;
+    border-radius: 100px;
+    background: grey;
+    padding: 5px;
+}
+.deg270 {
+    transform: rotate(270deg) translate(12em) rotate(-270deg);
+    border: 2px solid grey;
+    border-radius: 100px;
+    background: grey;
+    padding: 5px;
+}
+.deg100 {
+    transform: rotate(100deg) translate(12em) rotate(-100deg);
+    border: 2px solid grey;
+    border-radius: 100px;
+    background: grey;
+    padding: 5px;
+}
+.deg150 {
+    transform: rotate(140deg) translate(12em) rotate(-140deg);
+    border: 2px solid grey;
+    border-radius: 100px;
+    background: grey;
+    padding: 5px;
+}
 
-
-.circle-container a{
+.circle-container a {
     text-decoration: none;
     color: #000;
 }
 
-  .input_form{
-    padding: "5px ";                                                 
+.input_form {
+    padding: "5px ";
     border: "1px solid #dcdcdc";
-  }
+}
 
-  #formFile::before {
+#formFile::before {
     content: "Change file";
     position: absolute;
     z-index: 2;
     display: block;
     background-color: #eee;
     width: 80px;
-  }
+}
 
-
-
-
-
-  .drop-container {
+.drop-container {
     position: relative;
     display: flex;
     gap: 10px;
@@ -154,36 +196,37 @@ padding: 0;
     border: 2px dashed #555;
     color: #444;
     cursor: pointer;
-    transition: background .2s ease-in-out, border .2s ease-in-out;
-  }
-  
-  .drop-container:hover {
+    transition:
+        background 0.2s ease-in-out,
+        border 0.2s ease-in-out;
+}
+
+.drop-container:hover {
     background: #eee;
     border-color: #111;
-  }
-  
-  .drop-container:hover .drop-title {
+}
+
+.drop-container:hover .drop-title {
     color: #222;
-  }
-  
-  .drop-title {
+}
+
+.drop-title {
     color: #444;
     font-size: 20px;
     font-weight: bold;
     text-align: center;
-    transition: color .2s ease-in-out;
-  }
-  
-  /* .data-label{
+    transition: color 0.2s ease-in-out;
+}
+
+/* .data-label{
     box-shadow:0 0 0 1px #ebebeb inset, 0 0 0 2px rgba(255,255,255,0.15) inset, 0 8px 0 0 #adadad, 0 8px 0 1px rgba(0,0,0,0.4), 0 8px 8px 1px rgba(0,0,0,0.5);
     background-color:#fff;
   } */
 
-
-  legend.scheduler-border {
-    width:inherit; /* Or auto */
-    padding:0 10px; /* To give a bit of padding on the left and right */
-    border-bottom:1px;
+legend.scheduler-border {
+    width: inherit; /* Or auto */
+    padding: 0 10px; /* To give a bit of padding on the left and right */
+    border-bottom: 1px;
 }
 
 /* body {
@@ -204,31 +247,27 @@ padding: 0;
   text-align: center;
 } */
 
-
-html, body {
-  height: 100% !important; /* Le corps et la page occupent toujours toute la hauteur */
-  margin: 0 !important;    /* Éliminer les marges par défaut */
+html,
+body {
+    height: 100% !important; /* Le corps et la page occupent toujours toute la hauteur */
+    margin: 0 !important; /* Éliminer les marges par défaut */
 }
 
 .min-vh-100 {
-  min-height: 100vh !important; /* La page occupe toute la hauteur de la fenêtre */
+    min-height: 100vh !important; /* La page occupe toute la hauteur de la fenêtre */
 }
 
 .bg-teal {
-  background-color: teal !important;
-  margin-top: 50px !important;
-  height: auto !important;
-  
+    background-color: teal !important;
+    margin-top: 50px !important;
+    height: auto !important;
 }
 
 .footer {
-  position: relative !important; /* Position normale pour éviter des chevauchements */
-  width: 100% !important;        /* Le footer prend toute la largeur */
-  text-align: center !important;
-
-
+    position: relative !important; /* Position normale pour éviter des chevauchements */
+    width: 100% !important; /* Le footer prend toute la largeur */
+    text-align: center !important;
 }
-
 
 .shortcut-card {
     border-radius: 16px;
@@ -238,7 +277,7 @@ html, body {
 
 .shortcut-card:hover {
     transform: translateY(-6px);
-    box-shadow: 0 12px 25px rgba(0,0,0,0.15);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
 }
 
 .icon {
@@ -257,8 +296,8 @@ html, body {
     border-radius: 20px;
 }
 
-.shortcut-card a:hover{
-  text-decoration: none;
+.shortcut-card a:hover {
+    text-decoration: none;
 }
 
 .shortcut-link {
@@ -271,7 +310,6 @@ html, body {
 .shortcut-link:active {
     background: transparent !important;
 }
-
 
 .shortcut-card {
     width: 100%;
@@ -291,8 +329,6 @@ html, body {
         margin-bottom: 10px;
     }
 }
-
-
 
 /* Styles pour les onglets */
 .custom-tabs {
@@ -330,8 +366,6 @@ html, body {
     margin-right: 8px;
 }
 
-
-
 /* Styles pour les onglets de gestion des utilisateurs */
 .user-tabs {
     gap: 8px;
@@ -363,24 +397,15 @@ html, body {
     background-color: white;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* ========== SIDEBAR MODERNISÉ ========== */
 .main-sidebar {
     --sidebar-bg: linear-gradient(145deg, #0a0a0a 0%, #111111 100%);
     --sidebar-hover: rgba(32, 201, 151, 0.12);
-    --sidebar-active: linear-gradient(90deg, rgba(32, 201, 151, 0.2), transparent);
+    --sidebar-active: linear-gradient(
+        90deg,
+        rgba(32, 201, 151, 0.2),
+        transparent
+    );
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -397,13 +422,19 @@ html, body {
 }
 
 .user-panel::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: -1px;
     left: 15%;
     width: 70%;
     height: 2px;
-    background: linear-gradient(90deg, transparent, #20c997, #198764, transparent);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        #20c997,
+        #198764,
+        transparent
+    );
     border-radius: 2px;
 }
 
@@ -556,40 +587,50 @@ html, body {
         z-index: 1060;
     }
 }
-    
 
-
-
-
-    
-
-
-
-
-
-
-
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
-
-
-
-
+.modern-input {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+.modern-input:focus {
+    border-color: #20c997;
+    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+}
+.modern-select {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    background-color: white;
+    transition: all 0.2s ease;
+}
+.modern-select:focus {
+    border-color: #20c997;
+    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+}
+.label-modern {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 6px;
+    display: block;
+}
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+.gradient-btn {
+    background: linear-gradient(135deg, #20c997, #198764);
+    border: none;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+.gradient-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(32, 201, 151, 0.3);
+}
