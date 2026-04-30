@@ -413,9 +413,9 @@
                         </div>
                     </li>
                 @elseif(count($userAgences) == 1)
-                    <li class="nav-item">
+                    <li class="nav-item ms-auto">
                         <span class="nav-link text-white-50">
-                            <i class="fas fa-building me-1"></i> {{ $userAgences[0]['code_agence'] }}
+                            <i class="fas fa-building me-1"></i> AGENCE DE    {{ $userAgences[0]['nom_agence'] }} -{{ $userAgences[0]['code_agence'] }}
                         </span>
                     </li>
                 @endif

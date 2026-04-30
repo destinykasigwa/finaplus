@@ -27,14 +27,14 @@ export const EnteteBordereau = () => {
         <>
             <div className="entete-rapport">
                 <div className="entete-logo">
-                    {/* <img
+                    <img
                         src={`https://app.ihdemunis.org/uploads/images/logo/1696413083.jpg`}
                         alt="Logo"
-                    /> */}
-                       <img
+                    />
+                       {/* <img
                         src={`https://app.nuru.clindrc.com/uploads/images/logo/1736022909.PNG`}
                         alt="Logo"
-                    />
+                    /> */}
                 </div>
                 <div className="entete-infos">
                     <div className="entete-denomination">

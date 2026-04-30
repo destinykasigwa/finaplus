@@ -220,7 +220,7 @@ class SendNotification
                         ->first();
 
                     $data = ($getMembreInfo2->sexe == "Homme" ? " Bonjour Monsieur " : ($getMembreInfo2->sexe == "Femme" ? " Bonjour Madame " : " Bonjour ")) .
-                        $getMembreInfo2->NomCompte . " Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " depot ") . " de " . $montant . " sur votre compte CDF-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
+                        $getMembreInfo2->NomCompte . " Annulation " . ($typeTransaction == "C" ? " de votre depot" : " de votre retrait ") . " de " . $montant . " sur votre compte CDF-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
                     Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                     // return view('emails.test');
                 } else if ($devise == "USD") {
@@ -244,7 +244,7 @@ class SendNotification
                         : ($getMembreInfo2->sexe == "Femme"
                             ? "Bonjour Madame"
                             : "Bonjour"))
-                        . " " .  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " dépot ") . " de " . $montant . " sur votre compte USD-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreCDF) . " USD";
+                        . " " .  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre dépot " : "de votre retrait ") . " de " . $montant . " sur votre compte USD-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreCDF) . " USD";
 
                     Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                 }
@@ -268,7 +268,7 @@ class SendNotification
                         //         ? "Bonjour Madame "
                         //         : "Bonjour ");
 
-                        $message =  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " dépot ") . " de " . $montant . " sur votre compte CDF-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
+                        $message =  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre depot " : "de votre retrait ") . " de " . $montant . " sur votre compte CDF-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
 
                         $receiver_number = $getMembreInfo->Telephone;
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
@@ -317,7 +317,7 @@ class SendNotification
                         //         ? "Bonjour Madame "
                         //         : "Bonjour ");
 
-                        $message =  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre retrait " : " dépot ") . " de " . $montant . " sur votre compte USD-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD). " USD";
+                        $message =  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre depot " : "de votre retrait ") . " de " . $montant . " sur votre compte USD-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD). " USD";
                         $receiver_number = $getMembreInfo->Telephone;
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
 

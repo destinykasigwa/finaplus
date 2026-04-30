@@ -184,1276 +184,540 @@ const Appro = () => {
             {fetchData !== undefined &&
             getchefcaisse &&
             getchefcaisse.isChefCaisse == 1 ? (
-                // Vue pour le Chef de Caisse
-                <div
-                    className="container-fluid"
-                    style={{ marginTop: "10px", padding: "0 15px" }}
-                >
-                    {/* En-tête moderne */}
-                    <div className="row mb-4">
-                        <div className="col-12">
-                            <div className="card border-0 shadow-sm rounded-3">
-                                <div
-                                    className="card-body p-3"
-                                    style={{
-                                        background: "#138496",
-                                        borderRadius: "12px",
-                                    }}
-                                >
-                                    <div className="d-flex align-items-center">
-                                        <div className="me-3">
-                                            <i
-                                                className="fas fa-charging-station"
-                                                style={{
-                                                    fontSize: "28px",
-                                                    color: "white",
-                                                }}
-                                            ></i>
-                                        </div>
-                                        <div>
-                                            <h5 className="text-white fw-bold mb-0">
-                                                Approvisionnement
-                                            </h5>
-                                            <small className="text-white-50">
-                                                Gestion des approvisionnements
-                                                en espèces
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                <div className="container-fluid py-4">
+    {/* ========== EN-TÊTE MODERNE ========== */}
+    <div className="row mb-4">
+        <div className="col-12">
+            <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div className="card-header text-white border-0 py-3" style={{background: "#0b7285" }}>
+                    <div className="d-flex align-items-center gap-3">
+                        <div className="bg-white bg-opacity-25 rounded-3 p-2">
+                            <i className="fas fa-charging-station fa-2x"></i>
                         </div>
-                    </div>
-
-                    {/* Section Formulaire - Chef de Caisse */}
-                    <div className="row g-3 mb-4">
-                        <div className="col-md-5">
-                            <div className="card border-0 shadow-sm rounded-3">
-                                <div className="card-header bg-white border-0 pt-3">
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-info-circle me-2"></i>
-                                        Informations d'approvisionnement
-                                    </h6>
-                                </div>
-                                <div className="card-body">
-                                    <form>
-                                        <table style={{ width: "100%" }}>
-                                            <tbody>
-                                                <tr>
-                                                    <td
-                                                        style={{
-                                                            padding: "8px",
-                                                            width: "35%",
-                                                        }}
-                                                    >
-                                                        <label
-                                                            style={{
-                                                                color: "steelblue",
-                                                                fontWeight:
-                                                                    "500",
-                                                            }}
-                                                        >
-                                                            Devise
-                                                        </label>
-                                                    </td>
-                                                    <td
-                                                        style={{
-                                                            padding: "8px",
-                                                        }}
-                                                    >
-                                                        <select
-                                                            id="devise"
-                                                            name="devise"
-                                                            className="form-control"
-                                                            style={{
-                                                                borderRadius:
-                                                                    "8px",
-                                                            }}
-                                                            onChange={(e) => {
-                                                                setDevise(
-                                                                    e.target
-                                                                        .value,
-                                                                );
-                                                            }}
-                                                        >
-                                                            <option value="CDF">
-                                                                CDF
-                                                            </option>
-                                                            <option value="USD">
-                                                                USD
-                                                            </option>
-                                                        </select>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td
-                                                        style={{
-                                                            padding: "8px",
-                                                        }}
-                                                    >
-                                                        <label
-                                                            style={{
-                                                                color: "steelblue",
-                                                                fontWeight:
-                                                                    "500",
-                                                            }}
-                                                        >
-                                                            Caissier(ère)
-                                                        </label>
-                                                    </td>
-                                                    <td
-                                                        style={{
-                                                            padding: "8px",
-                                                        }}
-                                                    >
-                                                        <select
-                                                            id="CaissierId"
-                                                            name="CaissierId"
-                                                            className="form-control"
-                                                            style={{
-                                                                borderRadius:
-                                                                    "8px",
-                                                            }}
-                                                            onChange={(e) => {
-                                                                setCaissierId(
-                                                                    e.target
-                                                                        .value,
-                                                                );
-                                                            }}
-                                                        >
-                                                            <option value="">
-                                                                Sélectionnez
-                                                            </option>
-                                                            {fetchData &&
-                                                                fetchData.map(
-                                                                    (
-                                                                        res,
-                                                                        index,
-                                                                    ) => {
-                                                                        return (
-                                                                            <option
-                                                                                key={
-                                                                                    index
-                                                                                }
-                                                                                value={
-                                                                                    res.caissierId
-                                                                                }
-                                                                            >
-                                                                                {removeLastWord(
-                                                                                    res.NomCompte,
-                                                                                )}
-                                                                            </option>
-                                                                        );
-                                                                    },
-                                                                )}
-                                                        </select>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td
-                                                        style={{
-                                                            padding: "8px",
-                                                        }}
-                                                    >
-                                                        <label
-                                                            style={{
-                                                                color: "steelblue",
-                                                                fontWeight:
-                                                                    "500",
-                                                            }}
-                                                        >
-                                                            Montant
-                                                        </label>
-                                                    </td>
-                                                    <td
-                                                        style={{
-                                                            padding: "8px",
-                                                        }}
-                                                    >
-                                                        <input
-                                                            id="Montant"
-                                                            name="Montant"
-                                                            type="text"
-                                                            className="form-control"
-                                                            style={{
-                                                                borderRadius:
-                                                                    "8px",
-                                                                fontWeight:
-                                                                    "bold",
-                                                                fontSize:
-                                                                    "18px",
-                                                            }}
-                                                            onChange={(e) =>
-                                                                setMontant(
-                                                                    e.target
-                                                                        .value,
-                                                                )
-                                                            }
-                                                            value={Montant}
-                                                            placeholder="0,00"
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                        <hr className="my-3" />
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Billetage */}
-                        <div className="col-md-5">
-                            <div className="card border-0 shadow-sm rounded-3">
-                                <div className="card-header bg-white border-0 pt-3">
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-money-bill me-2"></i>
-                                        Billetage
-                                    </h6>
-                                </div>
-                                <div
-                                    className="card-body"
-                                    style={{
-                                        maxHeight: "450px",
-                                        overflowY: "auto",
-                                    }}
-                                >
-                                    {devise == "USD" ? (
-                                        <div className="table-responsive">
-                                            <table className="table table-bordered table-sm">
-                                                <thead
-                                                    style={{
-                                                        backgroundColor:
-                                                            "#e6f2f9",
-                                                    }}
-                                                >
-                                                    <tr>
-                                                        <th
-                                                            style={{
-                                                                color: "steelblue",
-                                                            }}
-                                                        >
-                                                            Coupures
-                                                        </th>
-                                                        <th
-                                                            style={{
-                                                                color: "steelblue",
-                                                            }}
-                                                        >
-                                                            Nbr Billets
-                                                        </th>
-                                                        <th
-                                                            style={{
-                                                                color: "steelblue",
-                                                            }}
-                                                        >
-                                                            Total
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {[
-                                                        {
-                                                            value: hundred,
-                                                            set: sethundred,
-                                                            label: "100",
-                                                            multiplier: 100,
-                                                        },
-                                                        {
-                                                            value: fitfty,
-                                                            set: setfitfty,
-                                                            label: "50",
-                                                            multiplier: 50,
-                                                        },
-                                                        {
-                                                            value: twenty,
-                                                            set: settwenty,
-                                                            label: "20",
-                                                            multiplier: 20,
-                                                        },
-                                                        {
-                                                            value: ten,
-                                                            set: setten,
-                                                            label: "10",
-                                                            multiplier: 10,
-                                                        },
-                                                        {
-                                                            value: five,
-                                                            set: setfive,
-                                                            label: "5",
-                                                            multiplier: 5,
-                                                        },
-                                                        {
-                                                            value: oneDollar,
-                                                            set: setoneDollar,
-                                                            label: "1",
-                                                            multiplier: 1,
-                                                        },
-                                                    ].map((item, idx) => (
-                                                        <tr key={idx}>
-                                                            <td className="fw-semibold">
-                                                                {item.label}
-                                                            </td>
-                                                            <td>
-                                                                <input
-                                                                    type="number"
-                                                                    className="form-control form-control-sm"
-                                                                    style={{
-                                                                        boxShadow:
-                                                                            "inset 0 0 3px #888",
-                                                                        borderRadius:
-                                                                            "6px",
-                                                                    }}
-                                                                    value={
-                                                                        item.value
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        item.set(
-                                                                            e
-                                                                                .target
-                                                                                .value,
-                                                                        )
-                                                                    }
-                                                                />
-                                                            </td>
-                                                            <td className="fw-bold text-success">
-                                                                {(
-                                                                    item.value *
-                                                                    item.multiplier
-                                                                ).toLocaleString()}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                    <tr
-                                                        style={{
-                                                            backgroundColor:
-                                                                "#e6f2f9",
-                                                        }}
-                                                    >
-                                                        <th>Total</th>
-                                                        <th>
-                                                            {parseInt(hundred) +
-                                                                parseInt(
-                                                                    fitfty,
-                                                                ) +
-                                                                parseInt(
-                                                                    twenty,
-                                                                ) +
-                                                                parseInt(ten) +
-                                                                parseInt(five) +
-                                                                parseInt(
-                                                                    oneDollar,
-                                                                )}
-                                                        </th>
-                                                        <th
-                                                            className="fw-bold fs-5"
-                                                            style={{
-                                                                color: "#ffc107",
-                                                            }}
-                                                        >
-                                                            {(
-                                                                hundred * 100 +
-                                                                fitfty * 50 +
-                                                                twenty * 20 +
-                                                                ten * 10 +
-                                                                five * 5 +
-                                                                oneDollar * 1
-                                                            ).toLocaleString()}
-                                                        </th>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    ) : (
-                                        <div className="table-responsive">
-                                            <table className="table table-bordered table-sm">
-                                                <thead
-                                                    style={{
-                                                        backgroundColor:
-                                                            "#e6f2f9",
-                                                    }}
-                                                >
-                                                    <tr>
-                                                        <th
-                                                            style={{
-                                                                color: "steelblue",
-                                                            }}
-                                                        >
-                                                            Coupures
-                                                        </th>
-                                                        <th
-                                                            style={{
-                                                                color: "steelblue",
-                                                            }}
-                                                        >
-                                                            Nbr Billets
-                                                        </th>
-                                                        <th
-                                                            style={{
-                                                                color: "steelblue",
-                                                            }}
-                                                        >
-                                                            Total
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {[
-                                                        {
-                                                            value: vightMille,
-                                                            set: setvightMille,
-                                                            label: "20000",
-                                                            multiplier: 20000,
-                                                        },
-                                                        {
-                                                            value: dixMille,
-                                                            set: setdixMille,
-                                                            label: "10000",
-                                                            multiplier: 10000,
-                                                        },
-                                                        {
-                                                            value: cinqMille,
-                                                            set: setcinqMille,
-                                                            label: "5000",
-                                                            multiplier: 5000,
-                                                        },
-                                                        {
-                                                            value: milleFranc,
-                                                            set: setmilleFranc,
-                                                            label: "1000",
-                                                            multiplier: 1000,
-                                                        },
-                                                        {
-                                                            value: cinqCentFr,
-                                                            set: setcinqCentFr,
-                                                            label: "500",
-                                                            multiplier: 500,
-                                                        },
-                                                        {
-                                                            value: deuxCentFranc,
-                                                            set: setdeuxCentFranc,
-                                                            label: "200",
-                                                            multiplier: 200,
-                                                        },
-                                                        {
-                                                            value: centFranc,
-                                                            set: setcentFranc,
-                                                            label: "100",
-                                                            multiplier: 100,
-                                                        },
-                                                        {
-                                                            value: cinquanteFanc,
-                                                            set: setcinquanteFanc,
-                                                            label: "50",
-                                                            multiplier: 50,
-                                                        },
-                                                    ].map((item, idx) => (
-                                                        <tr key={idx}>
-                                                            <td className="fw-semibold">
-                                                                {item.label}
-                                                            </td>
-                                                            <td>
-                                                                <input
-                                                                    type="number"
-                                                                    className="form-control form-control-sm"
-                                                                    style={{
-                                                                        boxShadow:
-                                                                            "inset 0 0 3px #888",
-                                                                        borderRadius:
-                                                                            "6px",
-                                                                    }}
-                                                                    value={
-                                                                        item.value
-                                                                    }
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        item.set(
-                                                                            e
-                                                                                .target
-                                                                                .value,
-                                                                        )
-                                                                    }
-                                                                />
-                                                            </td>
-                                                            <td className="fw-bold text-success">
-                                                                {(
-                                                                    item.value *
-                                                                    item.multiplier
-                                                                ).toLocaleString()}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                    <tr
-                                                        style={{
-                                                            backgroundColor:
-                                                                "#e6f2f9",
-                                                        }}
-                                                    >
-                                                        <th>Total</th>
-                                                        <th>
-                                                            {parseInt(
-                                                                vightMille,
-                                                            ) +
-                                                                parseInt(
-                                                                    dixMille,
-                                                                ) +
-                                                                parseInt(
-                                                                    cinqMille,
-                                                                ) +
-                                                                parseInt(
-                                                                    milleFranc,
-                                                                ) +
-                                                                parseInt(
-                                                                    cinqCentFr,
-                                                                ) +
-                                                                parseInt(
-                                                                    deuxCentFranc,
-                                                                ) +
-                                                                parseInt(
-                                                                    centFranc,
-                                                                ) +
-                                                                parseInt(
-                                                                    cinquanteFanc,
-                                                                )}
-                                                        </th>
-                                                        <th
-                                                            className="fw-bold fs-5"
-                                                            style={{
-                                                                color: "#ffc107",
-                                                            }}
-                                                        >
-                                                            {(
-                                                                vightMille *
-                                                                    20000 +
-                                                                dixMille *
-                                                                    10000 +
-                                                                cinqMille *
-                                                                    5000 +
-                                                                milleFranc *
-                                                                    1000 +
-                                                                cinqCentFr *
-                                                                    500 +
-                                                                deuxCentFranc *
-                                                                    200 +
-                                                                centFranc *
-                                                                    100 +
-                                                                cinquanteFanc *
-                                                                    50
-                                                            ).toLocaleString()}
-                                                        </th>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Bouton Validation */}
-                        <div className="col-md-2">
-                            <div className="card border-0 shadow-sm rounded-3 h-100">
-                                <div className="card-body d-flex align-items-center justify-content-center">
-                                    <button
-                                        className="btn w-100 py-3 fw-bold"
-                                        id="validerbtn"
-                                        style={{
-                                            background:
-                                                "linear-gradient(135deg, #ffc107, #e0a800)",
-                                            border: "none",
-                                            borderRadius: "12px",
-                                            fontSize: "16px",
-                                            color: "white",
-                                            transition: "all 0.3s ease",
-                                        }}
-                                        onClick={saveOperation}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.transform =
-                                                "translateY(-2px)";
-                                            e.currentTarget.style.boxShadow =
-                                                "0 6px 16px rgba(255,193,7,0.4)";
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.transform =
-                                                "translateY(0)";
-                                            e.currentTarget.style.boxShadow =
-                                                "none";
-                                        }}
-                                        disabled={
-                                            (devise == "USD"
-                                                ? hundred * 100 +
-                                                      fitfty * 50 +
-                                                      twenty * 20 +
-                                                      ten * 10 +
-                                                      five * 5 +
-                                                      oneDollar * 1 !==
-                                                  parseInt(Montant)
-                                                : vightMille * 20000 +
-                                                      dixMille * 10000 +
-                                                      cinqMille * 5000 +
-                                                      milleFranc * 1000 +
-                                                      cinqCentFr * 500 +
-                                                      deuxCentFranc * 200 +
-                                                      centFranc * 100 +
-                                                      cinquanteFanc * 50 !==
-                                                  parseInt(Montant)) ||
-                                            !Montant ||
-                                            !CaissierId
-                                        }
-                                    >
-                                        <i
-                                            className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-check me-2"}`}
-                                        ></i>
-                                        Valider
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Séparateur décoratif */}
-                    <div className="position-relative my-4">
-                        <hr
-                            className="border-2"
-                            style={{ borderColor: "#e9ecef" }}
-                        />
-                        <span className="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">
-                            <i className="fas fa-history me-1"></i> Opérations
-                            récentes
-                        </span>
-                    </div>
-
-                    {/* Historique des opérations */}
-                    <div className="row">
-                        <div className="col-12">
-                            <div className="card border-0 shadow-sm rounded-3">
-                                <div className="card-header bg-white border-0 pt-3">
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-clock me-2"></i>
-                                        Appros récents
-                                    </h6>
-                                </div>
-                                <div className="card-body">
-                                    {fetchDailyOperationCDF &&
-                                        fetchDailyOperationCDF.length > 0 && (
-                                            <>
-                                                <div className="mb-3">
-                                                    <h5
-                                                        className="fw-bold"
-                                                        style={{
-                                                            color: "steelblue",
-                                                        }}
-                                                    >
-                                                        <i className="fas fa-chart-line me-2"></i>
-                                                        CDF
-                                                    </h5>
-                                                </div>
-                                                <div className="table-responsive">
-                                                    <table className="table table-hover">
-                                                        <thead
-                                                            style={{
-                                                                backgroundColor:
-                                                                    "#e6f2f9",
-                                                            }}
-                                                        >
-                                                            <tr
-                                                                style={{
-                                                                    color: "steelblue",
-                                                                }}
-                                                            >
-                                                                <th>
-                                                                    Référence
-                                                                </th>
-                                                                <th>Montant</th>
-                                                                <th>
-                                                                    Caissier
-                                                                </th>
-                                                                <th>Action</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {fetchDailyOperationCDF.map(
-                                                                (
-                                                                    res,
-                                                                    index,
-                                                                ) => (
-                                                                    <tr
-                                                                        key={
-                                                                            index
-                                                                        }
-                                                                    >
-                                                                        <td>
-                                                                            <small>
-                                                                                {
-                                                                                    res.Reference
-                                                                                }
-                                                                            </small>
-                                                                        </td>
-                                                                        <td className="fw-bold text-success">
-                                                                            {res.montant?.toLocaleString()}
-                                                                        </td>
-                                                                        <td>
-                                                                            <small>
-                                                                                {
-                                                                                    res.NomUtilisateur
-                                                                                }
-                                                                            </small>
-                                                                        </td>
-                                                                        <td>
-                                                                            <button
-                                                                                onClick={() =>
-                                                                                    handlePrintClick(
-                                                                                        res,
-                                                                                    )
-                                                                                }
-                                                                                data-toggle="modal"
-                                                                                data-target="#modal-appro-cdf"
-                                                                                className="btn btn-sm"
-                                                                                style={{
-                                                                                    background:
-                                                                                        "#ffc107",
-                                                                                    color: "white",
-                                                                                    borderRadius:
-                                                                                        "6px",
-                                                                                    padding:
-                                                                                        "4px 12px",
-                                                                                }}
-                                                                            >
-                                                                                <i className="fas fa-print me-1"></i>{" "}
-                                                                                Imprimer
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                ),
-                                                            )}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                {selectedData && (
-                                                    <RecuApproCDF
-                                                        data={selectedData}
-                                                    />
-                                                )}
-                                            </>
-                                        )}
-
-                                    {fetchDailyOperationUSD &&
-                                        fetchDailyOperationUSD.length > 0 && (
-                                            <>
-                                                <div className="mb-3 mt-4">
-                                                    <h5
-                                                        className="fw-bold"
-                                                        style={{
-                                                            color: "steelblue",
-                                                        }}
-                                                    >
-                                                        <i className="fas fa-dollar-sign me-2"></i>
-                                                        USD
-                                                    </h5>
-                                                </div>
-                                                <div className="table-responsive">
-                                                    <table className="table table-hover">
-                                                        <thead
-                                                            style={{
-                                                                backgroundColor:
-                                                                    "#e6f2f9",
-                                                            }}
-                                                        >
-                                                            <tr
-                                                                style={{
-                                                                    color: "steelblue",
-                                                                }}
-                                                            >
-                                                                <th>
-                                                                    Référence
-                                                                </th>
-                                                                <th>Montant</th>
-                                                                <th>
-                                                                    Caissier
-                                                                </th>
-                                                                <th>Action</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {fetchDailyOperationUSD.map(
-                                                                (
-                                                                    res,
-                                                                    index,
-                                                                ) => (
-                                                                    <tr
-                                                                        key={
-                                                                            index
-                                                                        }
-                                                                    >
-                                                                        <td>
-                                                                            <small>
-                                                                                {
-                                                                                    res.Reference
-                                                                                }
-                                                                            </small>
-                                                                        </td>
-                                                                        <td className="fw-bold text-success">
-                                                                            {res.montant?.toLocaleString()}
-                                                                        </td>
-                                                                        <td>
-                                                                            <small>
-                                                                                {
-                                                                                    res.NomUtilisateur
-                                                                                }
-                                                                            </small>
-                                                                        </td>
-                                                                        <td>
-                                                                            <button
-                                                                                onClick={() =>
-                                                                                    handlePrintClick(
-                                                                                        res,
-                                                                                    )
-                                                                                }
-                                                                                data-toggle="modal"
-                                                                                data-target="#modal-appro-usd"
-                                                                                className="btn btn-sm"
-                                                                                style={{
-                                                                                    background:
-                                                                                        "#ffc107",
-                                                                                    color: "white",
-                                                                                    borderRadius:
-                                                                                        "6px",
-                                                                                    padding:
-                                                                                        "4px 12px",
-                                                                                }}
-                                                                            >
-                                                                                <i className="fas fa-print me-1"></i>{" "}
-                                                                                Imprimer
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                ),
-                                                            )}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                {selectedData && (
-                                                    <RecuApproUSD
-                                                        data={selectedData}
-                                                    />
-                                                )}
-                                            </>
-                                        )}
-
-                                    {(!fetchDailyOperationCDF ||
-                                        fetchDailyOperationCDF.length === 0) &&
-                                        (!fetchDailyOperationUSD ||
-                                            fetchDailyOperationUSD.length ===
-                                                0) && (
-                                            <div className="text-center py-5 text-muted">
-                                                <i className="fas fa-inbox fa-3x mb-2 opacity-50"></i>
-                                                <p className="mb-0">
-                                                    Aucune opération récente
-                                                </p>
-                                            </div>
-                                        )}
-                                </div>
-                            </div>
+                        <div>
+                            <h5 className="fw-bold mb-0">Approvisionnement</h5>
+                            <small className="text-white-50">Gestion des approvisionnements en espèces</small>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {/* ========== SECTION FORMULAIRE ========== */}
+    <div className="row g-4 mb-4">
+        {/* Carte Informations + Devise */}
+        <div className="col-md-4">
+            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                    <h6 className="section-title">
+                        <i className="fas fa-info-circle me-2" style={{ color: "#6366f1" }}></i>
+                        Informations d'approvisionnement
+                    </h6>
+                </div>
+                <div className="card-body pt-2">
+                    <div className="mb-3">
+                        <label className="label-modern">Devise</label>
+                        <select
+                            className="modern-select w-100"
+                            value={devise}
+                            onChange={(e) => setDevise(e.target.value)}
+                        >
+                            <option value="CDF">Franc Congolais (CDF)</option>
+                            <option value="USD">Dollar américain (USD)</option>
+                        </select>
+                    </div>
+                    <div className="mb-3">
+                        <label className="label-modern">Caissier(ère)</label>
+                        <select
+                            className="modern-select w-100"
+                            value={CaissierId}
+                            onChange={(e) => setCaissierId(e.target.value)}
+                        >
+                            <option value="">Sélectionnez un caissier</option>
+                            {fetchData?.map((res, idx) => (
+                                <option key={idx} value={res.caissierId}>
+                                    {removeLastWord(res.NomCompte)}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="label-modern">Montant</label>
+                        <input
+                            type="text"
+                            className="form-control modern-input"
+                            placeholder="0,00"
+                            value={Montant}
+                            onChange={(e) => setMontant(e.target.value)}
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* Carte Billetage */}
+        <div className="col-md-6">
+            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                    <h6 className="section-title">
+                        <i className="fas fa-money-bill-wave me-2" style={{ color: "#6366f1" }}></i>
+                        Billetage
+                    </h6>
+                </div>
+                <div className="card-body pt-2" style={{ maxHeight: "450px", overflowY: "auto" }}>
+                    {devise === "USD" ? (
+                        <div className="table-responsive">
+                            <table className="table table-hover table-sm align-middle custom-table">
+                                <thead className="table-light">
+                                    <tr>
+                                        <th>Coupure</th>
+                                        <th>Nombre de billets</th>
+                                        <th className="text-end">Montant (USD)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {[
+                                        { label: "100", value: hundred, set: sethundred, mult: 100 },
+                                        { label: "50", value: fitfty, set: setfitfty, mult: 50 },
+                                        { label: "20", value: twenty, set: settwenty, mult: 20 },
+                                        { label: "10", value: ten, set: setten, mult: 10 },
+                                        { label: "5", value: five, set: setfive, mult: 5 },
+                                        { label: "1", value: oneDollar, set: setoneDollar, mult: 1 }
+                                    ].map((item, idx) => (
+                                        <tr key={idx}>
+                                            <td className="fw-semibold">{item.label} ×</td>
+                                            <td>
+                                                <input
+                                                    type="number"
+                                                    className="form-control form-control-sm modern-input"
+                                                    value={item.value}
+                                                    onChange={(e) => item.set(e.target.value)}
+                                                />
+                                            </td>
+                                            <td className="text-end text-success fw-semibold">
+                                                {((parseInt(item.value) || 0) * item.mult).toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot className="table-warning fw-bold">
+                                    <tr>
+                                        <th colSpan="2">Total général</th>
+                                        <th className="text-end">
+                                            {(
+                                                (parseInt(hundred) || 0) * 100 +
+                                                (parseInt(fitfty) || 0) * 50 +
+                                                (parseInt(twenty) || 0) * 20 +
+                                                (parseInt(ten) || 0) * 10 +
+                                                (parseInt(five) || 0) * 5 +
+                                                (parseInt(oneDollar) || 0) * 1
+                                            ).toLocaleString()} USD
+                                        </th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="table-responsive">
+                            <table className="table table-hover table-sm align-middle custom-table">
+                                <thead className="table-light">
+                                    <tr>
+                                        <th>Coupure</th>
+                                        <th>Nombre de billets</th>
+                                        <th className="text-end">Montant (CDF)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {[
+                                        { label: "20 000", value: vightMille, set: setvightMille, mult: 20000 },
+                                        { label: "10 000", value: dixMille, set: setdixMille, mult: 10000 },
+                                        { label: "5 000", value: cinqMille, set: setcinqMille, mult: 5000 },
+                                        { label: "1 000", value: milleFranc, set: setmilleFranc, mult: 1000 },
+                                        { label: "500", value: cinqCentFr, set: setcinqCentFr, mult: 500 },
+                                        { label: "200", value: deuxCentFranc, set: setdeuxCentFranc, mult: 200 },
+                                        { label: "100", value: centFranc, set: setcentFranc, mult: 100 },
+                                        { label: "50", value: cinquanteFanc, set: setcinquanteFanc, mult: 50 }
+                                    ].map((item, idx) => (
+                                        <tr key={idx}>
+                                            <td className="fw-semibold">{item.label} ×</td>
+                                            <td>
+                                                <input
+                                                    type="number"
+                                                    className="form-control form-control-sm modern-input"
+                                                    value={item.value}
+                                                    onChange={(e) => item.set(e.target.value)}
+                                                />
+                                            </td>
+                                            <td className="text-end text-success fw-semibold">
+                                                {((parseInt(item.value) || 0) * item.mult).toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot className="table-warning fw-bold">
+                                    <tr>
+                                        <th colSpan="2">Total général</th>
+                                        <th className="text-end">
+                                            {(
+                                                (parseInt(vightMille) || 0) * 20000 +
+                                                (parseInt(dixMille) || 0) * 10000 +
+                                                (parseInt(cinqMille) || 0) * 5000 +
+                                                (parseInt(milleFranc) || 0) * 1000 +
+                                                (parseInt(cinqCentFr) || 0) * 500 +
+                                                (parseInt(deuxCentFranc) || 0) * 200 +
+                                                (parseInt(centFranc) || 0) * 100 +
+                                                (parseInt(cinquanteFanc) || 0) * 50
+                                            ).toLocaleString()} CDF
+                                        </th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+
+        {/* Carte Action - Validation */}
+        <div className="col-md-2">
+            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                    <h6 className="section-title">
+                        <i className="fas fa-check-circle me-2" style={{ color: "#6366f1" }}></i>
+                        Action
+                    </h6>
+                </div>
+                <div className="card-body d-flex align-items-center justify-content-center">
+                    <button
+                        className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
+                        onClick={saveOperation}
+                        disabled={
+                            (devise === "USD"
+                                ? (parseInt(hundred) || 0) * 100 +
+                                  (parseInt(fitfty) || 0) * 50 +
+                                  (parseInt(twenty) || 0) * 20 +
+                                  (parseInt(ten) || 0) * 10 +
+                                  (parseInt(five) || 0) * 5 +
+                                  (parseInt(oneDollar) || 0) * 1
+                                : (parseInt(vightMille) || 0) * 20000 +
+                                  (parseInt(dixMille) || 0) * 10000 +
+                                  (parseInt(cinqMille) || 0) * 5000 +
+                                  (parseInt(milleFranc) || 0) * 1000 +
+                                  (parseInt(cinqCentFr) || 0) * 500 +
+                                  (parseInt(deuxCentFranc) || 0) * 200 +
+                                  (parseInt(centFranc) || 0) * 100 +
+                                  (parseInt(cinquanteFanc) || 0) * 50) !== parseInt(Montant) ||
+                            !Montant ||
+                            !CaissierId
+                        }
+                    >
+                        {loading ? (
+                            <span className="spinner-border spinner-border-sm"></span>
+                        ) : (
+                            <i className="fas fa-check-circle"></i>
+                        )}
+                        <span>Valider</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {/* ========== SÉPARATEUR + HISTORIQUE ========== */}
+    <div className="position-relative my-4">
+        <hr className="border-2" style={{ borderColor: "#e9ecef" }} />
+        <span className="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">
+            <i className="fas fa-history me-1"></i> Opérations récentes
+        </span>
+    </div>
+
+    <div className="row">
+        <div className="col-12">
+            <div className="card border-0 shadow-sm rounded-4 dashboard-card">
+                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                    <h6 className="section-title">
+                        <i className="fas fa-clock me-2" style={{ color: "#6366f1" }}></i>
+                        Appros récents
+                    </h6>
+                </div>
+                <div className="card-body pt-2">
+                    {/* CDF */}
+                    {fetchDailyOperationCDF?.length > 0 && (
+                        <>
+                            <div className="mb-2">
+                                <h5 className="fw-bold mb-0" style={{ color: "teal" }}>
+                                    <i className="fas fa-chart-line me-2"></i>Francs Congolais (CDF)
+                                </h5>
+                            </div>
+                            <div className="table-responsive mb-4">
+                                <table className="table table-hover align-middle custom-table">
+                                    <thead className="table-light">
+                                        <tr>
+                                            <th>Référence</th>
+                                            <th className="text-end">Montant</th>
+                                            <th>Caissier</th>
+                                            <th className="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {fetchDailyOperationCDF.map((res, idx) => (
+                                            <tr key={idx}>
+                                                <td><small>{res.Reference}</small></td>
+                                                <td className="text-end fw-bold text-success">{res.montant?.toLocaleString()} CDF</td>
+                                                <td>{res.NomUtilisateur}</td>
+                                                <td className="text-center">
+                                                    <button
+                                                        onClick={() => handlePrintClick(res)}
+                                                        className="btn btn-sm btn-outline-warning"
+                                                        data-toggle="modal"
+                                                        data-target="#modal-appro-cdf"
+                                                        style={{ borderRadius: "20px" }}
+                                                        >
+                                                        <i className="fas fa-print me-1"></i> Imprimer
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {selectedData && <RecuApproCDF data={selectedData} />}
+                        </>
+                    )}
+
+                    {/* USD */}
+                    {fetchDailyOperationUSD?.length > 0 && (
+                        <>
+                            <div className="mb-2 mt-3">
+                                <h5 className="fw-bold mb-0" style={{ color: "teal" }}>
+                                    <i className="fas fa-dollar-sign me-2"></i>Dollars américains (USD)
+                                </h5>
+                            </div>
+                            <div className="table-responsive">
+                                <table className="table table-hover align-middle custom-table">
+                                    <thead className="table-light">
+                                        <tr>
+                                            <th>Référence</th>
+                                            <th className="text-end">Montant</th>
+                                            <th>Caissier</th>
+                                            <th className="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {fetchDailyOperationUSD.map((res, idx) => (
+                                            <tr key={idx}>
+                                                <td><small>{res.Reference}</small></td>
+                                                <td className="text-end fw-bold text-success">{res.montant?.toLocaleString()} USD</td>
+                                                <td>{res.NomUtilisateur}</td>
+                                                <td className="text-center">
+                                                    <button
+                                                        onClick={() => handlePrintClick(res)}
+                                                        className="btn btn-sm btn-outline-warning"
+                                                        data-toggle="modal"
+                                                        data-target="#modal-appro-usd"
+                                                        style={{ borderRadius: "20px" }}
+                                                    >
+                                                        <i className="fas fa-print me-1"></i> Imprimer
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {selectedData && <RecuApproUSD data={selectedData} />}
+                        </>
+                    )}
+
+                    {(!fetchDailyOperationCDF || fetchDailyOperationCDF.length === 0) &&
+                        (!fetchDailyOperationUSD || fetchDailyOperationUSD.length === 0) && (
+                            <div className="text-center py-5 text-muted">
+                                <i className="fas fa-inbox fa-3x mb-2 opacity-50"></i>
+                                <p className="mb-0">Aucune opération récente</p>
+                            </div>
+                        )}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             ) : (
                 // Vue pour les autres utilisateurs (consultation du billetage disponible)
-                <div
-                    className="container-fluid"
-                    style={{ marginTop: "10px", padding: "0 15px" }}
-                >
-                    {/* En-tête moderne */}
-                    <div className="row mb-4">
-                        <div className="col-12">
-                            <div className="card border-0 shadow-sm rounded-3">
-                                <div
-                                    className="card-body p-3"
-                                    style={{
-                                        background: "#138496",
-                                        borderRadius: "12px",
-                                    }}
-                                >
-                                    <div className="d-flex align-items-center">
-                                        <div className="me-3">
-                                            <i
-                                                className="fas fa-charging-station"
-                                                style={{
-                                                    fontSize: "28px",
-                                                    color: "white",
-                                                }}
-                                            ></i>
-                                        </div>
-                                        <div>
-                                            <h5 className="text-white fw-bold mb-0">
-                                                Approvisionnement
-                                            </h5>
-                                            <small className="text-white-50">
-                                                Consultation du billetage
-                                                disponible
-                                            </small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+              <div className="container-fluid py-4">
+    {/* En-tête moderne */}
+    <div className="row mb-4" >
+        <div className="col-12">
+            <div className="card border-0 shadow-lg rounded-4 overflow-hidden" style={{ background:"#0b7285" }}>
+                <div className="card-header text-white border-0 py-3">
+                    <div className="d-flex align-items-center gap-3">
+                        <div className="bg-white bg-opacity-25 rounded-3 p-2">
+                            <i className="fas fa-charging-station fa-2x"></i>
                         </div>
-                    </div>
-
-                    {/* Section Billetage Disponible */}
-                    <div className="row g-3">
-                        <div className="col-md-5">
-                            <div className="card border-0 shadow-sm rounded-3">
-                                <div className="card-header bg-white border-0 pt-3">
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-search me-2"></i>
-                                        Sélection de la devise
-                                    </h6>
-                                </div>
-                                <div className="card-body">
-                                    <form>
-                                        <table style={{ width: "100%" }}>
-                                            <tbody>
-                                                <tr>
-                                                    <td
-                                                        style={{
-                                                            padding: "8px",
-                                                            width: "35%",
-                                                        }}
-                                                    >
-                                                        <label
-                                                            style={{
-                                                                color: "steelblue",
-                                                                fontWeight:
-                                                                    "500",
-                                                            }}
-                                                        >
-                                                            Devise
-                                                        </label>
-                                                    </td>
-                                                    <td
-                                                        style={{
-                                                            padding: "8px",
-                                                        }}
-                                                    >
-                                                        <select
-                                                            id="devise"
-                                                            name="devise"
-                                                            className="form-control"
-                                                            style={{
-                                                                borderRadius:
-                                                                    "8px",
-                                                            }}
-                                                            onChange={(e) => {
-                                                                setDevise(
-                                                                    e.target
-                                                                        .value,
-                                                                );
-                                                            }}
-                                                        >
-                                                            <option value="CDF">
-                                                                CDF
-                                                            </option>
-                                                            <option value="USD">
-                                                                USD
-                                                            </option>
-                                                        </select>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                        <hr className="my-3" />
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="col-md-5">
-                            <div className="card border-0 shadow-sm rounded-3">
-                                <div className="card-header bg-white border-0 pt-3">
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-money-bill me-2"></i>
-                                        Billetage Disponible
-                                    </h6>
-                                </div>
-                                <div className="card-body">
-                                    {devise == "USD"
-                                        ? getBilletageUSD && (
-                                              <div className="table-responsive">
-                                                  <table className="table table-bordered">
-                                                      <thead
-                                                          style={{
-                                                              backgroundColor:
-                                                                  "#e6f2f9",
-                                                          }}
-                                                      >
-                                                          <tr
-                                                              style={{
-                                                                  color: "steelblue",
-                                                              }}
-                                                          >
-                                                              <th>Coupure</th>
-                                                              <th>
-                                                                  Nbr Billets
-                                                              </th>
-                                                              <th>Montant</th>
-                                                          </tr>
-                                                      </thead>
-                                                      <tbody>
-                                                          {[
-                                                              {
-                                                                  label: "100",
-                                                                  value: getBilletageUSD.centDollars,
-                                                                  multiplier: 100,
-                                                              },
-                                                              {
-                                                                  label: "50",
-                                                                  value: getBilletageUSD.cinquanteDollars,
-                                                                  multiplier: 50,
-                                                              },
-                                                              {
-                                                                  label: "20",
-                                                                  value: getBilletageUSD.vightDollars,
-                                                                  multiplier: 20,
-                                                              },
-                                                              {
-                                                                  label: "10",
-                                                                  value: getBilletageUSD.dixDollars,
-                                                                  multiplier: 10,
-                                                              },
-                                                              {
-                                                                  label: "5",
-                                                                  value: getBilletageUSD.cinqDollars,
-                                                                  multiplier: 5,
-                                                              },
-                                                              {
-                                                                  label: "1",
-                                                                  value: getBilletageUSD.unDollars,
-                                                                  multiplier: 1,
-                                                              },
-                                                          ].map((item, idx) => (
-                                                              <tr key={idx}>
-                                                                  <td className="fw-semibold">
-                                                                      {
-                                                                          item.label
-                                                                      }{" "}
-                                                                      X
-                                                                  </td>
-                                                                  <td>
-                                                                      {parseInt(
-                                                                          item.value,
-                                                                      ) || 0}
-                                                                  </td>
-                                                                  <td className="text-success">
-                                                                      {(
-                                                                          parseInt(
-                                                                              item.value,
-                                                                          ) *
-                                                                          item.multiplier
-                                                                      ).toLocaleString()}
-                                                                  </td>
-                                                              </tr>
-                                                          ))}
-                                                      </tbody>
-                                                      <tfoot>
-                                                          <tr
-                                                              style={{
-                                                                  backgroundColor:
-                                                                      "#ffc107",
-                                                                  color: "white",
-                                                              }}
-                                                          >
-                                                              <th colSpan="2">
-                                                                  Total
-                                                              </th>
-                                                              <th className="fw-bold">
-                                                                  {getBilletageUSD.montant !==
-                                                                      undefined &&
-                                                                      numberWithSpaces(
-                                                                          parseInt(
-                                                                              getBilletageUSD.montant,
-                                                                          ),
-                                                                      )}
-                                                              </th>
-                                                          </tr>
-                                                      </tfoot>
-                                                  </table>
-                                              </div>
-                                          )
-                                        : getBilletageCDF && (
-                                              <div className="table-responsive">
-                                                  <table className="table table-bordered">
-                                                      <thead
-                                                          style={{
-                                                              backgroundColor:
-                                                                  "#e6f2f9",
-                                                          }}
-                                                      >
-                                                          <tr
-                                                              style={{
-                                                                  color: "steelblue",
-                                                              }}
-                                                          >
-                                                              <th>Coupure</th>
-                                                              <th>
-                                                                  Nbr Billets
-                                                              </th>
-                                                              <th>Montant</th>
-                                                          </tr>
-                                                      </thead>
-                                                      <tbody>
-                                                          {[
-                                                              {
-                                                                  label: "20 000",
-                                                                  value: getBilletageCDF.vightMilleFranc,
-                                                                  multiplier: 20000,
-                                                              },
-                                                              {
-                                                                  label: "10 000",
-                                                                  value: getBilletageCDF.dixMilleFranc,
-                                                                  multiplier: 10000,
-                                                              },
-                                                              {
-                                                                  label: "5 000",
-                                                                  value: getBilletageCDF.cinqMilleFranc,
-                                                                  multiplier: 5000,
-                                                              },
-                                                              {
-                                                                  label: "1 000",
-                                                                  value: getBilletageCDF.milleFranc,
-                                                                  multiplier: 1000,
-                                                              },
-                                                              {
-                                                                  label: "500",
-                                                                  value: getBilletageCDF.cinqCentFranc,
-                                                                  multiplier: 500,
-                                                              },
-                                                              {
-                                                                  label: "200",
-                                                                  value: getBilletageCDF.deuxCentFranc,
-                                                                  multiplier: 200,
-                                                              },
-                                                              {
-                                                                  label: "100",
-                                                                  value: getBilletageCDF.centFranc,
-                                                                  multiplier: 100,
-                                                              },
-                                                              {
-                                                                  label: "50",
-                                                                  value: getBilletageCDF.cinquanteFanc,
-                                                                  multiplier: 50,
-                                                              },
-                                                          ].map((item, idx) => (
-                                                              <tr key={idx}>
-                                                                  <td className="fw-semibold">
-                                                                      {
-                                                                          item.label
-                                                                      }{" "}
-                                                                      X
-                                                                  </td>
-                                                                  <td>
-                                                                      {parseInt(
-                                                                          item.value,
-                                                                      ) || 0}
-                                                                  </td>
-                                                                  <td className="text-success">
-                                                                      {(
-                                                                          parseInt(
-                                                                              item.value,
-                                                                          ) *
-                                                                          item.multiplier
-                                                                      ).toLocaleString()}
-                                                                  </td>
-                                                              </tr>
-                                                          ))}
-                                                      </tbody>
-                                                      <tfoot>
-                                                          <tr
-                                                              style={{
-                                                                  backgroundColor:
-                                                                      "#ffc107",
-                                                                  color: "white",
-                                                              }}
-                                                          >
-                                                              <th colSpan="2">
-                                                                  Total
-                                                              </th>
-                                                              <th className="fw-bold">
-                                                                  {getBilletageCDF.montant !==
-                                                                      undefined &&
-                                                                      numberWithSpaces(
-                                                                          parseInt(
-                                                                              getBilletageCDF.montant,
-                                                                          ),
-                                                                      )}
-                                                              </th>
-                                                          </tr>
-                                                      </tfoot>
-                                                  </table>
-                                              </div>
-                                          )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Bouton Validation */}
-                        <div className="col-md-2">
-                            <div className="card border-0 shadow-sm rounded-3 h-100">
-                                <div className="card-body d-flex align-items-center justify-content-center">
-                                    <button
-                                        className="btn w-100 py-3 fw-bold"
-                                        id="validerbtn"
-                                        style={{
-                                            background:
-                                                "linear-gradient(135deg, #ffc107, #e0a800)",
-                                            border: "none",
-                                            borderRadius: "12px",
-                                            fontSize: "16px",
-                                            color: "white",
-                                            transition: "all 0.3s ease",
-                                        }}
-                                        onClick={AcceptAppro}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.transform =
-                                                "translateY(-2px)";
-                                            e.currentTarget.style.boxShadow =
-                                                "0 6px 16px rgba(255,193,7,0.4)";
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.transform =
-                                                "translateY(0)";
-                                            e.currentTarget.style.boxShadow =
-                                                "none";
-                                        }}
-                                    >
-                                        <i
-                                            className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-check me-2"}`}
-                                        ></i>
-                                        Valider
-                                    </button>
-                                </div>
-                            </div>
+                        <div>
+                            <h5 className="fw-bold mb-0">Approvisionnement</h5>
+                            <small className="text-white-50">Consultation du billetage disponible</small>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    {/* Cartes : Devise + Billetage + Action */}
+    <div className="row g-4">
+        {/* Carte : Sélection de la devise */}
+        <div className="col-md-4">
+            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                    <h6 className="section-title">
+                        <i className="fas fa-coins me-2" style={{ color: "#6366f1" }}></i>
+                        Devise
+                    </h6>
+                </div>
+                <div className="card-body pt-2">
+                    <label className="label-modern">Choisir la devise</label>
+                    <select
+                        className="modern-select w-100"
+                        value={devise}
+                        onChange={(e) => setDevise(e.target.value)}
+                    >
+                        <option value="CDF">Franc Congolais (CDF)</option>
+                        <option value="USD">Dollar américain (USD)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        {/* Carte : Billetage disponible */}
+        <div className="col-md-6">
+            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                    <h6 className="section-title">
+                        <i className="fas fa-money-bill-wave me-2" style={{ color: "#6366f1" }}></i>
+                        Billetage disponible
+                    </h6>
+                </div>
+                <div className="card-body pt-2">
+                    {devise === "USD" && getBilletageUSD ? (
+                        <div className="table-responsive">
+                            <table className="table table-hover table-sm align-middle custom-table">
+                                <thead className="table-light">
+                                    <tr>
+                                        <th>Coupure</th>
+                                        <th>Nombre de billets</th>
+                                        <th classNam e="text-end">Montant (USD)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {[
+                                        { label: "100", value: getBilletageUSD.centDollars, mult: 100 },
+                                        { label: "50", value: getBilletageUSD.cinquanteDollars, mult: 50 },
+                                        { label: "20", value: getBilletageUSD.vightDollars, mult: 20 },
+                                        { label: "10", value: getBilletageUSD.dixDollars, mult: 10 },
+                                        { label: "5", value: getBilletageUSD.cinqDollars, mult: 5 },
+                                        { label: "1", value: getBilletageUSD.unDollars, mult: 1 }
+                                    ].map((item, idx) => (
+                                        <tr key={idx}>
+                                            <td className="fw-semibold">{item.label} ×</td>
+                                            <td>{parseInt(item.value) || 0}</td>
+                                            <td className="text-end text-success fw-semibold">
+                                                {((parseInt(item.value) || 0) * item.mult).toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot className="table-warning fw-bold">
+                                    <tr>
+                                        <th colSpan="2">Total général</th>
+                                        <th className="text-end">
+                                            {getBilletageUSD.montant !== undefined &&
+                                                numberWithSpaces(parseInt(getBilletageUSD.montant))} USD
+                                        </th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    ) : devise === "CDF" && getBilletageCDF ? (
+                        <div className="table-responsive">
+                            <table className="table table-hover table-sm align-middle custom-table">
+                                <thead className="table-light">
+                                    <tr>
+                                        <th>Coupure</th>
+                                        <th>Nombre de billets</th>
+                                        <th className="text-end">Montant (CDF)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {[
+                                        { label: "20 000", value: getBilletageCDF.vightMilleFranc, mult: 20000 },
+                                        { label: "10 000", value: getBilletageCDF.dixMilleFranc, mult: 10000 },
+                                        { label: "5 000", value: getBilletageCDF.cinqMilleFranc, mult: 5000 },
+                                        { label: "1 000", value: getBilletageCDF.milleFranc, mult: 1000 },
+                                        { label: "500", value: getBilletageCDF.cinqCentFranc, mult: 500 },
+                                        { label: "200", value: getBilletageCDF.deuxCentFranc, mult: 200 },
+                                        { label: "100", value: getBilletageCDF.centFranc, mult: 100 },
+                                        { label: "50", value: getBilletageCDF.cinquanteFanc, mult: 50 }
+                                    ].map((item, idx) => (
+                                        <tr key={idx}>
+                                            <td className="fw-semibold">{item.label} ×</td>
+                                            <td>{parseInt(item.value) || 0}</td>
+                                            <td className="text-end text-success fw-semibold">
+                                                {((parseInt(item.value) || 0) * item.mult).toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                                <tfoot className="table-warning fw-bold">
+                                    <tr>
+                                        <th colSpan="2">Total général</th>
+                                        <th className="text-end">
+                                            {getBilletageCDF.montant !== undefined &&
+                                                numberWithSpaces(parseInt(getBilletageCDF.montant))} CDF
+                                        </th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="text-center py-5 text-muted">
+                            <i className="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                            <p>Chargement du billetage...</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+
+        {/* Carte : Validation */}
+        <div className="col-md-2">
+            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                    <h6 className="section-title">
+                        <i className="fas fa-check-circle me-2" style={{ color: "#6366f1" }}></i>
+                        Action
+                    </h6>
+                </div>
+                <div className="card-body d-flex align-items-center justify-content-center">
+                    <button
+                        className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
+                        onClick={AcceptAppro}
+                        disabled={loading}
+                    >
+                        {loading ? (
+                            <span className="spinner-border spinner-border-sm"></span>
+                        ) : (
+                            <i className="fas fa-check-circle"></i>
+                        )}
+                        <span>Valider</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
             )}
+           
         </>
     );
 };

@@ -546,12 +546,12 @@ export default class SMSbanking extends React.Component {
                                                                                 <div className="btn-group" role="group">
                                                                                     {res.ActivatedSMS == 1 ? (
                                                                                         <button onClick={() => this.ActivateUserOnMSG(res.id)} 
-                                                                                            className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "6px" }}>
+                                                                                            className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "6px",fontSize:"10px" }}>
                                                                                             <i className="fas fa-sms me-1"></i>Désactiver SMS
                                                                                         </button>
                                                                                     ) : (
                                                                                         <button onClick={() => this.ActivateUserOnMSG(res.id)} 
-                                                                                            className="btn btn-sm" style={{ background: "#28a745", color: "white", borderRadius: "6px" }}>
+                                                                                            className="btn btn-sm" style={{ background: "#28a745", color: "white", borderRadius: "6px",fontSize:"10px" }}>
                                                                                             <i className="fas fa-sms me-1"></i>Activer SMS
                                                                                         </button>
                                                                                     )}
@@ -561,12 +561,12 @@ export default class SMSbanking extends React.Component {
                                                                                 <div className="btn-group" role="group">
                                                                                     {res.ActivatedEmail == 1 ? (
                                                                                         <button onClick={() => this.ActivateUserOnEmail(res.id)} 
-                                                                                            className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "6px" }}>
+                                                                                            className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "6px",fontSize:"10px" }}>
                                                                                             <i className="fas fa-envelope me-1"></i>Désactiver Email
                                                                                         </button>
                                                                                     ) : (
                                                                                         <button onClick={() => this.ActivateUserOnEmail(res.id)} 
-                                                                                            className="btn btn-sm" style={{ background: "#28a745", color: "white", borderRadius: "6px" }}>
+                                                                                            className="btn btn-sm" style={{ background: "#28a745", color: "white", borderRadius: "6px",fontSize:"10px" }}>
                                                                                             <i className="fas fa-envelope me-1"></i>Activer Email
                                                                                         </button>
                                                                                     )}
@@ -630,12 +630,12 @@ export default class SMSbanking extends React.Component {
                                                                             <div className="btn-group" role="group">
                                                                                 {this.state.fetchSeachedData.ActivatedSMS == 1 ? (
                                                                                     <button onClick={() => this.ActivateUserOnMSG(this.state.fetchSeachedData.id)} 
-                                                                                        className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "6px" }}>
+                                                                                        className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "6px",fontSize:"10px" }}>
                                                                                         <i className="fas fa-sms me-1"></i>Désactiver SMS
                                                                                     </button>
                                                                                 ) : (
                                                                                     <button onClick={() => this.ActivateUserOnMSG(this.state.fetchSeachedData.id)} 
-                                                                                        className="btn btn-sm" style={{ background: "#28a745", color: "white", borderRadius: "6px" }}>
+                                                                                        className="btn btn-sm" style={{ background: "#28a745", color: "white", borderRadius: "6px",fontSize:"10px" }}>
                                                                                         <i className="fas fa-sms me-1"></i>Activer SMS
                                                                                     </button>
                                                                                 )}
@@ -645,12 +645,12 @@ export default class SMSbanking extends React.Component {
                                                                             <div className="btn-group" role="group">
                                                                                 {this.state.fetchSeachedData.ActivatedEmail == 1 ? (
                                                                                     <button onClick={() => this.ActivateUserOnEmail(this.state.fetchSeachedData.id)} 
-                                                                                        className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "6px" }}>
+                                                                                        className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "6px",fontSize:"10px" }}>
                                                                                         <i className="fas fa-envelope me-1"></i>Désactiver Email
                                                                                     </button>
                                                                                 ) : (
                                                                                     <button onClick={() => this.ActivateUserOnEmail(this.state.fetchSeachedData.id)} 
-                                                                                        className="btn btn-sm" style={{ background: "#28a745", color: "white", borderRadius: "6px" }}>
+                                                                                        className="btn btn-sm" style={{ background: "#28a745", color: "white", borderRadius: "6px",fontSize:"10px" }}>
                                                                                         <i className="fas fa-envelope me-1"></i>Activer Email
                                                                                     </button>
                                                                                 )}

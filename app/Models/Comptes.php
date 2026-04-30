@@ -11,6 +11,7 @@ class Comptes extends Model
     protected $fillable = [
         'CodeAgence',
         'NumCompte',
+        'Num_Manuel',
         'NumCompteAmo',
         'NomCompte',
         'RefTypeCompte',

@@ -135,7 +135,7 @@ const Delestage = () => {
                                     <div className="mb-3">
                                         <label className="form-label" style={{ color: "#0b7285", fontWeight: "500" }}>Devise</label>
                                         <select
-                                            className="form-select rounded-3"
+                                            className="form-select rounded-3 modern-selects w-50"
                                             onChange={(e) => setDevise(e.target.value)}
                                         >
                                             <option value="CDF">CDF</option>
@@ -147,7 +147,7 @@ const Delestage = () => {
                                         {devise === "USD" ? (
                                             <input
                                                 type="text"
-                                                className="form-control rounded-3"
+                                                className="form-control rounded-3 w-50"
                                                 style={{
                                                     backgroundColor: "#f8f9fa",
                                                     fontWeight: "bold",
@@ -162,7 +162,7 @@ const Delestage = () => {
                                         ) : (
                                             <input
                                                 type="text"
-                                                className="form-control rounded-3"
+                                                className="form-control rounded-3 w-50"
                                                 style={{
                                                     backgroundColor: "#f8f9fa",
                                                     fontWeight: "bold",
@@ -194,7 +194,7 @@ const Delestage = () => {
                                             {devise === "USD" ? (
                                                 getBilletageUSD && (
                                                     <div className="table-responsive">
-                                                        <table className="table table-borderless table-sm align-middle">
+                                                        <table className="table table-bordered table-sm align-middle">
                                                             <thead style={{ backgroundColor: "#e6f4f1" }}>
                                                                 <tr style={{ color: "#0b7285" }}>
                                                                     <th>Coupure</th>
@@ -234,7 +234,7 @@ const Delestage = () => {
                                             ) : (
                                                 getBilletageCDF && (
                                                     <div className="table-responsive">
-                                                        <table className="table table-borderless table-sm align-middle">
+                                                        <table className="table table-bordered table-sm align-middle">
                                                             <thead style={{ backgroundColor: "#e6f4f1" }}>
                                                                 <tr style={{ color: "#0b7285" }}>
                                                                     <th>Coupure</th>

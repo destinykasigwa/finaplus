@@ -16,10 +16,10 @@ return new class extends Migration
 
         $table->string('code_agence')->unique();
         $table->string('nom_agence');
-
         $table->string('devise_principale')->default('CDF');
+         $table->string('compte_liaison_cdf')->nullable();
+        $table->string('compte_liaison_usd')->nullable();
         $table->boolean('active')->default(true);
-
         $table->timestamps();
     });
 }

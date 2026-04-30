@@ -171,7 +171,7 @@ const EntreeT = () => {
                                         <select
                                             id="devise"
                                             name="devise"
-                                            className="form-control"
+                                           className="modern-select"
                                             style={{ borderRadius: "8px" }}
                                             onChange={(e) => {
                                                 setDevise(e.target.value);

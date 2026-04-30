@@ -10,7 +10,9 @@ class Agences extends Model
     use HasFactory;
     protected $fillable = [
          "codeAgence",
-         "NomAgence"
+         "NomAgence",
+         "compte_liaison_cdf",
+         "compte_liaison_usd"
     ];
 
 

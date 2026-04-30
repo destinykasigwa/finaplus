@@ -623,6 +623,8 @@ Route::post('eco/pages/add/all-agences', [UtilisateurController::class, 'addAllA
 Route::post('eco/agence/change', [UtilisateurController::class, 'changeActiveAgence'])->name('eco.agence.change');
 
 
+Route::get('eco/pages/user-agences', [AdhesionController::class, 'getUserAgencesForAdhesion']);
+
 
 
 

@@ -1,12 +1,12 @@
 import styles from "../styles/RegisterForm.module.css";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 
 const Adhesion = () => {
     const [adhesion, setAdhesion] = useState({
-        agenceFilter: "",
+        code_agence: "",
         code_monnaie: "CDF",
         type_epargne: "",
         type_client: "",
@@ -37,7 +37,7 @@ const Adhesion = () => {
     const [isLoading1, setIsloading1] = useState(false);
     const [isLoading2, setIsloading2] = useState(false);
     const [error, setError] = useState([]);
-    const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
+    // const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
 
     ///UPDATE ATTRIBUTE
 
@@ -76,6 +76,9 @@ const Adhesion = () => {
     const [mandataireName, setmandataireName] = useState();
     const [mandatairePhone, setmandatairePhone] = useState();
     const [fetchMandataire, setFetchMandataire] = useState();
+
+    const [agencesList, setAgencesList] = useState([]);
+const [loadingAgences, setLoadingAgences] = useState(true);
 
     //ENREGISTRE LES DONNEES POUR LE NOUVEAU MEMBRE CREE
     const handleSubmitAdhesion = async (e) => {
@@ -311,6 +314,27 @@ const Adhesion = () => {
         }
     };
 
+
+    useEffect(() => {
+    const fetchAgences = async () => {
+        try {
+            const res = await axios.get('/eco/pages/user-agences');
+            if (res.data.status === 1) {
+                setAgencesList(res.data.data);
+                // Si une seule agence, on la pré‑sélectionne
+                if (res.data.data.length === 1) {
+                    setAdhesion(prev => ({ ...prev, agence_id: res.data.data[0].id }));
+                }
+            }
+        } catch (error) {
+            console.error("Erreur chargement agences", error);
+        } finally {
+            setLoadingAgences(false);
+        }
+    };
+    fetchAgences();
+}, []);
+
     const AjouterMandataire = async (e) => {
         e.preventDefault();
         const res = await axios.post("/eco/pages/adhesion/ajout-mandataire", {
@@ -515,138 +539,32 @@ const Adhesion = () => {
                                                             </td>
                                                         </tr>
                                                         <tr>
-                                                            <td
-                                                                style={{
-                                                                    padding:
-                                                                        "6px",
-                                                                    width: "40%",
-                                                                }}
-                                                            >
-                                                                <label
-                                                                    style={{
-                                                                        color: "steelblue",
-                                                                        fontWeight:
-                                                                            "500",
-                                                                    }}
-                                                                >
-                                                                    Agence
-                                                                </label>
-                                                            </td>
-                                                            <td
-                                                                style={{
-                                                                    padding:
-                                                                        "6px",
-                                                                }}
-                                                            >
-                                                                {/* <select
-                                                                    className={`form-control ${error.agence ? "is-invalid" : ""}`}
-                                                                    style={{
-                                                                        borderRadius:
-                                                                            "8px",
-                                                                    }}
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        setAdhesion(
-                                                                            (
-                                                                                p,
-                                                                            ) => ({
-                                                                                ...p,
-                                                                                agence: e
-                                                                                    .target
-                                                                                    .value,
-                                                                            }),
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <option value="">
-                                                                        Sélectionnez
-                                                                    </option>
-                                                                    <option value="SIEGE">
-                                                                        SIEGE
-                                                                    </option>
-                                                                </select> */}
-                                                                {error.agenceFilter && (
-                                                                    <small className="text-danger">
-                                                                        {
-                                                                            error.agenceFilter
-                                                                        }
-                                                                    </small>
-                                                                )}
-
-                                                                <select
-                                                                    className={`form-control ${error.agenceFilter ? "is-invalid" : ""}`}
-                                                                    style={{
-                                                                        borderRadius:
-                                                                            "8px",
-                                                                    }}
-                                                                    // value={agenceFilter}
-
-                                                                    // onChange={(e) =>
-                                                                    //     setAgenceFilter(
-                                                                    //         e.target.value,
-                                                                    //     )
-
-                                                                    // }
-
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) =>
-                                                                        setAdhesion(
-                                                                            (
-                                                                                p,
-                                                                            ) => ({
-                                                                                ...p,
-                                                                                agenceFilter:
-                                                                                    e
-                                                                                        .target
-                                                                                        .value,
-                                                                            }),
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        userAgences.length <=
-                                                                        1
-                                                                    }
-                                                                >
-                                                                    <option value="current">
-                                                                        Agence
-                                                                        courante
-                                                                        (
-                                                                        {currentAgence?.nom_agence ||
-                                                                            "Non définie"}
-                                                                        )
-                                                                    </option>
-                                                                    {userAgences.length >
-                                                                        1 && (
-                                                                        <>
-                                                                            {userAgences.map(
-                                                                                (
-                                                                                    agence,
-                                                                                ) => (
-                                                                                    <option
-                                                                                        key={
-                                                                                            agence.id
-                                                                                        }
-                                                                                        value={
-                                                                                            agence.code_agence
-                                                                                        }
-                                                                                    >
-                                                                                        {
-                                                                                            agence.code_agence
-                                                                                        }{" "}
-                                                                                        -{" "}
-                                                                                        {
-                                                                                            agence.nom_agence
-                                                                                        }
-                                                                                    </option>
-                                                                                ),
-                                                                            )}
-                                                                        </>
-                                                                    )}
-                                                                </select>
-                                                            </td>
-                                                        </tr>
+    <td style={{ padding: "6px", width: "40%" }}>
+        <label style={{ color: "steelblue", fontWeight: "500" }}>
+            Agence
+        </label>
+    </td>
+    <td style={{ padding: "6px" }}>
+        {loadingAgences ? (
+            <span className="spinner-border spinner-border-sm text-muted"></span>
+        ) : (
+            <select
+                className={`form-control`}
+                style={{ borderRadius: "8px" }}
+                value={adhesion.code_agence || ""}
+                onChange={(e) => setAdhesion(prev => ({ ...prev, code_agence: e.target.value }))}
+                disabled={agencesList.length <= 1}
+            >
+                {agencesList.map(agence => (
+                    <option key={agence.id} value={agence.code_agence}>
+                        {agence.code_agence} - {agence.nom_agence}
+                    </option>
+                ))}
+            </select>
+        )}
+        {/* {error.code_agence && <small className="text-danger">{error.code_agence}</small>} */}
+    </td>
+</tr>
                                                         <tr>
                                                             <td
                                                                 style={{

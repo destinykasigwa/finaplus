@@ -419,160 +419,202 @@ const Journal = () => {
     </div>
 </div>
 
-    {/* Tableau des résultats */}
-    {(getDataCDF && getDataCDF.length > 0) || (getDataUSD && getDataUSD.length > 0) ? (
-        <div className="card border-0 shadow-sm rounded-3 mb-4">
-            <div className="card-body p-4">
-                <div id="content-to-download-journal">
-                    {/* En-tête du rapport */}
-                    <div className="text-center mb-3">
-                        <EnteteRapport />
-                    </div>
-                    
-                    <div className="text-center mb-4">
-                        <h4 style={{ 
-                            background: "#1a2632", 
-                            padding: "12px", 
-                            color: "#fff", 
-                            borderRadius: "8px", 
-                            display: "inline-block",
-                            borderLeft: "5px solid #20c997"
-                        }}>
-                            <i className="fas fa-book-open me-2"></i>
-                            JOURNAL DES OPÉRATIONS
-                            <br />
-                            <small style={{ fontSize: "14px" }}>
-                                Du {dateDebut ? dateParser(dateDebut) : dateParser(getdefaultDateDebut)} 
-                                au {dateFin ? dateParser(dateFin) : dateParser(getdefaultDateFin)}
-                            </small>
-                        </h4>
-                    </div>
-
-                    {/* Informations des filtres */}
-                    <div className="row g-2 mb-3">
-                        {radioValue === "givenAgence" && AgenceFrom && (
-                            <div className="col-auto">
-                                <span className="badge bg-info">Agence: {AgenceFrom}</span>
-                            </div>
-                        )}
-                        {UserName && (
-                            <div className="col-auto">
-                                <span className="badge bg-success">Utilisateur: {UserName}</span>
-                            </div>
-                        )}
-                        {checkboxValues.SuspensTransactions && (
-                            <div className="col-auto">
-                                <span className="badge bg-warning">Opérations En suspens</span>
-                            </div>
-                        )}
-                        {checkboxValues.givenCurrency && MonnaieDonnee && (
-                            <div className="col-auto">
-                                <span className="badge bg-secondary">Devise: {MonnaieDonnee}</span>
-                            </div>
-                        )}
-                        {checkboxValues.GivenJournal && JournalDonne && (
-                            <div className="col-auto">
-                                <span className="badge bg-dark">Journal: {JournalDonne}</span>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="table-responsive">
-                        <table className="table table-bordered table-striped" id="content-releve-tableCDF" style={{ fontSize: "13px" }}>
-                            <thead style={{ backgroundColor: "#1a2632", color: "white" }}>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Réf. Op</th>
-                                    <th>Num cpte</th>
-                                    <th>Nom compte</th>
-                                    <th>Libellé</th>
-                                    <th className="text-end">Débit</th>
-                                    <th className="text-end">Crédit</th>
-                                   </tr>
-                            </thead>
-                            <tbody>
-                                {/* Section CDF */}
-                                {getDataCDF && getDataCDF.length > 0 && (
-                                    <>
-                                        <tr style={{ backgroundColor: "#e6f2f9" }}>
-                                            <td colSpan="7" className="fw-bold fs-5" style={{ color: "steelblue" }}>
-                                                <i className="fas fa-chart-line me-2"></i>CDF
-                                              </td>
-                                         </tr>
-                                        {getDataCDF.map((res, index) => (
-                                            <tr key={`cdf-${index}`}>
-                                                <td>{dateParser(res.DateTransaction)}</td>
-                                                <td className="fw-semibold">{res.NumTransaction}</td>
-                                                <td>{res.NumCompte}</td>
-                                                <td>{res.NomCompte}</td>
-                                                <td>{res.Libelle}</td>
-                                                <td className="text-end text-danger fw-bold">{res.Debitfc?.toFixed(2)}</td>
-                                                <td className="text-end text-success fw-bold">{res.Creditfc?.toFixed(2)}</td>
-                                             </tr>
-                                        ))}
-                                        {/* Total CDF */}
-                                        <tr style={{ backgroundColor: "#20c997", color: "white", fontWeight: "bold" }}>
-                                            <td colSpan="5" className="text-end fw-bold">TOTAL CDF :</td>
-                                            <td className="text-end fw-bold">{numberWithSpaces(getTot?.totCDF?.TotalDebitfc?.toFixed(2))}</td>
-                                            <td className="text-end fw-bold">{numberWithSpaces(getTot?.totCDF?.TotalCreditfc?.toFixed(2))}</td>
-                                         </tr>
-                                    </>
-                                )}
-
-                                {/* Section USD */}
-                                {getDataUSD && getDataUSD.length > 0 && (
-                                    <>
-                                        <tr style={{ backgroundColor: "#e6f2f9" }}>
-                                            <td colSpan="7" className="fw-bold fs-5" style={{ color: "steelblue" }}>
-                                                <i className="fas fa-dollar-sign me-2"></i>USD
-                                              </td>
-                                         </tr>
-                                        {getDataUSD.map((res, index) => (
-                                            <tr key={`usd-${index}`}>
-                                                <td>{dateParser(res.DateTransaction)}</td>
-                                                <td className="fw-semibold">{res.NumTransaction}</td>
-                                                <td>{res.NumCompte}</td>
-                                                <td>{res.NomCompte}</td>
-                                                <td>{res.Libelle}</td>
-                                                <td className="text-end text-danger fw-bold">{res.Debitusd?.toFixed(2)}</td>
-                                                <td className="text-end text-success fw-bold">{res.Creditusd?.toFixed(2)}</td>
-                                             </tr>
-                                        ))}
-                                        {/* Total USD */}
-                                        <tr style={{ backgroundColor: "#20c997", color: "white", fontWeight: "bold" }}>
-                                            <td colSpan="5" className="text-end fw-bold">TOTAL USD :</td>
-                                            <td className="text-end fw-bold">{numberWithSpaces(getTot?.totUSD?.TotalDebitusd?.toFixed(2))}</td>
-                                            <td className="text-end fw-bold">{numberWithSpaces(getTot?.totUSD?.TotalCreditusd?.toFixed(2))}</td>
-                                         </tr>
-                                    </>
-                                )}
-                            </tbody>
-                         </table>
-                    </div>
+   {/* Tableau des résultats */}
+{(getDataCDF && getDataCDF.length > 0) || (getDataUSD && getDataUSD.length > 0) ? (
+    <div className="card border-0 shadow-sm rounded-3 mb-4">
+        <div className="card-body p-4">
+            <div id="content-to-download-journal">
+                {/* En-tête du rapport */}
+                <div className="text-center mb-3">
+                    <EnteteRapport />
                 </div>
 
-                {/* Boutons d'export */}
-                <div className="d-flex justify-content-end gap-2 mt-4">
-                    <button onClick={() => exportTableData("content-to-download-journal")} 
-                        className="btn" style={{ background: "#28a745", color: "white", borderRadius: "8px" }}>
-                        <i className="fas fa-file-excel me-2"></i>Exporter en Excel
-                    </button>
-                    <button onClick={exportToPDF} 
-                        className="btn" style={{ background: "#dc3545", color: "white", borderRadius: "8px" }}>
-                        <i className="fas fa-file-pdf me-2"></i>Exporter en PDF
-                    </button>
+                <div className="text-center mb-4">
+                    <h4 style={{ 
+                        background: "#1a2632", 
+                        padding: "12px", 
+                        color: "#fff", 
+                        borderRadius: "8px", 
+                        display: "inline-block",
+                        borderLeft: "5px solid #20c997"
+                    }}>
+                        <i className="fas fa-book-open me-2"></i>
+                        JOURNAL DES OPÉRATIONS
+                        <br />
+                        <small style={{ fontSize: "14px" }}>
+                            Du {dateDebut ? dateParser(dateDebut) : dateParser(getdefaultDateDebut)} 
+                            au {dateFin ? dateParser(dateFin) : dateParser(getdefaultDateFin)}
+                        </small>
+                    </h4>
                 </div>
+
+                {/* Filtres actifs (inchangé) */}
+                <div className="row g-2 mb-3">
+                    {radioValue === "givenAgence" && AgenceFrom && (
+                        <div className="col-auto">
+                            <span className="badge bg-info">Agence: {AgenceFrom}</span>
+                        </div>
+                    )}
+                    {UserName && (
+                        <div className="col-auto">
+                            <span className="badge bg-success">Utilisateur: {UserName}</span>
+                        </div>
+                    )}
+                    {checkboxValues.SuspensTransactions && (
+                        <div className="col-auto">
+                            <span className="badge bg-warning">Opérations En suspens</span>
+                        </div>
+                    )}
+                    {checkboxValues.givenCurrency && MonnaieDonnee && (
+                        <div className="col-auto">
+                            <span className="badge bg-secondary">Devise: {MonnaieDonnee}</span>
+                        </div>
+                    )}
+                    {checkboxValues.GivenJournal && JournalDonne && (
+                        <div className="col-auto">
+                            <span className="badge bg-dark">Journal: {JournalDonne}</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Tableau des résultats */}
+{(getDataCDF && getDataCDF.length > 0) || (getDataUSD && getDataUSD.length > 0) ? (
+    <div className="card border-0 shadow-sm rounded-3 mb-4">
+        <div className="card-body p-4">
+            <div id="content-to-download-journal">
+                {/* En-tête (inchangé) */}
+                <div className="text-center mb-3"><EnteteRapport /></div>
+                <div className="text-center mb-4"><h4 style={{ background: "#1a2632", padding: "12px", color: "#fff", borderRadius: "8px", display: "inline-block", borderLeft: "5px solid #20c997" }}>
+                    <i className="fas fa-book-open me-2"></i>JOURNAL DES OPÉRATIONS
+                    <br /><small style={{ fontSize: "14px" }}>Du {dateDebut ? dateParser(dateDebut) : dateParser(getdefaultDateDebut)} au {dateFin ? dateParser(dateFin) : dateParser(getdefaultDateFin)}</small>
+                </h4></div>
+
+                {/* Éventuels badges de filtre (inchangés) */}
+                ...
+
+                <div className="table-responsive">
+                    <table className="table table-bordered table-striped" style={{ fontSize: "13px" }}>
+                        <thead style={{ backgroundColor: "#1a2632", color: "white" }}>
+                            <tr>
+                                <th>Date</th>
+                                <th>Réf. Op</th>
+                                <th>Compte débit</th>
+                                <th>Compte crédit</th>
+                                <th>Libellé</th>
+                                <th className="text-end">Débit</th>
+                                <th className="text-end">Crédit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {/* SECTION CDF */}
+                            {getDataCDF && getDataCDF.length > 0 && (
+                                <>
+                                    <tr style={{ backgroundColor: "#e6f2f9" }}>
+                                        <td colSpan="7" className="fw-bold fs-5" style={{ color: "steelblue" }}>
+                                            <i className="fas fa-chart-line me-2"></i>CDF
+                                        </td>
+                                    </tr>
+                                    {getDataCDF.map((res, idx) => {
+                                        // Détection de déséquilibre ou contrepartie manquante
+                                        const isDesequilibre = (res.MontantDebit !== res.MontantCredit) ||
+                                                                !res.CompteDebit || !res.CompteCredit;
+                                        const rowStyle = isDesequilibre ? { backgroundColor: "#f8d7da" } : {};
+                                        return (
+                                            <tr key={`cdf-${idx}`} style={rowStyle}>
+                                                <td>{dateParser(res.DateTransaction)}</td>
+                                                <td className="fw-semibold">{res.NumTransaction}</td>
+                                                <td>{res.CompteDebit}<br /><small className="text-muted">{res.NomCompteDebit}</small></td>
+                                                <td>{res.CompteCredit}<br /><small className="text-muted">{res.NomCompteCredit}</small></td>
+                                                <td>{res.Libelle}</td>
+                                                <td className="text-end text-danger fw-bold">{numberWithSpaces(res.MontantDebit?.toFixed(2))}</td>
+                                                <td className="text-end text-success fw-bold">{numberWithSpaces(res.MontantCredit?.toFixed(2))}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                    <tr style={{ backgroundColor: "#20c997", color: "white", fontWeight: "bold" }}>
+                                        <td colSpan="5" className="text-end fw-bold">TOTAL CDF :</td>
+                                        <td className="text-end">{numberWithSpaces(getTot?.totCDF?.TotalDebit?.toFixed(2))}</td>
+                                        <td className="text-end">{numberWithSpaces(getTot?.totCDF?.TotalCredit?.toFixed(2))}</td>
+                                    </tr>
+                                </>
+                            )}
+
+                            {/* SECTION USD – même logique */}
+                            {getDataUSD && getDataUSD.length > 0 && (
+                                <>
+                                    <tr style={{ backgroundColor: "#e6f2f9" }}>
+                                        <td colSpan="7" className="fw-bold fs-5" style={{ color: "steelblue" }}>
+                                            <i className="fas fa-dollar-sign me-2"></i>USD
+                                        </td>
+                                    </tr>
+                                    {getDataUSD.map((res, idx) => {
+                                        const isDesequilibre = (res.MontantDebit !== res.MontantCredit) ||
+                                                                !res.CompteDebit || !res.CompteCredit;
+                                        const rowStyle = isDesequilibre ? { backgroundColor: "#f8d7da" } : {};
+                                        return (
+                                            <tr key={`usd-${idx}`} style={rowStyle}>
+                                                <td>{dateParser(res.DateTransaction)}</td>
+                                                <td className="fw-semibold">{res.NumTransaction}</td>
+                                                <td>{res.CompteDebit}<br /><small className="text-muted">{res.NomCompteDebit}</small></td>
+                                                <td>{res.CompteCredit}<br /><small className="text-muted">{res.NomCompteCredit}</small></td>
+                                                <td>{res.Libelle}</td>
+                                                <td className="text-end text-danger fw-bold">{numberWithSpaces(res.MontantDebit?.toFixed(2))}</td>
+                                                <td className="text-end text-success fw-bold">{numberWithSpaces(res.MontantCredit?.toFixed(2))}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                    <tr style={{ backgroundColor: "#20c997", color: "white", fontWeight: "bold" }}>
+                                        <td colSpan="5" className="text-end fw-bold">TOTAL USD :</td>
+                                        <td className="text-end">{numberWithSpaces(getTot?.totUSD?.TotalDebit?.toFixed(2))}</td>
+                                        <td className="text-end">{numberWithSpaces(getTot?.totUSD?.TotalCredit?.toFixed(2))}</td>
+                                    </tr>
+                                </>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Boutons d'export */}
+            <div className="d-flex justify-content-end gap-2 mt-4">
+                <button onClick={() => exportTableData("content-to-download-journal")} className="btn" style={{ background: "#28a745", color: "white", borderRadius: "8px" }}>
+                    <i className="fas fa-file-excel me-2"></i>Exporter en Excel
+                </button>
+                <button onClick={exportToPDF} className="btn" style={{ background: "#dc3545", color: "white", borderRadius: "8px" }}>
+                    <i className="fas fa-file-pdf me-2"></i>Exporter en PDF
+                </button>
             </div>
         </div>
-    ) : (
-        // Message si aucune donnée
-        (getDataCDF || getDataUSD) && (
-            <div className="text-center py-5">
-                <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
-                <p className="text-muted">Aucune opération trouvée pour les critères sélectionnés.</p>
+    </div>
+) : ((getDataCDF || getDataUSD) && (
+    <div className="text-center py-5">
+        <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
+        <p className="text-muted">Aucune opération trouvée pour les critères sélectionnés.</p>
+    </div>
+))}
             </div>
-        )
-    )}
+
+            {/* Boutons d'export */}
+            {/* <div className="d-flex justify-content-end gap-2 mt-4">
+                <button onClick={() => exportTableData("content-to-download-journal")} 
+                    className="btn" style={{ background: "#28a745", color: "white", borderRadius: "8px" }}>
+                    <i className="fas fa-file-excel me-2"></i>Exporter en Excel
+                </button>
+                <button onClick={exportToPDF} 
+                    className="btn" style={{ background: "#dc3545", color: "white", borderRadius: "8px" }}>
+                    <i className="fas fa-file-pdf me-2"></i>Exporter en PDF
+                </button>
+            </div> */}
+        </div>
+    </div>
+) : (
+    (getDataCDF || getDataUSD) && (
+        <div className="text-center py-5">
+            <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
+            <p className="text-muted">Aucune opération trouvée pour les critères sélectionnés.</p>
+        </div>
+    )
+)}
 
     <div style={{ height: "30px" }}></div>
 

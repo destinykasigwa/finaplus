@@ -9,6 +9,7 @@ use App\Models\AdhesionMembre;
 use App\Models\Agences;
 use App\Models\CompteurCompte;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
 
 class AdhesionController extends Controller
@@ -27,10 +28,40 @@ class AdhesionController extends Controller
 
     //PERMET D'ENREGISTRER UN NOUVEAU MEMBRE
 
+    /**
+ * Génère un préfixe unique pour une agence (2 lettres)
+ * Exemples : GOMA → GM, KATINDO → KT, SIEGE → SG
+ */
+private function getPrefixeAgence($codeAgence)
+{
+    // Vous pouvez utiliser un mapping direct selon le code_agence ou le nom_agence
+    $prefixes = [
+        'GOMA'    => 'GM',
+        'KATINDO' => 'KT',
+        'SIEGE'   => 'SG',
+        // Ajoutez ici tous les codes/noms d'agence avec leur préfixe
+    ];
+
+    // Récupérer l'agence depuis la base de données pour obtenir son nom
+    $agence = Agences::where('code_agence', $codeAgence)->first();
+    if (!$agence) {
+        // Par défaut, on prend les deux premières lettres du code en majuscule
+        return strtoupper(substr($codeAgence, 0, 2));
+    }
+
+    $nom = strtoupper($agence->nom_agence);
+    // Vérifier dans le tableau mapping
+    if (isset($prefixes[$nom])) {
+        return $prefixes[$nom];
+    }
+
+    // Sinon, prendre les deux premières lettres du nom (ex: BUKAVU → BU)
+    return substr($nom, 0, 2);
+}
     public function RegisterNewMember(Request $request)
     {
         $validator = validator::make($request->all(), [
-            'agenceFilter' => 'required',
+            // 'code_agence' => 'required',
             'code_monnaie' => 'required',
             'type_epargne' => 'required',
             'type_client' => 'required',
@@ -43,9 +74,19 @@ class AdhesionController extends Controller
                 'validate_error' => $validator->messages()
             ]);
         }
-        $getAgence = Agences::where("code_agence", $request->agenceFilter)->first();
+        $getAgence = Agences::where("code_agence", $request->code_agence)->first();
         $NomAgence = $getAgence ? $getAgence->nom_agence : null;
-        $codeAgence = $request->agenceFilter;
+
+        $codeAgence = $request->code_agence;
+        if (!$codeAgence) {
+            $user = auth()->user();
+            $agence = $user->agences()->first();
+            if ($agence) {
+                $codeAgence = $agence->code_agence;
+            } else {
+                return response()->json(['status' => 0, 'msg' => 'Aucune agence associée à cet utilisateur']);
+            }
+        }
         //CREATE AN ACCOUNT REF
         CompteurCompte::create([
             "default_value" => "0000"
@@ -61,11 +102,15 @@ class AdhesionController extends Controller
         } else if ($refCompte >= 1000 && $refCompte < 10000) {
             $compteEnFranc = "330100" . $refCompte . $codeAgence . "2";
         }
+
+        $prefixe = $this->getPrefixeAgence($codeAgence);
+        $numManuel = $prefixe . $refCompte; // $NumAdherant = "500" par exemple
         AdhesionMembre::create([
             "num_compte" => $compteEnFranc,
             "compte_abrege" => $refCompte,
+            "Num_Manuel"=>$numManuel,
             "agence" => $NomAgence,
-            "code_agence" => $request->agenceFilter,
+            "code_agence" => $request->code_agence,
             "code_monnaie" => "CDF",
             "type_epargne" => $request->type_epargne,
             "type_client" => $request->type_client,
@@ -116,29 +161,63 @@ class AdhesionController extends Controller
 
     //GET A SEACHED MEMBER TO UPDATE
 
-    public function getSeachedMembre(Request $request)
-    {
-        // $validator = validator::make($request->all(), [
-        //     'compte_to_search' => 'required',
-        // ]);
-        // if ($validator->fails()) {
-        //     return response()->json([
-        //         'validate_error' => $validator->messages()
-        //     ]);
-        // }
-        // return response()->json([$request->compte_to_search]);
-        if (isset($request->compte_to_search)) {
+    // public function getSeachedMembre(Request $request)
+    // {
 
-            $data =  AdhesionMembre::where("compte_abrege", $request->compte_to_search)->first();
-            if ($data) {
-                return response()->json(["status" => 1, "data" => $data]);
-            } else {
-                return response()->json(["status" => 0, "msg" => "Aucun membre trouvé"]);
-            }
-        } else {
-            return response()->json(["status" => 0, "msg" => "Veuillez renseigner un numéro de compte"]);
-        }
+    //     if (isset($request->compte_to_search)) {
+
+    //         $data =  AdhesionMembre::where("compte_abrege", $request->compte_to_search)->first();
+    //         if ($data) {
+    //             return response()->json(["status" => 1, "data" => $data]);
+    //         } else {
+    //             return response()->json(["status" => 0, "msg" => "Aucun membre trouvé"]);
+    //         }
+    //     } else {
+    //         return response()->json(["status" => 0, "msg" => "Veuillez renseigner un numéro de compte"]);
+    //     }
+    // }
+
+    public function getSeachedMembre(Request $request)
+{
+    if (!isset($request->compte_to_search)) {
+        return response()->json(["status" => 0, "msg" => "Veuillez renseigner un numéro de compte"]);
     }
+
+    $search = $request->compte_to_search;
+
+    // Récupération de l'agence courante
+    $currentAgence = session('current_agence');
+    $codeAgence = $currentAgence['code_agence'] ?? null;
+    if (!$codeAgence) {
+        return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+    }
+
+    // Recherche dans adhesion_membres
+    // Si la table a une colonne 'code_agence', on filtre directement
+    // Sinon, on utilise le préfixe du num_manuel (si vous avez stocké le préfixe)
+    $query = AdhesionMembre::query();
+
+    // Option 1 : colonne code_agence existe (recommandé)
+    if (Schema::hasColumn('adhesion_membres', 'code_agence')) {
+        $query->where('code_agence', $codeAgence);
+    } else {
+        // Option 2 : utiliser le préfixe du num_manuel
+        $prefixe = $this->getPrefixeAgence($codeAgence); // fonction définie précédemment
+        $query->where('Num_Manuel', 'like', $prefixe . '%');
+    }
+
+    // Recherche sur compte_abrege ou num_manuel
+    $membre = $query->where(function ($q) use ($search) {
+        $q->where('compte_abrege', $search)
+          ->orWhere('Num_Manuel', $search);
+    })->first();
+
+    if (!$membre) {
+        return response()->json(["status" => 0, "msg" => "Aucun membre trouvé dans votre agence pour ce numéro"]);
+    }
+
+    return response()->json(["status" => 1, "data" => $membre]);
+}
 
     //PERMET DE METTRE A JOURS LES INFORMATIONS D'UN MEMBRES
 
@@ -224,6 +303,7 @@ class AdhesionController extends Controller
                     Comptes::create([
                         'CodeAgence' => $data->code_agence,
                         'NumCompte' => $data->num_compte,
+                        'Num_Manuel'=>$data->Num_Manuel,
                         'NomCompte' => $data->intitule_compte,
                         'RefTypeCompte' => "3",
                         'RefCadre' => "33",
@@ -237,6 +317,7 @@ class AdhesionController extends Controller
                         'niveau' => "5",
                         'est_classe' => 0,
                         'compte_parent' => "3300",
+                        
                     ]);
                     return response()->json(["status" => 1, "msg" => "Compte bien crée"]);
                 } else {
@@ -262,6 +343,7 @@ class AdhesionController extends Controller
                     Comptes::create([
                         'CodeAgence' => $data->code_agence,
                         'NumCompte' => $compteEnDollars,
+                        'Num_Manuel'=>$data->Num_Manuel,
                         'NomCompte' => $data->intitule_compte,
                         'RefTypeCompte' => "3",
                         'RefCadre' => "33",
@@ -324,5 +406,17 @@ class AdhesionController extends Controller
         } else {
             return response()->json(["status" => 0, "msg" => "Vous n'êtes autorisé à supprimer un mandataire"]);
         }
+    }
+
+    public function getUserAgencesForAdhesion()
+    {
+        $user = auth()->user();
+        $agences = $user->agences()
+            ->select('agences.id', 'agences.code_agence', 'agences.nom_agence')
+            ->get();
+        return response()->json([
+            'status' => 1,
+            'data'   => $agences
+        ]);
     }
 }

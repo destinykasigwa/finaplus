@@ -10,6 +10,7 @@ class AdhesionMembre extends Model
     use HasFactory;
     protected $fillable = [
         "compte_abrege",
+        "Num_Manuel",
         "num_compte",
         "agence",
         "code_agence",

@@ -88,155 +88,403 @@ class ReportsController extends Controller
 }
     //GET SEARCHED JOURNAL
 
+// public function getSearchedJournal(Request $request)
+// {
+//     $user = auth()->user();
+
+//     // =========================
+//     // 🔹 Gestion CodeAgence (OBLIGATOIRE)
+//     // =========================
+//     $agenceFilter = $request->agence_filter ?? 'current';
+//     $codeAgence = null;
+
+//     if ($agenceFilter === 'current') {
+//         $currentAgence = session('current_agence');
+//         $codeAgence = $currentAgence['code_agence'] ?? null;
+
+//         if (!$codeAgence) {
+//             return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
+//         }
+//     } elseif ($agenceFilter !== 'all') {
+//         $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
+
+//         if (!$agence) {
+//             return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
+//         }
+
+//         $codeAgence = $agence->code_agence;
+//     }
+
+//     if (!$codeAgence) {
+//         return response()->json(['status' => 0, 'msg' => 'Code agence requis']);
+//     }
+
+//     // =========================
+//     // 🔹 Filtres optionnels
+//     // =========================
+//     $dateDebut = $request->DateDebut ?? null;
+//     $dateFin   = $request->DateFin ?? null;
+//     $userName  = $request->UserName ?? null;
+//     $isSuspens = $request->AutresCriteres['SuspensTransactions'] ?? false;
+
+//     // =========================
+//     // 🔹 Construction WHERE dynamique
+//     // =========================
+//     $conditions = [];
+
+//     // obligatoire
+//     $conditions[] = "t1.CodeAgence = '$codeAgence'";
+
+//     // optionnels
+//     if ($dateDebut && $dateFin) {
+//         $conditions[] = "t1.DateTransaction BETWEEN '$dateDebut' AND '$dateFin'";
+//     }
+
+//     if ($userName) {
+//         $conditions[] = "t1.NomUtilisateur = '$userName'";
+//     }
+
+//     // ✔️ CORRECTION ICI
+//     if ($isSuspens) {
+//         $conditions[] = "t1.isSuspens = 1";
+//     }
+
+//     // logique métier (matching débit/crédit)
+//     $conditions[] = "t1.Debitfc = t2.Creditfc";
+//     $conditions[] = "t1.Debitusd = t2.Creditusd";
+//     $conditions[] = "t1.Creditfc = t2.Debitfc";
+//     $conditions[] = "t1.Creditusd = t2.Debitusd";
+
+//     $whereClause = implode(" AND ", $conditions);
+
+//     // =========================
+//     // 🔹 Fonction de génération requête
+//     // =========================
+//     $buildQuery = function ($codeMonnaie) use ($whereClause) {
+//         return "
+//             SELECT DISTINCT 
+//                 t1.NumTransaction,
+//                 t1.DateTransaction,
+//                 t1.CodeMonnaie,
+//                 t1.NumCompte,
+//                 t1.NumComptecp,
+//                 t1.Debitfc,
+//                 t1.Debitusd,
+//                 t1.Creditfc,
+//                 t1.Creditusd,
+//                 t1.Libelle,
+//                 c1.NomCompte AS NomCompte
+//             FROM transactions t1
+//             JOIN transactions t2 
+//                 ON t1.NumComptecp = t2.NumCompte 
+//                 AND t1.NumCompte = t2.NumComptecp 
+//                 AND t1.CodeMonnaie = t2.CodeMonnaie 
+//                 AND t1.DateTransaction = t2.DateTransaction 
+//                 AND t1.NumTransaction = t2.NumTransaction
+//             JOIN comptes c1 ON t1.NumCompte = c1.NumCompte
+//             WHERE $whereClause
+//             AND t1.CodeMonnaie = $codeMonnaie
+//         ";
+//     };
+
+//     // =========================
+//     // 🔹 Exécution
+//     // =========================
+//     $queryCDF = $buildQuery(2);
+//     $queryUSD = $buildQuery(1);
+
+//     $dataCDF = DB::select($queryCDF);
+//     $dataUSD = DB::select($queryUSD);
+
+//     if (empty($dataCDF) && empty($dataUSD)) {
+//         return response()->json([
+//             "status" => 0,
+//             "msg" => "Pas de données trouvées"
+//         ]);
+//     }
+
+//     // =========================
+//     // 🔹 Totaux
+//     // =========================
+//     $buildTotalQuery = function ($codeMonnaie) use ($whereClause) {
+//         return "
+//             SELECT 
+//                 SUM(t1.Debitfc) AS TotalDebitfc,
+//                 SUM(t1.Debitusd) AS TotalDebitusd,
+//                 SUM(t1.Creditfc) AS TotalCreditfc,
+//                 SUM(t1.Creditusd) AS TotalCreditusd
+//             FROM transactions t1
+//             JOIN transactions t2 
+//                 ON t1.NumComptecp = t2.NumCompte 
+//                 AND t1.NumCompte = t2.NumComptecp 
+//                 AND t1.CodeMonnaie = t2.CodeMonnaie 
+//                 AND t1.DateTransaction = t2.DateTransaction 
+//                 AND t1.NumTransaction = t2.NumTransaction
+//             WHERE $whereClause
+//             AND t1.CodeMonnaie = $codeMonnaie
+//         ";
+//     };
+
+//     $totUSD = DB::select($buildTotalQuery(1))[0];
+//     $totCDF = DB::select($buildTotalQuery(2))[0];
+
+//     // =========================
+//     // 🔹 Retour
+//     // =========================
+//     return response()->json([
+//         "status" => 1,
+//         "dataCDF" => $dataCDF,
+//         "dataUSD" => $dataUSD,
+//         "totCDF" => $totCDF,
+//         "totUSD" => $totUSD,
+//     ]);
+// }
+
+
+// public function getSearchedJournal(Request $request)
+// {
+//     $user = auth()->user();
+
+//     // Gestion du filtre agence (identique)
+//     $agenceFilter = $request->agence_filter ?? 'current';
+//     $codeAgence = null;
+//     if ($agenceFilter === 'current') {
+//         $currentAgence = session('current_agence');
+//         $codeAgence = $currentAgence['code_agence'] ?? null;
+//         if (!$codeAgence) return response()->json(['status' => 0, 'msg' => 'Aucune agence courante']);
+//     } elseif ($agenceFilter !== 'all') {
+//         $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
+//         if (!$agence) return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
+//         $codeAgence = $agence->code_agence;
+//     }
+//     if (!$codeAgence) return response()->json(['status' => 0, 'msg' => 'Code agence requis']);
+
+//     // Autres filtres
+//     $dateDebut = $request->DateDebut ?? null;
+//     $dateFin   = $request->DateFin ?? null;
+//     $userName  = $request->UserName ?? null;
+//     $isSuspens = $request->AutresCriteres['SuspensTransactions'] ?? false;
+
+//     // Conditions WHERE communes
+//     $conditions = ["t.CodeAgence = '$codeAgence'"];
+//     if ($dateDebut && $dateFin) $conditions[] = "t.DateTransaction BETWEEN '$dateDebut' AND '$dateFin'";
+//     if ($userName) $conditions[] = "t.NomUtilisateur = '$userName'";
+//     if ($isSuspens) $conditions[] = "t.isSuspens = 1";
+//     $whereClause = implode(" AND ", $conditions);
+
+//     // Fonction pour récupérer les lignes brutes (débit/crédit)
+//     $getRawLines = function ($codeMonnaie, $debitCol, $creditCol) use ($whereClause) {
+//         return DB::select("
+//             SELECT 
+//                 t.NumTransaction,
+//                 t.DateTransaction,
+//                 t.CodeMonnaie,
+//                 t.NumCompte,
+//                 c.NomCompte,
+//                 t.$debitCol AS Debit,
+//                 t.$creditCol AS Credit,
+//                 t.Libelle
+//             FROM transactions t
+//             JOIN comptes c ON t.NumCompte = c.NumCompte
+//             WHERE $whereClause
+//               AND t.CodeMonnaie = $codeMonnaie
+//               AND (t.$debitCol != 0 OR t.$creditCol != 0)
+//             ORDER BY t.DateTransaction, t.NumTransaction
+//         ");
+//     };
+
+//     // Regroupement PHP
+//     $buildGrouped = function ($rawLines) {
+//         $grouped = [];
+//         foreach ($rawLines as $line) {
+//             $key = $line->NumTransaction . '_' . $line->DateTransaction;
+//             if (!isset($grouped[$key])) {
+//                 $grouped[$key] = (object)[
+//                     'NumTransaction' => $line->NumTransaction,
+//                     'DateTransaction' => $line->DateTransaction,
+//                     'CodeMonnaie' => $line->CodeMonnaie,
+//                     'CompteDebit' => null,
+//                     'NomCompteDebit' => null,
+//                     'CompteCredit' => null,
+//                     'NomCompteCredit' => null,
+//                     'MontantDebit' => 0,
+//                     'MontantCredit' => 0,
+//                     'Libelle' => $line->Libelle,
+//                 ];
+//             }
+//             if ($line->Debit > 0) {
+//                 $grouped[$key]->CompteDebit = $line->NumCompte;
+//                 $grouped[$key]->NomCompteDebit = $line->NomCompte;
+//                 $grouped[$key]->MontantDebit = $line->Debit;
+//             }
+//             if ($line->Credit > 0) {
+//                 $grouped[$key]->CompteCredit = $line->NumCompte;
+//                 $grouped[$key]->NomCompteCredit = $line->NomCompte;
+//                 $grouped[$key]->MontantCredit = $line->Credit;
+//             }
+//         }
+//         return array_values($grouped);
+//     };
+
+//     // Données CDF (CodeMonnaie = 2)
+//     $rawCDF = $getRawLines(2, 'Debitfc', 'Creditfc');
+//     $dataCDF = $buildGrouped($rawCDF);
+
+//     // Données USD (CodeMonnaie = 1)
+//     $rawUSD = $getRawLines(1, 'Debitusd', 'Creditusd');
+//     $dataUSD = $buildGrouped($rawUSD);
+
+//     if (empty($dataCDF) && empty($dataUSD)) {
+//         return response()->json(['status' => 0, 'msg' => 'Pas de données trouvées']);
+//     }
+
+//     // Totaux (somme des montants débit et crédit après regroupement)
+//     $totCDF = (object)['TotalDebitfc' => 0, 'TotalCreditfc' => 0];
+//     foreach ($dataCDF as $row) {
+//         $totCDF->TotalDebitfc += $row->MontantDebit;
+//         $totCDF->TotalCreditfc += $row->MontantCredit;
+//     }
+
+//     $totUSD = (object)['TotalDebitusd' => 0, 'TotalCreditusd' => 0];
+//     foreach ($dataUSD as $row) {
+//         $totUSD->TotalDebitusd += $row->MontantDebit;
+//         $totUSD->TotalCreditusd += $row->MontantCredit;
+//     }
+
+//     return response()->json([
+//         'status' => 1,
+//         'dataCDF' => $dataCDF,
+//         'dataUSD' => $dataUSD,
+//         'totCDF' => $totCDF,
+//         'totUSD' => $totUSD,
+//     ]);
+// }
+
+
 public function getSearchedJournal(Request $request)
 {
     $user = auth()->user();
 
-    // =========================
-    // 🔹 Gestion CodeAgence (OBLIGATOIRE)
-    // =========================
+    // ---------- Gestion du filtre agence (obligatoire) ----------
     $agenceFilter = $request->agence_filter ?? 'current';
     $codeAgence = null;
-
     if ($agenceFilter === 'current') {
         $currentAgence = session('current_agence');
         $codeAgence = $currentAgence['code_agence'] ?? null;
-
         if (!$codeAgence) {
             return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
         }
     } elseif ($agenceFilter !== 'all') {
         $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
-
         if (!$agence) {
             return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
         }
-
         $codeAgence = $agence->code_agence;
     }
-
     if (!$codeAgence) {
         return response()->json(['status' => 0, 'msg' => 'Code agence requis']);
     }
 
-    // =========================
-    // 🔹 Filtres optionnels
-    // =========================
+    // ---------- Autres filtres ----------
     $dateDebut = $request->DateDebut ?? null;
     $dateFin   = $request->DateFin ?? null;
     $userName  = $request->UserName ?? null;
     $isSuspens = $request->AutresCriteres['SuspensTransactions'] ?? false;
 
-    // =========================
-    // 🔹 Construction WHERE dynamique
-    // =========================
-    $conditions = [];
-
-    // obligatoire
-    $conditions[] = "t1.CodeAgence = '$codeAgence'";
-
-    // optionnels
-    if ($dateDebut && $dateFin) {
-        $conditions[] = "t1.DateTransaction BETWEEN '$dateDebut' AND '$dateFin'";
-    }
-
-    if ($userName) {
-        $conditions[] = "t1.NomUtilisateur = '$userName'";
-    }
-
-    // ✔️ CORRECTION ICI
-    if ($isSuspens) {
-        $conditions[] = "t1.isSuspens = 1";
-    }
-
-    // logique métier (matching débit/crédit)
-    $conditions[] = "t1.Debitfc = t2.Creditfc";
-    $conditions[] = "t1.Debitusd = t2.Creditusd";
-    $conditions[] = "t1.Creditfc = t2.Debitfc";
-    $conditions[] = "t1.Creditusd = t2.Debitusd";
-
+    // Conditions SQL communes
+    $conditions = ["t.CodeAgence = '$codeAgence'"];
+    if ($dateDebut && $dateFin) $conditions[] = "t.DateTransaction BETWEEN '$dateDebut' AND '$dateFin'";
+    if ($userName) $conditions[] = "t.NomUtilisateur = '$userName'";
+    if ($isSuspens) $conditions[] = "t.isSuspens = 1";
     $whereClause = implode(" AND ", $conditions);
 
-    // =========================
-    // 🔹 Fonction de génération requête
-    // =========================
-    $buildQuery = function ($codeMonnaie) use ($whereClause) {
-        return "
-            SELECT DISTINCT 
-                t1.NumTransaction,
-                t1.DateTransaction,
-                t1.CodeMonnaie,
-                t1.NumCompte,
-                t1.NumComptecp,
-                t1.Debitfc,
-                t1.Debitusd,
-                t1.Creditfc,
-                t1.Creditusd,
-                t1.Libelle,
-                c1.NomCompte AS NomCompte
-            FROM transactions t1
-            JOIN transactions t2 
-                ON t1.NumComptecp = t2.NumCompte 
-                AND t1.NumCompte = t2.NumComptecp 
-                AND t1.CodeMonnaie = t2.CodeMonnaie 
-                AND t1.DateTransaction = t2.DateTransaction 
-                AND t1.NumTransaction = t2.NumTransaction
-            JOIN comptes c1 ON t1.NumCompte = c1.NumCompte
+    // Fonction pour récupérer les lignes brutes d'une devise
+    $getRawLines = function ($codeMonnaie, $debitCol, $creditCol) use ($whereClause) {
+        return DB::select("
+            SELECT 
+                t.NumTransaction,
+                t.DateTransaction,
+                t.CodeMonnaie,
+                t.NumCompte,
+                c.NomCompte,
+                t.$debitCol AS MontantDebit,
+                t.$creditCol AS MontantCredit,
+                t.Libelle
+            FROM transactions t
+            JOIN comptes c ON t.NumCompte = c.NumCompte
             WHERE $whereClause
-            AND t1.CodeMonnaie = $codeMonnaie
-        ";
+              AND t.CodeMonnaie = $codeMonnaie
+              AND (t.$debitCol != 0 OR t.$creditCol != 0)
+            ORDER BY t.DateTransaction, t.NumTransaction
+        ");
     };
 
-    // =========================
-    // 🔹 Exécution
-    // =========================
-    $queryCDF = $buildQuery(2);
-    $queryUSD = $buildQuery(1);
+    // Regroupement en PHP : une ligne par transaction
+    $buildGrouped = function ($rawLines) {
+        $grouped = [];
+        foreach ($rawLines as $line) {
+            $key = $line->NumTransaction . '_' . $line->DateTransaction;
+            if (!isset($grouped[$key])) {
+                $grouped[$key] = (object)[
+                    'NumTransaction'   => $line->NumTransaction,
+                    'DateTransaction'  => $line->DateTransaction,
+                    'CodeMonnaie'      => $line->CodeMonnaie,
+                    'CompteDebit'      => null,
+                    'NomCompteDebit'   => null,
+                    'CompteCredit'     => null,
+                    'NomCompteCredit'  => null,
+                    'MontantDebit'     => 0,
+                    'MontantCredit'    => 0,
+                    'Libelle'          => $line->Libelle,
+                ];
+            }
+            // Ligne débit
+            if ($line->MontantDebit > 0) {
+                $grouped[$key]->CompteDebit    = $line->NumCompte;
+                $grouped[$key]->NomCompteDebit = $line->NomCompte;
+                $grouped[$key]->MontantDebit   = $line->MontantDebit;
+            }
+            // Ligne crédit
+            if ($line->MontantCredit > 0) {
+                $grouped[$key]->CompteCredit    = $line->NumCompte;
+                $grouped[$key]->NomCompteCredit = $line->NomCompte;
+                $grouped[$key]->MontantCredit   = $line->MontantCredit;
+            }
+        }
+        return array_values($grouped);
+    };
 
-    $dataCDF = DB::select($queryCDF);
-    $dataUSD = DB::select($queryUSD);
+    // Exécution pour CDF (CodeMonnaie = 2)
+    $rawCDF = $getRawLines(2, 'Debitfc', 'Creditfc');
+    $dataCDF = $buildGrouped($rawCDF);
+
+    // Exécution pour USD (CodeMonnaie = 1)
+    $rawUSD = $getRawLines(1, 'Debitusd', 'Creditusd');
+    $dataUSD = $buildGrouped($rawUSD);
 
     if (empty($dataCDF) && empty($dataUSD)) {
-        return response()->json([
-            "status" => 0,
-            "msg" => "Pas de données trouvées"
-        ]);
+        return response()->json(['status' => 0, 'msg' => 'Pas de données trouvées']);
     }
 
-    // =========================
-    // 🔹 Totaux
-    // =========================
-    $buildTotalQuery = function ($codeMonnaie) use ($whereClause) {
-        return "
-            SELECT 
-                SUM(t1.Debitfc) AS TotalDebitfc,
-                SUM(t1.Debitusd) AS TotalDebitusd,
-                SUM(t1.Creditfc) AS TotalCreditfc,
-                SUM(t1.Creditusd) AS TotalCreditusd
-            FROM transactions t1
-            JOIN transactions t2 
-                ON t1.NumComptecp = t2.NumCompte 
-                AND t1.NumCompte = t2.NumComptecp 
-                AND t1.CodeMonnaie = t2.CodeMonnaie 
-                AND t1.DateTransaction = t2.DateTransaction 
-                AND t1.NumTransaction = t2.NumTransaction
-            WHERE $whereClause
-            AND t1.CodeMonnaie = $codeMonnaie
-        ";
-    };
+    // Totaux après regroupement
+    $totCDF = (object)['TotalDebit' => 0, 'TotalCredit' => 0];
+    foreach ($dataCDF as $row) {
+        $totCDF->TotalDebit  += $row->MontantDebit;
+        $totCDF->TotalCredit += $row->MontantCredit;
+    }
 
-    $totUSD = DB::select($buildTotalQuery(1))[0];
-    $totCDF = DB::select($buildTotalQuery(2))[0];
+    $totUSD = (object)['TotalDebit' => 0, 'TotalCredit' => 0];
+    foreach ($dataUSD as $row) {
+        $totUSD->TotalDebit  += $row->MontantDebit;
+        $totUSD->TotalCredit += $row->MontantCredit;
+    }
 
-    // =========================
-    // 🔹 Retour
-    // =========================
     return response()->json([
-        "status" => 1,
-        "dataCDF" => $dataCDF,
-        "dataUSD" => $dataUSD,
-        "totCDF" => $totCDF,
-        "totUSD" => $totUSD,
+        'status'  => 1,
+        'dataCDF' => $dataCDF,
+        'dataUSD' => $dataUSD,
+        'totCDF'  => $totCDF,
+        'totUSD'  => $totUSD,
     ]);
 }
 

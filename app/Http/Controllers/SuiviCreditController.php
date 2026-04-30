@@ -119,7 +119,7 @@ class SuiviCreditController extends Controller
 
     public function getTypeCredit()
     {
-       $data = TypeCredit::where("state", "on")->orderBy('type_credit','desc')->get();
+        $data = TypeCredit::where("state", "on")->orderBy('type_credit', 'desc')->get();
         return response()->json([
             "status" => 1,
             "data" => $data
@@ -173,7 +173,7 @@ class SuiviCreditController extends Controller
 
     public function getDataToDisplayOnFormLoadMontageCredit()
     {
-        $type_credit = TypeCredit::where("state", "on")->orderBy('type_credit','desc')->get();
+        $type_credit = TypeCredit::where("state", "on")->orderBy('type_credit', 'desc')->get();
         $objet_credit = ObjetCredit::get();
         $agent_credit = User::get();
         $frequenceRemboursement = FrequenceRemboursement::get();
@@ -254,6 +254,30 @@ class SuiviCreditController extends Controller
     public function getSeachedAccount(Request $request)
     {
         if (isset($request->seachedAccount)) {
+
+            $search = $request->seachedAccount;
+
+            // Récupération de l'agence courante de l'utilisateur
+            $currentAgence = session('current_agence');
+            $codeAgenceCourante = $currentAgence['code_agence'] ?? null;
+            if (!$codeAgenceCourante) {
+                return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+            }
+            // Recherche du compte (niveau 5) dans l'agence courante
+            $data = Comptes::where('niveau', 5)
+                ->where('CodeAgence', $codeAgenceCourante)
+                ->where(function ($query) use ($search) {
+                    $query->where('NumCompte', $search)
+                        ->orWhere('NumAdherant', $search)
+                        ->orWhere('Num_Manuel', $search);
+                })
+                ->first();
+
+            if (!$data) {
+                return response()->json(['status' => 0, 'msg' => "Ce numéro de compte n'existe pas dans votre agence."]);
+            }
+
+            // Vérification d'un crédit non clôturé
             $checkNumExist = Comptes::where("NumAdherant", $request->seachedAccount)->orWhere("NumCompte", $request->seachedAccount)->first();
 
             if ($checkNumExist) {
@@ -268,46 +292,46 @@ class SuiviCreditController extends Controller
                 }
                 $data_numdossier = DB::select("SELECT * FROM compteur_dossier_credits ORDER BY id DESC")[0];
                 $data = Comptes::where("NumAdherant", $request->seachedAccount)->orWhere("NumCompte", $request->seachedAccount)->first();
-                $codeAgence=$data->CodeAgence;
+                $codeAgence = $data->CodeAgence;
                 if ($data->CodeMonnaie == 2) {
                     if ($data->NumAdherant < 10) {
-                        $compteCreditEnFranc = "320100000" . $data->NumAdherant .$codeAgence. "2";
-                        $epargneCautionCDF = "334100000" . $data->NumAdherant . $codeAgence. "2";
+                        $compteCreditEnFranc = "320100000" . $data->NumAdherant . $codeAgence . "2";
+                        $epargneCautionCDF = "334100000" . $data->NumAdherant . $codeAgence . "2";
                     } else if ($data->NumAdherant >= 10 && $data->NumAdherant < 100) {
-                        $epargneCautionCDF = "33410000" . $data->NumAdherant . $codeAgence. "2";
-                        $compteCreditEnFranc = "32010000" . $data->NumAdherant . $codeAgence. "2";
+                        $epargneCautionCDF = "33410000" . $data->NumAdherant . $codeAgence . "2";
+                        $compteCreditEnFranc = "32010000" . $data->NumAdherant . $codeAgence . "2";
                     } else if ($data->NumAdherant >= 100 && $data->NumAdherant < 1000) {
-                        $epargneCautionCDF = "3341000" . $data->NumAdherant . $codeAgence. "2";
-                        $compteCreditEnFranc = "3201000" . $data->NumAdherant . $codeAgence. "2";
+                        $epargneCautionCDF = "3341000" . $data->NumAdherant . $codeAgence . "2";
+                        $compteCreditEnFranc = "3201000" . $data->NumAdherant . $codeAgence . "2";
                     } else if ($data->NumAdherant >= 1000 && $data->NumAdherant < 10000) {
-                        $epargneCautionCDF = "334100" . $data->NumAdherant . $codeAgence. "2";
-                        $compteCreditEnFranc = "320100" . $data->NumAdherant . $codeAgence. "2";
+                        $epargneCautionCDF = "334100" . $data->NumAdherant . $codeAgence . "2";
+                        $compteCreditEnFranc = "320100" . $data->NumAdherant . $codeAgence . "2";
                     } else if ($data->NumAdherant >= 10000 && $data->NumAdherant < 100000) {
-                        $epargneCautionCDF = "33410" . $data->NumAdherant . $codeAgence. "2";
-                        $compteCreditEnFranc = "32010" . $data->NumAdherant . $codeAgence. "2";
+                        $epargneCautionCDF = "33410" . $data->NumAdherant . $codeAgence . "2";
+                        $compteCreditEnFranc = "32010" . $data->NumAdherant . $codeAgence . "2";
                     } else if ($data->NumAdherant >= 100000 && $data->NumAdherant < 1000000) {
-                        $epargneCautionCDF = "3341" . $data->NumAdherant . $codeAgence. "2";
-                        $compteCreditEnFranc = "3201" . $data->NumAdherant . $codeAgence. "2";
+                        $epargneCautionCDF = "3341" . $data->NumAdherant . $codeAgence . "2";
+                        $compteCreditEnFranc = "3201" . $data->NumAdherant . $codeAgence . "2";
                     }
                 } else if ($data->CodeMonnaie == 1) {
                     if ($data->NumAdherant < 10) {
-                        $compteCreditEnUSD = "320000000" . $data->NumAdherant . $codeAgence. "1";
-                        $epargneCautionUSD = "334000000" . $data->NumAdherant . $codeAgence. "1";
+                        $compteCreditEnUSD = "320000000" . $data->NumAdherant . $codeAgence . "1";
+                        $epargneCautionUSD = "334000000" . $data->NumAdherant . $codeAgence . "1";
                     } else if ($data->NumAdherant >= 10 && $data->NumAdherant < 100) {
-                        $epargneCautionUSD = "33400000" . $data->NumAdherant . $codeAgence. "1";
-                        $compteCreditEnUSD = "32000000" . $data->NumAdherant . $codeAgence. "1";
+                        $epargneCautionUSD = "33400000" . $data->NumAdherant . $codeAgence . "1";
+                        $compteCreditEnUSD = "32000000" . $data->NumAdherant . $codeAgence . "1";
                     } else if ($data->NumAdherant >= 100 && $data->NumAdherant < 1000) {
-                        $epargneCautionUSD = "3340000" . $data->NumAdherant . $codeAgence. "1";
-                        $compteCreditEnUSD = "3200000" . $data->NumAdherant . $codeAgence. "1";
+                        $epargneCautionUSD = "3340000" . $data->NumAdherant . $codeAgence . "1";
+                        $compteCreditEnUSD = "3200000" . $data->NumAdherant . $codeAgence . "1";
                     } else if ($data->NumAdherant >= 1000 && $data->NumAdherant < 10000) {
-                        $epargneCautionUSD = "334000" . $data->NumAdherant . $codeAgence. "1";
-                        $compteCreditEnUSD = "320000" . $data->NumAdherant . $codeAgence. "1";
+                        $epargneCautionUSD = "334000" . $data->NumAdherant . $codeAgence . "1";
+                        $compteCreditEnUSD = "320000" . $data->NumAdherant . $codeAgence . "1";
                     } else if ($data->NumAdherant >= 10000 && $data->NumAdherant < 100000) {
-                        $epargneCautionUSD = "33400" . $data->NumAdherant . $codeAgence. "1";
-                        $compteCreditEnUSD = "32000" . $data->NumAdherant . $codeAgence. "1";
+                        $epargneCautionUSD = "33400" . $data->NumAdherant . $codeAgence . "1";
+                        $compteCreditEnUSD = "32000" . $data->NumAdherant . $codeAgence . "1";
                     } else if ($data->NumAdherant >= 100000 && $data->NumAdherant < 1000000) {
-                        $epargneCautionUSD = "3340" . $data->NumAdherant . $codeAgence. "1";
-                        $compteCreditEnUSD = "3200" . $data->NumAdherant . $codeAgence. "1";
+                        $epargneCautionUSD = "3340" . $data->NumAdherant . $codeAgence . "1";
+                        $compteCreditEnUSD = "3200" . $data->NumAdherant . $codeAgence . "1";
                     }
                 }
                 return response()->json([
@@ -330,6 +354,7 @@ class SuiviCreditController extends Controller
             ]);
         }
     }
+
 
     //PERMET DE MODDIFIER UN CREDIT 
     public function updateCredit(Request $request)
@@ -628,7 +653,7 @@ class SuiviCreditController extends Controller
                     $capitalAmorti = $capital / $data->NbrTranche;
                     // $epargneObligatoire = ($capitalAmorti * 5) / 100;
                     // $totalAp = $interetApayer + $capitalAmorti +  $epargneObligatoire;
-                     $totalAp = $interetApayer + $capitalAmorti;
+                    $totalAp = $interetApayer + $capitalAmorti;
                     $lastRowData  = Echeancier::orderBy('ReferenceEch', 'desc')->first();
                     Echeancier::create([
                         "NumDossier" => $NumDossier,
@@ -787,10 +812,10 @@ class SuiviCreditController extends Controller
                             'RefSousGroupe' => "3340",
                             'CodeMonnaie' => $getDossier->CodeMonnaie == "CDF" ? 2 : 1,
                             'NumAdherant' => $getDossier->numAdherant,
-                             'nature_compte'=>"PASSIF",
-                             'niveau'=>"5",
-                             'est_classe'=>0,
-                             'compte_parent'=> "3340",
+                            'nature_compte' => "PASSIF",
+                            'niveau' => "5",
+                            'est_classe' => 0,
+                            'compte_parent' => "3340",
                         ]);
                     }
                     $checkCompteCredit = Comptes::where("NumCompte", $NumCompteCredit)->first();
@@ -806,10 +831,10 @@ class SuiviCreditController extends Controller
                             'RefSousGroupe' => $getDossier->CodeMonnaie == "CDF" ? "3210" : "3210",
                             'CodeMonnaie' => $getDossier->CodeMonnaie == "CDF" ? 2 : 1,
                             'NumAdherant' => $getDossier->numAdherant,
-                             'nature_compte'=>"ACTIF",
-                             'niveau'=>"5",
-                             'est_classe'=>0,
-                             'compte_parent'=> "3200",
+                            'nature_compte' => "ACTIF",
+                            'niveau' => "5",
+                            'est_classe' => 0,
+                            'compte_parent' => "3200",
                         ]);
                     }
 
@@ -824,11 +849,11 @@ class SuiviCreditController extends Controller
                             ->groupBy("NumCompte")
                             ->first();
                         $montantAccorde = $getDossier->MontantAccorde;
-                            $garantieCredit = ($montantAccorde * 15) / 100;
-                        
+                        $garantieCredit = ($montantAccorde * 15) / 100;
+
                         if ($soldeMembreCDF->soldeCDF >= $garantieCredit) {
                             //ON RECUPERE LE 30% SUR LE COMPTE DE LA PERSONNE CONCERNEE POUR L'EPARGNE GARANTIE
-                                //CREE UN NUMERO DE TRANSACTION
+                            //CREE UN NUMERO DE TRANSACTION
                             CompteurTransaction::create([
                                 'fakevalue' => "0000",
                             ]);
@@ -898,7 +923,7 @@ class SuiviCreditController extends Controller
 
                             LockedGarantie::create([
                                 "NumCompte" => $NumCompteEpargne,
-                                "EpargneGarantie" =>$compteEpargneCaution,
+                                "EpargneGarantie" => $compteEpargneCaution,
                                 "NumAbrege" => $getDossier->numAdherant,
                                 "Montant" => $garantieCredit,
                                 "Devise" => "CDF",
@@ -1017,7 +1042,7 @@ class SuiviCreditController extends Controller
 
                             LockedGarantie::create([
                                 "NumCompte" => $NumCompteEpargne,
-                                "EpargneGarantie" =>$compteEpargneCaution,
+                                "EpargneGarantie" => $compteEpargneCaution,
                                 "NumAbrege" => $getDossier->numAdherant,
                                 "Montant" => $garantieCredit,
                                 "Devise" => "USD",
@@ -1385,7 +1410,6 @@ class SuiviCreditController extends Controller
             } else {
                 return response()->json(["status" => 0, "msg" => "Le crédit ne pas encore accordé merci."]);
             }
-            
         } else {
             return response()->json(["status" => 0, "msg" => "Aucun numéro de dossier trouvé."]);
         }

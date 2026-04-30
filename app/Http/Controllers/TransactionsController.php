@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Services\AfricaTalkingService;
 use Illuminate\Support\Facades\Validator;
 use App\CustomTasks\ClotureJourneeCopy;
+use App\Models\Agences;
 
 class TransactionsController extends Controller
 {
@@ -64,70 +65,165 @@ class TransactionsController extends Controller
     }
 
     //GET SEACHED ACCOUNT
+    // public function getSeachedAccount(Request $request)
+    // {
+    //     if (isset($request->searched_account)) {
+    //         $checkRowExist = Comptes::where("NumCompte", $request->searched_account)->orWhere("NumAdherant", $request->searched_account)->first();
+
+    //         $numDocument = CompteurDocument::latest()->first();
+    //         if ($checkRowExist) {
+    //             $data = Comptes::where(function ($query) use ($request) {
+    //                 $query->where('NumCompte', $request->searched_account)
+    //                     ->orWhere('NumAdherant', $request->searched_account);
+    //             })->where('niveau', 5)->get();
+    //             $membreSignature =  AdhesionMembre::where("compte_abrege", $request->searched_account)->first();
+    //             $madantairedata = Mandataires::where("refCompte", $request->searched_account)->get();
+    //             // CompteurDocument::create([
+    //             //     "fakenumber" => 000,
+    //             // ]);
+    //             return response()->json([
+    //                 "status" => 1,
+    //                 "data" => $data,
+    //                 "membreSignature" => $membreSignature,
+    //                 "numDocument" => $numDocument,
+    //                 "madantairedata" => $madantairedata
+    //             ]);
+    //         } else {
+    //             return response()->json(["status" => 0, "msg" => "Ce numero de compte n'existe pas."]);
+    //         }
+    //     } else {
+    //         return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
+    //     }
+    // }
 
     public function getSeachedAccount(Request $request)
-    {
-        if (isset($request->searched_account)) {
-            $checkRowExist = Comptes::where("NumCompte", $request->searched_account)->orWhere("NumAdherant", $request->searched_account)->first();
-
-            $numDocument = CompteurDocument::latest()->first();
-            if ($checkRowExist) {
-                $data = Comptes::where(function ($query) use ($request) {
-                    $query->where('NumCompte', $request->searched_account)
-                        ->orWhere('NumAdherant', $request->searched_account);
-                })->where('niveau', 5)->get();
-                $membreSignature =  AdhesionMembre::where("compte_abrege", $request->searched_account)->first();
-                $madantairedata = Mandataires::where("refCompte", $request->searched_account)->get();
-                // CompteurDocument::create([
-                //     "fakenumber" => 000,
-                // ]);
-                return response()->json([
-                    "status" => 1,
-                    "data" => $data,
-                    "membreSignature" => $membreSignature,
-                    "numDocument" => $numDocument,
-                    "madantairedata" => $madantairedata
-                ]);
-            } else {
-                return response()->json(["status" => 0, "msg" => "Ce numero de compte n'existe pas."]);
-            }
-        } else {
-            return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
-        }
+{
+    if (!isset($request->searched_account)) {
+        return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
     }
+
+    // Récupération de l'agence courante
+    $currentAgence = session('current_agence');
+    $codeAgence = $currentAgence['code_agence'] ?? null;
+    if (!$codeAgence) {
+        return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
+    }
+
+    $search = $request->searched_account;
+
+    // Recherche des comptes de niveau 5 appartenant à l'agence courante
+    $data = Comptes::where('niveau', 5)
+        ->where('CodeAgence', $codeAgence)
+        ->where(function ($query) use ($search) {
+            $query->where('NumCompte', $search)
+                  ->orWhere('NumAdherant', $search)
+                  ->orWhere('Num_Manuel', $search);
+        })
+        ->get();
+
+    if ($data->isEmpty()) {
+        return response()->json(["status" => 0, "msg" => "Aucun compte trouvé dans votre agence pour ce numéro."]);
+    }
+
+    // Récupération des infos complémentaires (signature, mandataire)
+    $compte = $data->first();
+    $membreSignature = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->first();
+    $madantairedata = Mandataires::where("refCompte", $compte->NumAdherant)->get();
+    $numDocument = CompteurDocument::latest()->first();
+
+    return response()->json([
+        "status"          => 1,
+        "data"            => $data,
+        "membreSignature" => $membreSignature,
+        "numDocument"     => $numDocument,
+        "madantairedata"  => $madantairedata
+    ]);
+}
+
+    // public function getSeachedAccount2(Request $request)
+    // {
+    //     if (isset($request->searched_account)) {
+    //         $checkRowExist = Comptes::where("NumCompte", $request->searched_account)->orWhere("NumAdherant", $request->searched_account)->first();
+    //         $numDocument = CompteurDocument::latest()->first();
+    //         if ($checkRowExist) {
+    //             $data = Comptes::where(function ($query) use ($request) {
+    //                 $query->where('NumCompte', $request->searched_account)
+    //                     ->orWhere('NumAdherant', $request->searched_account);
+    //             })
+    //                 ->where('niveau', 5)
+    //                 ->where('RefGroupe', 330) // ← Ajout du filtre
+    //                 ->get();
+    //             $membreSignature =  AdhesionMembre::where("compte_abrege", $request->searched_account)->first();
+    //             $madantairedata = Mandataires::where("refCompte", $request->searched_account)->get();
+    //             // CompteurDocument::create([
+    //             //     "fakenumber" => 000,
+    //             // ]);
+    //             return response()->json([
+    //                 "status" => 1,
+    //                 "data" => $data,
+    //                 "membreSignature" => $membreSignature,
+    //                 "numDocument" => $numDocument,
+    //                 "madantairedata" => $madantairedata
+    //             ]);
+    //         } else {
+    //             return response()->json(["status" => 0, "msg" => "Ce numero de compte n'existe pas."]);
+    //         }
+    //     } else {
+    //         return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
+    //     }
+    // }
 
     public function getSeachedAccount2(Request $request)
-    {
-        if (isset($request->searched_account)) {
-            $checkRowExist = Comptes::where("NumCompte", $request->searched_account)->orWhere("NumAdherant", $request->searched_account)->first();
-            $numDocument = CompteurDocument::latest()->first();
-            if ($checkRowExist) {
-                $data = Comptes::where(function ($query) use ($request) {
-            $query->where('NumCompte', $request->searched_account)
-                  ->orWhere('NumAdherant', $request->searched_account);
-        })
-        ->where('niveau', 5)
-        ->where('RefGroupe', 330) // ← Ajout du filtre
-        ->get();
-                $membreSignature =  AdhesionMembre::where("compte_abrege", $request->searched_account)->first();
-                $madantairedata = Mandataires::where("refCompte", $request->searched_account)->get();
-                // CompteurDocument::create([
-                //     "fakenumber" => 000,
-                // ]);
-                return response()->json([
-                    "status" => 1,
-                    "data" => $data,
-                    "membreSignature" => $membreSignature,
-                    "numDocument" => $numDocument,
-                    "madantairedata" => $madantairedata
-                ]);
-            } else {
-                return response()->json(["status" => 0, "msg" => "Ce numero de compte n'existe pas."]);
-            }
-        } else {
-            return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
-        }
+{
+    if (!isset($request->searched_account)) {
+        return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
     }
+
+    // Récupération de l'agence courante
+    $currentAgence = session('current_agence');
+    $codeAgence = $currentAgence['code_agence'] ?? null;
+    if (!$codeAgence) {
+        return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
+    }
+
+    $search = $request->searched_account;
+
+    // Vérifier l'existence d'un compte dans l'agence courante
+    $checkRowExist = Comptes::where('CodeAgence', $codeAgence)
+        ->where(function ($q) use ($search) {
+            $q->where('NumCompte', $search)
+              ->orWhere('NumAdherant', $search)
+              ->orWhere('num_manuel', $search);
+        })
+        ->first();
+
+    $numDocument = CompteurDocument::latest()->first();
+
+    if ($checkRowExist) {
+        $data = Comptes::where('CodeAgence', $codeAgence)
+            ->where(function ($query) use ($search) {
+                $query->where('NumCompte', $search)
+                      ->orWhere('NumAdherant', $search)
+                      ->orWhere('num_manuel', $search);
+            })
+            ->where('niveau', 5)
+            ->where('RefGroupe', 330)
+            ->get();
+
+        $membreSignature = AdhesionMembre::where('compte_abrege', $checkRowExist->NumAdherant)->first();
+        $madantairedata = Mandataires::where('refCompte', $checkRowExist->NumAdherant)->get();
+
+        return response()->json([
+            "status" => 1,
+            "data" => $data,
+            "membreSignature" => $membreSignature,
+            "numDocument" => $numDocument,
+            "madantairedata" => $madantairedata
+        ]);
+    } else {
+        return response()->json(["status" => 0, "msg" => "Ce numéro de compte n'existe pas dans votre agence."]);
+    }
+}
 
     //RECUPERE UN NUMERO DE COMPTE SPECIFIQUE
 
@@ -170,106 +266,494 @@ class TransactionsController extends Controller
     }
     //PERMET D'EFFECTUER UN DEPOT
 
+    // public function DepositEspece(Request $request)
+    // {
+    //     $validator = validator::make($request->all(), [
+    //         'devise' => 'required',
+    //         'motifDepot' => 'required',
+    //         'DeposantName' => 'required',
+    //         // 'Montant' => 'required',
+    //     ]);
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'validate_error' => $validator->messages()
+    //         ]);
+    //     }
+    //     try {
+    //         if ($request->devise == "CDF") {
+
+    //             //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
+    //             $dataCompte = Comptes::where(function ($query) use ($request) {
+    //                 $query->where("NumAdherant", $request->NumAbrege)
+    //                     ->orWhere("NumCompte", $request->NumAbrege);
+    //             })
+    //                 ->where("CodeMonnaie", 2)
+    //                 ->first();
+
+    //             $NumCompte = $request->getNumCompte;
+    //             if ($NumCompte) {
+
+    //                 $numCompteCaissierCDF = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "2")->first();
+    //                 $CompteCaissierCDF = $numCompteCaissierCDF->NumCompte;
+    //                 // dd($numCompteCaissierCDF);
+    //                 $codeAgenceCaissier = $numCompteCaissierCDF->CodeAgence;
+
+    //                 $NomCaissier = $numCompteCaissierCDF->NomCompte;
+    //                 $dataSystem = TauxEtDateSystem::latest()->first();
+
+    //                 //CHECK THERE IS A COMMISSION 
+
+    //                 if (isset($request->Commission) and $request->Commission > 0) {
+    //                     CompteurTransaction::create([
+    //                         'fakevalue' => "0000",
+    //                     ]);
+    //                     $numOperation = [];
+    //                     $numOperation = CompteurTransaction::latest()->first();
+    //                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+    //                     //CREDITE LE COMPTE COMMISION CDF
+    //                     $compteCommissionCDF = "7270000000202";
+    //                     Transactions::create([
+    //                         "NumTransaction" => $NumTransaction,
+    //                         "DateTransaction" => $dataSystem->DateSystem,
+    //                         "DateSaisie" => $dataSystem->DateSystem,
+    //                         "Taux" => 1,
+    //                         "TypeTransaction" => "C",
+    //                         "CodeMonnaie" => 2,
+    //                         "CodeAgence" => $codeAgenceCaissier,
+    //                         "NumDossier" => "DOS0" . $numOperation->id,
+    //                         "NumDemande" => "V0" . $numOperation->id,
+    //                         "NumCompte" => $compteCommissionCDF,
+    //                         "NumComptecp" => $NumCompte,
+    //                         "Credit"  => $request->Commission,
+    //                         "Creditusd"  => $request->Commission / $dataSystem->TauxEnFc,
+    //                         "Creditfc" => $request->Commission,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $NumCompte . " par le caissier " . Auth::user()->name,
+    //                         "refCompteMembre" => $compteCommissionCDF,
+    //                     ]);
+
+    //                     //DEBITE LE COMPTE DU MEMBRE DE LA COMMISSION
+    //                     Transactions::create([
+    //                         "NumTransaction" => $NumTransaction,
+    //                         "DateTransaction" => $dataSystem->DateSystem,
+    //                         "DateSaisie" => $dataSystem->DateSystem,
+    //                         "Taux" => 1,
+    //                         "TypeTransaction" => "D",
+    //                         "CodeMonnaie" => 2,
+    //                         "CodeAgence" => $codeAgenceCaissier,
+    //                         "NumDossier" => "DOS0" . $numOperation->id,
+    //                         "NumDemande" => "V0" . $numOperation->id,
+    //                         "NumCompte" => $NumCompte,
+    //                         "NumComptecp" =>  $compteCommissionCDF,
+    //                         "Debit"  => $request->Commission,
+    //                         "Debitusd"  => $request->Commission / $dataSystem->TauxEnFc,
+    //                         "Debitfc" => $request->Commission,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "Libelle" => "PRISE COMMISSION",
+    //                     ]);
+    //                     // Transactions::recalculateBalances($dataCompte->NumCompte, $dataSystem->DateSystem);
+    //                     //PERMET DE DIPLIQUE LA LIGNE POUR METTRE A JOUR Résultat Net de l'exercice
+    //                     // $this->CheckTransactionStatus(871);
+    //                     if ($request->Montant == 0) {
+    //                         return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
+    //                     }
+    //                 }
+    //                 if ($request->Montant > 0) {
+    //                     CompteurTransaction::create([
+    //                         'fakevalue' => "0000",
+    //                     ]);
+    //                     $numOperation = [];
+    //                     $numOperation = CompteurTransaction::latest()->first();
+    //                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+    //                     //DEBITE LE COMPTE DU CAISSIER
+    //                     Transactions::create([
+    //                         "NumTransaction" => $NumTransaction,
+    //                         "DateTransaction" => $dataSystem->DateSystem,
+    //                         "DateSaisie" => $dataSystem->DateSystem,
+    //                         "TypeTransaction" => "D",
+    //                         "CodeMonnaie" => 2,
+    //                         "CodeAgence" => $codeAgenceCaissier,
+    //                         "NumDossier" => "DOS0" . $numOperation->id,
+    //                         "NumDemande" => "V0" . $numOperation->id,
+    //                         "NumCompte" => $CompteCaissierCDF,
+    //                         "NumComptecp" => $NumCompte,
+    //                         "Operant" => $NomCaissier,
+    //                         "Debit"  => $request->Montant,
+    //                         "Debitusd"  => $request->Montant / $dataSystem->TauxEnFc,
+    //                         "Debitfc" => $request->Montant,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "Libelle" => $request->motifDepot,
+
+    //                     ]);
+    //                     //CREDITE LE COMPTE DU CLIENT
+    //                     Transactions::create([
+    //                         "NumTransaction" => $NumTransaction,
+    //                         "DateTransaction" => $dataSystem->DateSystem,
+    //                         "DateSaisie" => $dataSystem->DateSystem,
+    //                         "TypeTransaction" => "C",
+    //                         "CodeMonnaie" => 2,
+    //                         "CodeAgence" => $dataCompte->CodeAgence,
+    //                         "NumDossier" => "DOS0" . $numOperation->id,
+    //                         "NumDemande" => "V0" . $numOperation->id,
+    //                         "NumCompte" => $NumCompte,
+    //                         "NumComptecp" => $CompteCaissierCDF,
+    //                         "Operant" => $request->DeposantName,
+    //                         "Credit"  => $request->Montant,
+    //                         "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
+    //                         "Creditfc" => $request->Montant,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "Libelle" => $request->motifDepot,
+    //                     ]);
+
+    //                     //CREDIT  LE COMPTE COMPTABLE 33 EPARGNE
+    //                     // $Ecompte_courant_cdf = EpargneAdhesionModel::first()->Ecompte_courant_cdf;
+    //                     // Transactions::create([
+    //                     //     "NumTransaction" => $NumTransaction,
+    //                     //     "DateTransaction" => $dataSystem->DateSystem,
+    //                     //     "DateSaisie" => $dataSystem->DateSystem,
+    //                     //     "TypeTransaction" => "C",
+    //                     //     "CodeMonnaie" => 2,
+    //                     //     "CodeAgence" => $codeAgenceCaissier,
+    //                     //     "NumDossier" => "DOS0" . $numOperation->id,
+    //                     //     "NumDemande" => "V0" . $numOperation->id,
+    //                     //     "NumCompte" => $Ecompte_courant_cdf,
+    //                     //     "NumComptecp" => $dataCompte->NumCompte,
+    //                     //     "Credit"  => $request->Montant,
+    //                     //     "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
+    //                     //     "Creditfc" => $request->Montant,
+    //                     //     "NomUtilisateur" => Auth::user()->name,
+    //                     //     "Libelle" => $request->motifDepot,
+    //                     // ]);
+
+    //                     //RENSEIGNE LE BILLETAGE
+    //                     $lastInsertedId = Transactions::latest()->first();
+    //                     //COMPLETE LE BILLETAGE
+
+    //                     BilletageCDF::create([
+    //                         "refOperation" => $lastInsertedId->NumTransaction,
+    //                         "NumCompte" => $NumCompte,
+    //                         "NomMembre" => $dataCompte->NomCompte,
+    //                         "NumAbrege" => $request->NumAbrege,
+    //                         "Beneficiaire" => $request->DeposantName,
+    //                         "Motif" => $request->motifDepot,
+    //                         "Devise" => $request->devise,
+    //                         "vightMilleFranc" => $request->vightMille,
+    //                         "dixMilleFranc" => $request->dixMille,
+    //                         "cinqMilleFranc" => $request->cinqMille,
+    //                         "milleFranc" => $request->milleFranc,
+    //                         "cinqCentFranc" => $request->cinqCentFr,
+    //                         "deuxCentFranc" => $request->deuxCentFranc,
+    //                         "centFranc" => $request->centFranc,
+    //                         "montantEntre" => $request->Montant,
+    //                         "cinquanteFanc" => $request->cinquanteFanc,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "DateTransaction" => $dataSystem->DateSystem
+    //                     ]);
+
+    //                     //SEND NOTIFICATION
+    //                     $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $request->DeposantName);
+    //                     return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
+    //                 } else {
+    //                     return response()->json([
+    //                         'validate_error' => $validator->messages()
+    //                     ]);
+    //                 }
+    //             } else {
+    //                 return response()->json(["status" => 0, "msg" => "Le compte en franc pour ce client n'est pas activé" . $request->searched_account]);
+    //             }
+    //         } else if ($request->devise == "USD") {
+
+    //             //RECUPERE LE COMPTE DU CAISSIER CONCERNE USD
+    //             $dataCompte = Comptes::where(function ($query) use ($request) {
+    //                 $query->where("NumAdherant", $request->NumAbrege)
+    //                     ->orWhere("NumCompte", $request->NumAbrege);
+    //             })
+    //                 ->where("CodeMonnaie", 1)
+    //                 ->first();
+    //             $NumCompte = $request->getNumCompte;
+    //             if ($NumCompte) {
+    //                 $numCompteCaissierUSD = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "1")->first();
+    //                 $CompteCaissierUSD = $numCompteCaissierUSD->NumCompte;
+    //                 $codeAgenceCaissier = $numCompteCaissierUSD->CodeAgence;
+    //                 $NomCaissier = $numCompteCaissierUSD->NomCompte;
+    //                 $dataSystem = TauxEtDateSystem::latest()->first();
+
+
+    //                 //CHECK THERE IS A COMMISSION 
+
+    //                 if (isset($request->Commission) and $request->Commission > 0) {
+    //                     CompteurTransaction::create([
+    //                         'fakevalue' => "0000",
+    //                     ]);
+    //                     $numOperation = [];
+    //                     $numOperation = CompteurTransaction::latest()->first();
+    //                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+    //                     //CREDITE LE COMPTE COMMISION USD
+    //                     $compteCommissionUSD = "7270000000201";
+    //                     Transactions::create([
+    //                         "NumTransaction" => $NumTransaction,
+    //                         "DateTransaction" => $dataSystem->DateSystem,
+    //                         "DateSaisie" => $dataSystem->DateSystem,
+    //                         "Taux" => 1,
+    //                         "TypeTransaction" => "C",
+    //                         "CodeMonnaie" => 1,
+    //                         "CodeAgence" => "20",
+    //                         "NumDossier" => "DOS00" . $numOperation->id,
+    //                         "NumDemande" => "V00" . $numOperation->id,
+    //                         "NumCompte" => $compteCommissionUSD,
+    //                         "NumComptecp" => $NumCompte,
+    //                         //   "Operant" => "COMPTE COMMISSION CDF",
+    //                         "Credit"  => $request->Commission,
+    //                         "Creditusd"  => $request->Commission,
+    //                         "Creditfc" => $request->Commission * $dataSystem->TauxEnFc,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $dataCompte->NumCompte . " par le caissier " . Auth::user()->name,
+    //                         "refCompteMembre" => $compteCommissionUSD
+    //                     ]);
+
+    //                     //DEBITE LE COMPTE DU MEMBRE DE LA COMMISSION
+    //                     Transactions::create([
+    //                         "NumTransaction" => $NumTransaction,
+    //                         "DateTransaction" => $dataSystem->DateSystem,
+    //                         "DateSaisie" => $dataSystem->DateSystem,
+    //                         "Taux" => 1,
+    //                         "TypeTransaction" => "D",
+    //                         "CodeMonnaie" => 1,
+    //                         "CodeAgence" => "20",
+    //                         "NumDossier" => "DOS00" . $numOperation->id,
+    //                         "NumDemande" => "V00" . $numOperation->id,
+    //                         "NumCompte" => $NumCompte,
+    //                         "NumComptecp" =>  $compteCommissionUSD,
+    //                         "Debit"  => $request->Commission,
+    //                         "Debitusd"  => $request->Commission,
+    //                         "Debitfc" => $request->Commission * $dataSystem->TauxEnFc,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "Libelle" => "PRISE COMMISSION",
+    //                     ]);
+    //                 }
+    //                 if ($request->Montant > 0) {
+    //                     CompteurTransaction::create([
+    //                         'fakevalue' => "0000",
+    //                     ]);
+    //                     $numOperation = [];
+    //                     $numOperation = CompteurTransaction::latest()->first();
+    //                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+    //                     //CREDITE LE COMPTE DU CLIENT
+    //                     Transactions::create([
+    //                         "NumTransaction" => $NumTransaction,
+    //                         "DateTransaction" => $dataSystem->DateSystem,
+    //                         "DateSaisie" => $dataSystem->DateSystem,
+    //                         "TypeTransaction" => "C",
+    //                         "CodeMonnaie" => 1,
+    //                         "CodeAgence" => $dataCompte->CodeAgence,
+    //                         "NumDossier" => "DOS0" . $numOperation->id,
+    //                         "NumDemande" => "V0" . $numOperation->id,
+    //                         "NumCompte" => $NumCompte,
+    //                         "NumComptecp" => $CompteCaissierUSD,
+    //                         "Operant" => $request->DeposantName,
+    //                         "Credit"  => $request->Montant,
+    //                         "Creditusd"  => $request->Montant,
+    //                         "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "Libelle" => $request->motifDepot,
+    //                     ]);
+    //                     //DEBITE LE COMPTE DU CAISSIER
+    //                     Transactions::create([
+    //                         "NumTransaction" => $NumTransaction,
+    //                         "DateTransaction" => $dataSystem->DateSystem,
+    //                         "DateSaisie" => $dataSystem->DateSystem,
+    //                         "TypeTransaction" => "D",
+    //                         "CodeMonnaie" => 1,
+    //                         "CodeAgence" => $codeAgenceCaissier,
+    //                         "NumDossier" => "DOS0" . $numOperation->id,
+    //                         "NumDemande" => "V0" . $numOperation->id,
+    //                         "NumCompte" => $CompteCaissierUSD,
+    //                         "NumComptecp" => $NumCompte,
+    //                         "Operant" => $NomCaissier,
+    //                         "Debit"  => $request->Montant,
+    //                         "Debitusd"  => $request->Montant,
+    //                         "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "Libelle" => $request->motifDepot,
+    //                     ]);
+    //                     //CREDIT  LE COMPTE COMPTABLE 33 EPARGNE
+    //                     // $Ecompte_courant_usd = EpargneAdhesionModel::first()->Ecompte_courant_usd;
+    //                     // Transactions::create([
+    //                     //     "NumTransaction" => $NumTransaction,
+    //                     //     "DateTransaction" => $dataSystem->DateSystem,
+    //                     //     "DateSaisie" => $dataSystem->DateSystem,
+    //                     //     "TypeTransaction" => "C",
+    //                     //     "CodeMonnaie" => 1,
+    //                     //     "CodeAgence" => $codeAgenceCaissier,
+    //                     //     "NumDossier" => "DOS0" . $numOperation->id,
+    //                     //     "NumDemande" => "V0" . $numOperation->id,
+    //                     //     "NumCompte" => $Ecompte_courant_usd,
+    //                     //     "NumComptecp" => $dataCompte->NumCompte,
+    //                     //     "Credit"  => $request->Montant,
+    //                     //     "Creditusd"  => $request->Montant,
+    //                     //     "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+    //                     //     "NomUtilisateur" => Auth::user()->name,
+    //                     //     "Libelle" => $request->motifDepot,
+    //                     // ]);
+
+    //                     //RECUPERE LE DERNIER ID DU L'OPERATION INSEREE
+    //                     $lastInsertedId = Transactions::latest()->first();
+    //                     //RENSEIGNE LE BILLETAGE
+
+    //                     BilletageUSD::create([
+    //                         "refOperation" => $lastInsertedId->NumTransaction,
+    //                         "NumCompte" => $NumCompte,
+    //                         "NomMembre" => $dataCompte->NomCompte,
+    //                         "NumAbrege" => $request->NumAbrege,
+    //                         "Beneficiaire" => $request->DeposantName,
+    //                         "Motif" => $request->motifDepot,
+    //                         "Devise" => $request->devise,
+    //                         "centDollars" => $request->hundred,
+    //                         "cinquanteDollars" => $request->fitfty,
+    //                         "vightDollars" => $request->twenty,
+    //                         "dixDollars" => $request->ten,
+    //                         "cinqDollars" => $request->five,
+    //                         "unDollars" => $request->oneDollar,
+    //                         "montantEntre" => $request->Montant,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "DateTransaction" => $dataSystem->DateSystem
+    //                     ]);
+
+    //                     //SEND NOTIFICATION
+
+    //                     $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $request->DeposantName);
+    //                     return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
+    //                 } else {
+    //                     return response()->json([
+    //                         'validate_error' => $validator->messages()
+    //                     ]);
+    //                 }
+    //             } else {
+    //                 return response()->json(["status" => 0, "msg" => "Le compte en franc pour ce client n'est pas activé" . $request->searched_account]);
+    //             }
+    //         }
+    //     } catch (\Exception $e) {
+    //         // Attraper les exceptions liées à la connexion ou autres erreurs
+
+    //         return response()->json(["status" => 0, "msg" => "Erreur de connexion. Veuillez patienter et réessayer.", "error" => $e->getMessage()]);
+    //     }
+    // }
+
+
     public function DepositEspece(Request $request)
     {
         $validator = validator::make($request->all(), [
             'devise' => 'required',
             'motifDepot' => 'required',
             'DeposantName' => 'required',
-            // 'Montant' => 'required',
         ]);
         if ($validator->fails()) {
-            return response()->json([
-                'validate_error' => $validator->messages()
-            ]);
+            return response()->json(['validate_error' => $validator->messages()]);
         }
+
         try {
             if ($request->devise == "CDF") {
-
-                //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
+                // --- Récupération des comptes (inchangé) ---
                 $dataCompte = Comptes::where(function ($query) use ($request) {
                     $query->where("NumAdherant", $request->NumAbrege)
                         ->orWhere("NumCompte", $request->NumAbrege);
-                })
-                    ->where("CodeMonnaie", 2)
-                    ->first();
+                })->where("CodeMonnaie", 2)->first();
 
                 $NumCompte = $request->getNumCompte;
-                if ($NumCompte) {
+                if (!$NumCompte) {
+                    return response()->json(["status" => 0, "msg" => "Le compte en franc pour ce client n'est pas activé"]);
+                }
 
-                    $numCompteCaissierCDF = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "2")->first();
-                    $CompteCaissierCDF = $numCompteCaissierCDF->NumCompte;
-                    // dd($numCompteCaissierCDF);
-                    $codeAgenceCaissier = $numCompteCaissierCDF->CodeAgence;
+                // Récupérer l'agence courante de l'utilisateur (depuis la session)
+                $currentAgence = session('current_agence');
+                if (!$currentAgence || !isset($currentAgence['code_agence'])) {
+                    return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+                }
+                $codeAgenceCourante = $currentAgence['code_agence'];
 
-                    $NomCaissier = $numCompteCaissierCDF->NomCompte;
-                    $dataSystem = TauxEtDateSystem::latest()->first();
+                // Récupérer le compte caisse correspondant à cette agence et à la devise CDF
+                $compteCaisse = Comptes::where("caissierId", Auth::user()->id)
+                    ->where("CodeMonnaie", 2)
+                    ->where("CodeAgence", $codeAgenceCourante)
+                    ->first();
 
-                    //CHECK THERE IS A COMMISSION 
+                if (!$compteCaisse) {
+                    return response()->json(["status" => 0, "msg" => "Compte caisse CDF introuvable pour l'agence sélectionnée"]);
+                }
+                $CompteCaissierCDF = $compteCaisse->NumCompte;
+                $codeAgenceCaissier = $compteCaisse->CodeAgence;
+                $codeAgenceClient = $dataCompte->CodeAgence;
+                $NomCaissier = $compteCaisse->NomCompte;
+                $dataSystem = TauxEtDateSystem::latest()->first();
 
-                    if (isset($request->Commission) and $request->Commission > 0) {
-                        CompteurTransaction::create([
-                            'fakevalue' => "0000",
-                        ]);
-                        $numOperation = [];
-                        $numOperation = CompteurTransaction::latest()->first();
-                        $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-                        //CREDITE LE COMPTE COMMISION CDF
-                        $compteCommissionCDF = "7270000000202";
-                        Transactions::create([
-                            "NumTransaction" => $NumTransaction,
-                            "DateTransaction" => $dataSystem->DateSystem,
-                            "DateSaisie" => $dataSystem->DateSystem,
-                            "Taux" => 1,
-                            "TypeTransaction" => "C",
-                            "CodeMonnaie" => 2,
-                            "CodeAgence" => $codeAgenceCaissier,
-                            "NumDossier" => "DOS0" . $numOperation->id,
-                            "NumDemande" => "V0" . $numOperation->id,
-                            "NumCompte" => $compteCommissionCDF,
-                            "NumComptecp" => $NumCompte,
-                            "Credit"  => $request->Commission,
-                            "Creditusd"  => $request->Commission / $dataSystem->TauxEnFc,
-                            "Creditfc" => $request->Commission,
-                            "NomUtilisateur" => Auth::user()->name,
-                            "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $NumCompte . " par le caissier " . Auth::user()->name,
-                            "refCompteMembre" => $compteCommissionCDF,
-                        ]);
+                // --- Commission (inchangée) ---
+                if (isset($request->Commission) && $request->Commission > 0) {
+                    CompteurTransaction::create([
+                        'fakevalue' => "0000",
+                    ]);
+                    $numOperation = [];
+                    $numOperation = CompteurTransaction::latest()->first();
+                    $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
 
-                        //DEBITE LE COMPTE DU MEMBRE DE LA COMMISSION
-                        Transactions::create([
-                            "NumTransaction" => $NumTransaction,
-                            "DateTransaction" => $dataSystem->DateSystem,
-                            "DateSaisie" => $dataSystem->DateSystem,
-                            "Taux" => 1,
-                            "TypeTransaction" => "D",
-                            "CodeMonnaie" => 2,
-                            "CodeAgence" => $codeAgenceCaissier,
-                            "NumDossier" => "DOS0" . $numOperation->id,
-                            "NumDemande" => "V0" . $numOperation->id,
-                            "NumCompte" => $NumCompte,
-                            "NumComptecp" =>  $compteCommissionCDF,
-                            "Debit"  => $request->Commission,
-                            "Debitusd"  => $request->Commission / $dataSystem->TauxEnFc,
-                            "Debitfc" => $request->Commission,
-                            "NomUtilisateur" => Auth::user()->name,
-                            "Libelle" => "PRISE COMMISSION",
-                        ]);
-                        // Transactions::recalculateBalances($dataCompte->NumCompte, $dataSystem->DateSystem);
-                        //PERMET DE DIPLIQUE LA LIGNE POUR METTRE A JOUR Résultat Net de l'exercice
-                        // $this->CheckTransactionStatus(871);
-                        if ($request->Montant == 0) {
-                            return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
-                        }
+                    //CREDITE LE COMPTE COMMISION CDF
+                    $compteCommissionCDF = "7270000000202";
+                    //DEBITE LE COMPTE DU MEMBRE DE LA COMMISSION
+                    Transactions::create([
+                        "NumTransaction" => $NumTransaction,
+                        "DateTransaction" => $dataSystem->DateSystem,
+                        "DateSaisie" => $dataSystem->DateSystem,
+                        "Taux" => 1,
+                        "TypeTransaction" => "D",
+                        "CodeMonnaie" => 2,
+                        "CodeAgence" => $codeAgenceCaissier,
+                        "NumDossier" => "DOS0" . $numOperation->id,
+                        "NumDemande" => "V0" . $numOperation->id,
+                        "NumCompte" => $NumCompte,
+                        "NumComptecp" =>  $compteCommissionCDF,
+                        "Debit"  => $request->Commission,
+                        "Debitusd"  => $request->Commission / $dataSystem->TauxEnFc,
+                        "Debitfc" => $request->Commission,
+                        "NomUtilisateur" => Auth::user()->name,
+                        "Libelle" => "PRISE COMMISSION",
+                    ]);
+
+                    Transactions::create([
+                        "NumTransaction" => $NumTransaction,
+                        "DateTransaction" => $dataSystem->DateSystem,
+                        "DateSaisie" => $dataSystem->DateSystem,
+                        "Taux" => 1,
+                        "TypeTransaction" => "C",
+                        "CodeMonnaie" => 2,
+                        "CodeAgence" => $codeAgenceCaissier,
+                        "NumDossier" => "DOS0" . $numOperation->id,
+                        "NumDemande" => "V0" . $numOperation->id,
+                        "NumCompte" => $compteCommissionCDF,
+                        "NumComptecp" => $NumCompte,
+                        "Credit"  => $request->Commission,
+                        "Creditusd"  => $request->Commission / $dataSystem->TauxEnFc,
+                        "Creditfc" => $request->Commission,
+                        "NomUtilisateur" => Auth::user()->name,
+                        "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $NumCompte . " par le caissier " . Auth::user()->name,
+                        "refCompteMembre" => $compteCommissionCDF,
+                    ]);
+
+
+
+                    if ($request->Montant == 0) {
+                        return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
                     }
-                    if ($request->Montant > 0) {
-                        CompteurTransaction::create([
-                            'fakevalue' => "0000",
-                        ]);
-                        $numOperation = [];
-                        $numOperation = CompteurTransaction::latest()->first();
-                        $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-                        //DEBITE LE COMPTE DU CAISSIER
+                }
+
+                // --- Dépôt principal ---
+                if ($request->Montant > 0) {
+                    CompteurTransaction::create(['fakevalue' => "0000"]);
+                    $numOperation = CompteurTransaction::latest()->first();
+                    $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+
+                    // 🔥 Détection : même agence ou inter‑agences ?
+                    if ($codeAgenceCaissier === $codeAgenceClient) {
+                        // ***** MÊME AGENCE : écritures simples (inchangées) *****
+                        // Débit caisse
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
                             "DateTransaction" => $dataSystem->DateSystem,
@@ -282,186 +766,218 @@ class TransactionsController extends Controller
                             "NumCompte" => $CompteCaissierCDF,
                             "NumComptecp" => $NumCompte,
                             "Operant" => $NomCaissier,
-                            "Debit"  => $request->Montant,
-                            "Debitusd"  => $request->Montant / $dataSystem->TauxEnFc,
+                            "Debit" => $request->Montant,
+                            "Debitusd" => $request->Montant / $dataSystem->TauxEnFc,
                             "Debitfc" => $request->Montant,
                             "NomUtilisateur" => Auth::user()->name,
                             "Libelle" => $request->motifDepot,
-
                         ]);
-                        //CREDITE LE COMPTE DU CLIENT
+                        // Crédit client
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "C",
                             "CodeMonnaie" => 2,
-                            "CodeAgence" => $dataCompte->CodeAgence,
+                            "CodeAgence" => $codeAgenceClient,
                             "NumDossier" => "DOS0" . $numOperation->id,
                             "NumDemande" => "V0" . $numOperation->id,
                             "NumCompte" => $NumCompte,
                             "NumComptecp" => $CompteCaissierCDF,
                             "Operant" => $request->DeposantName,
-                            "Credit"  => $request->Montant,
-                            "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
+                            "Credit" => $request->Montant,
+                            "Creditusd" => $request->Montant / $dataSystem->TauxEnFc,
                             "Creditfc" => $request->Montant,
                             "NomUtilisateur" => Auth::user()->name,
                             "Libelle" => $request->motifDepot,
                         ]);
+                    } else {
+                        // ***** INTER‑AGENCES : 4 écritures de liaison *****
+                        // Récupérer les comptes de liaison
+                        $agenceCaissier = Agences::where('code_agence', $codeAgenceCaissier)->first();
+                        $agenceClient = Agences::where('code_agence', $codeAgenceClient)->first();
+                        if (!$agenceCaissier || !$agenceClient) {
+                            throw new \Exception("Agence non trouvée");
+                        }
+                        $compteLiaisonCaissier = $agenceCaissier->compte_liaison_cdf;
+                        $compteLiaisonClient    = $agenceClient->compte_liaison_cdf;
+                        if (!$compteLiaisonCaissier || !$compteLiaisonClient) {
+                            throw new \Exception("Comptes de liaison CDF non définis pour les agences concernées");
+                        }
 
-                        //CREDIT  LE COMPTE COMPTABLE 33 EPARGNE
-                        // $Ecompte_courant_cdf = EpargneAdhesionModel::first()->Ecompte_courant_cdf;
-                        // Transactions::create([
-                        //     "NumTransaction" => $NumTransaction,
-                        //     "DateTransaction" => $dataSystem->DateSystem,
-                        //     "DateSaisie" => $dataSystem->DateSystem,
-                        //     "TypeTransaction" => "C",
-                        //     "CodeMonnaie" => 2,
-                        //     "CodeAgence" => $codeAgenceCaissier,
-                        //     "NumDossier" => "DOS0" . $numOperation->id,
-                        //     "NumDemande" => "V0" . $numOperation->id,
-                        //     "NumCompte" => $Ecompte_courant_cdf,
-                        //     "NumComptecp" => $dataCompte->NumCompte,
-                        //     "Credit"  => $request->Montant,
-                        //     "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
-                        //     "Creditfc" => $request->Montant,
-                        //     "NomUtilisateur" => Auth::user()->name,
-                        //     "Libelle" => $request->motifDepot,
-                        // ]);
-
-                        //RENSEIGNE LE BILLETAGE
-                        $lastInsertedId = Transactions::latest()->first();
-                        //COMPLETE LE BILLETAGE
-
-                        BilletageCDF::create([
-                            "refOperation" => $lastInsertedId->NumTransaction,
-                            "NumCompte" => $NumCompte,
-                            "NomMembre" => $dataCompte->NomCompte,
-                            "NumAbrege" => $request->NumAbrege,
-                            "Beneficiaire" => $request->DeposantName,
-                            "Motif" => $request->motifDepot,
-                            "Devise" => $request->devise,
-                            "vightMilleFranc" => $request->vightMille,
-                            "dixMilleFranc" => $request->dixMille,
-                            "cinqMilleFranc" => $request->cinqMille,
-                            "milleFranc" => $request->milleFranc,
-                            "cinqCentFranc" => $request->cinqCentFr,
-                            "deuxCentFranc" => $request->deuxCentFranc,
-                            "centFranc" => $request->centFranc,
-                            "montantEntre" => $request->Montant,
-                            "cinquanteFanc" => $request->cinquanteFanc,
+                        // 1) Débit caisse (agence caissier) ↔ Crédit liaison caissier
+                        Transactions::create([
+                            "NumTransaction" => $NumTransaction,
+                            "DateTransaction" => $dataSystem->DateSystem,
+                            "DateSaisie" => $dataSystem->DateSystem,
+                            "TypeTransaction" => "D",
+                            "CodeMonnaie" => 2,
+                            "CodeAgence" => $codeAgenceCaissier,
+                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "NumDossier" => "DOS0" . $numOperation->id,
+                            "NumDemande" => "V0" . $numOperation->id,
+                            "NumCompte" => $CompteCaissierCDF,
+                            "NumComptecp" => $compteLiaisonCaissier,
+                            "Operant" => $NomCaissier,
+                            "Debit" => $request->Montant,
+                            "Debitusd" => $request->Montant / $dataSystem->TauxEnFc,
+                            "Debitfc" => $request->Montant,
                             "NomUtilisateur" => Auth::user()->name,
-                            "DateTransaction" => $dataSystem->DateSystem
+                            "Libelle" => $request->motifDepot . " (dépôt client agence $codeAgenceClient)",
+                        ]);
+                        Transactions::create([
+                            "NumTransaction" => $NumTransaction,
+                            "DateTransaction" => $dataSystem->DateSystem,
+                            "DateSaisie" => $dataSystem->DateSystem,
+                            "TypeTransaction" => "C",
+                            "CodeMonnaie" => 2,
+                            "CodeAgence" => $codeAgenceCaissier,
+                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "NumDossier" => "DOS0" . $numOperation->id,
+                            "NumDemande" => "V0" . $numOperation->id,
+                            "NumCompte" => $compteLiaisonCaissier,
+                            "NumComptecp" => $CompteCaissierCDF,
+                            "Credit" => $request->Montant,
+                            "Creditusd" => $request->Montant / $dataSystem->TauxEnFc,
+                            "Creditfc" => $request->Montant,
+                            "NomUtilisateur" => Auth::user()->name,
+                            "Libelle" => $request->motifDepot . " (dépôt client agence $codeAgenceClient)",
                         ]);
 
-                        //SEND NOTIFICATION
-                        $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $request->DeposantName);
-                        return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
-                    } else {
-                        return response()->json([
-                            'validate_error' => $validator->messages()
+                        // 2) Débit liaison client ↔ Crédit compte client
+                        Transactions::create([
+                            "NumTransaction" => $NumTransaction,
+                            "DateTransaction" => $dataSystem->DateSystem,
+                            "DateSaisie" => $dataSystem->DateSystem,
+                            "TypeTransaction" => "D",
+                            "CodeMonnaie" => 2,
+                            "CodeAgence" => $codeAgenceClient,
+                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "NumDossier" => "DOS0" . $numOperation->id,
+                            "NumDemande" => "V0" . $numOperation->id,
+                            "NumCompte" => $compteLiaisonClient,
+                            "NumComptecp" => $NumCompte,
+                            "Debit" => $request->Montant,
+                            "Debitusd" => $request->Montant / $dataSystem->TauxEnFc,
+                            "Debitfc" => $request->Montant,
+                            "NomUtilisateur" => Auth::user()->name,
+                            "Libelle" => $request->motifDepot . " (dépôt via agence $codeAgenceCaissier)",
+                        ]);
+                        Transactions::create([
+                            "NumTransaction" => $NumTransaction,
+                            "DateTransaction" => $dataSystem->DateSystem,
+                            "DateSaisie" => $dataSystem->DateSystem,
+                            "TypeTransaction" => "C",
+                            "CodeMonnaie" => 2,
+                            "CodeAgence" => $codeAgenceClient,
+                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "NumDossier" => "DOS0" . $numOperation->id,
+                            "NumDemande" => "V0" . $numOperation->id,
+                            "NumCompte" => $NumCompte,
+                            "NumComptecp" => $compteLiaisonClient,
+                            "Operant" => $request->DeposantName,
+                            "Credit" => $request->Montant,
+                            "Creditusd" => $request->Montant / $dataSystem->TauxEnFc,
+                            "Creditfc" => $request->Montant,
+                            "NomUtilisateur" => Auth::user()->name,
+                            "Libelle" => $request->motifDepot . " (dépôt via agence $codeAgenceCaissier)",
                         ]);
                     }
-                } else {
-                    return response()->json(["status" => 0, "msg" => "Le compte en franc pour ce client n'est pas activé" . $request->searched_account]);
-                }
-            } else if ($request->devise == "USD") {
 
-                //RECUPERE LE COMPTE DU CAISSIER CONCERNE USD
+                    // --- Billetage, notification (inchangé) ---
+                    BilletageCDF::create([
+                        "refOperation" => $NumTransaction,
+                        "NumCompte" => $NumCompte,
+                        "NomMembre" => $dataCompte->NomCompte,
+                        "NumAbrege" => $request->NumAbrege,
+                        "Beneficiaire" => $request->DeposantName,
+                        "Motif" => $request->motifDepot,
+                        "Devise" => $request->devise,
+                        "vightMilleFranc" => $request->vightMille,
+                        "dixMilleFranc" => $request->dixMille,
+                        "cinqMilleFranc" => $request->cinqMille,
+                        "milleFranc" => $request->milleFranc,
+                        "cinqCentFranc" => $request->cinqCentFr,
+                        "deuxCentFranc" => $request->deuxCentFranc,
+                        "centFranc" => $request->centFranc,
+                        "montantEntre" => $request->Montant,
+                        "cinquanteFanc" => $request->cinquanteFanc,
+                        "NomUtilisateur" => Auth::user()->name,
+                        "DateTransaction" => $dataSystem->DateSystem
+                    ]);
+
+                    $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $request->DeposantName);
+                    return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
+                } else {
+                    return response()->json(['validate_error' => $validator->messages()]);
+                }
+            }
+
+            // ------------------ PARTIE USD ------------------
+            else if ($request->devise == "USD") {
+                // Structure identique à CDF mais avec les colonnes USD et les comptes de liaison USD
                 $dataCompte = Comptes::where(function ($query) use ($request) {
                     $query->where("NumAdherant", $request->NumAbrege)
                         ->orWhere("NumCompte", $request->NumAbrege);
-                })
-                    ->where("CodeMonnaie", 1)
-                    ->first();
+                })->where("CodeMonnaie", 1)->first();
+
                 $NumCompte = $request->getNumCompte;
-                if ($NumCompte) {
-                    $numCompteCaissierUSD = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "1")->first();
-                    $CompteCaissierUSD = $numCompteCaissierUSD->NumCompte;
-                    $codeAgenceCaissier = $numCompteCaissierUSD->CodeAgence;
-                    $NomCaissier = $numCompteCaissierUSD->NomCompte;
-                    $dataSystem = TauxEtDateSystem::latest()->first();
+                if (!$NumCompte) {
+                    return response()->json(["status" => 0, "msg" => "Le compte en USD pour ce client n'est pas activé"]);
+                }
 
+                // Récupérer l'agence courante de l'utilisateur (depuis la session)
+                $currentAgence = session('current_agence');
+                if (!$currentAgence || !isset($currentAgence['code_agence'])) {
+                    return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+                }
+                $codeAgenceCourante = $currentAgence['code_agence'];
 
-                    //CHECK THERE IS A COMMISSION 
+                // Récupérer le compte caisse correspondant à cette agence et à la devise CDF
+                $compteCaisse = Comptes::where("caissierId", Auth::user()->id)
+                    ->where("CodeMonnaie", 1)
+                    ->where("CodeAgence", $codeAgenceCourante)
+                    ->first();
 
-                    if (isset($request->Commission) and $request->Commission > 0) {
-                        CompteurTransaction::create([
-                            'fakevalue' => "0000",
-                        ]);
-                        $numOperation = [];
-                        $numOperation = CompteurTransaction::latest()->first();
-                        $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-                        //CREDITE LE COMPTE COMMISION USD
-                        $compteCommissionUSD = "7270000000201";
-                        Transactions::create([
-                            "NumTransaction" => $NumTransaction,
-                            "DateTransaction" => $dataSystem->DateSystem,
-                            "DateSaisie" => $dataSystem->DateSystem,
-                            "Taux" => 1,
-                            "TypeTransaction" => "C",
-                            "CodeMonnaie" => 1,
-                            "CodeAgence" => "20",
-                            "NumDossier" => "DOS00" . $numOperation->id,
-                            "NumDemande" => "V00" . $numOperation->id,
-                            "NumCompte" => $compteCommissionUSD,
-                            "NumComptecp" => $NumCompte,
-                            //   "Operant" => "COMPTE COMMISSION CDF",
-                            "Credit"  => $request->Commission,
-                            "Creditusd"  => $request->Commission,
-                            "Creditfc" => $request->Commission * $dataSystem->TauxEnFc,
-                            "NomUtilisateur" => Auth::user()->name,
-                            "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $dataCompte->NumCompte . " par le caissier " . Auth::user()->name,
-                            "refCompteMembre" => $compteCommissionUSD
-                        ]);
+                if (!$compteCaisse) {
+                    return response()->json(["status" => 0, "msg" => "Compte caisse USD introuvable pour l'agence sélectionnée"]);
+                }
+                $CompteCaissierUSD = $compteCaisse->NumCompte;
+                $codeAgenceCaissier = $compteCaisse->CodeAgence;
+                $codeAgenceClient = $dataCompte->CodeAgence;
+                $NomCaissier = $compteCaisse->NomCompte;
+                $dataSystem = TauxEtDateSystem::latest()->first();
 
-                        //DEBITE LE COMPTE DU MEMBRE DE LA COMMISSION
-                        Transactions::create([
-                            "NumTransaction" => $NumTransaction,
-                            "DateTransaction" => $dataSystem->DateSystem,
-                            "DateSaisie" => $dataSystem->DateSystem,
-                            "Taux" => 1,
-                            "TypeTransaction" => "D",
-                            "CodeMonnaie" => 1,
-                            "CodeAgence" => "20",
-                            "NumDossier" => "DOS00" . $numOperation->id,
-                            "NumDemande" => "V00" . $numOperation->id,
-                            "NumCompte" => $NumCompte,
-                            "NumComptecp" =>  $compteCommissionUSD,
-                            "Debit"  => $request->Commission,
-                            "Debitusd"  => $request->Commission,
-                            "Debitfc" => $request->Commission * $dataSystem->TauxEnFc,
-                            "NomUtilisateur" => Auth::user()->name,
-                            "Libelle" => "PRISE COMMISSION",
-                        ]);
-                    }
-                    if ($request->Montant > 0) {
-                        CompteurTransaction::create([
-                            'fakevalue' => "0000",
-                        ]);
-                        $numOperation = [];
-                        $numOperation = CompteurTransaction::latest()->first();
-                        $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-                        //CREDITE LE COMPTE DU CLIENT
+                // Commission USD (inchangée)
+                if (isset($request->Commission) && $request->Commission > 0) {
+                    // ... votre code commission USD existant ...
+                }
+
+                if ($request->Montant > 0) {
+                    CompteurTransaction::create(['fakevalue' => "0000"]);
+                    $numOperation = CompteurTransaction::latest()->first();
+                    $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+
+                    if ($codeAgenceCaissier === $codeAgenceClient) {
+                        // Même agence : écritures simples
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "C",
                             "CodeMonnaie" => 1,
-                            "CodeAgence" => $dataCompte->CodeAgence,
+                            "CodeAgence" => $codeAgenceClient,
                             "NumDossier" => "DOS0" . $numOperation->id,
                             "NumDemande" => "V0" . $numOperation->id,
                             "NumCompte" => $NumCompte,
                             "NumComptecp" => $CompteCaissierUSD,
                             "Operant" => $request->DeposantName,
-                            "Credit"  => $request->Montant,
-                            "Creditusd"  => $request->Montant,
+                            "Credit" => $request->Montant,
+                            "Creditusd" => $request->Montant,
                             "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
                             "NomUtilisateur" => Auth::user()->name,
                             "Libelle" => $request->motifDepot,
                         ]);
-                        //DEBITE LE COMPTE DU CAISSIER
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
                             "DateTransaction" => $dataSystem->DateSystem,
@@ -474,72 +990,132 @@ class TransactionsController extends Controller
                             "NumCompte" => $CompteCaissierUSD,
                             "NumComptecp" => $NumCompte,
                             "Operant" => $NomCaissier,
-                            "Debit"  => $request->Montant,
-                            "Debitusd"  => $request->Montant,
+                            "Debit" => $request->Montant,
+                            "Debitusd" => $request->Montant,
                             "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
                             "NomUtilisateur" => Auth::user()->name,
                             "Libelle" => $request->motifDepot,
                         ]);
-                        //CREDIT  LE COMPTE COMPTABLE 33 EPARGNE
-                        // $Ecompte_courant_usd = EpargneAdhesionModel::first()->Ecompte_courant_usd;
-                        // Transactions::create([
-                        //     "NumTransaction" => $NumTransaction,
-                        //     "DateTransaction" => $dataSystem->DateSystem,
-                        //     "DateSaisie" => $dataSystem->DateSystem,
-                        //     "TypeTransaction" => "C",
-                        //     "CodeMonnaie" => 1,
-                        //     "CodeAgence" => $codeAgenceCaissier,
-                        //     "NumDossier" => "DOS0" . $numOperation->id,
-                        //     "NumDemande" => "V0" . $numOperation->id,
-                        //     "NumCompte" => $Ecompte_courant_usd,
-                        //     "NumComptecp" => $dataCompte->NumCompte,
-                        //     "Credit"  => $request->Montant,
-                        //     "Creditusd"  => $request->Montant,
-                        //     "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
-                        //     "NomUtilisateur" => Auth::user()->name,
-                        //     "Libelle" => $request->motifDepot,
-                        // ]);
+                    } else {
+                        // Inter‑agences USD
+                        $agenceCaissier = Agences::where('code_agence', $codeAgenceCaissier)->first();
+                        $agenceClient = Agences::where('code_agence', $codeAgenceClient)->first();
+                        if (!$agenceCaissier || !$agenceClient) {
+                            throw new \Exception("Agence non trouvée");
+                        }
+                        $compteLiaisonCaissier = $agenceCaissier->compte_liaison_usd;
+                        $compteLiaisonClient    = $agenceClient->compte_liaison_usd;
+                        if (!$compteLiaisonCaissier || !$compteLiaisonClient) {
+                            throw new \Exception("Comptes de liaison USD non définis");
+                        }
 
-                        //RECUPERE LE DERNIER ID DU L'OPERATION INSEREE
-                        $lastInsertedId = Transactions::latest()->first();
-                        //RENSEIGNE LE BILLETAGE
-
-                        BilletageUSD::create([
-                            "refOperation" => $lastInsertedId->NumTransaction,
-                            "NumCompte" => $NumCompte,
-                            "NomMembre" => $dataCompte->NomCompte,
-                            "NumAbrege" => $request->NumAbrege,
-                            "Beneficiaire" => $request->DeposantName,
-                            "Motif" => $request->motifDepot,
-                            "Devise" => $request->devise,
-                            "centDollars" => $request->hundred,
-                            "cinquanteDollars" => $request->fitfty,
-                            "vightDollars" => $request->twenty,
-                            "dixDollars" => $request->ten,
-                            "cinqDollars" => $request->five,
-                            "unDollars" => $request->oneDollar,
-                            "montantEntre" => $request->Montant,
+                        // Débit caisse ↔ Crédit liaison caissier
+                        Transactions::create([
+                            "NumTransaction" => $NumTransaction,
+                            "DateTransaction" => $dataSystem->DateSystem,
+                            "DateSaisie" => $dataSystem->DateSystem,
+                            "TypeTransaction" => "D",
+                            "CodeMonnaie" => 1,
+                            "CodeAgence" => $codeAgenceCaissier,
+                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "NumDossier" => "DOS0" . $numOperation->id,
+                            "NumDemande" => "V0" . $numOperation->id,
+                            "NumCompte" => $CompteCaissierUSD,
+                            "NumComptecp" => $compteLiaisonCaissier,
+                            "Operant" => $NomCaissier,
+                            "Debit" => $request->Montant,
+                            "Debitusd" => $request->Montant,
+                            "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
                             "NomUtilisateur" => Auth::user()->name,
-                            "DateTransaction" => $dataSystem->DateSystem
+                            "Libelle" => $request->motifDepot . " (dépôt client agence $codeAgenceClient)",
+                        ]);
+                        Transactions::create([
+                            "NumTransaction" => $NumTransaction,
+                            "DateTransaction" => $dataSystem->DateSystem,
+                            "DateSaisie" => $dataSystem->DateSystem,
+                            "TypeTransaction" => "C",
+                            "CodeMonnaie" => 1,
+                            "CodeAgence" => $codeAgenceCaissier,
+                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "NumDossier" => "DOS0" . $numOperation->id,
+                            "NumDemande" => "V0" . $numOperation->id,
+                            "NumCompte" => $compteLiaisonCaissier,
+                            "NumComptecp" => $CompteCaissierUSD,
+                            "Credit" => $request->Montant,
+                            "Creditusd" => $request->Montant,
+                            "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+                            "NomUtilisateur" => Auth::user()->name,
+                            "Libelle" => $request->motifDepot . " (dépôt client agence $codeAgenceClient)",
                         ]);
 
-                        //SEND NOTIFICATION
-
-                        $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $request->DeposantName);
-                        return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
-                    } else {
-                        return response()->json([
-                            'validate_error' => $validator->messages()
+                        // Débit liaison client ↔ Crédit client
+                        Transactions::create([
+                            "NumTransaction" => $NumTransaction,
+                            "DateTransaction" => $dataSystem->DateSystem,
+                            "DateSaisie" => $dataSystem->DateSystem,
+                            "TypeTransaction" => "D",
+                            "CodeMonnaie" => 1,
+                            "CodeAgence" => $codeAgenceClient,
+                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "NumDossier" => "DOS0" . $numOperation->id,
+                            "NumDemande" => "V0" . $numOperation->id,
+                            "NumCompte" => $compteLiaisonClient,
+                            "NumComptecp" => $NumCompte,
+                            "Debit" => $request->Montant,
+                            "Debitusd" => $request->Montant,
+                            "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+                            "NomUtilisateur" => Auth::user()->name,
+                            "Libelle" => $request->motifDepot . " (dépôt via agence $codeAgenceCaissier)",
+                        ]);
+                        Transactions::create([
+                            "NumTransaction" => $NumTransaction,
+                            "DateTransaction" => $dataSystem->DateSystem,
+                            "DateSaisie" => $dataSystem->DateSystem,
+                            "TypeTransaction" => "C",
+                            "CodeMonnaie" => 1,
+                            "CodeAgence" => $codeAgenceClient,
+                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "NumDossier" => "DOS0" . $numOperation->id,
+                            "NumDemande" => "V0" . $numOperation->id,
+                            "NumCompte" => $NumCompte,
+                            "NumComptecp" => $compteLiaisonClient,
+                            "Operant" => $request->DeposantName,
+                            "Credit" => $request->Montant,
+                            "Creditusd" => $request->Montant,
+                            "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+                            "NomUtilisateur" => Auth::user()->name,
+                            "Libelle" => $request->motifDepot . " (dépôt via agence $codeAgenceCaissier)",
                         ]);
                     }
+
+                    // Billetage USD
+                    BilletageUSD::create([
+                        "refOperation" => $NumTransaction,
+                        "NumCompte" => $NumCompte,
+                        "NomMembre" => $dataCompte->NomCompte,
+                        "NumAbrege" => $request->NumAbrege,
+                        "Beneficiaire" => $request->DeposantName,
+                        "Motif" => $request->motifDepot,
+                        "Devise" => $request->devise,
+                        "centDollars" => $request->hundred,
+                        "cinquanteDollars" => $request->fitfty,
+                        "vightDollars" => $request->twenty,
+                        "dixDollars" => $request->ten,
+                        "cinqDollars" => $request->five,
+                        "unDollars" => $request->oneDollar,
+                        "montantEntre" => $request->Montant,
+                        "NomUtilisateur" => Auth::user()->name,
+                        "DateTransaction" => $dataSystem->DateSystem
+                    ]);
+
+                    $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $request->DeposantName);
+                    return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
                 } else {
-                    return response()->json(["status" => 0, "msg" => "Le compte en franc pour ce client n'est pas activé" . $request->searched_account]);
+                    return response()->json(['validate_error' => $validator->messages()]);
                 }
             }
         } catch (\Exception $e) {
-            // Attraper les exceptions liées à la connexion ou autres erreurs
-
-            return response()->json(["status" => 0, "msg" => "Erreur de connexion. Veuillez patienter et réessayer.", "error" => $e->getMessage()]);
+            return response()->json(["status" => 0, "msg" => "Erreur : " . $e->getMessage()]);
         }
     }
 
@@ -718,15 +1294,479 @@ class TransactionsController extends Controller
 
     //PERMET DE VALIDER UN RETRAI 
 
+    // public function saveRetraitEspece(Request $request)
+    // {
+
+    //     if (isset($request->NumAbrege)) {
+
+    //         //VERTIFIE SI LE BILLETATGE ENTREE PAR LE CAISSIER CORRESPOND AU BILLETAGE QU'IL POSSEDE DANS SA CAISSE
+    //         if ($request->devise == "CDF") {
+
+    //             //RECUPERE LA SOMME DE  BILLETAGE EN FRANC CONGOLAIS
+    //             $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
+    //             $billetageCDF = BilletageCDF::select(
+    //                 DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFran"),
+    //                 DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFran"),
+    //                 DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFran"),
+    //                 DB::raw("SUM(milleFranc)-SUM(milleFrancSortie) as milleFran"),
+    //                 DB::raw("SUM(cinqCentFranc)-SUM(cinqCentFrancSortie) as cinqCentFran"),
+    //                 DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFran"),
+    //                 DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFran"),
+    //                 DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFan"),
+    //             )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $date)
+    //                 ->groupBy("NomUtilisateur")
+    //                 ->get();
+
+
+
+    //             if ($billetageCDF->isEmpty()) {
+
+    //                 return response()->json(['status' => 0, "msg" => "Vous devez d'abord effectuer un appro votre caisse en CDF semble n'est pas contenir de fonds !"]);
+    //             } else {
+
+    //                 if ($request->vightMille > $billetageCDF[0]->vightMilleFran) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 20.000f non disponible vous avez " . $billetageCDF[0]->vightMilleFran . " billets dans votre caisse"]);
+    //                 } else if ($request->dixMille > $billetageCDF[0]->dixMilleFran) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 10.000f non disponible vous avez " . $billetageCDF[0]->dixMilleFran . " billets dans votre caisse"]);
+    //                 } else if ($request->cinqMille > $billetageCDF[0]->cinqMilleFran) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 5000f non disponible vous avez " . $billetageCDF[0]->cinqMilleFran . " billets dans votre caisse"]);
+    //                 } else if ($request->milleFranc > $billetageCDF[0]->milleFran) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 1000f non disponible vous avez " . $billetageCDF[0]->milleFran . " billets dans votre caisse"]);
+    //                 } else if ($request->cinqCentFr > $billetageCDF[0]->cinqCentFran) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 500f non disponible vous avez " . $billetageCDF[0]->cinqCentFran . " billets dans votre caisse"]);
+    //                 } else if ($request->deuxCentFranc > $billetageCDF[0]->deuxCentFran) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 200f non disponible vous avez " . $billetageCDF[0]->deuxCentFran . " billets dans votre caisse"]);
+    //                 } else if ($request->centFranc > $billetageCDF[0]->centFran) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 100f non disponible vous avez " . $billetageCDF[0]->centFran . " billets dans votre caisse"]);
+    //                 } else if ($request->cinquanteFanc > $billetageCDF[0]->cinquanteFan) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 50f non disponible vous avez " . $billetageCDF[0]->cinquanteFan . " billets dans votre caisse"]);
+    //                 }
+
+
+    //                 CompteurTransaction::create([
+    //                     'fakevalue' => "0000",
+    //                 ]);
+    //                 $numOperation = [];
+    //                 $numOperation = CompteurTransaction::latest()->first();
+    //                 $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+    //                 //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
+    //                 //$dataCompte = Comptes::where("NumAdherant", $request//->NumAbrege)
+    //                 // ->where("CodeMonnaie", 2)->first();
+    //                 $dataCompte = Comptes::where(function ($query) use ($request) {
+    //                     $query->where('NumAdherant', $request->NumAbrege)
+    //                         ->orWhere('NumCompte', $request->NumAbrege);
+    //                 })
+    //                     ->where('CodeMonnaie', 2)
+    //                     ->first();
+
+    //                 if ($dataCompte) {
+    //                     $numCompteCaissierCDF = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "2")->first();
+    //                     $CompteCaissierCDF = $numCompteCaissierCDF->NumCompte;
+    //                     $codeAgenceCaissier = $numCompteCaissierCDF->CodeAgence;
+    //                     $NomCaissier = $numCompteCaissierCDF->NomCompte;
+    //                     $dataSystem = TauxEtDateSystem::latest()->first();
+
+
+    //                     $soldeCompteCaissier = Transactions::select(
+    //                         DB::raw("SUM(Debitfc)-SUM(Creditfc) as soldeCompte"),
+    //                     )->where("NumCompte", '=', $CompteCaissierCDF)
+    //                         ->groupBy("NumCompte")
+    //                         ->first();
+
+    //                     $montant = (int) $request->Montant;
+    //                     $solde = abs($soldeCompteCaissier->soldeCompte);
+    //                     if ($solde < $montant) {
+    //                         return response()->json(['status' => 0, 'msg' => "Votre solde est inferieur au montant à retirer votre solde actuel " .  $solde . " votre compte doit être approvisionné"]);
+    //                     }
+
+    //                     if (isset($request->Commission) and $request->Commission > 0) {
+    //                         CompteurTransaction::create([
+    //                             'fakevalue' => "0000",
+    //                         ]);
+    //                         $numOperation = [];
+    //                         $numOperation = CompteurTransaction::latest()->first();
+    //                         $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+    //                         //CREDITE LE COMPTE COMMISION USD
+    //                         $compteCommissionCDF = "7270000000202";
+    //                         Transactions::create([
+    //                             "NumTransaction" => $NumTransaction,
+    //                             "DateTransaction" => $dataSystem->DateSystem,
+    //                             "DateSaisie" => $dataSystem->DateSystem,
+    //                             "Taux" => 1,
+    //                             "TypeTransaction" => "C",
+    //                             "CodeMonnaie" => 2,
+    //                             "CodeAgence" => "20",
+    //                             "NumDossier" => "DOS00" . $numOperation->id,
+    //                             "NumDemande" => "V00" . $numOperation->id,
+    //                             "NumCompte" => $compteCommissionCDF,
+    //                             "NumComptecp" => $dataCompte->NumCompte,
+    //                             "Credit"  => $request->Commission,
+    //                             "Creditusd"  => $request->Commission,
+    //                             "Creditfc" => $request->Montant / $dataSystem->TauxEnFc,
+    //                             "NomUtilisateur" => Auth::user()->name,
+    //                             "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $dataCompte->NumCompte . " par le caissier " . Auth::user()->name,
+    //                             "refCompteMembre" => $compteCommissionCDF
+    //                         ]);
+
+    //                         //DEBITE LE COMPTE DU MEMBRE DE LA COMMISSION
+    //                         Transactions::create([
+    //                             "NumTransaction" => $NumTransaction,
+    //                             "DateTransaction" => $dataSystem->DateSystem,
+    //                             "DateSaisie" => $dataSystem->DateSystem,
+    //                             "Taux" => 1,
+    //                             "TypeTransaction" => "D",
+    //                             "CodeMonnaie" => 2,
+    //                             "CodeAgence" => "20",
+    //                             "NumDossier" => "DOS00" . $numOperation->id,
+    //                             "NumDemande" => "V00" . $numOperation->id,
+    //                             "NumCompte" => $dataCompte->NumCompte,
+    //                             "NumComptecp" =>  $compteCommissionCDF,
+    //                             "Debit"  => $request->Commission,
+    //                             "Debitusd"  => $request->Commission,
+    //                             "Debitfc" => $request->Montant / $dataSystem->TauxEnFc,
+    //                             "NomUtilisateur" => Auth::user()->name,
+    //                             "Libelle" => "PRISE COMMISSION",
+    //                         ]);
+    //                     }
+
+
+
+    //                     //RECUPERE LA LIGNE POUR L'OPERATION POSITIONNEE
+
+    //                     $dataVisa = Positionnements::where("NumDocument", "=", $request->numDocument)->first();
+    //                     //DEBITE LE COMPTE DU CLIENT 
+    //                     CompteurTransaction::create([
+    //                         'fakevalue' => "0000",
+    //                     ]);
+    //                     $numOperation = [];
+    //                     $numOperation = CompteurTransaction::latest()->first();
+    //                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+    //                     Transactions::create([
+    //                         "NumTransaction" => $NumTransaction,
+    //                         "DateTransaction" => $dataSystem->DateSystem,
+    //                         "DateSaisie" => $dataSystem->DateSystem,
+    //                         "TypeTransaction" => "D",
+    //                         "CodeMonnaie" => 2,
+    //                         "CodeAgence" => $dataCompte->CodeAgence,
+    //                         "NumDossier" => "DOS0" . $numOperation->id,
+    //                         "NumDemande" => "V0" . $numOperation->id,
+    //                         "NumCompte" => $dataCompte->NumCompte,
+    //                         "NumComptecp" => $CompteCaissierCDF,
+    //                         "Operant" =>  $dataVisa->Retirant,
+    //                         "Debit"  => $request->Montant,
+    //                         "Debit"  => $request->Montant / $dataSystem->TauxEnFc,
+    //                         "Debitfc" => $request->Montant,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "Libelle" => $request->motifRetrait,
+    //                     ]);
+    //                     //CREDITE LE COMPTE DU CAISSIER
+    //                     Transactions::create([
+    //                         "NumTransaction" => $NumTransaction,
+    //                         "DateTransaction" => $dataSystem->DateSystem,
+    //                         "DateSaisie" => $dataSystem->DateSystem,
+    //                         "TypeTransaction" => "C",
+    //                         "CodeMonnaie" => 2,
+    //                         "CodeAgence" => $codeAgenceCaissier,
+    //                         "NumDossier" => "DOS0" . $numOperation->id,
+    //                         "NumDemande" => "V0" . $numOperation->id,
+    //                         "NumCompte" => $CompteCaissierCDF,
+    //                         "NumComptecp" => $dataCompte->NumCompte,
+    //                         "Operant" => $NomCaissier,
+    //                         "Credit"  => $request->Montant,
+    //                         "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
+    //                         "Creditfc" => $request->Montant,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "Libelle" => $request->motifRetrait,
+    //                     ]);
+    //                     //CREDIT  LE COMPTE COMPTABLE 33 EPARGNE
+    //                     // $Ecompte_courant_cdf = EpargneAdhesionModel::first()->Ecompte_courant_cdf;
+    //                     // Transactions::create([
+    //                     //     "NumTransaction" => $NumTransaction,
+    //                     //     "DateTransaction" => $dataSystem->DateSystem,
+    //                     //     "DateSaisie" => $dataSystem->DateSystem,
+    //                     //     "TypeTransaction" => "C",
+    //                     //     "CodeMonnaie" => 2,
+    //                     //     "CodeAgence" => $codeAgenceCaissier,
+    //                     //     "NumDossier" => "DOS0" . $numOperation->id,
+    //                     //     "NumDemande" => "V0" . $numOperation->id,
+    //                     //     "NumCompte" => $Ecompte_courant_cdf,
+    //                     //     "NumComptecp" => $dataCompte->NumCompte,
+    //                     //     "Credit"  => $request->Montant,
+    //                     //     "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
+    //                     //     "Creditfc" => $request->Montant,
+    //                     //     "NomUtilisateur" => Auth::user()->name,
+    //                     //     "Libelle" => $request->motifRetrait,
+    //                     // ]);
+
+    //                     //RENSEIGNE LE BILLETAGE
+    //                     $lastInsertedId = Transactions::latest()->first();
+    //                     //COMPLETE LE BILLETAGE
+
+    //                     BilletageCDF::create([
+    //                         "refOperation" => $lastInsertedId->NumTransaction,
+    //                         "NumCompte" => $dataCompte->NumCompte,
+    //                         "NomMembre" => $dataCompte->NomCompte,
+    //                         "NumAbrege" => $request->NumAbrege,
+    //                         "Beneficiaire" => $dataVisa->Retirant,
+    //                         "Motif" => $request->motifRetrait,
+    //                         "Devise" => $request->devise,
+    //                         "vightMilleFrancSortie" => $request->vightMille,
+    //                         "dixMilleFrancSortie" => $request->dixMille,
+    //                         "cinqMilleFrancSortie" => $request->cinqMille,
+    //                         "milleFrancSortie" => $request->milleFranc,
+    //                         "cinqCentFrancSortie" => $request->cinqCentFr,
+    //                         "deuxCentFrancSortie" => $request->deuxCentFranc,
+    //                         "centFrancSortie" => $request->centFranc,
+    //                         "cinquanteFancSortie" => $request->cinquanteFanc,
+    //                         "montantSortie" => $request->Montant,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "DateTransaction" => $dataSystem->DateSystem
+    //                     ]);
+
+    //                     //MET A JOUR LA TABLE POSITIONNEMENT
+    //                     Positionnements::where("NumDocument", $request->numDocument)->update([
+    //                         "Servie" => 1,
+    //                     ]);
+    //                     //SEND NOTIFICATION TO CUSTUMER
+    //                     $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "D", $dataVisa->Retirant);
+    //                     return response()->json(['status' => 1, 'msg' => "Opération bien enregistrée."]);
+    //                 } else {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! une erreur est survenue lors de l'éxécution de cette requête verifier bien que votre caisse est approvissionnée si l'erreur persiste veuillez contactez votre Administrateur système."]);
+    //                 }
+    //             }
+    //         }
+
+    //         if ($request->devise == "USD") {
+    //             CompteurTransaction::create([
+    //                 'fakevalue' => "0000",
+    //             ]);
+
+    //             //RECUPERE LA SOMME DE BILLETAGE USD
+    //             $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
+    //             $billetageUSD = BilletageUSD::select(
+    //                 DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollar"),
+    //                 DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollar"),
+    //                 DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollar"),
+    //                 DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollar"),
+    //                 DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollar"),
+    //                 DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollar"),
+    //             )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $date)
+    //                 ->groupBy("NomUtilisateur")
+    //                 ->get();
+    //             if (isset($billetageUSD[0])) {
+    //                 if ($request->hundred > $billetageUSD[0]->centDollar) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 100$ non disponible vous avez " . $billetageUSD[0]->centDollar . " billets dans votre caisse"]);
+    //                 } else if ($request->fitfty > $billetageUSD[0]->cinquanteDollar) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 50$ non disponible vous avez " . $billetageUSD[0]->cinquanteDollar . " billets dans votre caisse"]);
+    //                 } else if ($request->twenty > $billetageUSD[0]->vightDollar) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 20$ non disponible vous avez " . $billetageUSD[0]->vightDollar . " billets dans votre caisse"]);
+    //                 } else if ($request->ten > $billetageUSD[0]->dixDollar) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 10$ non disponible vous avez " . $billetageUSD[0]->dixDollar . " billets dans votre caisse"]);
+    //                 } else if ($request->five > $billetageUSD[0]->cinqDollar) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 5$ non disponible vous avez " . $billetageUSD[0]->cinqDollar . " billets dans votre caisse"]);
+    //                 } else if ($request->oneDollar > $billetageUSD[0]->unDollar) {
+    //                     return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 1$ non disponible vous avez " . $billetageUSD[0]->unDollar . " billets dans votre caisse"]);
+    //                 }
+
+
+    //                 $numOperation = [];
+    //                 $numOperation = CompteurTransaction::latest()->first();
+    //                 $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+    //                 //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
+    //                 $dataCompte = Comptes::where(function ($query) use ($request) {
+    //                     $query->where('NumAdherant', $request->NumAbrege)
+    //                         ->orWhere('NumCompte', $request->NumAbrege);
+    //                 })
+    //                     ->where('CodeMonnaie', 1)
+    //                     ->first();
+    //                 if ($dataCompte) {
+    //                     $numCompteCaissierUSD = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "1")->first();
+    //                     $CompteCaissierUSD = $numCompteCaissierUSD->NumCompte;
+    //                     $codeAgenceCaissier = $numCompteCaissierUSD->CodeAgence;
+    //                     $NomCaissier = $numCompteCaissierUSD->NomCompte;
+    //                     $dataSystem = TauxEtDateSystem::latest()->first();
+
+
+    //                     $soldeCompteCaissier = Transactions::select(
+    //                         DB::raw("SUM(Debitusd)-SUM(Creditusd) as soldeCompte"),
+    //                     )->where("NumCompte", '=', $CompteCaissierUSD)
+    //                         ->groupBy("NumCompte")
+    //                         ->first();
+
+    //                     $montant = (int) $request->Montant;
+    //                     $solde = abs($soldeCompteCaissier->soldeCompte);
+    //                     if ($solde < $montant) {
+    //                         return response()->json(['status' => 0, 'msg' => "Votre solde est inferieur au montant à retirer votre solde actuel " .  $solde . " votre compte doit être approvisionné"]);
+    //                     }
+    //                     //RECUPERE LA LIGNE POUR L'OPERATION POSITIONNEE
+
+
+
+    //                     if (isset($request->Commission) and $request->Commission > 0) {
+    //                         CompteurTransaction::create([
+    //                             'fakevalue' => "0000",
+    //                         ]);
+    //                         $numOperation = [];
+    //                         $numOperation = CompteurTransaction::latest()->first();
+    //                         $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+    //                         //CREDITE LE COMPTE COMMISION USD
+    //                         $compteCommissionUSD = "7270000000201";
+    //                         Transactions::create([
+    //                             "NumTransaction" => $NumTransaction,
+    //                             "DateTransaction" => $dataSystem->DateSystem,
+    //                             "DateSaisie" => $dataSystem->DateSystem,
+    //                             "Taux" => 1,
+    //                             "TypeTransaction" => "C",
+    //                             "CodeMonnaie" => 1,
+    //                             "CodeAgence" => "20",
+    //                             "NumDossier" => "DOS00" . $numOperation->id,
+    //                             "NumDemande" => "V00" . $numOperation->id,
+    //                             "NumCompte" => $compteCommissionUSD,
+    //                             "NumComptecp" => $dataCompte->NumCompte,
+    //                             //   "Operant" => "COMPTE COMMISSION CDF",
+    //                             "Credit"  => $request->Commission,
+    //                             "Creditusd"  => $request->Commission,
+    //                             "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+    //                             "NomUtilisateur" => Auth::user()->name,
+    //                             "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $dataCompte->NumCompte . " par le caissier " . Auth::user()->name,
+    //                             "refCompteMembre" => $compteCommissionUSD
+    //                         ]);
+
+    //                         //DEBITE LE COMPTE DU MEMBRE DE LA COMMISSION
+    //                         Transactions::create([
+    //                             "NumTransaction" => $NumTransaction,
+    //                             "DateTransaction" => $dataSystem->DateSystem,
+    //                             "DateSaisie" => $dataSystem->DateSystem,
+    //                             "Taux" => 1,
+    //                             "TypeTransaction" => "D",
+    //                             "CodeMonnaie" => 1,
+    //                             "CodeAgence" => "20",
+    //                             "NumDossier" => "DOS00" . $numOperation->id,
+    //                             "NumDemande" => "V00" . $numOperation->id,
+    //                             "NumCompte" => $dataCompte->NumCompte,
+    //                             "NumComptecp" =>  $compteCommissionUSD,
+    //                             "Debit"  => $request->Commission,
+    //                             "Debitusd"  => $request->Commission,
+    //                             "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+    //                             "NomUtilisateur" => Auth::user()->name,
+    //                             "Libelle" => "PRISE COMMISSION",
+    //                         ]);
+    //                     }
+
+    //                     $dataVisa = Positionnements::where("NumDocument", "=", $request->numDocument)->first();
+    //                     //DEBITE LE COMPTE DU CLIENT 
+    //                     CompteurTransaction::create([
+    //                         'fakevalue' => "0000",
+    //                     ]);
+    //                     $numOperation = [];
+    //                     $numOperation = CompteurTransaction::latest()->first();
+    //                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+    //                     Transactions::create([
+    //                         "NumTransaction" => $NumTransaction,
+    //                         "DateTransaction" => $dataSystem->DateSystem,
+    //                         "DateSaisie" => $dataSystem->DateSystem,
+    //                         "TypeTransaction" => "D",
+    //                         "CodeMonnaie" => 1,
+    //                         "CodeAgence" => $dataCompte->CodeAgence,
+    //                         "NumDossier" => "DOS0" . $numOperation->id,
+    //                         "NumDemande" => "V0" . $numOperation->id,
+    //                         "NumCompte" => $dataCompte->NumCompte,
+    //                         "NumComptecp" => $CompteCaissierUSD,
+    //                         "Operant" =>  $dataVisa->Retirant,
+    //                         "Debit"  => $request->Montant,
+    //                         "Debitusd"  => $request->Montant,
+    //                         "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "Libelle" => $request->motifRetrait,
+    //                     ]);
+    //                     //CREDITE LE COMPTE DU CAISSIER
+    //                     Transactions::create([
+    //                         "NumTransaction" => $NumTransaction,
+    //                         "DateTransaction" => $dataSystem->DateSystem,
+    //                         "DateSaisie" => $dataSystem->DateSystem,
+    //                         "TypeTransaction" => "C",
+    //                         "CodeMonnaie" => 1,
+    //                         "CodeAgence" => $codeAgenceCaissier,
+    //                         "NumDossier" => "DOS0" . $numOperation->id,
+    //                         "NumDemande" => "V0" . $numOperation->id,
+    //                         "NumCompte" => $CompteCaissierUSD,
+    //                         "NumComptecp" => $dataCompte->NumCompte,
+    //                         "Operant" => $NomCaissier,
+    //                         "Credit"  => $request->Montant,
+    //                         "Creditusd"  => $request->Montant,
+    //                         "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "Libelle" => $request->motifRetrait,
+    //                     ]);
+    //                     //CREDIT  LE COMPTE COMPTABLE 33 EPARGNE
+    //                     // $Ecompte_courant_usd = EpargneAdhesionModel::first()->Ecompte_courant_usd;
+    //                     // Transactions::create([
+    //                     //     "NumTransaction" => $NumTransaction,
+    //                     //     "DateTransaction" => $dataSystem->DateSystem,
+    //                     //     "DateSaisie" => $dataSystem->DateSystem,
+    //                     //     "TypeTransaction" => "C",
+    //                     //     "CodeMonnaie" => 1,
+    //                     //     "CodeAgence" => $codeAgenceCaissier,
+    //                     //     "NumDossier" => "DOS0" . $numOperation->id,
+    //                     //     "NumDemande" => "V0" . $numOperation->id,
+    //                     //     "NumCompte" => $Ecompte_courant_usd,
+    //                     //     "NumComptecp" => $dataCompte->NumCompte,
+    //                     //     "Credit"  => $request->Montant,
+    //                     //     "Creditusd"  => $request->Montant,
+    //                     //     "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+    //                     //     "NomUtilisateur" => Auth::user()->name,
+    //                     //     "Libelle" => $request->motifRetrait,
+    //                     // ]);
+
+    //                     //RENSEIGNE LE BILLETAGE
+    //                     $lastInsertedId = Transactions::latest()->first();
+    //                     //COMPLETE LE BILLETAGE
+
+    //                     BilletageUSD::create([
+    //                         "refOperation" => $lastInsertedId->NumTransaction,
+    //                         "NumCompte" => $dataCompte->NumCompte,
+    //                         "NomMembre" => $dataCompte->NomCompte,
+    //                         "NumAbrege" => $request->NumAbrege,
+    //                         "Beneficiaire" => $dataVisa->Retirant,
+    //                         "Motif" => $request->motifRetrait,
+    //                         "Devise" => $request->devise,
+    //                         "centDollarsSortie" => $request->hundred,
+    //                         "cinquanteDollarsSortie" => $request->fitfty,
+    //                         "vightDollarsSortie" => $request->twenty,
+    //                         "dixDollarsSortie" => $request->ten,
+    //                         "cinqDollarsSortie" => $request->five,
+    //                         "unDollarsSortie" => $request->oneDollar,
+    //                         "montantSortie" => $request->Montant,
+    //                         "NomUtilisateur" => Auth::user()->name,
+    //                         "DateTransaction" => $dataSystem->DateSystem
+    //                     ]);
+    //                     //MET A JOUR LA TABLE POSITIONNEMENT
+    //                     Positionnements::where("NumDocument", $request->numDocument)->update([
+    //                         "Servie" => 1,
+    //                     ]);
+
+    //                     //SEND NOTIFICATION TO CUSTOMER 
+
+    //                     $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "D", $dataVisa->Retirant);
+    //                     return response()->json(['status' => 1, 'msg' => "Opération bien enregistrée."]);
+    //                 }
+    //             } else {
+    //                 return response()->json(['status' => 0, 'msg' => "Oooops! une erreur est survenue lors de l'éxécution de cette requête verifier bien que votre caisse est approvissionnée si l'erreur persiste veuillez contactez votre Administrateur système."]);
+    //             }
+    //         }
+    //     } else {
+    //         return response()->json(['status' => 0, "msg" => "Erreur!."]);
+    //     }
+    // }
+
     public function saveRetraitEspece(Request $request)
     {
-
         if (isset($request->NumAbrege)) {
 
-            //VERTIFIE SI LE BILLETATGE ENTREE PAR LE CAISSIER CORRESPOND AU BILLETAGE QU'IL POSSEDE DANS SA CAISSE
+            // ========================= CDF =========================
             if ($request->devise == "CDF") {
 
-                //RECUPERE LA SOMME DE  BILLETAGE EN FRANC CONGOLAIS
+                // Récupération du billetage disponible (inchangé)
                 $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
                 $billetageCDF = BilletageCDF::select(
                     DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFran"),
@@ -741,13 +1781,10 @@ class TransactionsController extends Controller
                     ->groupBy("NomUtilisateur")
                     ->get();
 
-
-
                 if ($billetageCDF->isEmpty()) {
-
                     return response()->json(['status' => 0, "msg" => "Vous devez d'abord effectuer un appro votre caisse en CDF semble n'est pas contenir de fonds !"]);
                 } else {
-
+                    // Vérifications des billets
                     if ($request->vightMille > $billetageCDF[0]->vightMilleFran) {
                         return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 20.000f non disponible vous avez " . $billetageCDF[0]->vightMilleFran . " billets dans votre caisse"]);
                     } else if ($request->dixMille > $billetageCDF[0]->dixMilleFran) {
@@ -766,31 +1803,42 @@ class TransactionsController extends Controller
                         return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 50f non disponible vous avez " . $billetageCDF[0]->cinquanteFan . " billets dans votre caisse"]);
                     }
 
-
-                    CompteurTransaction::create([
-                        'fakevalue' => "0000",
-                    ]);
-                    $numOperation = [];
+                    // Génération du numéro de transaction (pour la suite)
+                    CompteurTransaction::create(['fakevalue' => "0000"]);
                     $numOperation = CompteurTransaction::latest()->first();
                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-                    //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
-                    //$dataCompte = Comptes::where("NumAdherant", $request//->NumAbrege)
-                    // ->where("CodeMonnaie", 2)->first();
+
+                    // Récupération du compte client
                     $dataCompte = Comptes::where(function ($query) use ($request) {
                         $query->where('NumAdherant', $request->NumAbrege)
                             ->orWhere('NumCompte', $request->NumAbrege);
-                    })
-                        ->where('CodeMonnaie', 2)
-                        ->first();
+                    })->where('CodeMonnaie', 2)->first();
 
                     if ($dataCompte) {
-                        $numCompteCaissierCDF = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "2")->first();
-                        $CompteCaissierCDF = $numCompteCaissierCDF->NumCompte;
-                        $codeAgenceCaissier = $numCompteCaissierCDF->CodeAgence;
-                        $NomCaissier = $numCompteCaissierCDF->NomCompte;
+                        // 🔥 Récupération de l'agence courante du caissier
+                        $currentAgence = session('current_agence');
+                        if (!$currentAgence || !isset($currentAgence['code_agence'])) {
+                            return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+                        }
+                        $codeAgenceCourante = $currentAgence['code_agence'];
+
+                        // 🔥 Récupérer le compte caisse CDF correspondant à cette agence
+                        $compteCaisse = Comptes::where("caissierId", Auth::user()->id)
+                            ->where("CodeMonnaie", 2)
+                            ->where("CodeAgence", $codeAgenceCourante)
+                            ->first();
+
+                        if (!$compteCaisse) {
+                            return response()->json(["status" => 0, "msg" => "Compte caisse CDF introuvable pour l'agence sélectionnée"]);
+                        }
+
+                        $CompteCaissierCDF = $compteCaisse->NumCompte;
+                        $codeAgenceCaissier = $compteCaisse->CodeAgence;
+                        $codeAgenceClient = $dataCompte->CodeAgence;
+                        $NomCaissier = $compteCaisse->NomCompte;
                         $dataSystem = TauxEtDateSystem::latest()->first();
 
-
+                        // Vérification du solde de la caisse
                         $soldeCompteCaissier = Transactions::select(
                             DB::raw("SUM(Debitfc)-SUM(Creditfc) as soldeCompte"),
                         )->where("NumCompte", '=', $CompteCaissierCDF)
@@ -800,28 +1848,25 @@ class TransactionsController extends Controller
                         $montant = (int) $request->Montant;
                         $solde = abs($soldeCompteCaissier->soldeCompte);
                         if ($solde < $montant) {
-                            return response()->json(['status' => 0, 'msg' => "Votre solde est inferieur au montant à retirer votre solde actuel " .  $solde . " votre compte doit être approvisionné"]);
+                            return response()->json(['status' => 0, 'msg' => "Votre solde est inférieur au montant à retirer votre solde actuel " .  $solde . " votre compte doit être approvisionné"]);
                         }
 
-                        if (isset($request->Commission) and $request->Commission > 0) {
-                            CompteurTransaction::create([
-                                'fakevalue' => "0000",
-                            ]);
-                            $numOperation = [];
-                            $numOperation = CompteurTransaction::latest()->first();
-                            $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-                            //CREDITE LE COMPTE COMMISION USD
+                        // Gestion de la commission (inchangée)
+                        if (isset($request->Commission) && $request->Commission > 0) {
+                            CompteurTransaction::create(['fakevalue' => "0000"]);
+                            $numOperationComm = CompteurTransaction::latest()->first();
+                            $NumTransactionComm = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperationComm->id;
                             $compteCommissionCDF = "7270000000202";
                             Transactions::create([
-                                "NumTransaction" => $NumTransaction,
+                                "NumTransaction" => $NumTransactionComm,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "Taux" => 1,
                                 "TypeTransaction" => "C",
                                 "CodeMonnaie" => 2,
                                 "CodeAgence" => "20",
-                                "NumDossier" => "DOS00" . $numOperation->id,
-                                "NumDemande" => "V00" . $numOperation->id,
+                                "NumDossier" => "DOS00" . $numOperationComm->id,
+                                "NumDemande" => "V00" . $numOperationComm->id,
                                 "NumCompte" => $compteCommissionCDF,
                                 "NumComptecp" => $dataCompte->NumCompte,
                                 "Credit"  => $request->Commission,
@@ -831,18 +1876,16 @@ class TransactionsController extends Controller
                                 "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $dataCompte->NumCompte . " par le caissier " . Auth::user()->name,
                                 "refCompteMembre" => $compteCommissionCDF
                             ]);
-
-                            //DEBITE LE COMPTE DU MEMBRE DE LA COMMISSION
                             Transactions::create([
-                                "NumTransaction" => $NumTransaction,
+                                "NumTransaction" => $NumTransactionComm,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "Taux" => 1,
                                 "TypeTransaction" => "D",
                                 "CodeMonnaie" => 2,
                                 "CodeAgence" => "20",
-                                "NumDossier" => "DOS00" . $numOperation->id,
-                                "NumDemande" => "V00" . $numOperation->id,
+                                "NumDossier" => "DOS00" . $numOperationComm->id,
+                                "NumDemande" => "V00" . $numOperationComm->id,
                                 "NumCompte" => $dataCompte->NumCompte,
                                 "NumComptecp" =>  $compteCommissionCDF,
                                 "Debit"  => $request->Commission,
@@ -853,79 +1896,147 @@ class TransactionsController extends Controller
                             ]);
                         }
 
-
-
-                        //RECUPERE LA LIGNE POUR L'OPERATION POSITIONNEE
-
                         $dataVisa = Positionnements::where("NumDocument", "=", $request->numDocument)->first();
-                        //DEBITE LE COMPTE DU CLIENT 
-                        CompteurTransaction::create([
-                            'fakevalue' => "0000",
-                        ]);
-                        $numOperation = [];
-                        $numOperation = CompteurTransaction::latest()->first();
-                        $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-                        Transactions::create([
-                            "NumTransaction" => $NumTransaction,
-                            "DateTransaction" => $dataSystem->DateSystem,
-                            "DateSaisie" => $dataSystem->DateSystem,
-                            "TypeTransaction" => "D",
-                            "CodeMonnaie" => 2,
-                            "CodeAgence" => $dataCompte->CodeAgence,
-                            "NumDossier" => "DOS0" . $numOperation->id,
-                            "NumDemande" => "V0" . $numOperation->id,
-                            "NumCompte" => $dataCompte->NumCompte,
-                            "NumComptecp" => $CompteCaissierCDF,
-                            "Operant" =>  $dataVisa->Retirant,
-                            "Debit"  => $request->Montant,
-                            "Debit"  => $request->Montant / $dataSystem->TauxEnFc,
-                            "Debitfc" => $request->Montant,
-                            "NomUtilisateur" => Auth::user()->name,
-                            "Libelle" => $request->motifRetrait,
-                        ]);
-                        //CREDITE LE COMPTE DU CAISSIER
-                        Transactions::create([
-                            "NumTransaction" => $NumTransaction,
-                            "DateTransaction" => $dataSystem->DateSystem,
-                            "DateSaisie" => $dataSystem->DateSystem,
-                            "TypeTransaction" => "C",
-                            "CodeMonnaie" => 2,
-                            "CodeAgence" => $codeAgenceCaissier,
-                            "NumDossier" => "DOS0" . $numOperation->id,
-                            "NumDemande" => "V0" . $numOperation->id,
-                            "NumCompte" => $CompteCaissierCDF,
-                            "NumComptecp" => $dataCompte->NumCompte,
-                            "Operant" => $NomCaissier,
-                            "Credit"  => $request->Montant,
-                            "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
-                            "Creditfc" => $request->Montant,
-                            "NomUtilisateur" => Auth::user()->name,
-                            "Libelle" => $request->motifRetrait,
-                        ]);
-                        //CREDIT  LE COMPTE COMPTABLE 33 EPARGNE
-                        // $Ecompte_courant_cdf = EpargneAdhesionModel::first()->Ecompte_courant_cdf;
-                        // Transactions::create([
-                        //     "NumTransaction" => $NumTransaction,
-                        //     "DateTransaction" => $dataSystem->DateSystem,
-                        //     "DateSaisie" => $dataSystem->DateSystem,
-                        //     "TypeTransaction" => "C",
-                        //     "CodeMonnaie" => 2,
-                        //     "CodeAgence" => $codeAgenceCaissier,
-                        //     "NumDossier" => "DOS0" . $numOperation->id,
-                        //     "NumDemande" => "V0" . $numOperation->id,
-                        //     "NumCompte" => $Ecompte_courant_cdf,
-                        //     "NumComptecp" => $dataCompte->NumCompte,
-                        //     "Credit"  => $request->Montant,
-                        //     "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
-                        //     "Creditfc" => $request->Montant,
-                        //     "NomUtilisateur" => Auth::user()->name,
-                        //     "Libelle" => $request->motifRetrait,
-                        // ]);
 
-                        //RENSEIGNE LE BILLETAGE
+                        // Génération du numéro pour l'opération principale
+                        CompteurTransaction::create(['fakevalue' => "0000"]);
+                        $numOperationMain = CompteurTransaction::latest()->first();
+                        $NumTransactionMain = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperationMain->id;
+
+                        // 🔥 Détection : même agence ou inter‑agences ?
+                        if ($codeAgenceCaissier === $codeAgenceClient) {
+                            // ***** MÊME AGENCE : 2 écritures (débit client, crédit caisse) *****
+                            // Débit client
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "D",
+                                "CodeMonnaie" => 2,
+                                "CodeAgence" => $codeAgenceClient,
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $dataCompte->NumCompte,
+                                "NumComptecp" => $CompteCaissierCDF,
+                                "Operant" => $dataVisa->Retirant,
+                                "Debit"  => $request->Montant,
+                                "Debitusd"  => $request->Montant / $dataSystem->TauxEnFc,
+                                "Debitfc" => $request->Montant,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait,
+                            ]);
+                            // Crédit caisse
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "C",
+                                "CodeMonnaie" => 2,
+                                "CodeAgence" => $codeAgenceCaissier,
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $CompteCaissierCDF,
+                                "NumComptecp" => $dataCompte->NumCompte,
+                                "Operant" => $NomCaissier,
+                                "Credit"  => $request->Montant,
+                                "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
+                                "Creditfc" => $request->Montant,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait,
+                            ]);
+                        } else {
+                            // ***** INTER‑AGENCES : 4 écritures avec comptes de liaison *****
+                            $agenceCaissier = Agences::where('code_agence', $codeAgenceCaissier)->first();
+                            $agenceClient = Agences::where('code_agence', $codeAgenceClient)->first();
+                            if (!$agenceCaissier || !$agenceClient) {
+                                throw new \Exception("Agence non trouvée");
+                            }
+                            $compteLiaisonCaissier = $agenceCaissier->compte_liaison_cdf;
+                            $compteLiaisonClient    = $agenceClient->compte_liaison_cdf;
+                            if (!$compteLiaisonCaissier || !$compteLiaisonClient) {
+                                throw new \Exception("Comptes de liaison CDF non définis pour les agences concernées");
+                            }
+
+                            // 1) Dans l'agence du caissier : débit liaison ↔ crédit caisse
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "C",
+                                "CodeMonnaie" => 2,
+                                "CodeAgence" => $codeAgenceCaissier,
+                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $CompteCaissierCDF,
+                                "NumComptecp" => $compteLiaisonCaissier,
+                                "Credit" => $request->Montant,
+                                "Creditusd" => $request->Montant / $dataSystem->TauxEnFc,
+                                "Creditfc" => $request->Montant,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait . " (retrait client agence $codeAgenceClient)",
+                            ]);
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "D",
+                                "CodeMonnaie" => 2,
+                                "CodeAgence" => $codeAgenceCaissier,
+                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $compteLiaisonCaissier,
+                                "NumComptecp" => $CompteCaissierCDF,
+                                "Debit" => $request->Montant,
+                                "Debitusd" => $request->Montant / $dataSystem->TauxEnFc,
+                                "Debitfc" => $request->Montant,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait . " (retrait client agence $codeAgenceClient)",
+                            ]);
+
+                            // 2) Dans l'agence du client : débit client ↔ crédit liaison client
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "D",
+                                "CodeMonnaie" => 2,
+                                "CodeAgence" => $codeAgenceClient,
+                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $dataCompte->NumCompte,
+                                "NumComptecp" => $compteLiaisonClient,
+                                "Operant" => $dataVisa->Retirant,
+                                "Debit" => $request->Montant,
+                                "Debitusd" => $request->Montant / $dataSystem->TauxEnFc,
+                                "Debitfc" => $request->Montant,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait . " (retrait via agence $codeAgenceCaissier)",
+                            ]);
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "C",
+                                "CodeMonnaie" => 2,
+                                "CodeAgence" => $codeAgenceClient,
+                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $compteLiaisonClient,
+                                "NumComptecp" => $dataCompte->NumCompte,
+                                "Credit" => $request->Montant,
+                                "Creditusd" => $request->Montant / $dataSystem->TauxEnFc,
+                                "Creditfc" => $request->Montant,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait . " (retrait via agence $codeAgenceCaissier)",
+                            ]);
+                        }
+
+                        // Billetage (inchangé)
                         $lastInsertedId = Transactions::latest()->first();
-                        //COMPLETE LE BILLETAGE
-
                         BilletageCDF::create([
                             "refOperation" => $lastInsertedId->NumTransaction,
                             "NumCompte" => $dataCompte->NumCompte,
@@ -947,11 +2058,12 @@ class TransactionsController extends Controller
                             "DateTransaction" => $dataSystem->DateSystem
                         ]);
 
-                        //MET A JOUR LA TABLE POSITIONNEMENT
+                        // Mise à jour du positionnement
                         Positionnements::where("NumDocument", $request->numDocument)->update([
                             "Servie" => 1,
                         ]);
-                        //SEND NOTIFICATION TO CUSTUMER
+
+                        // Notification
                         $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "D", $dataVisa->Retirant);
                         return response()->json(['status' => 1, 'msg' => "Opération bien enregistrée."]);
                     } else {
@@ -960,12 +2072,10 @@ class TransactionsController extends Controller
                 }
             }
 
+            // ========================= USD =========================
             if ($request->devise == "USD") {
-                CompteurTransaction::create([
-                    'fakevalue' => "0000",
-                ]);
+                CompteurTransaction::create(['fakevalue' => "0000"]);
 
-                //RECUPERE LA SOMME DE BILLETAGE USD
                 $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
                 $billetageUSD = BilletageUSD::select(
                     DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollar"),
@@ -977,6 +2087,7 @@ class TransactionsController extends Controller
                 )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $date)
                     ->groupBy("NomUtilisateur")
                     ->get();
+
                 if (isset($billetageUSD[0])) {
                     if ($request->hundred > $billetageUSD[0]->centDollar) {
                         return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 100$ non disponible vous avez " . $billetageUSD[0]->centDollar . " billets dans votre caisse"]);
@@ -992,25 +2103,38 @@ class TransactionsController extends Controller
                         return response()->json(['status' => 0, 'msg' => "Oooops! Nombre de billet pour 1$ non disponible vous avez " . $billetageUSD[0]->unDollar . " billets dans votre caisse"]);
                     }
 
-
-                    $numOperation = [];
                     $numOperation = CompteurTransaction::latest()->first();
                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-                    //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
+
                     $dataCompte = Comptes::where(function ($query) use ($request) {
                         $query->where('NumAdherant', $request->NumAbrege)
                             ->orWhere('NumCompte', $request->NumAbrege);
-                    })
-                        ->where('CodeMonnaie', 1)
-                        ->first();
+                    })->where('CodeMonnaie', 1)->first();
+
                     if ($dataCompte) {
-                        $numCompteCaissierUSD = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "1")->first();
-                        $CompteCaissierUSD = $numCompteCaissierUSD->NumCompte;
-                        $codeAgenceCaissier = $numCompteCaissierUSD->CodeAgence;
-                        $NomCaissier = $numCompteCaissierUSD->NomCompte;
+                        // 🔥 Récupération de l'agence courante
+                        $currentAgence = session('current_agence');
+                        if (!$currentAgence || !isset($currentAgence['code_agence'])) {
+                            return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+                        }
+                        $codeAgenceCourante = $currentAgence['code_agence'];
+
+                        $compteCaisse = Comptes::where("caissierId", Auth::user()->id)
+                            ->where("CodeMonnaie", 1)
+                            ->where("CodeAgence", $codeAgenceCourante)
+                            ->first();
+
+                        if (!$compteCaisse) {
+                            return response()->json(["status" => 0, "msg" => "Compte caisse USD introuvable pour l'agence sélectionnée"]);
+                        }
+
+                        $CompteCaissierUSD = $compteCaisse->NumCompte;
+                        $codeAgenceCaissier = $compteCaisse->CodeAgence;
+                        $codeAgenceClient = $dataCompte->CodeAgence;
+                        $NomCaissier = $compteCaisse->NomCompte;
                         $dataSystem = TauxEtDateSystem::latest()->first();
 
-
+                        // Vérification solde caisse
                         $soldeCompteCaissier = Transactions::select(
                             DB::raw("SUM(Debitusd)-SUM(Creditusd) as soldeCompte"),
                         )->where("NumCompte", '=', $CompteCaissierUSD)
@@ -1020,34 +2144,27 @@ class TransactionsController extends Controller
                         $montant = (int) $request->Montant;
                         $solde = abs($soldeCompteCaissier->soldeCompte);
                         if ($solde < $montant) {
-                            return response()->json(['status' => 0, 'msg' => "Votre solde est inferieur au montant à retirer votre solde actuel " .  $solde . " votre compte doit être approvisionné"]);
+                            return response()->json(['status' => 0, 'msg' => "Votre solde est inférieur au montant à retirer votre solde actuel " .  $solde . " votre compte doit être approvisionné"]);
                         }
-                        //RECUPERE LA LIGNE POUR L'OPERATION POSITIONNEE
 
-
-
-                        if (isset($request->Commission) and $request->Commission > 0) {
-                            CompteurTransaction::create([
-                                'fakevalue' => "0000",
-                            ]);
-                            $numOperation = [];
-                            $numOperation = CompteurTransaction::latest()->first();
-                            $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-                            //CREDITE LE COMPTE COMMISION USD
+                        // Commission USD
+                        if (isset($request->Commission) && $request->Commission > 0) {
+                            CompteurTransaction::create(['fakevalue' => "0000"]);
+                            $numOperationComm = CompteurTransaction::latest()->first();
+                            $NumTransactionComm = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperationComm->id;
                             $compteCommissionUSD = "7270000000201";
                             Transactions::create([
-                                "NumTransaction" => $NumTransaction,
+                                "NumTransaction" => $NumTransactionComm,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "Taux" => 1,
                                 "TypeTransaction" => "C",
                                 "CodeMonnaie" => 1,
                                 "CodeAgence" => "20",
-                                "NumDossier" => "DOS00" . $numOperation->id,
-                                "NumDemande" => "V00" . $numOperation->id,
+                                "NumDossier" => "DOS00" . $numOperationComm->id,
+                                "NumDemande" => "V00" . $numOperationComm->id,
                                 "NumCompte" => $compteCommissionUSD,
                                 "NumComptecp" => $dataCompte->NumCompte,
-                                //   "Operant" => "COMPTE COMMISSION CDF",
                                 "Credit"  => $request->Commission,
                                 "Creditusd"  => $request->Commission,
                                 "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
@@ -1055,18 +2172,16 @@ class TransactionsController extends Controller
                                 "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $dataCompte->NumCompte . " par le caissier " . Auth::user()->name,
                                 "refCompteMembre" => $compteCommissionUSD
                             ]);
-
-                            //DEBITE LE COMPTE DU MEMBRE DE LA COMMISSION
                             Transactions::create([
-                                "NumTransaction" => $NumTransaction,
+                                "NumTransaction" => $NumTransactionComm,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "Taux" => 1,
                                 "TypeTransaction" => "D",
                                 "CodeMonnaie" => 1,
                                 "CodeAgence" => "20",
-                                "NumDossier" => "DOS00" . $numOperation->id,
-                                "NumDemande" => "V00" . $numOperation->id,
+                                "NumDossier" => "DOS00" . $numOperationComm->id,
+                                "NumDemande" => "V00" . $numOperationComm->id,
                                 "NumCompte" => $dataCompte->NumCompte,
                                 "NumComptecp" =>  $compteCommissionUSD,
                                 "Debit"  => $request->Commission,
@@ -1078,74 +2193,141 @@ class TransactionsController extends Controller
                         }
 
                         $dataVisa = Positionnements::where("NumDocument", "=", $request->numDocument)->first();
-                        //DEBITE LE COMPTE DU CLIENT 
-                        CompteurTransaction::create([
-                            'fakevalue' => "0000",
-                        ]);
-                        $numOperation = [];
-                        $numOperation = CompteurTransaction::latest()->first();
-                        $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-                        Transactions::create([
-                            "NumTransaction" => $NumTransaction,
-                            "DateTransaction" => $dataSystem->DateSystem,
-                            "DateSaisie" => $dataSystem->DateSystem,
-                            "TypeTransaction" => "D",
-                            "CodeMonnaie" => 1,
-                            "CodeAgence" => $dataCompte->CodeAgence,
-                            "NumDossier" => "DOS0" . $numOperation->id,
-                            "NumDemande" => "V0" . $numOperation->id,
-                            "NumCompte" => $dataCompte->NumCompte,
-                            "NumComptecp" => $CompteCaissierUSD,
-                            "Operant" =>  $dataVisa->Retirant,
-                            "Debit"  => $request->Montant,
-                            "Debitusd"  => $request->Montant,
-                            "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
-                            "NomUtilisateur" => Auth::user()->name,
-                            "Libelle" => $request->motifRetrait,
-                        ]);
-                        //CREDITE LE COMPTE DU CAISSIER
-                        Transactions::create([
-                            "NumTransaction" => $NumTransaction,
-                            "DateTransaction" => $dataSystem->DateSystem,
-                            "DateSaisie" => $dataSystem->DateSystem,
-                            "TypeTransaction" => "C",
-                            "CodeMonnaie" => 1,
-                            "CodeAgence" => $codeAgenceCaissier,
-                            "NumDossier" => "DOS0" . $numOperation->id,
-                            "NumDemande" => "V0" . $numOperation->id,
-                            "NumCompte" => $CompteCaissierUSD,
-                            "NumComptecp" => $dataCompte->NumCompte,
-                            "Operant" => $NomCaissier,
-                            "Credit"  => $request->Montant,
-                            "Creditusd"  => $request->Montant,
-                            "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
-                            "NomUtilisateur" => Auth::user()->name,
-                            "Libelle" => $request->motifRetrait,
-                        ]);
-                        //CREDIT  LE COMPTE COMPTABLE 33 EPARGNE
-                        // $Ecompte_courant_usd = EpargneAdhesionModel::first()->Ecompte_courant_usd;
-                        // Transactions::create([
-                        //     "NumTransaction" => $NumTransaction,
-                        //     "DateTransaction" => $dataSystem->DateSystem,
-                        //     "DateSaisie" => $dataSystem->DateSystem,
-                        //     "TypeTransaction" => "C",
-                        //     "CodeMonnaie" => 1,
-                        //     "CodeAgence" => $codeAgenceCaissier,
-                        //     "NumDossier" => "DOS0" . $numOperation->id,
-                        //     "NumDemande" => "V0" . $numOperation->id,
-                        //     "NumCompte" => $Ecompte_courant_usd,
-                        //     "NumComptecp" => $dataCompte->NumCompte,
-                        //     "Credit"  => $request->Montant,
-                        //     "Creditusd"  => $request->Montant,
-                        //     "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
-                        //     "NomUtilisateur" => Auth::user()->name,
-                        //     "Libelle" => $request->motifRetrait,
-                        // ]);
 
-                        //RENSEIGNE LE BILLETAGE
+                        CompteurTransaction::create(['fakevalue' => "0000"]);
+                        $numOperationMain = CompteurTransaction::latest()->first();
+                        $NumTransactionMain = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperationMain->id;
+
+                        if ($codeAgenceCaissier === $codeAgenceClient) {
+                            // Même agence : 2 écritures
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "D",
+                                "CodeMonnaie" => 1,
+                                "CodeAgence" => $codeAgenceClient,
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $dataCompte->NumCompte,
+                                "NumComptecp" => $CompteCaissierUSD,
+                                "Operant" => $dataVisa->Retirant,
+                                "Debit"  => $request->Montant,
+                                "Debitusd"  => $request->Montant,
+                                "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait,
+                            ]);
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "C",
+                                "CodeMonnaie" => 1,
+                                "CodeAgence" => $codeAgenceCaissier,
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $CompteCaissierUSD,
+                                "NumComptecp" => $dataCompte->NumCompte,
+                                "Operant" => $NomCaissier,
+                                "Credit"  => $request->Montant,
+                                "Creditusd"  => $request->Montant,
+                                "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait,
+                            ]);
+                        } else {
+                            // Inter‑agences USD
+                            $agenceCaissier = Agences::where('code_agence', $codeAgenceCaissier)->first();
+                            $agenceClient = Agences::where('code_agence', $codeAgenceClient)->first();
+                            if (!$agenceCaissier || !$agenceClient) {
+                                throw new \Exception("Agence non trouvée");
+                            }
+                            $compteLiaisonCaissier = $agenceCaissier->compte_liaison_usd;
+                            $compteLiaisonClient    = $agenceClient->compte_liaison_usd;
+                            if (!$compteLiaisonCaissier || !$compteLiaisonClient) {
+                                throw new \Exception("Comptes de liaison USD non définis");
+                            }
+
+                            // Agence caissier : crédit caisse, débit liaison
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "C",
+                                "CodeMonnaie" => 1,
+                                "CodeAgence" => $codeAgenceCaissier,
+                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $CompteCaissierUSD,
+                                "NumComptecp" => $compteLiaisonCaissier,
+                                "Credit" => $request->Montant,
+                                "Creditusd" => $request->Montant,
+                                "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait . " (retrait client agence $codeAgenceClient)",
+                            ]);
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "D",
+                                "CodeMonnaie" => 1,
+                                "CodeAgence" => $codeAgenceCaissier,
+                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $compteLiaisonCaissier,
+                                "NumComptecp" => $CompteCaissierUSD,
+                                "Debit" => $request->Montant,
+                                "Debitusd" => $request->Montant,
+                                "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait . " (retrait client agence $codeAgenceClient)",
+                            ]);
+
+                            // Agence client : débit client, crédit liaison
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "D",
+                                "CodeMonnaie" => 1,
+                                "CodeAgence" => $codeAgenceClient,
+                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $dataCompte->NumCompte,
+                                "NumComptecp" => $compteLiaisonClient,
+                                "Operant" => $dataVisa->Retirant,
+                                "Debit" => $request->Montant,
+                                "Debitusd" => $request->Montant,
+                                "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait . " (retrait via agence $codeAgenceCaissier)",
+                            ]);
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "C",
+                                "CodeMonnaie" => 1,
+                                "CodeAgence" => $codeAgenceClient,
+                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $compteLiaisonClient,
+                                "NumComptecp" => $dataCompte->NumCompte,
+                                "Credit" => $request->Montant,
+                                "Creditusd" => $request->Montant,
+                                "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait . " (retrait via agence $codeAgenceCaissier)",
+                            ]);
+                        }
+
                         $lastInsertedId = Transactions::latest()->first();
-                        //COMPLETE LE BILLETAGE
-
                         BilletageUSD::create([
                             "refOperation" => $lastInsertedId->NumTransaction,
                             "NumCompte" => $dataCompte->NumCompte,
@@ -1164,15 +2346,15 @@ class TransactionsController extends Controller
                             "NomUtilisateur" => Auth::user()->name,
                             "DateTransaction" => $dataSystem->DateSystem
                         ]);
-                        //MET A JOUR LA TABLE POSITIONNEMENT
+
                         Positionnements::where("NumDocument", $request->numDocument)->update([
                             "Servie" => 1,
                         ]);
 
-                        //SEND NOTIFICATION TO CUSTOMER 
-
                         $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "D", $dataVisa->Retirant);
                         return response()->json(['status' => 1, 'msg' => "Opération bien enregistrée."]);
+                    } else {
+                        return response()->json(['status' => 0, 'msg' => "Oooops! une erreur est survenue lors de l'éxécution de cette requête verifier bien que votre caisse est approvissionnée si l'erreur persiste veuillez contactez votre Administrateur système."]);
                     }
                 } else {
                     return response()->json(['status' => 0, 'msg' => "Oooops! une erreur est survenue lors de l'éxécution de cette requête verifier bien que votre caisse est approvissionnée si l'erreur persiste veuillez contactez votre Administrateur système."]);
@@ -1283,11 +2465,11 @@ class TransactionsController extends Controller
                     ->where("delested", "=", 0)
                     ->groupBy("NomUtilisateur")
                     ->first();
-                if(!$billetageCDF){
+                if (!$billetageCDF) {
                     return response()->json([
-                    "status" => 0,
-                    "msg" => "Le délestage est déjà effectué.",
-                ]);
+                        "status" => 0,
+                        "msg" => "Le délestage est déjà effectué.",
+                    ]);
                 }
                 //RENSEINE LE DELESTAGE
                 BilletageCDF::where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)->update([
@@ -1341,11 +2523,11 @@ class TransactionsController extends Controller
                     ->where("delested", "=", 0)
                     ->groupBy("NomUtilisateur")
                     ->first();
-                    if(!$billetageUSD){
+                if (!$billetageUSD) {
                     return response()->json([
-                    "status" => 0,
-                    "msg" => "Le délestage est déjà effectué.",
-                ]);
+                        "status" => 0,
+                        "msg" => "Le délestage est déjà effectué.",
+                    ]);
                 }
 
                 //RENSEINE LE DELESTAGE
@@ -1413,7 +2595,7 @@ class TransactionsController extends Controller
                 $soldeComptePrincip = Transactions::select(
                     DB::raw("SUM(Debitfc)-SUM(Creditfc) as soldeCompte"),
                 )->where("NumCompte", '=', $numCompteCaissePrCDF)
-                ->where("CodeMonnaie",2)
+                    ->where("CodeMonnaie", 2)
                     ->groupBy("NumCompte")
                     ->first();
 
@@ -1457,7 +2639,7 @@ class TransactionsController extends Controller
                 $soldeComptePrincip = Transactions::select(
                     DB::raw("SUM(Debitusd)-SUM(Creditusd) as soldeCompte"),
                 )->where("NumCompte", '=', $numCompteCaissePrUSD)
-                 ->where("CodeMonnaie",1)
+                    ->where("CodeMonnaie", 1)
                     ->groupBy("NumCompte")
                     ->first();
                 $montant = (int) $request->Montant;
@@ -2070,66 +3252,66 @@ class TransactionsController extends Controller
 
     //PERMET D'AFFICHER LE RELEVE 
 
-  public function getReleveInfo(Request $request)
-{
-    if (!$request->NumCompte) {
-        return response()->json(["status" => 0, "msg" => "Aucun compte trouvé."]);
-    }
-
-    // 🔥 Gestion du filtre agence
-    $agenceFilter = $request->agence_filter ?? 'current';
-    $codeAgence = null;
-    $user = auth()->user();
-
-    if ($agenceFilter === 'current') {
-        $currentAgence = session('current_agence');
-        $codeAgence = $currentAgence['code_agence'] ?? null;
-        if (!$codeAgence) {
-            return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
+    public function getReleveInfo(Request $request)
+    {
+        if (!$request->NumCompte) {
+            return response()->json(["status" => 0, "msg" => "Aucun compte trouvé."]);
         }
-    } elseif ($agenceFilter === 'all') {
+
+        // 🔥 Gestion du filtre agence
+        $agenceFilter = $request->agence_filter ?? 'current';
         $codeAgence = null;
-    } else {
-        $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
-        if (!$agence) {
-            return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
+        $user = auth()->user();
+
+        if ($agenceFilter === 'current') {
+            $currentAgence = session('current_agence');
+            $codeAgence = $currentAgence['code_agence'] ?? null;
+            if (!$codeAgence) {
+                return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
+            }
+        } elseif ($agenceFilter === 'all') {
+            $codeAgence = null;
+        } else {
+            $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
+            if (!$agence) {
+                return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
+            }
+            $codeAgence = $agence->code_agence;
         }
-        $codeAgence = $agence->code_agence;
-    }
 
-   try {
-    $compte = Comptes::where("NumCompte", $request->NumCompte)->first();
+        try {
+            $compte = Comptes::where("NumCompte", $request->NumCompte)->first();
 
-    if (!$compte) {
-        return response()->json(["status" => 0, "msg" => "Compte introuvable."]);
-    }
+            if (!$compte) {
+                return response()->json(["status" => 0, "msg" => "Compte introuvable."]);
+            }
 
-    // Récupération sécurisée de l'adresse (évite l'erreur si aucun enregistrement)
-    $adhesion = AdhesionMembre::where("num_compte", $request->NumCompte)->first();
-    $getAdresseMembre = $adhesion ? $adhesion->suiteAdresse : null;
+            // Récupération sécurisée de l'adresse (évite l'erreur si aucun enregistrement)
+            $adhesion = AdhesionMembre::where("num_compte", $request->NumCompte)->first();
+            $getAdresseMembre = $adhesion ? $adhesion->suiteAdresse : null;
 
-    // Vérifier que le compte appartient bien à l'agence choisie (sauf si all)
-    if ($codeAgence && $compte->CodeAgence != $codeAgence) {
-        return response()->json(["status" => 0, "msg" => "Ce compte n'appartient pas à l'agence sélectionnée."]);
-    }
+            // Vérifier que le compte appartient bien à l'agence choisie (sauf si all)
+            if ($codeAgence && $compte->CodeAgence != $codeAgence) {
+                return response()->json(["status" => 0, "msg" => "Ce compte n'appartient pas à l'agence sélectionnée."]);
+            }
 
-    $isCDF = $compte->CodeMonnaie == 2;
-    $debit  = $isCDF ? "Debitfc"  : "Debitusd";
-    $credit = $isCDF ? "Creditfc" : "Creditusd";
+            $isCDF = $compte->CodeMonnaie == 2;
+            $debit  = $isCDF ? "Debitfc"  : "Debitusd";
+            $credit = $isCDF ? "Creditfc" : "Creditusd";
 
-    // SOLDE REPORT (avec filtre agence)
-    $soldeReportQuery = Transactions::where("NumCompte", $request->NumCompte)
-        ->where("DateTransaction", "<", $request->DateDebut);
-    if ($codeAgence) {
-        $soldeReportQuery->where("CodeAgence", $codeAgence);
-    }
-    $soldeReport = $soldeReportQuery->selectRaw("COALESCE(SUM($credit) - SUM($debit),0) as solde")
-        ->value("solde");
+            // SOLDE REPORT (avec filtre agence)
+            $soldeReportQuery = Transactions::where("NumCompte", $request->NumCompte)
+                ->where("DateTransaction", "<", $request->DateDebut);
+            if ($codeAgence) {
+                $soldeReportQuery->where("CodeAgence", $codeAgence);
+            }
+            $soldeReport = $soldeReportQuery->selectRaw("COALESCE(SUM($credit) - SUM($debit),0) as solde")
+                ->value("solde");
 
-    DB::statement("SET @cumul := " . ($soldeReport ?? 0));
+            DB::statement("SET @cumul := " . ($soldeReport ?? 0));
 
-    // Requête principale
-    $query = "
+            // Requête principale
+            $query = "
         SELECT 
             t.RefTransaction,
             t.NumTransaction,
@@ -2148,47 +3330,46 @@ class TransactionsController extends Controller
             AND (t.$credit != 0 OR t.$debit != 0)
     ";
 
-    $params = [$request->NumCompte, $request->DateDebut, $request->DateFin];
+            $params = [$request->NumCompte, $request->DateDebut, $request->DateFin];
 
-    if ($codeAgence) {
-        $query .= " AND t.CodeAgence = ? AND c.CodeAgence = ?";
-        $params[] = $codeAgence;
-        $params[] = $codeAgence;
-    }
+            if ($codeAgence) {
+                $query .= " AND t.CodeAgence = ? AND c.CodeAgence = ?";
+                $params[] = $codeAgence;
+                $params[] = $codeAgence;
+            }
 
-    $query .= " ORDER BY t.DateTransaction, t.created_at, t.RefTransaction";
+            $query .= " ORDER BY t.DateTransaction, t.created_at, t.RefTransaction";
 
-    $data = DB::select($query, $params);
+            $data = DB::select($query, $params);
 
-    // SOLDE FIN (avec filtre agence)
-    $soldeInfoQuery = Transactions::where("NumCompte", $request->NumCompte)
-        ->where("DateTransaction", "<=", $request->DateFin);
-    if ($codeAgence) {
-        $soldeInfoQuery->where("CodeAgence", $codeAgence);
-    }
-    $soldeInfo = $soldeInfoQuery->selectRaw("
+            // SOLDE FIN (avec filtre agence)
+            $soldeInfoQuery = Transactions::where("NumCompte", $request->NumCompte)
+                ->where("DateTransaction", "<=", $request->DateFin);
+            if ($codeAgence) {
+                $soldeInfoQuery->where("CodeAgence", $codeAgence);
+            }
+            $soldeInfo = $soldeInfoQuery->selectRaw("
         COALESCE(SUM($credit) - SUM($debit),0) as soldeDispo,
         SUM($credit) as TotalCredit,
         SUM($debit) as TotalDebit
     ")->first();
 
-    return response()->json([
-        "status" => 1,
-        "dataReleve" => $data,
-        "dataSoldeReport" => $soldeReport ?? 0,
-        "devise" => $isCDF ? "CDF" : "USD",
-        "soldeInfo" => $soldeInfo,
-        "getCompteInfo" => $compte,
-        "adresseMembre" => $getAdresseMembre, // ✅ Adresse ajoutée
-    ]);
-
-} catch (\Throwable $th) {
-    return response()->json([
-        "status" => 0,
-        "msg" => $th->getMessage()
-    ]);
-}
-}
+            return response()->json([
+                "status" => 1,
+                "dataReleve" => $data,
+                "dataSoldeReport" => $soldeReport ?? 0,
+                "devise" => $isCDF ? "CDF" : "USD",
+                "soldeInfo" => $soldeInfo,
+                "getCompteInfo" => $compte,
+                "adresseMembre" => $getAdresseMembre, // ✅ Adresse ajoutée
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                "status" => 0,
+                "msg" => $th->getMessage()
+            ]);
+        }
+    }
 
     public function getSuspensHomePage()
     {
@@ -2511,365 +3692,658 @@ class TransactionsController extends Controller
     }
 
     //SAVE DEBIT
+    // public function saveDebit(Request $request)
+    // {
+
+    //     if (isset($request->compte_a_debiter) and isset($request->compte_a_crediter)) {
+
+    //         if ($request->devise == 2) {
+    //             $dataDebit = Comptes::where(function ($query) use ($request) {
+    //                 $query->where('NumCompte', $request->compte_a_debiter)
+    //                     ->where('CodeMonnaie', 2);
+    //             })->orWhere(function ($query) use ($request) {
+    //                 $query->where('NumAdherant', $request->compte_a_debiter)
+    //                     ->where('CodeMonnaie', 2);
+    //             })->orderByRaw("NumCompte = '{$request->compte_a_debiter}' DESC")
+    //                 ->first();
+
+    //             $dataCredit = Comptes::where(function ($query) use ($request) {
+    //                 $query->where('NumCompte', $request->compte_a_crediter)
+    //                     ->where('CodeMonnaie', 2);
+    //             })->orWhere(function ($query) use ($request) {
+    //                 $query->where('NumAdherant', $request->compte_a_crediter)
+    //                     ->where('CodeMonnaie', 2);
+    //             })->orderByRaw("NumCompte = '{$request->compte_a_crediter}' DESC")
+    //                 ->first();
+
+    //             if ($dataDebit->CodeMonnaie == 2 and $dataCredit->CodeMonnaie == 2) {
+    //                 //VERIFIE LE SOLDE 
+    //                 // $soldeCompteDebit = Transactions::select(
+    //                 //     DB::raw("SUM(Creditfc)-SUM(Debitfc) as soldeCompte"),
+    //                 // )->where("NumCompte", '=', $dataDebit->NumCompte)
+    //                 //     ->groupBy("NumCompte")
+    //                 //     ->first();
+
+    //                 // if ($soldeCompteDebit->soldeCompte >= $request->Montant and $dataDebit->RefGroupe == 330) {
+    //                 // if ($soldeCompteDebit->soldeCompte >= $request->Montant) {
+    //                 //DEBITE LE COMPTE 
+    //                 $dataSystem = TauxEtDateSystem::latest()->first();
+    //                 CompteurTransaction::create([
+    //                     'fakevalue' => "0000",
+    //                 ]);
+    //                 $numOperation = [];
+    //                 $numOperation = CompteurTransaction::latest()->first();
+    //                 $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+
+    //                 Transactions::create([
+    //                     "NumTransaction" => $NumTransaction,
+    //                     "DateTransaction" =>  $dataSystem->DateSystem,
+    //                     "DateSaisie" => $dataSystem->DateSystem,
+    //                     "TypeTransaction" => "D",
+    //                     "CodeMonnaie" => 2,
+    //                     "CodeAgence" => $dataDebit->CodeAgence,
+    //                     "NumDossier" => "DOS0" . $numOperation->id,
+    //                     "NumDemande" => "V0" . $numOperation->id,
+    //                     "NumCompte" => $dataDebit->NumCompte,
+    //                     "NumComptecp" =>  $dataCredit->NumCompte,
+    //                     "Operant" => Auth::user()->name,
+    //                     "Debit"  => $request->Montant,
+    //                     "Debitusd"  => $request->Montant / $dataSystem->TauxEnFc,
+    //                     "Debitfc" => $request->Montant,
+    //                     // "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+    //                     "NomUtilisateur" => Auth::user()->name,
+    //                     "Libelle" => $request->Libelle,
+    //                     // "isVirement" => $request->isVirement ? 1 : 0
+    //                 ]);
+
+    //                 //ON CREDITE LE COMPTE 
+
+    //                 Transactions::create([
+    //                     "NumTransaction" => $NumTransaction,
+    //                     "DateTransaction" =>  $dataSystem->DateSystem,
+    //                     "DateSaisie" => $dataSystem->DateSystem,
+    //                     "TypeTransaction" => "C",
+    //                     "CodeMonnaie" => 2,
+    //                     "CodeAgence" => $dataCredit->CodeAgence,
+    //                     "NumDossier" => "DOS0" . $numOperation->id,
+    //                     "NumDemande" => "V0" . $numOperation->id,
+    //                     "NumCompte" => $dataCredit->NumCompte,
+    //                     "NumComptecp" =>  $dataDebit->NumCompte,
+    //                     "Operant" => Auth::user()->name,
+    //                     "Credit"  => $request->Montant,
+    //                     "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
+    //                     "Creditfc" => $request->Montant,
+    //                     // "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+    //                     "NomUtilisateur" => Auth::user()->name,
+    //                     "Libelle" => $request->Libelle,
+    //                     // "isVirement" => $request->isVirement ? 1 : 0
+    //                 ]);
+    //                 // $this->CheckTransactionStatus(871);
+    //                 // $this->CheckTransactionStatus2(851);
+
+    //                 //CETTE LOGIQUE PERMET D'ENVOYER UN MESSAGE AU CLIENT LORSQUE LE COMPTE MOUVEMENTER SONT DES COMPTES EPARGNE
+    //                 $dataRefCompteClientDebit = Transactions::where("NumCompte", $request->compte_a_debiter)->orWhere("refCompteMembre", $request->compte_a_debiter)
+    //                     ->where("NumCompte", "like", "33%")->first();
+    //                 $dataRefCompteClientCredit = Transactions::where("NumCompte", $request->compte_a_crediter)->orWhere("refCompteMembre", $request->compte_a_crediter)
+    //                     ->where("NumCompte", "like", "33%")
+    //                     ->first();
+    //                 if ($dataRefCompteClientDebit) {
+    //                     if ($dataRefCompteClientDebit->CodeMonnaie == 1) {
+    //                         $devise = "USD"; //USD
+    //                         $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientDebit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientDebit->TypeTransaction, $request->Libelle);
+    //                     } else if ($dataRefCompteClientDebit->CodeMonnaie == 2) {
+    //                         $devise = "CDF"; //CDF
+    //                         $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientDebit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientDebit->TypeTransaction, $request->Libelle);
+    //                     }
+    //                 }
+    //                 if ($dataRefCompteClientCredit) {
+    //                     if ($dataRefCompteClientCredit->CodeMonnaie == 1) {
+    //                         $devise = "USD"; //USD
+    //                         $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientCredit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientCredit->TypeTransaction, $request->Libelle);
+    //                     } else if ($dataRefCompteClientCredit->CodeMonnaie == 2) {
+    //                         $devise = "CDF"; //CDF
+    //                         $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientCredit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientCredit->TypeTransaction, $request->Libelle);
+    //                     }
+    //                 }
+
+    //                 return response()->json([
+    //                     "status" => 1,
+    //                     "msg" => "Opération bien enregistrée."
+    //                 ]);
+    //                 // } else {
+    //                 //     return response()->json([
+    //                 //         "status" => 0,
+    //                 //         "msg" => "Le solde du compte à débiter est inferieur au montant saisi."
+    //                 //     ]);
+    //                 // }
+    //             } else {
+    //                 return response()->json([
+    //                     "status" => 0,
+    //                     "msg" => "Les devises pour ces deux comptes sont differentes."
+    //                 ]);
+    //             }
+    //         } else if ($request->devise == 1) {
+    //             $dataDebit = Comptes::where(function ($query) use ($request) {
+    //                 $query->where('NumCompte', $request->compte_a_debiter)
+    //                     ->where('CodeMonnaie', 1);
+    //             })->orWhere(function ($query) use ($request) {
+    //                 $query->where('NumAdherant', $request->compte_a_debiter)
+    //                     ->where('CodeMonnaie', 1);
+    //             })->orderByRaw("NumCompte = '{$request->compte_a_debiter}' DESC")
+    //                 ->first();
+
+
+
+    //             // Recherche d'abord par NumCompte avec CodeMonnaie = 1
+    //             $dataDebit = Comptes::where('NumCompte', $request->compte_a_debiter)
+    //                 ->where('CodeMonnaie', 1)
+    //                 ->first();
+
+    //             // Si aucun résultat n'est trouvé, rechercher par NumAdherant avec CodeMonnaie = 1
+    //             if (!$dataDebit) {
+    //                 $dataDebit = Comptes::where('NumAdherant', $request->compte_a_debiter)
+    //                     ->where('CodeMonnaie', 1)
+    //                     ->first();
+    //             }
+
+
+    //             // Recherche d'abord par NumCompte avec CodeMonnaie = 1
+    //             $dataCredit = Comptes::where('NumCompte', $request->compte_a_crediter)
+    //                 ->where('CodeMonnaie', 1)
+    //                 ->first();
+
+    //             // Si aucun résultat n'est trouvé, rechercher par NumAdherant avec CodeMonnaie = 2
+    //             if (!$dataCredit) {
+    //                 $dataCredit = Comptes::where('NumAdherant', $request->compte_a_crediter)
+    //                     ->where('CodeMonnaie', 1)
+    //                     ->first();
+    //             }
+
+    //             if ($dataDebit->CodeMonnaie == 1 and $dataCredit->CodeMonnaie == 1) {
+    //                 // if($dataDebit)
+    //                 //VERIFIE LE SOLDE 
+    //                 $soldeCompteDebit = Transactions::select(
+    //                     DB::raw("SUM(Creditusd)-SUM(Debitusd) as soldeCompte"),
+    //                 )->where("NumCompte", '=', $dataDebit->NumCompte)
+    //                     ->groupBy("NumCompte")
+    //                     ->first();
+    //                 // if ($soldeCompteDebit->soldeCompte >= $request->Montant and $dataDebit->RefGroupe == 330) {
+    //                 // if ($soldeCompteDebit->soldeCompte >= $request->Montant) {
+    //                 //DEBITE LE COMPTE 
+    //                 $dataSystem = TauxEtDateSystem::latest()->first();
+    //                 CompteurTransaction::create([
+    //                     'fakevalue' => "0000",
+    //                 ]);
+    //                 $numOperation = [];
+    //                 $numOperation = CompteurTransaction::latest()->first();
+    //                 $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+
+    //                 Transactions::create([
+    //                     "NumTransaction" => $NumTransaction,
+    //                     "DateTransaction" =>  $dataSystem->DateSystem,
+    //                     "DateSaisie" => $dataSystem->DateSystem,
+    //                     "TypeTransaction" => "D",
+    //                     "CodeMonnaie" => 1,
+    //                     "CodeAgence" => $dataDebit->CodeAgence,
+    //                     "NumDossier" => "DOS0" . $numOperation->id,
+    //                     "NumDemande" => "V0" . $numOperation->id,
+    //                     "NumCompte" => $dataDebit->NumCompte,
+    //                     "NumComptecp" =>  $dataCredit->NumCompte,
+    //                     "Operant" => Auth::user()->name,
+    //                     "Debit"  => $request->Montant,
+    //                     "Debitusd"  => $request->Montant,
+    //                     "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+    //                     "NomUtilisateur" => Auth::user()->name,
+    //                     "Libelle" => $request->Libelle,
+    //                     // "isVirement" => $request->isVirement ? 1 : 0
+    //                 ]);
+
+    //                 //ON CREDITE LE COMPTE 
+
+    //                 Transactions::create([
+    //                     "NumTransaction" => $NumTransaction,
+    //                     "DateTransaction" =>  $dataSystem->DateSystem,
+    //                     "DateSaisie" => $dataSystem->DateSystem,
+    //                     "TypeTransaction" => "C",
+    //                     "CodeMonnaie" => 1,
+    //                     "CodeAgence" => $dataCredit->CodeAgence,
+    //                     "NumDossier" => "DOS0" . $numOperation->id,
+    //                     "NumDemande" => "V0" . $numOperation->id,
+    //                     "NumCompte" => $dataCredit->NumCompte,
+    //                     "NumComptecp" =>  $dataDebit->NumCompte,
+    //                     "Operant" => Auth::user()->name,
+    //                     "Credit"  => $request->Montant,
+    //                     "Creditusd"  => $request->Montant,
+    //                     "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+    //                     "NomUtilisateur" => Auth::user()->name,
+    //                     "Libelle" => $request->Libelle,
+    //                     // "isVirement" => $request->isVirement ? 1 : 0
+    //                 ]);
+
+    //                 // $this->CheckTransactionStatus(870);
+    //                 // $this->CheckTransactionStatus2(851);
+
+    //                 return response()->json([
+    //                     "status" => 1,
+    //                     "msg" => "Opération bien enregistrée."
+    //                 ]);
+    //                 // } else {
+    //                 //     return response()->json([
+    //                 //         "status" => 0,
+    //                 //         "msg" => "Le solde du compte à débiter est inferieur au montant saisi."
+    //                 //     ]);
+    //                 // }
+    //             } else {
+    //                 return response()->json([
+    //                     "status" => 0,
+    //                     "msg" => "Les devises pour ces deux comptes sont differentes."
+    //                 ]);
+    //             }
+    //         }
+    //     } else {
+    //         return response()->json([
+    //             "status" => 0,
+    //             "msg" => "Veuillez renseigner le compte à débiter et le compte à créditer."
+    //         ]);
+    //     }
+    // }
+
+
     public function saveDebit(Request $request)
     {
-
-        if (isset($request->compte_a_debiter) and isset($request->compte_a_crediter)) {
-
-            if ($request->devise == 2) {
-                $dataDebit = Comptes::where(function ($query) use ($request) {
-                    $query->where('NumCompte', $request->compte_a_debiter)
-                        ->where('CodeMonnaie', 2);
-                })->orWhere(function ($query) use ($request) {
-                    $query->where('NumAdherant', $request->compte_a_debiter)
-                        ->where('CodeMonnaie', 2);
-                })->orderByRaw("NumCompte = '{$request->compte_a_debiter}' DESC")
-                    ->first();
-
-                $dataCredit = Comptes::where(function ($query) use ($request) {
-                    $query->where('NumCompte', $request->compte_a_crediter)
-                        ->where('CodeMonnaie', 2);
-                })->orWhere(function ($query) use ($request) {
-                    $query->where('NumAdherant', $request->compte_a_crediter)
-                        ->where('CodeMonnaie', 2);
-                })->orderByRaw("NumCompte = '{$request->compte_a_crediter}' DESC")
-                    ->first();
-
-                if ($dataDebit->CodeMonnaie == 2 and $dataCredit->CodeMonnaie == 2) {
-                    //VERIFIE LE SOLDE 
-                    // $soldeCompteDebit = Transactions::select(
-                    //     DB::raw("SUM(Creditfc)-SUM(Debitfc) as soldeCompte"),
-                    // )->where("NumCompte", '=', $dataDebit->NumCompte)
-                    //     ->groupBy("NumCompte")
-                    //     ->first();
-
-                    // if ($soldeCompteDebit->soldeCompte >= $request->Montant and $dataDebit->RefGroupe == 330) {
-                    // if ($soldeCompteDebit->soldeCompte >= $request->Montant) {
-                    //DEBITE LE COMPTE 
-                    $dataSystem = TauxEtDateSystem::latest()->first();
-                    CompteurTransaction::create([
-                        'fakevalue' => "0000",
-                    ]);
-                    $numOperation = [];
-                    $numOperation = CompteurTransaction::latest()->first();
-                    $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-
-                    Transactions::create([
-                        "NumTransaction" => $NumTransaction,
-                        "DateTransaction" =>  $dataSystem->DateSystem,
-                        "DateSaisie" => $dataSystem->DateSystem,
-                        "TypeTransaction" => "D",
-                        "CodeMonnaie" => 2,
-                        "CodeAgence" => $dataDebit->CodeAgence,
-                        "NumDossier" => "DOS0" . $numOperation->id,
-                        "NumDemande" => "V0" . $numOperation->id,
-                        "NumCompte" => $dataDebit->NumCompte,
-                        "NumComptecp" =>  $dataCredit->NumCompte,
-                        "Operant" => Auth::user()->name,
-                        "Debit"  => $request->Montant,
-                        "Debitusd"  => $request->Montant / $dataSystem->TauxEnFc,
-                        "Debitfc" => $request->Montant,
-                        // "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
-                        "NomUtilisateur" => Auth::user()->name,
-                        "Libelle" => $request->Libelle,
-                        "isVirement" => $request->isVirement ? 1 : 0
-                    ]);
-
-                    //ON CREDITE LE COMPTE 
-
-                    Transactions::create([
-                        "NumTransaction" => $NumTransaction,
-                        "DateTransaction" =>  $dataSystem->DateSystem,
-                        "DateSaisie" => $dataSystem->DateSystem,
-                        "TypeTransaction" => "C",
-                        "CodeMonnaie" => 2,
-                        "CodeAgence" => $dataCredit->CodeAgence,
-                        "NumDossier" => "DOS0" . $numOperation->id,
-                        "NumDemande" => "V0" . $numOperation->id,
-                        "NumCompte" => $dataCredit->NumCompte,
-                        "NumComptecp" =>  $dataDebit->NumCompte,
-                        "Operant" => Auth::user()->name,
-                        "Credit"  => $request->Montant,
-                        "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
-                        "Creditfc" => $request->Montant,
-                        // "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
-                        "NomUtilisateur" => Auth::user()->name,
-                        "Libelle" => $request->Libelle,
-                        "isVirement" => $request->isVirement ? 1 : 0
-                    ]);
-                    // $this->CheckTransactionStatus(871);
-                    // $this->CheckTransactionStatus2(851);
-
-                    //CETTE LOGIQUE PERMET D'ENVOYER UN MESSAGE AU CLIENT LORSQUE LE COMPTE MOUVEMENTER SONT DES COMPTES EPARGNE
-                    $dataRefCompteClientDebit = Transactions::where("NumCompte", $request->compte_a_debiter)->orWhere("refCompteMembre", $request->compte_a_debiter)
-                        ->where("NumCompte", "like", "33%")->first();
-                    $dataRefCompteClientCredit = Transactions::where("NumCompte", $request->compte_a_crediter)->orWhere("refCompteMembre", $request->compte_a_crediter)
-                        ->where("NumCompte", "like", "33%")
-                        ->first();
-                    if ($dataRefCompteClientDebit) {
-                        if ($dataRefCompteClientDebit->CodeMonnaie == 1) {
-                            $devise = "USD"; //USD
-                            $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientDebit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientDebit->TypeTransaction, $request->Libelle);
-                        } else if ($dataRefCompteClientDebit->CodeMonnaie == 2) {
-                            $devise = "CDF"; //CDF
-                            $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientDebit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientDebit->TypeTransaction, $request->Libelle);
-                        }
-                    }
-                    if ($dataRefCompteClientCredit) {
-                        if ($dataRefCompteClientCredit->CodeMonnaie == 1) {
-                            $devise = "USD"; //USD
-                            $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientCredit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientCredit->TypeTransaction, $request->Libelle);
-                        } else if ($dataRefCompteClientCredit->CodeMonnaie == 2) {
-                            $devise = "CDF"; //CDF
-                            $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientCredit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientCredit->TypeTransaction, $request->Libelle);
-                        }
-                    }
-
-                    return response()->json([
-                        "status" => 1,
-                        "msg" => "Opération bien enregistrée."
-                    ]);
-                    // } else {
-                    //     return response()->json([
-                    //         "status" => 0,
-                    //         "msg" => "Le solde du compte à débiter est inferieur au montant saisi."
-                    //     ]);
-                    // }
-                } else {
-                    return response()->json([
-                        "status" => 0,
-                        "msg" => "Les devises pour ces deux comptes sont differentes."
-                    ]);
-                }
-            } else if ($request->devise == 1) {
-                $dataDebit = Comptes::where(function ($query) use ($request) {
-                    $query->where('NumCompte', $request->compte_a_debiter)
-                        ->where('CodeMonnaie', 1);
-                })->orWhere(function ($query) use ($request) {
-                    $query->where('NumAdherant', $request->compte_a_debiter)
-                        ->where('CodeMonnaie', 1);
-                })->orderByRaw("NumCompte = '{$request->compte_a_debiter}' DESC")
-                    ->first();
-
-                // $dataCredit = Comptes::where(function ($query) use ($request) {
-                //     $query->where('NumCompte', $request->compte_a_crediter)
-                //         ->where('CodeMonnaie', 1);
-                // })->orWhere(function ($query) use ($request) {
-                //     $query->where('NumAdherant', $request->compte_a_crediter)
-                //         ->where('CodeMonnaie', 1);
-                // })->orderByRaw("NumCompte = '{$request->compte_a_crediter}' DESC")
-                //     ->first();
-
-                // Recherche d'abord par NumCompte avec CodeMonnaie = 1
-                $dataDebit = Comptes::where('NumCompte', $request->compte_a_debiter)
-                    ->where('CodeMonnaie', 1)
-                    ->first();
-
-                // Si aucun résultat n'est trouvé, rechercher par NumAdherant avec CodeMonnaie = 1
-                if (!$dataDebit) {
-                    $dataDebit = Comptes::where('NumAdherant', $request->compte_a_debiter)
-                        ->where('CodeMonnaie', 1)
-                        ->first();
-                }
-
-
-                // Recherche d'abord par NumCompte avec CodeMonnaie = 1
-                $dataCredit = Comptes::where('NumCompte', $request->compte_a_crediter)
-                    ->where('CodeMonnaie', 1)
-                    ->first();
-
-                // Si aucun résultat n'est trouvé, rechercher par NumAdherant avec CodeMonnaie = 2
-                if (!$dataCredit) {
-                    $dataCredit = Comptes::where('NumAdherant', $request->compte_a_crediter)
-                        ->where('CodeMonnaie', 1)
-                        ->first();
-                }
-
-                if ($dataDebit->CodeMonnaie == 1 and $dataCredit->CodeMonnaie == 1) {
-                    // if($dataDebit)
-                    //VERIFIE LE SOLDE 
-                    $soldeCompteDebit = Transactions::select(
-                        DB::raw("SUM(Creditusd)-SUM(Debitusd) as soldeCompte"),
-                    )->where("NumCompte", '=', $dataDebit->NumCompte)
-                        ->groupBy("NumCompte")
-                        ->first();
-                    // if ($soldeCompteDebit->soldeCompte >= $request->Montant and $dataDebit->RefGroupe == 330) {
-                    // if ($soldeCompteDebit->soldeCompte >= $request->Montant) {
-                    //DEBITE LE COMPTE 
-                    $dataSystem = TauxEtDateSystem::latest()->first();
-                    CompteurTransaction::create([
-                        'fakevalue' => "0000",
-                    ]);
-                    $numOperation = [];
-                    $numOperation = CompteurTransaction::latest()->first();
-                    $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-
-                    Transactions::create([
-                        "NumTransaction" => $NumTransaction,
-                        "DateTransaction" =>  $dataSystem->DateSystem,
-                        "DateSaisie" => $dataSystem->DateSystem,
-                        "TypeTransaction" => "D",
-                        "CodeMonnaie" => 1,
-                        "CodeAgence" => $dataDebit->CodeAgence,
-                        "NumDossier" => "DOS0" . $numOperation->id,
-                        "NumDemande" => "V0" . $numOperation->id,
-                        "NumCompte" => $dataDebit->NumCompte,
-                        "NumComptecp" =>  $dataCredit->NumCompte,
-                        "Operant" => Auth::user()->name,
-                        "Debit"  => $request->Montant,
-                        "Debitusd"  => $request->Montant,
-                        "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
-                        "NomUtilisateur" => Auth::user()->name,
-                        "Libelle" => $request->Libelle,
-                        "isVirement" => $request->isVirement ? 1 : 0
-                    ]);
-
-                    //ON CREDITE LE COMPTE 
-
-                    Transactions::create([
-                        "NumTransaction" => $NumTransaction,
-                        "DateTransaction" =>  $dataSystem->DateSystem,
-                        "DateSaisie" => $dataSystem->DateSystem,
-                        "TypeTransaction" => "C",
-                        "CodeMonnaie" => 1,
-                        "CodeAgence" => $dataCredit->CodeAgence,
-                        "NumDossier" => "DOS0" . $numOperation->id,
-                        "NumDemande" => "V0" . $numOperation->id,
-                        "NumCompte" => $dataCredit->NumCompte,
-                        "NumComptecp" =>  $dataDebit->NumCompte,
-                        "Operant" => Auth::user()->name,
-                        "Credit"  => $request->Montant,
-                        "Creditusd"  => $request->Montant,
-                        "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
-                        "NomUtilisateur" => Auth::user()->name,
-                        "Libelle" => $request->Libelle,
-                        "isVirement" => $request->isVirement ? 1 : 0
-                    ]);
-
-                    // $this->CheckTransactionStatus(870);
-                    // $this->CheckTransactionStatus2(851);
-
-                    return response()->json([
-                        "status" => 1,
-                        "msg" => "Opération bien enregistrée."
-                    ]);
-                    // } else {
-                    //     return response()->json([
-                    //         "status" => 0,
-                    //         "msg" => "Le solde du compte à débiter est inferieur au montant saisi."
-                    //     ]);
-                    // }
-                } else {
-                    return response()->json([
-                        "status" => 0,
-                        "msg" => "Les devises pour ces deux comptes sont differentes."
-                    ]);
-                }
-            }
-        } else {
+        if (!isset($request->compte_a_debiter) || !isset($request->compte_a_crediter)) {
             return response()->json([
                 "status" => 0,
                 "msg" => "Veuillez renseigner le compte à débiter et le compte à créditer."
             ]);
         }
+
+        // Récupération de l'agence courante de l'utilisateur (pour le contexte)
+        $currentAgence = session('current_agence');
+        if (!$currentAgence || !isset($currentAgence['code_agence'])) {
+            return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+        }
+        $codeAgenceCourante = $currentAgence['code_agence'];
+           
+
+        $deviseParam = $request->devise; // 2 pour CDF, 1 pour USD
+        $dataSystem = TauxEtDateSystem::latest()->first();
+
+        // ---------- CDF ----------
+        if ($deviseParam == 2) {
+            $debitCol = 'Debitfc';
+            $creditCol = 'Creditfc';
+            $deviseLib = 'CDF';
+            $liaisonCol = 'compte_liaison_cdf';
+
+            // Récupération des comptes par NumCompte ou NumAdherant
+            $dataDebit = Comptes::where(function ($query) use ($request) {
+                $query->where('NumCompte', $request->compte_a_debiter)
+                    ->orWhere('NumAdherant', $request->compte_a_debiter);
+            })->where('CodeMonnaie', 2)->orderByRaw("NumCompte = '{$request->compte_a_debiter}' DESC")->first();
+
+            $dataCredit = Comptes::where(function ($query) use ($request) {
+                $query->where('NumCompte', $request->compte_a_crediter)
+                    ->orWhere('NumAdherant', $request->compte_a_crediter);
+            })->where('CodeMonnaie', 2)->orderByRaw("NumCompte = '{$request->compte_a_crediter}' DESC")->first();
+
+            if (!$dataDebit || !$dataCredit) {
+                return response()->json(["status" => 0, "msg" => "Compte introuvable pour la devise CDF"]);
+            }
+
+            if ($dataDebit->CodeMonnaie != 2 || $dataCredit->CodeMonnaie != 2) {
+                return response()->json(["status" => 0, "msg" => "Les devises des comptes ne correspondent pas à la devise sélectionnée"]);
+            }
+
+            $codeAgenceDebit = $dataDebit->CodeAgence;
+            $codeAgenceCredit = $dataCredit->CodeAgence;
+
+            // Génération du numéro de transaction
+            CompteurTransaction::create(['fakevalue' => "0000"]);
+            $numOperation = CompteurTransaction::latest()->first();
+            $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+
+            // Cas 1 : même agence → 2 écritures
+            if ($codeAgenceDebit === $codeAgenceCredit) {
+                // Débit
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "DateTransaction" => $dataSystem->DateSystem,
+                    "DateSaisie" => $dataSystem->DateSystem,
+                    "TypeTransaction" => "D",
+                    "CodeMonnaie" => 2,
+                    "CodeAgence" => $codeAgenceDebit,
+                    "NumDossier" => "DOS0" . $numOperation->id,
+                    "NumDemande" => "V0" . $numOperation->id,
+                    "NumCompte" => $dataDebit->NumCompte,
+                    "NumComptecp" => $dataCredit->NumCompte,
+                    "Operant" => Auth::user()->name,
+                    "Debit" => $request->Montant,
+                    "Debitusd" => $request->Montant / $dataSystem->TauxEnFc,
+                    "Debitfc" => $request->Montant,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => $request->Libelle,
+                ]);
+                // Crédit
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "DateTransaction" => $dataSystem->DateSystem,
+                    "DateSaisie" => $dataSystem->DateSystem,
+                    "TypeTransaction" => "C",
+                    "CodeMonnaie" => 2,
+                    "CodeAgence" => $codeAgenceCredit,
+                    "NumDossier" => "DOS0" . $numOperation->id,
+                    "NumDemande" => "V0" . $numOperation->id,
+                    "NumCompte" => $dataCredit->NumCompte,
+                    "NumComptecp" => $dataDebit->NumCompte,
+                    "Operant" => Auth::user()->name,
+                    "Credit" => $request->Montant,
+                    "Creditusd" => $request->Montant / $dataSystem->TauxEnFc,
+                    "Creditfc" => $request->Montant,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => $request->Libelle,
+                ]);
+            }
+            // Cas 2 : agences différentes → 4 écritures via comptes de liaison
+            else {
+                $agenceDebit = Agences::where('code_agence', $codeAgenceDebit)->first();
+                $agenceCredit = Agences::where('code_agence', $codeAgenceCredit)->first();
+                if (!$agenceDebit || !$agenceCredit) {
+                    return response()->json(["status" => 0, "msg" => "Agence non trouvée pour l'un des comptes"]);
+                }
+                $compteLiaisonDebit = $agenceDebit->$liaisonCol;
+                $compteLiaisonCredit = $agenceCredit->$liaisonCol;
+                if (!$compteLiaisonDebit || !$compteLiaisonCredit) {
+                    return response()->json(["status" => 0, "msg" => "Comptes de liaison non définis pour les agences concernées"]);
+                }
+             
+                // 1) Débit du compte débiteur, crédit de son compte de liaison
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "DateTransaction" => $dataSystem->DateSystem,
+                    "DateSaisie" => $dataSystem->DateSystem,
+                    "TypeTransaction" => "D",
+                    "CodeMonnaie" => 2,
+                    "CodeAgence" => $codeAgenceDebit,
+                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "NumDossier" => "DOS0" . $numOperation->id,
+                    "NumDemande" => "V0" . $numOperation->id,
+                    "NumCompte" => $dataDebit->NumCompte,
+                    "NumComptecp" => $compteLiaisonDebit,
+                    "Operant" => Auth::user()->name,
+                    "Debit" => $request->Montant,
+                    "Debitusd" => $request->Montant / $dataSystem->TauxEnFc,
+                    "Debitfc" => $request->Montant,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => $request->Libelle,
+                ]);
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "DateTransaction" => $dataSystem->DateSystem,
+                    "DateSaisie" => $dataSystem->DateSystem,
+                    "TypeTransaction" => "C",
+                    "CodeMonnaie" => 2,
+                    "CodeAgence" => $codeAgenceDebit,
+                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "NumDossier" => "DOS0" . $numOperation->id,
+                    "NumDemande" => "V0" . $numOperation->id,
+                    "NumCompte" => $compteLiaisonDebit,
+                    "NumComptecp" => $dataDebit->NumCompte,
+                    "Credit" => $request->Montant,
+                    "Creditusd" => $request->Montant / $dataSystem->TauxEnFc,
+                    "Creditfc" => $request->Montant,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => $request->Libelle,
+                ]);
+
+                // 2) Débit du compte de liaison du créditeur, crédit du compte créditeur
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "DateTransaction" => $dataSystem->DateSystem,
+                    "DateSaisie" => $dataSystem->DateSystem,
+                    "TypeTransaction" => "D",
+                    "CodeMonnaie" => 2,
+                    "CodeAgence" => $codeAgenceCredit,
+                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "NumDossier" => "DOS0" . $numOperation->id,
+                    "NumDemande" => "V0" . $numOperation->id,
+                    "NumCompte" => $compteLiaisonCredit,
+                    "NumComptecp" => $dataCredit->NumCompte,
+                    "Debit" => $request->Montant,
+                    "Debitusd" => $request->Montant / $dataSystem->TauxEnFc,
+                    "Debitfc" => $request->Montant,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => $request->Libelle,
+                ]);
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "DateTransaction" => $dataSystem->DateSystem,
+                    "DateSaisie" => $dataSystem->DateSystem,
+                    "TypeTransaction" => "C",
+                    "CodeMonnaie" => 2,
+                    "CodeAgence" => $codeAgenceCredit,
+                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "NumDossier" => "DOS0" . $numOperation->id,
+                    "NumDemande" => "V0" . $numOperation->id,
+                    "NumCompte" => $dataCredit->NumCompte,
+                    "NumComptecp" => $compteLiaisonCredit,
+                    "Operant" => Auth::user()->name,
+                    "Credit" => $request->Montant,
+                    "Creditusd" => $request->Montant / $dataSystem->TauxEnFc,
+                    "Creditfc" => $request->Montant,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => $request->Libelle,
+                ]);
+            }
+        }
+
+        // ---------- USD ----------
+        else if ($deviseParam == 1) {
+            $debitCol = 'Debitusd';
+            $creditCol = 'Creditusd';
+            $deviseLib = 'USD';
+            $liaisonCol = 'compte_liaison_usd';
+
+            // Récupération des comptes (recherche d'abord par NumCompte exact, puis par NumAdherant)
+            $dataDebit = Comptes::where('NumCompte', $request->compte_a_debiter)
+                ->where('CodeMonnaie', 1)
+                ->first();
+            if (!$dataDebit) {
+                $dataDebit = Comptes::where('NumAdherant', $request->compte_a_debiter)
+                    ->where('CodeMonnaie', 1)
+                    ->first();
+            }
+
+            $dataCredit = Comptes::where('NumCompte', $request->compte_a_crediter)
+                ->where('CodeMonnaie', 1)
+                ->first();
+            if (!$dataCredit) {
+                $dataCredit = Comptes::where('NumAdherant', $request->compte_a_crediter)
+                    ->where('CodeMonnaie', 1)
+                    ->first();
+            }
+
+            if (!$dataDebit || !$dataCredit) {
+                return response()->json(["status" => 0, "msg" => "Compte introuvable pour la devise USD"]);
+            }
+
+            if ($dataDebit->CodeMonnaie != 1 || $dataCredit->CodeMonnaie != 1) {
+                return response()->json(["status" => 0, "msg" => "Les devises des comptes ne correspondent pas à la devise sélectionnée"]);
+            }
+
+            $codeAgenceDebit = $dataDebit->CodeAgence;
+            $codeAgenceCredit = $dataCredit->CodeAgence;
+
+            CompteurTransaction::create(['fakevalue' => "0000"]);
+            $numOperation = CompteurTransaction::latest()->first();
+            $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+
+            if ($codeAgenceDebit === $codeAgenceCredit) {
+                // Même agence
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "DateTransaction" => $dataSystem->DateSystem,
+                    "DateSaisie" => $dataSystem->DateSystem,
+                    "TypeTransaction" => "D",
+                    "CodeMonnaie" => 1,
+                    "CodeAgence" => $codeAgenceDebit,
+                    "NumDossier" => "DOS0" . $numOperation->id,
+                    "NumDemande" => "V0" . $numOperation->id,
+                    "NumCompte" => $dataDebit->NumCompte,
+                    "NumComptecp" => $dataCredit->NumCompte,
+                    "Operant" => Auth::user()->name,
+                    "Debit" => $request->Montant,
+                    "Debitusd" => $request->Montant,
+                    "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => $request->Libelle,
+                ]);
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "DateTransaction" => $dataSystem->DateSystem,
+                    "DateSaisie" => $dataSystem->DateSystem,
+                    "TypeTransaction" => "C",
+                    "CodeMonnaie" => 1,
+                    "CodeAgence" => $codeAgenceCredit,
+                    "NumDossier" => "DOS0" . $numOperation->id,
+                    "NumDemande" => "V0" . $numOperation->id,
+                    "NumCompte" => $dataCredit->NumCompte,
+                    "NumComptecp" => $dataDebit->NumCompte,
+                    "Operant" => Auth::user()->name,
+                    "Credit" => $request->Montant,
+                    "Creditusd" => $request->Montant,
+                    "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => $request->Libelle,
+                ]);
+            } else {
+                // Agences différentes
+                $agenceDebit = Agences::where('code_agence', $codeAgenceDebit)->first();
+                $agenceCredit = Agences::where('code_agence', $codeAgenceCredit)->first();
+                if (!$agenceDebit || !$agenceCredit) {
+                    return response()->json(["status" => 0, "msg" => "Agence non trouvée pour l'un des comptes"]);
+                }
+                $compteLiaisonDebit = $agenceDebit->$liaisonCol;
+                $compteLiaisonCredit = $agenceCredit->$liaisonCol;
+                if (!$compteLiaisonDebit || !$compteLiaisonCredit) {
+                    return response()->json(["status" => 0, "msg" => "Comptes de liaison non définis pour les agences concernées"]);
+                }
+
+                // 1) Débit du compte débiteur, crédit de son liaison
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "DateTransaction" => $dataSystem->DateSystem,
+                    "DateSaisie" => $dataSystem->DateSystem,
+                    "TypeTransaction" => "D",
+                    "CodeMonnaie" => 1,
+                    "CodeAgence" => $codeAgenceDebit,
+                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "NumDossier" => "DOS0" . $numOperation->id,
+                    "NumDemande" => "V0" . $numOperation->id,
+                    "NumCompte" => $dataDebit->NumCompte,
+                    "NumComptecp" => $compteLiaisonDebit,
+                    "Operant" => Auth::user()->name,
+                    "Debit" => $request->Montant,
+                    "Debitusd" => $request->Montant,
+                    "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => $request->Libelle,
+                ]);
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "DateTransaction" => $dataSystem->DateSystem,
+                    "DateSaisie" => $dataSystem->DateSystem,
+                    "TypeTransaction" => "C",
+                    "CodeMonnaie" => 1,
+                    "CodeAgence" => $codeAgenceDebit,
+                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "NumDossier" => "DOS0" . $numOperation->id,
+                    "NumDemande" => "V0" . $numOperation->id,
+                    "NumCompte" => $compteLiaisonDebit,
+                    "NumComptecp" => $dataDebit->NumCompte,
+                    "Credit" => $request->Montant,
+                    "Creditusd" => $request->Montant,
+                    "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => $request->Libelle,
+                ]);
+
+                // 2) Débit du liaison du créditeur, crédit du compte créditeur
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "DateTransaction" => $dataSystem->DateSystem,
+                    "DateSaisie" => $dataSystem->DateSystem,
+                    "TypeTransaction" => "D",
+                    "CodeMonnaie" => 1,
+                    "CodeAgence" => $codeAgenceCredit,
+                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "NumDossier" => "DOS0" . $numOperation->id,
+                    "NumDemande" => "V0" . $numOperation->id,
+                    "NumCompte" => $compteLiaisonCredit,
+                    "NumComptecp" => $dataCredit->NumCompte,
+                    "Debit" => $request->Montant,
+                    "Debitusd" => $request->Montant,
+                    "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => $request->Libelle,
+                ]);
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "DateTransaction" => $dataSystem->DateSystem,
+                    "DateSaisie" => $dataSystem->DateSystem,
+                    "TypeTransaction" => "C",
+                    "CodeMonnaie" => 1,
+                    "CodeAgence" => $codeAgenceCredit,
+                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "NumDossier" => "DOS0" . $numOperation->id,
+                    "NumDemande" => "V0" . $numOperation->id,
+                    "NumCompte" => $dataCredit->NumCompte,
+                    "NumComptecp" => $compteLiaisonCredit,
+                    "Operant" => Auth::user()->name,
+                    "Credit" => $request->Montant,
+                    "Creditusd" => $request->Montant,
+                    "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => $request->Libelle,
+                ]);
+            }
+        } else {
+            return response()->json(["status" => 0, "msg" => "Devise non reconnue"]);
+        }
+
+        // Notifications (inchangé)
+
+        //CETTE LOGIQUE PERMET D'ENVOYER UN MESSAGE AU CLIENT LORSQUE LE COMPTE MOUVEMENTER SONT DES COMPTES EPARGNE
+        $dataRefCompteClientDebit = Transactions::where("NumCompte", $request->compte_a_debiter)->orWhere("refCompteMembre", $request->compte_a_debiter)
+            ->where("NumCompte", "like", "33%")->first();
+        $dataRefCompteClientCredit = Transactions::where("NumCompte", $request->compte_a_crediter)->orWhere("refCompteMembre", $request->compte_a_crediter)
+            ->where("NumCompte", "like", "33%")
+            ->first();
+        if ($dataRefCompteClientDebit) {
+            if ($dataRefCompteClientDebit->CodeMonnaie == 1) {
+                $devise = "USD"; //USD
+                $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientDebit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientDebit->TypeTransaction, $request->Libelle);
+            } else if ($dataRefCompteClientDebit->CodeMonnaie == 2) {
+                $devise = "CDF"; //CDF
+                $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientDebit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientDebit->TypeTransaction, $request->Libelle);
+            }
+        }
+        if ($dataRefCompteClientCredit) {
+            if ($dataRefCompteClientCredit->CodeMonnaie == 1) {
+                $devise = "USD"; //USD
+                $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientCredit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientCredit->TypeTransaction, $request->Libelle);
+            } else if ($dataRefCompteClientCredit->CodeMonnaie == 2) {
+                $devise = "CDF"; //CDF
+                $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientCredit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientCredit->TypeTransaction, $request->Libelle);
+            }
+        }
+
+
+        return response()->json([
+            "status" => 1,
+            "msg" => "Opération bien enregistrée."
+        ]);
     }
-    //CETE FONCTION PERMET DE DIMPLUQUER UNE OPERATION POUR INCREMENTE OU DECREMENTE LE RESULTAT A CHAQUE FOIS QU'UN COMPTE DE CHARGE EST TOUCHE
-    // public function CheckTransactionStatus($numcompte)
-    // {
-    //     // Récupérer la dernière ligne insérée dans la table transactions
-    //     $lastTransaction = Transactions::join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
-    //         ->whereBetween('comptes.RefTypeCompte', [6, 7])
-    //         ->orderBy('transactions.RefTransaction', 'desc')
-    //         ->select('transactions.*') // Select only the columns from transactions
-    //         ->first();
-
-    //     // Vérifier si une transaction a été trouvée
-    //     if ($lastTransaction) {
-    //         // Récupérer le compte associé
-    //         $account = Comptes::where('NumCompte', $lastTransaction->NumCompte)->first();
-
-    //         // Log fetched account data
-    //         Log::info('Fetched account data', ['account' => $account]);
-
-    //         // Vérifier si le compte existe et que RefTypeCompte est 6 ou 7
-    //         if ($account && in_array($account->RefTypeCompte, [6, 7])) {
-    //             Log::info('Account exists and RefTypeCompte is in [6, 7]', ['RefTypeCompte' => $account->RefTypeCompte]);
-
-    //             // Répliquer la transaction sans l'ID pour le premier compte
-    //             $newTransaction = $lastTransaction->replicate(['RefTransaction']); // Ne pas répliquer l'ID
-    //             $newTransaction->NumCompte = $numcompte; // S'assurer que c'est le bon format pour NumCompte
-
-    //             // Appliquer la logique pour CodeMonnaie
-    //             if ($lastTransaction->CodeMonnaie == 1) {
-    //                 $newTransaction->Debitusd = $lastTransaction->Debitusd;
-    //                 $newTransaction->Creditusd = $lastTransaction->Creditusd;
-    //             } elseif ($lastTransaction->CodeMonnaie == 2) {
-    //                 $newTransaction->Debitfc = $lastTransaction->Debitfc;
-    //                 $newTransaction->Creditfc = $lastTransaction->Creditfc;
-    //             }
-
-    //             // Sauvegarder la nouvelle transaction
-    //             $newTransaction->save();
-
-    //             Log::info('Transaction duplicated successfully', ['transaction_id' => $newTransaction->id]);
-    //             // return 'Transaction duplicated successfully.';
-    //             //$this->CheckTransactionStatus(871, 851);
-    //         } else {
-    //             Log::error('Account not found or RefTypeCompte not in [6, 7]', ['transaction_id' => $lastTransaction->id, 'NumCompte' => $lastTransaction->NumCompte]);
-    //             return 'Account not found or RefTypeCompte not in [6, 7].';
-    //         }
-    //     } else {
-    //         Log::error('No transaction found');
-    //         return 'No transaction found.';
-    //     }
-    // }
-
-    //CETE FONCTION PERMET DE DIMPLUQUER UNE OPERATION POUR INCREMENTE OU DECREMENTE LE RESULTAT A CHAQUE FOIS QU'UN COMPTE DE CHARGE EST TOUCHE
-    // public function CheckTransactionStatus2($numcompte)
-    // {
-    //     // Récupérer la dernière ligne insérée dans la table transactions
-    //     $lastTransaction = Transactions::orderBy('RefTransaction', 'desc')->first();
-
-    //     // Vérifier si une transaction a été trouvée
-    //     if ($lastTransaction) {
-    //         // Récupérer le compte associé
-    //         $account = Comptes::where('NumCompte', $lastTransaction->NumCompte)->first();
-
-    //         // Log fetched account data
-    //         Log::info('Fetched account data', ['account' => $account]);
-
-    //         // Vérifier si le compte existe et que RefTypeCompte est 6 ou 7
-    //         if ($account && in_array($account->RefTypeCompte, [6, 7])) {
-    //             Log::info('Account exists and RefTypeCompte is in [6, 7]', ['RefTypeCompte' => $account->RefTypeCompte]);
-
-    //             // Répliquer la transaction sans l'ID
-    //             $newTransaction = $lastTransaction->replicate(['RefTransaction']); // Ne pas répliquer l'ID
-    //             $newTransaction->NumCompte = $numcompte; // S'assurer que c'est le bon format pour NumCompte
-
-    //             // Appliquer la logique pour CodeMonnaie
-    //             if ($lastTransaction->CodeMonnaie == 1) {
-    //                 $newTransaction->Debitusd = $lastTransaction->Debitusd;
-    //                 $newTransaction->Creditusd = $lastTransaction->Creditusd;
-    //             } elseif ($lastTransaction->CodeMonnaie == 2) {
-    //                 $newTransaction->Debitfc = $lastTransaction->Debitfc;
-    //                 $newTransaction->Creditfc = $lastTransaction->Creditfc;
-    //             }
-
-    //             // Sauvegarder la nouvelle transaction
-    //             $newTransaction->save();
-
-    //             Log::info('Transaction duplicated successfully', ['transaction_id' => $newTransaction->id]);
-
-    //             return 'Transaction duplicated successfully.';
-    //         } else {
-    //             Log::error('Account not found or RefTypeCompte not in [6, 7]', ['transaction_id' => $lastTransaction->id, 'NumCompte' => $lastTransaction->NumCompte]);
-    //             return 'Account not found or RefTypeCompte not in [6, 7].';
-    //         }
-    //     } else {
-    //         Log::error('No transaction found');
-    //         return 'No transaction found.';
-    //     }
-    // }
 
 
 
@@ -3236,9 +4710,9 @@ class TransactionsController extends Controller
     public function getCommissionConfig()
     {
         $data = EpargneAdhesionModel::first()->show_commission_pannel;
-        $type_recu= EpargneAdhesionModel::first()->type_recu;
-        
-        return response()->json(["status" => 1, "data" => $data,"type_recu"=>$type_recu]);
+        $type_recu = EpargneAdhesionModel::first()->type_recu;
+
+        return response()->json(["status" => 1, "data" => $data, "type_recu" => $type_recu]);
     }
 
 
