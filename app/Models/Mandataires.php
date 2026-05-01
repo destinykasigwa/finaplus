@@ -10,6 +10,7 @@ class Mandataires extends Model
     use HasFactory;
     protected $fillable = [
         'refCompte',
+        'CodeAgence',
         'mendataireName',
         'lieuNaissM',
         'dateNaissM',

@@ -225,47 +225,128 @@ class TransactionsController extends Controller
     //     }
     // }
 
+    // public function getSeachedAccount2(Request $request)
+    // {
+    //     if (!isset($request->searched_account)) {
+    //         return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
+    //     }
+
+    //     $search = $request->searched_account;
+
+    //     // Recherche sans restriction d'agence (compte n'importe où)
+    //     $checkRowExist = Comptes::where(function ($q) use ($search) {
+    //         $q->where('NumCompte', $search)
+    //             ->orWhere('NumAdherant', $search)
+    //             ->orWhere('num_manuel', $search);
+    //     })->first();
+
+    //     $numDocument = CompteurDocument::latest()->first();
+
+    //     if ($checkRowExist) {
+    //         $data = Comptes::where(function ($query) use ($search) {
+    //             $query->where('NumCompte', $search)
+    //                 ->orWhere('NumAdherant', $search)
+    //                 ->orWhere('num_manuel', $search);
+    //         })
+    //             ->where('niveau', 5)
+    //             ->where('RefGroupe', 330)
+    //             ->get();
+
+    //         $membreSignature = AdhesionMembre::where('compte_abrege', $checkRowExist->NumAdherant)->first();
+    //         $madantairedata = Mandataires::where('refCompte', $checkRowExist->NumAdherant)->get();
+
+    //         return response()->json([
+    //             "status" => 1,
+    //             "data" => $data,
+    //             "membreSignature" => $membreSignature,
+    //             "numDocument" => $numDocument,
+    //             "madantairedata" => $madantairedata
+    //         ]);
+    //     } else {
+    //         return response()->json(["status" => 0, "msg" => "Ce numéro de compte n'existe pas."]);
+    //     }
+    // }
+
+
     public function getSeachedAccount2(Request $request)
-    {
-        if (!isset($request->searched_account)) {
-            return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
-        }
-
-        $search = $request->searched_account;
-
-        // Recherche sans restriction d'agence (compte n'importe où)
-        $checkRowExist = Comptes::where(function ($q) use ($search) {
-            $q->where('NumCompte', $search)
-                ->orWhere('NumAdherant', $search)
-                ->orWhere('num_manuel', $search);
-        })->first();
-
-        $numDocument = CompteurDocument::latest()->first();
-
-        if ($checkRowExist) {
-            $data = Comptes::where(function ($query) use ($search) {
-                $query->where('NumCompte', $search)
-                    ->orWhere('NumAdherant', $search)
-                    ->orWhere('num_manuel', $search);
-            })
-                ->where('niveau', 5)
-                ->where('RefGroupe', 330)
-                ->get();
-
-            $membreSignature = AdhesionMembre::where('compte_abrege', $checkRowExist->NumAdherant)->first();
-            $madantairedata = Mandataires::where('refCompte', $checkRowExist->NumAdherant)->get();
-
-            return response()->json([
-                "status" => 1,
-                "data" => $data,
-                "membreSignature" => $membreSignature,
-                "numDocument" => $numDocument,
-                "madantairedata" => $madantairedata
-            ]);
-        } else {
-            return response()->json(["status" => 0, "msg" => "Ce numéro de compte n'existe pas."]);
-        }
+{
+    if (!isset($request->searched_account)) {
+        return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
     }
+
+    $search = trim($request->searched_account);
+    $currentAgence = session('current_agence');
+    $codeAgenceUtil = $currentAgence['code_agence'] ?? null;
+    $nomAgenceUtil = $currentAgence['nom_agence'] ?? $codeAgenceUtil;
+
+    $compte = null;
+    $typeRecherche = '';
+
+    // 1. Si c'est un Num_Manuel (ex: GM500)
+    if (preg_match('/^[A-Za-z]{2}\d+$/', $search)) {
+        $compte = Comptes::where('num_manuel', $search)->where('RefGroupe', 330)->first();
+        $typeRecherche = 'num_manuel';
+    }
+    // 2. Si c'est un numéro de compte complet (13 chiffres)
+    elseif (strlen($search) === 13 && ctype_digit($search)) {
+        $compte = Comptes::where('NumCompte', $search)->where('RefGroupe', 330)->first();
+        $typeRecherche = 'NumCompte';
+    }
+    // 3. Sinon, c'est un numéro abrégé numérique
+    elseif (ctype_digit($search)) {
+        // Chercher d'abord dans l'agence courante
+        $compte = Comptes::where('NumAdherant', $search)
+                        ->where('CodeAgence', $codeAgenceUtil)
+                        ->where('RefGroupe', 330)
+                        ->first();
+        if ($compte) {
+            $typeRecherche = 'NumAdherant (même agence)';
+        } else {
+            // Vérifier si ce numéro abrégé existe dans une autre agence
+            $compteAutre = Comptes::where('NumAdherant', $search)->where('RefGroupe', 330)->first();
+            if ($compteAutre) {
+                // Récupérer le nom de l'agence correspondante
+                $agence = Agences::where('code_agence', $compteAutre->CodeAgence)->first();
+                $nomAgence = $agence ? $agence->nom_agence : $compteAutre->CodeAgence;
+                return response()->json([
+                    "status" => 0,
+                    "msg" => "Ce numéro abrégé correspond à un compte de l'agence '{$nomAgence}'. Vous travaillez sur '{$nomAgenceUtil}'. Veuillez utiliser son Num_Manuel ('{$compteAutre->num_manuel}') ou son numéro de compte complet ('{$compteAutre->NumCompte}')."
+                ]);
+            }
+            // Aucun compte trouvé
+            return response()->json(["status" => 0, "msg" => "Aucun compte trouvé avec ce numéro abrégé dans votre agence."]);
+        }
+    } else {
+        return response()->json(["status" => 0, "msg" => "Format de recherche non reconnu."]);
+    }
+
+    if (!$compte) {
+        return response()->json(["status" => 0, "msg" => "Aucun compte trouvé."]);
+    }
+
+    $numDocument = CompteurDocument::latest()->first();
+
+    // Récupérer les comptes (la requête originale retourne une collection, mais ici on a un seul compte)
+    $data = Comptes::where(function ($query) use ($search) {
+            $query->where('NumCompte', $search)
+                  ->orWhere('NumAdherant', $search)
+                  ->orWhere('num_manuel', $search);
+        })
+        ->where('niveau', 5)
+        ->where('RefGroupe', 330)
+        ->get();
+
+    $membreSignature = AdhesionMembre::where('compte_abrege', $compte->NumAdherant)->first();
+    $madantairedata = Mandataires::where('refCompte', $compte->NumAdherant)->get();
+
+    return response()->json([
+        "status" => 1,
+        "data" => $data,
+        "membreSignature" => $membreSignature,
+        "numDocument" => $numDocument,
+        "madantairedata" => $madantairedata
+    ]);
+}
 
     //RECUPERE UN NUMERO DE COMPTE SPECIFIQUE
 

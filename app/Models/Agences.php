@@ -12,7 +12,8 @@ class Agences extends Model
          "codeAgence",
          "NomAgence",
          "compte_liaison_cdf",
-         "compte_liaison_usd"
+         "compte_liaison_usd",
+         "last_ref_compte"
     ];
 
 

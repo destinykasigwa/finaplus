@@ -2871,7 +2871,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                             }
                                                                         >
                                                                             <i className="fas fa-search me-1"></i>
-                                                                            Rechercher
+                                                                            {/* Rechercher */}
                                                                         </button>
                                                                     </div>
                                                                     {intitule_compte && (
@@ -3161,7 +3161,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                             }
                                                                         >
                                                                             <i className="fas fa-search me-1"></i>
-                                                                            Rechercher
+                                                                            {/* Rechercher */}
                                                                         </button>
                                                                     </div>
                                                                     {intitule_compte && (
