@@ -67,7 +67,7 @@ const Suspens = () => {
 
     const getSeachedData = async (e) => {
         e.preventDefault();
-        const res = await axios.post("/eco/page/depot-espece/get-account", {
+        const res = await axios.post("/eco/page/depot-espece/get-account/2", {
             searched_account: searched_account,
         });
         if (res.data.status == 1) {

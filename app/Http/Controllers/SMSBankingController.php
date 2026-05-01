@@ -68,7 +68,7 @@ class SMSBankingController extends Controller
         $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
         if (isset($request->NumCompte)) {
             //VERIFIE SI LE NUMERO DE COMPTE ABREGE SAISIE PAR L'UTILISATEUR EST CORRECT
-            $NumAdherant   = Comptes::where("NumAdherant", "=", $request->NumCompte)->first();
+            $NumAdherant   = Comptes::where("NumAdherant", "=", $request->NumCompte)->orWhere('NumCompte', $request->NumCompte)->first();
             $phone = $this->normalizePhoneNumber($request->Telephone);
             if ($NumAdherant) {
                 SMSBanking::create([
@@ -99,7 +99,7 @@ class SMSBankingController extends Controller
     public function getSearchedSMSBankingUsers($item)
     {
         if (isset($item)) {
-            $data =  SMSBanking::where("NumAbrege", "=", $item)->first();
+           $data = SMSBanking::where('NumAbrege', $item)->orWhere('NumCompte', $item)->first();
             if ($data) {
                 return response()->json(["success" => 1, "msg" => "Element trouvé", "data" => $data]);
             } else {

@@ -409,7 +409,7 @@ export default class SMSbanking extends React.Component {
                                                                 <tbody>
                                                                     <tr>
                                                                         <td style={{ padding: "6px", width: "35%" }}>
-                                                                            <label style={{ color: "steelblue", fontWeight: "500" }}>Numéro Compte Abrégé</label>
+                                                                            <label style={{ color: "steelblue", fontWeight: "500" }}>Numéro Compte</label>
                                                                          </td>
                                                                         <td style={{ padding: "6px" }}>
                                                                             <input name="NumCompte" type="text" className="form-control" style={{ borderRadius: "8px" }}
@@ -480,7 +480,7 @@ export default class SMSbanking extends React.Component {
                                                         </h6>
                                                         <div className="input-group">
                                                             <input type="text" className="form-control" style={{ borderRadius: "8px 0 0 8px" }}
-                                                                ref={this.textInput} placeholder="Numéro abrégé..."
+                                                                ref={this.textInput} placeholder="Numéro compte..."
                                                                 name="searchedItem" value={this.state.searchedItem} onChange={this.handleChange} />
                                                             <button className="btn" style={{ background: "#20c997", color: "white", borderRadius: "0 8px 8px 0" }}
                                                                 onClick={() => this.handleSeach(this.state.searchedItem)}>

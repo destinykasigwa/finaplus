@@ -97,48 +97,48 @@ class TransactionsController extends Controller
     // }
 
     public function getSeachedAccount(Request $request)
-{
-    if (!isset($request->searched_account)) {
-        return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
+    {
+        if (!isset($request->searched_account)) {
+            return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
+        }
+
+        // Récupération de l'agence courante
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
+        if (!$codeAgence) {
+            return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
+        }
+
+        $search = $request->searched_account;
+
+        // Recherche des comptes de niveau 5 appartenant à l'agence courante
+        $data = Comptes::where('niveau', 5)
+            ->where('CodeAgence', $codeAgence)
+            ->where(function ($query) use ($search) {
+                $query->where('NumCompte', $search)
+                    ->orWhere('NumAdherant', $search)
+                    ->orWhere('Num_Manuel', $search);
+            })
+            ->get();
+
+        if ($data->isEmpty()) {
+            return response()->json(["status" => 0, "msg" => "Aucun compte trouvé dans votre agence pour ce numéro."]);
+        }
+
+        // Récupération des infos complémentaires (signature, mandataire)
+        $compte = $data->first();
+        $membreSignature = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->first();
+        $madantairedata = Mandataires::where("refCompte", $compte->NumAdherant)->get();
+        $numDocument = CompteurDocument::latest()->first();
+
+        return response()->json([
+            "status"          => 1,
+            "data"            => $data,
+            "membreSignature" => $membreSignature,
+            "numDocument"     => $numDocument,
+            "madantairedata"  => $madantairedata
+        ]);
     }
-
-    // Récupération de l'agence courante
-    $currentAgence = session('current_agence');
-    $codeAgence = $currentAgence['code_agence'] ?? null;
-    if (!$codeAgence) {
-        return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
-    }
-
-    $search = $request->searched_account;
-
-    // Recherche des comptes de niveau 5 appartenant à l'agence courante
-    $data = Comptes::where('niveau', 5)
-        ->where('CodeAgence', $codeAgence)
-        ->where(function ($query) use ($search) {
-            $query->where('NumCompte', $search)
-                  ->orWhere('NumAdherant', $search)
-                  ->orWhere('Num_Manuel', $search);
-        })
-        ->get();
-
-    if ($data->isEmpty()) {
-        return response()->json(["status" => 0, "msg" => "Aucun compte trouvé dans votre agence pour ce numéro."]);
-    }
-
-    // Récupération des infos complémentaires (signature, mandataire)
-    $compte = $data->first();
-    $membreSignature = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->first();
-    $madantairedata = Mandataires::where("refCompte", $compte->NumAdherant)->get();
-    $numDocument = CompteurDocument::latest()->first();
-
-    return response()->json([
-        "status"          => 1,
-        "data"            => $data,
-        "membreSignature" => $membreSignature,
-        "numDocument"     => $numDocument,
-        "madantairedata"  => $madantairedata
-    ]);
-}
 
     // public function getSeachedAccount2(Request $request)
     // {
@@ -173,57 +173,99 @@ class TransactionsController extends Controller
     //     }
     // }
 
+    //     public function getSeachedAccount2(Request $request)
+    // {
+    //     if (!isset($request->searched_account)) {
+    //         return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
+    //     }
+
+    //     // Récupération de l'agence courante
+    //     $currentAgence = session('current_agence');
+    //     $codeAgence = $currentAgence['code_agence'] ?? null;
+    //     if (!$codeAgence) {
+    //         return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
+    //     }
+
+    //     $search = $request->searched_account;
+
+    //     // Vérifier l'existence d'un compte dans l'agence courante
+    //     $checkRowExist = Comptes::where('CodeAgence', $codeAgence)
+    //         ->where(function ($q) use ($search) {
+    //             $q->where('NumCompte', $search)
+    //               ->orWhere('NumAdherant', $search)
+    //               ->orWhere('num_manuel', $search);
+    //         })
+    //         ->first();
+
+    //     $numDocument = CompteurDocument::latest()->first();
+
+    //     if ($checkRowExist) {
+    //         $data = Comptes::where('CodeAgence', $codeAgence)
+    //             ->where(function ($query) use ($search) {
+    //                 $query->where('NumCompte', $search)
+    //                       ->orWhere('NumAdherant', $search)
+    //                       ->orWhere('num_manuel', $search);
+    //             })
+    //             ->where('niveau', 5)
+    //             ->where('RefGroupe', 330)
+    //             ->get();
+
+    //         $membreSignature = AdhesionMembre::where('compte_abrege', $checkRowExist->NumAdherant)->first();
+    //         $madantairedata = Mandataires::where('refCompte', $checkRowExist->NumAdherant)->get();
+
+    //         return response()->json([
+    //             "status" => 1,
+    //             "data" => $data,
+    //             "membreSignature" => $membreSignature,
+    //             "numDocument" => $numDocument,
+    //             "madantairedata" => $madantairedata
+    //         ]);
+    //     } else {
+    //         return response()->json(["status" => 0, "msg" => "Ce numéro de compte n'existe pas dans votre agence."]);
+    //     }
+    // }
+
     public function getSeachedAccount2(Request $request)
-{
-    if (!isset($request->searched_account)) {
-        return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
-    }
+    {
+        if (!isset($request->searched_account)) {
+            return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
+        }
 
-    // Récupération de l'agence courante
-    $currentAgence = session('current_agence');
-    $codeAgence = $currentAgence['code_agence'] ?? null;
-    if (!$codeAgence) {
-        return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
-    }
+        $search = $request->searched_account;
 
-    $search = $request->searched_account;
-
-    // Vérifier l'existence d'un compte dans l'agence courante
-    $checkRowExist = Comptes::where('CodeAgence', $codeAgence)
-        ->where(function ($q) use ($search) {
+        // Recherche sans restriction d'agence (compte n'importe où)
+        $checkRowExist = Comptes::where(function ($q) use ($search) {
             $q->where('NumCompte', $search)
-              ->orWhere('NumAdherant', $search)
-              ->orWhere('num_manuel', $search);
-        })
-        ->first();
+                ->orWhere('NumAdherant', $search)
+                ->orWhere('num_manuel', $search);
+        })->first();
 
-    $numDocument = CompteurDocument::latest()->first();
+        $numDocument = CompteurDocument::latest()->first();
 
-    if ($checkRowExist) {
-        $data = Comptes::where('CodeAgence', $codeAgence)
-            ->where(function ($query) use ($search) {
+        if ($checkRowExist) {
+            $data = Comptes::where(function ($query) use ($search) {
                 $query->where('NumCompte', $search)
-                      ->orWhere('NumAdherant', $search)
-                      ->orWhere('num_manuel', $search);
+                    ->orWhere('NumAdherant', $search)
+                    ->orWhere('num_manuel', $search);
             })
-            ->where('niveau', 5)
-            ->where('RefGroupe', 330)
-            ->get();
+                ->where('niveau', 5)
+                ->where('RefGroupe', 330)
+                ->get();
 
-        $membreSignature = AdhesionMembre::where('compte_abrege', $checkRowExist->NumAdherant)->first();
-        $madantairedata = Mandataires::where('refCompte', $checkRowExist->NumAdherant)->get();
+            $membreSignature = AdhesionMembre::where('compte_abrege', $checkRowExist->NumAdherant)->first();
+            $madantairedata = Mandataires::where('refCompte', $checkRowExist->NumAdherant)->get();
 
-        return response()->json([
-            "status" => 1,
-            "data" => $data,
-            "membreSignature" => $membreSignature,
-            "numDocument" => $numDocument,
-            "madantairedata" => $madantairedata
-        ]);
-    } else {
-        return response()->json(["status" => 0, "msg" => "Ce numéro de compte n'existe pas dans votre agence."]);
+            return response()->json([
+                "status" => 1,
+                "data" => $data,
+                "membreSignature" => $membreSignature,
+                "numDocument" => $numDocument,
+                "madantairedata" => $madantairedata
+            ]);
+        } else {
+            return response()->json(["status" => 0, "msg" => "Ce numéro de compte n'existe pas."]);
+        }
     }
-}
 
     //RECUPERE UN NUMERO DE COMPTE SPECIFIQUE
 
@@ -656,7 +698,8 @@ class TransactionsController extends Controller
                 // --- Récupération des comptes (inchangé) ---
                 $dataCompte = Comptes::where(function ($query) use ($request) {
                     $query->where("NumAdherant", $request->NumAbrege)
-                        ->orWhere("NumCompte", $request->NumAbrege);
+                        ->orWhere("NumCompte", $request->NumAbrege)
+                        ->orWhere("Num_Manuel", $request->NumAbrege);   // ← ajout
                 })->where("CodeMonnaie", 2)->first();
 
                 $NumCompte = $request->getNumCompte;
@@ -813,7 +856,7 @@ class TransactionsController extends Controller
                             "TypeTransaction" => "D",
                             "CodeMonnaie" => 2,
                             "CodeAgence" => $codeAgenceCaissier,
-                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "CodeAgenceOrigine" => $codeAgenceCourante,
                             "NumDossier" => "DOS0" . $numOperation->id,
                             "NumDemande" => "V0" . $numOperation->id,
                             "NumCompte" => $CompteCaissierCDF,
@@ -832,7 +875,7 @@ class TransactionsController extends Controller
                             "TypeTransaction" => "C",
                             "CodeMonnaie" => 2,
                             "CodeAgence" => $codeAgenceCaissier,
-                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "CodeAgenceOrigine" => $codeAgenceCourante,
                             "NumDossier" => "DOS0" . $numOperation->id,
                             "NumDemande" => "V0" . $numOperation->id,
                             "NumCompte" => $compteLiaisonCaissier,
@@ -852,7 +895,7 @@ class TransactionsController extends Controller
                             "TypeTransaction" => "D",
                             "CodeMonnaie" => 2,
                             "CodeAgence" => $codeAgenceClient,
-                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "CodeAgenceOrigine" => $codeAgenceCourante,
                             "NumDossier" => "DOS0" . $numOperation->id,
                             "NumDemande" => "V0" . $numOperation->id,
                             "NumCompte" => $compteLiaisonClient,
@@ -870,7 +913,7 @@ class TransactionsController extends Controller
                             "TypeTransaction" => "C",
                             "CodeMonnaie" => 2,
                             "CodeAgence" => $codeAgenceClient,
-                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "CodeAgenceOrigine" => $codeAgenceCourante,
                             "NumDossier" => "DOS0" . $numOperation->id,
                             "NumDemande" => "V0" . $numOperation->id,
                             "NumCompte" => $NumCompte,
@@ -918,7 +961,8 @@ class TransactionsController extends Controller
                 // Structure identique à CDF mais avec les colonnes USD et les comptes de liaison USD
                 $dataCompte = Comptes::where(function ($query) use ($request) {
                     $query->where("NumAdherant", $request->NumAbrege)
-                        ->orWhere("NumCompte", $request->NumAbrege);
+                        ->orWhere("NumCompte", $request->NumAbrege)
+                        ->orWhere("Num_Manuel", $request->NumAbrege);   // ← ajout
                 })->where("CodeMonnaie", 1)->first();
 
                 $NumCompte = $request->getNumCompte;
@@ -1017,7 +1061,7 @@ class TransactionsController extends Controller
                             "TypeTransaction" => "D",
                             "CodeMonnaie" => 1,
                             "CodeAgence" => $codeAgenceCaissier,
-                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "CodeAgenceOrigine" => $codeAgenceCourante,
                             "NumDossier" => "DOS0" . $numOperation->id,
                             "NumDemande" => "V0" . $numOperation->id,
                             "NumCompte" => $CompteCaissierUSD,
@@ -1036,7 +1080,7 @@ class TransactionsController extends Controller
                             "TypeTransaction" => "C",
                             "CodeMonnaie" => 1,
                             "CodeAgence" => $codeAgenceCaissier,
-                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "CodeAgenceOrigine" => $codeAgenceCourante,
                             "NumDossier" => "DOS0" . $numOperation->id,
                             "NumDemande" => "V0" . $numOperation->id,
                             "NumCompte" => $compteLiaisonCaissier,
@@ -1056,7 +1100,7 @@ class TransactionsController extends Controller
                             "TypeTransaction" => "D",
                             "CodeMonnaie" => 1,
                             "CodeAgence" => $codeAgenceClient,
-                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "CodeAgenceOrigine" => $codeAgenceCourante,
                             "NumDossier" => "DOS0" . $numOperation->id,
                             "NumDemande" => "V0" . $numOperation->id,
                             "NumCompte" => $compteLiaisonClient,
@@ -1074,7 +1118,7 @@ class TransactionsController extends Controller
                             "TypeTransaction" => "C",
                             "CodeMonnaie" => 1,
                             "CodeAgence" => $codeAgenceClient,
-                             "CodeAgenceOrigine" => $codeAgenceCourante, 
+                            "CodeAgenceOrigine" => $codeAgenceCourante,
                             "NumDossier" => "DOS0" . $numOperation->id,
                             "NumDemande" => "V0" . $numOperation->id,
                             "NumCompte" => $NumCompte,
@@ -1811,7 +1855,8 @@ class TransactionsController extends Controller
                     // Récupération du compte client
                     $dataCompte = Comptes::where(function ($query) use ($request) {
                         $query->where('NumAdherant', $request->NumAbrege)
-                            ->orWhere('NumCompte', $request->NumAbrege);
+                            ->orWhere('NumCompte', $request->NumAbrege)
+                            ->orWhere("Num_Manuel", $request->NumAbrege);   // ← ajout
                     })->where('CodeMonnaie', 2)->first();
 
                     if ($dataCompte) {
@@ -1965,7 +2010,7 @@ class TransactionsController extends Controller
                                 "TypeTransaction" => "C",
                                 "CodeMonnaie" => 2,
                                 "CodeAgence" => $codeAgenceCaissier,
-                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "CodeAgenceOrigine" => $codeAgenceCourante,
                                 "NumDossier" => "DOS0" . $numOperationMain->id,
                                 "NumDemande" => "V0" . $numOperationMain->id,
                                 "NumCompte" => $CompteCaissierCDF,
@@ -1983,7 +2028,7 @@ class TransactionsController extends Controller
                                 "TypeTransaction" => "D",
                                 "CodeMonnaie" => 2,
                                 "CodeAgence" => $codeAgenceCaissier,
-                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "CodeAgenceOrigine" => $codeAgenceCourante,
                                 "NumDossier" => "DOS0" . $numOperationMain->id,
                                 "NumDemande" => "V0" . $numOperationMain->id,
                                 "NumCompte" => $compteLiaisonCaissier,
@@ -2003,7 +2048,7 @@ class TransactionsController extends Controller
                                 "TypeTransaction" => "D",
                                 "CodeMonnaie" => 2,
                                 "CodeAgence" => $codeAgenceClient,
-                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "CodeAgenceOrigine" => $codeAgenceCourante,
                                 "NumDossier" => "DOS0" . $numOperationMain->id,
                                 "NumDemande" => "V0" . $numOperationMain->id,
                                 "NumCompte" => $dataCompte->NumCompte,
@@ -2022,7 +2067,7 @@ class TransactionsController extends Controller
                                 "TypeTransaction" => "C",
                                 "CodeMonnaie" => 2,
                                 "CodeAgence" => $codeAgenceClient,
-                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "CodeAgenceOrigine" => $codeAgenceCourante,
                                 "NumDossier" => "DOS0" . $numOperationMain->id,
                                 "NumDemande" => "V0" . $numOperationMain->id,
                                 "NumCompte" => $compteLiaisonClient,
@@ -2108,7 +2153,8 @@ class TransactionsController extends Controller
 
                     $dataCompte = Comptes::where(function ($query) use ($request) {
                         $query->where('NumAdherant', $request->NumAbrege)
-                            ->orWhere('NumCompte', $request->NumAbrege);
+                            ->orWhere('NumCompte', $request->NumAbrege)
+                            ->orWhere("Num_Manuel", $request->NumAbrege);   // ← ajout
                     })->where('CodeMonnaie', 1)->first();
 
                     if ($dataCompte) {
@@ -2257,7 +2303,7 @@ class TransactionsController extends Controller
                                 "TypeTransaction" => "C",
                                 "CodeMonnaie" => 1,
                                 "CodeAgence" => $codeAgenceCaissier,
-                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "CodeAgenceOrigine" => $codeAgenceCourante,
                                 "NumDossier" => "DOS0" . $numOperationMain->id,
                                 "NumDemande" => "V0" . $numOperationMain->id,
                                 "NumCompte" => $CompteCaissierUSD,
@@ -2275,7 +2321,7 @@ class TransactionsController extends Controller
                                 "TypeTransaction" => "D",
                                 "CodeMonnaie" => 1,
                                 "CodeAgence" => $codeAgenceCaissier,
-                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "CodeAgenceOrigine" => $codeAgenceCourante,
                                 "NumDossier" => "DOS0" . $numOperationMain->id,
                                 "NumDemande" => "V0" . $numOperationMain->id,
                                 "NumCompte" => $compteLiaisonCaissier,
@@ -2295,7 +2341,7 @@ class TransactionsController extends Controller
                                 "TypeTransaction" => "D",
                                 "CodeMonnaie" => 1,
                                 "CodeAgence" => $codeAgenceClient,
-                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "CodeAgenceOrigine" => $codeAgenceCourante,
                                 "NumDossier" => "DOS0" . $numOperationMain->id,
                                 "NumDemande" => "V0" . $numOperationMain->id,
                                 "NumCompte" => $dataCompte->NumCompte,
@@ -2314,7 +2360,7 @@ class TransactionsController extends Controller
                                 "TypeTransaction" => "C",
                                 "CodeMonnaie" => 1,
                                 "CodeAgence" => $codeAgenceClient,
-                                 "CodeAgenceOrigine" => $codeAgenceCourante, 
+                                "CodeAgenceOrigine" => $codeAgenceCourante,
                                 "NumDossier" => "DOS0" . $numOperationMain->id,
                                 "NumDemande" => "V0" . $numOperationMain->id,
                                 "NumCompte" => $compteLiaisonClient,
@@ -3594,16 +3640,36 @@ class TransactionsController extends Controller
     {
         if (isset($request->compte_a_debiter)) {
             //RECUPERE LE COMPTE DANS LA DB
-            $checkData = Comptes::where("NumCompte", $request->compte_a_debiter)->orWhere("NumAdherant", $request->compte_a_debiter)->first();
+            //$checkData = Comptes::where("NumCompte", $request->compte_a_debiter)->orWhere("NumAdherant", $request->compte_a_debiter)->first();
+            $checkData = Comptes::where(function ($query) use ($request) {
+                $query->where("NumAdherant", $request->compte_a_debiter)
+                    ->orWhere("NumCompte", $request->compte_a_debiter)
+                    ->orWhere("Num_Manuel", $request->compte_a_debiter);   // ← ajout
+            })->first();
             if ($checkData) {
+                // $data = Comptes::where(function ($query) use ($request) {
+
+                //     $query->where('NumCompte', $request->compte_a_debiter)
+
+                //         ->orWhere(function ($q) use ($request) {
+                //             $q->where('NumAdherant', $request->compte_a_debiter)
+                //                 ->where('RefGroupe', 330)
+                //                 ->where('CodeMonnaie', 2);
+                //         });
+                // })
+                //     ->orderByRaw("NumCompte = ? DESC", [$request->compte_a_debiter])
+                //     ->first();
                 $data = Comptes::where(function ($query) use ($request) {
-
                     $query->where('NumCompte', $request->compte_a_debiter)
-
                         ->orWhere(function ($q) use ($request) {
                             $q->where('NumAdherant', $request->compte_a_debiter)
-                                ->where('RefGroupe', 330)
-                                ->where('CodeMonnaie', 2);
+                                ->where('RefGroupe', 330);
+                            // ->where('CodeMonnaie', 2);
+                        })
+                        ->orWhere(function ($q) use ($request) {
+                            $q->where('Num_Manuel', $request->compte_a_debiter)
+                                ->where('RefGroupe', 330);
+                            // ->where('CodeMonnaie', 2);
                         });
                 })
                     ->orderByRaw("NumCompte = ? DESC", [$request->compte_a_debiter])
@@ -3642,23 +3708,38 @@ class TransactionsController extends Controller
     {
         if (isset($request->compte_a_crediter)) {
             //RECUPERE LE COMPTE DANS LA DB
-            $checkData = Comptes::where("NumCompte", $request->compte_a_crediter)->orWhere("NumAdherant", $request->compte_a_crediter)->first();
+            // $checkData = Comptes::where("NumCompte", $request->compte_a_crediter)->orWhere("NumAdherant", $request->compte_a_crediter)->first();
+            $checkData = Comptes::where(function ($query) use ($request) {
+                $query->where("NumAdherant", $request->compte_a_crediter)
+                    ->orWhere("NumCompte", $request->compte_a_crediter)
+                    ->orWhere("Num_Manuel", $request->compte_a_crediter);   // ← ajout
+            })->first();
             if ($checkData) {
                 // // Recherche d'abord par NumCompte
 
-                // $data = Comptes::where('NumCompte', $request->compte_a_crediter)
-                //     ->orWhere('NumAdherant', $request->compte_a_crediter)
-                //     ->orderByRaw("NumCompte = '{$request->compte_a_crediter}' DESC")
+                // $data = Comptes::where(function ($query) use ($request) {
+
+                //     $query->where('NumCompte', $request->compte_a_crediter)
+
+                //         ->orWhere(function ($q) use ($request) {
+                //             $q->where('NumAdherant', $request->compte_a_crediter)
+                //                 ->where('RefGroupe', 330)
+                //                 ->where('CodeMonnaie', 2);
+                //         });
+                // })
+                //     ->orderByRaw("NumCompte = ? DESC", [$request->compte_a_crediter])
                 //     ->first();
-
                 $data = Comptes::where(function ($query) use ($request) {
-
                     $query->where('NumCompte', $request->compte_a_crediter)
-
                         ->orWhere(function ($q) use ($request) {
                             $q->where('NumAdherant', $request->compte_a_crediter)
-                                ->where('RefGroupe', 330)
-                                ->where('CodeMonnaie', 2);
+                                ->where('RefGroupe', 330);
+                            // ->where('CodeMonnaie', 2);
+                        })
+                        ->orWhere(function ($q) use ($request) {
+                            $q->where('Num_Manuel', $request->compte_a_crediter)
+                                ->where('RefGroupe', 330);
+                            // ->where('CodeMonnaie', 2);
                         });
                 })
                     ->orderByRaw("NumCompte = ? DESC", [$request->compte_a_crediter])
@@ -3964,7 +4045,7 @@ class TransactionsController extends Controller
             return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
         }
         $codeAgenceCourante = $currentAgence['code_agence'];
-           
+
 
         $deviseParam = $request->devise; // 2 pour CDF, 1 pour USD
         $dataSystem = TauxEtDateSystem::latest()->first();
@@ -3979,12 +4060,14 @@ class TransactionsController extends Controller
             // Récupération des comptes par NumCompte ou NumAdherant
             $dataDebit = Comptes::where(function ($query) use ($request) {
                 $query->where('NumCompte', $request->compte_a_debiter)
-                    ->orWhere('NumAdherant', $request->compte_a_debiter);
+                    ->orWhere('NumAdherant', $request->compte_a_debiter)
+                    ->orWhere('Num_Manuel', $request->compte_a_debiter);
             })->where('CodeMonnaie', 2)->orderByRaw("NumCompte = '{$request->compte_a_debiter}' DESC")->first();
 
             $dataCredit = Comptes::where(function ($query) use ($request) {
                 $query->where('NumCompte', $request->compte_a_crediter)
-                    ->orWhere('NumAdherant', $request->compte_a_crediter);
+                    ->orWhere('NumAdherant', $request->compte_a_crediter)
+                    ->orWhere('Num_Manuel', $request->compte_a_crediter);
             })->where('CodeMonnaie', 2)->orderByRaw("NumCompte = '{$request->compte_a_crediter}' DESC")->first();
 
             if (!$dataDebit || !$dataCredit) {
@@ -4056,7 +4139,7 @@ class TransactionsController extends Controller
                 if (!$compteLiaisonDebit || !$compteLiaisonCredit) {
                     return response()->json(["status" => 0, "msg" => "Comptes de liaison non définis pour les agences concernées"]);
                 }
-             
+
                 // 1) Débit du compte débiteur, crédit de son compte de liaison
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
@@ -4065,7 +4148,7 @@ class TransactionsController extends Controller
                     "TypeTransaction" => "D",
                     "CodeMonnaie" => 2,
                     "CodeAgence" => $codeAgenceDebit,
-                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "CodeAgenceOrigine" => $codeAgenceCourante,
                     "NumDossier" => "DOS0" . $numOperation->id,
                     "NumDemande" => "V0" . $numOperation->id,
                     "NumCompte" => $dataDebit->NumCompte,
@@ -4084,7 +4167,7 @@ class TransactionsController extends Controller
                     "TypeTransaction" => "C",
                     "CodeMonnaie" => 2,
                     "CodeAgence" => $codeAgenceDebit,
-                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "CodeAgenceOrigine" => $codeAgenceCourante,
                     "NumDossier" => "DOS0" . $numOperation->id,
                     "NumDemande" => "V0" . $numOperation->id,
                     "NumCompte" => $compteLiaisonDebit,
@@ -4104,7 +4187,7 @@ class TransactionsController extends Controller
                     "TypeTransaction" => "D",
                     "CodeMonnaie" => 2,
                     "CodeAgence" => $codeAgenceCredit,
-                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "CodeAgenceOrigine" => $codeAgenceCourante,
                     "NumDossier" => "DOS0" . $numOperation->id,
                     "NumDemande" => "V0" . $numOperation->id,
                     "NumCompte" => $compteLiaisonCredit,
@@ -4122,7 +4205,7 @@ class TransactionsController extends Controller
                     "TypeTransaction" => "C",
                     "CodeMonnaie" => 2,
                     "CodeAgence" => $codeAgenceCredit,
-                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "CodeAgenceOrigine" => $codeAgenceCourante,
                     "NumDossier" => "DOS0" . $numOperation->id,
                     "NumDemande" => "V0" . $numOperation->id,
                     "NumCompte" => $dataCredit->NumCompte,
@@ -4144,24 +4227,39 @@ class TransactionsController extends Controller
             $deviseLib = 'USD';
             $liaisonCol = 'compte_liaison_usd';
 
-            // Récupération des comptes (recherche d'abord par NumCompte exact, puis par NumAdherant)
-            $dataDebit = Comptes::where('NumCompte', $request->compte_a_debiter)
-                ->where('CodeMonnaie', 1)
-                ->first();
-            if (!$dataDebit) {
-                $dataDebit = Comptes::where('NumAdherant', $request->compte_a_debiter)
-                    ->where('CodeMonnaie', 1)
-                    ->first();
-            }
+            // // Récupération des comptes (recherche d'abord par NumCompte exact, puis par NumAdherant)
+            // $dataDebit = Comptes::where('NumCompte', $request->compte_a_debiter)
+            //     ->where('CodeMonnaie', 1)
+            //     ->first();
+            // if (!$dataDebit) {
+            //     $dataDebit = Comptes::where('NumAdherant', $request->compte_a_debiter)
+            //         ->where('CodeMonnaie', 1)
+            //         ->first();
+            // }
 
-            $dataCredit = Comptes::where('NumCompte', $request->compte_a_crediter)
-                ->where('CodeMonnaie', 1)
-                ->first();
-            if (!$dataCredit) {
-                $dataCredit = Comptes::where('NumAdherant', $request->compte_a_crediter)
-                    ->where('CodeMonnaie', 1)
-                    ->first();
-            }
+            // $dataCredit = Comptes::where('NumCompte', $request->compte_a_crediter)
+            //     ->where('CodeMonnaie', 1)
+            //     ->first();
+            // if (!$dataCredit) {
+            //     $dataCredit = Comptes::where('NumAdherant', $request->compte_a_crediter)
+            //         ->where('CodeMonnaie', 1)
+            //         ->first();
+            // }
+
+
+
+            // Récupération des comptes par NumCompte ou NumAdherant
+            $dataDebit = Comptes::where(function ($query) use ($request) {
+                $query->where('NumCompte', $request->compte_a_debiter)
+                    ->orWhere('NumAdherant', $request->compte_a_debiter)
+                    ->orWhere('Num_Manuel', $request->compte_a_debiter);
+            })->where('CodeMonnaie', 1)->orderByRaw("NumCompte = '{$request->compte_a_debiter}' DESC")->first();
+
+            $dataCredit = Comptes::where(function ($query) use ($request) {
+                $query->where('NumCompte', $request->compte_a_crediter)
+                    ->orWhere('NumAdherant', $request->compte_a_crediter)
+                    ->orWhere('Num_Manuel', $request->compte_a_crediter);
+            })->where('CodeMonnaie', 1)->orderByRaw("NumCompte = '{$request->compte_a_crediter}' DESC")->first();
 
             if (!$dataDebit || !$dataCredit) {
                 return response()->json(["status" => 0, "msg" => "Compte introuvable pour la devise USD"]);
@@ -4237,7 +4335,7 @@ class TransactionsController extends Controller
                     "TypeTransaction" => "D",
                     "CodeMonnaie" => 1,
                     "CodeAgence" => $codeAgenceDebit,
-                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "CodeAgenceOrigine" => $codeAgenceCourante,
                     "NumDossier" => "DOS0" . $numOperation->id,
                     "NumDemande" => "V0" . $numOperation->id,
                     "NumCompte" => $dataDebit->NumCompte,
@@ -4256,7 +4354,7 @@ class TransactionsController extends Controller
                     "TypeTransaction" => "C",
                     "CodeMonnaie" => 1,
                     "CodeAgence" => $codeAgenceDebit,
-                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "CodeAgenceOrigine" => $codeAgenceCourante,
                     "NumDossier" => "DOS0" . $numOperation->id,
                     "NumDemande" => "V0" . $numOperation->id,
                     "NumCompte" => $compteLiaisonDebit,
@@ -4276,7 +4374,7 @@ class TransactionsController extends Controller
                     "TypeTransaction" => "D",
                     "CodeMonnaie" => 1,
                     "CodeAgence" => $codeAgenceCredit,
-                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "CodeAgenceOrigine" => $codeAgenceCourante,
                     "NumDossier" => "DOS0" . $numOperation->id,
                     "NumDemande" => "V0" . $numOperation->id,
                     "NumCompte" => $compteLiaisonCredit,
@@ -4294,7 +4392,7 @@ class TransactionsController extends Controller
                     "TypeTransaction" => "C",
                     "CodeMonnaie" => 1,
                     "CodeAgence" => $codeAgenceCredit,
-                     "CodeAgenceOrigine" => $codeAgenceCourante,
+                    "CodeAgenceOrigine" => $codeAgenceCourante,
                     "NumDossier" => "DOS0" . $numOperation->id,
                     "NumDemande" => "V0" . $numOperation->id,
                     "NumCompte" => $dataCredit->NumCompte,
@@ -4314,28 +4412,51 @@ class TransactionsController extends Controller
         // Notifications (inchangé)
 
         //CETTE LOGIQUE PERMET D'ENVOYER UN MESSAGE AU CLIENT LORSQUE LE COMPTE MOUVEMENTER SONT DES COMPTES EPARGNE
-        $dataRefCompteClientDebit = Transactions::where("NumCompte", $request->compte_a_debiter)->orWhere("refCompteMembre", $request->compte_a_debiter)
-            ->where("NumCompte", "like", "33%")->first();
-        $dataRefCompteClientCredit = Transactions::where("NumCompte", $request->compte_a_crediter)->orWhere("refCompteMembre", $request->compte_a_crediter)
-            ->where("NumCompte", "like", "33%")
+        // $dataRefCompteClientDebit = Transactions::where("NumCompte", $request->compte_a_debiter)->orWhere("refCompteMembre", $request->compte_a_debiter)
+        //     ->where("NumCompte", "like", "33%")->first();
+        // $dataRefCompteClientCredit = Transactions::where("NumCompte", $request->compte_a_crediter)->orWhere("refCompteMembre", $request->compte_a_crediter)
+        //     ->where("NumCompte", "like", "33%")
+        //     ->first();
+        $dataRefCompteClientDebit = Comptes::where(function ($query) use ($request) {
+            $query->where('NumCompte', $request->compte_a_debiter)
+                ->orWhere('NumAdherant', $request->compte_a_debiter)
+                ->orWhere('Num_Manuel', $request->compte_a_debiter);
+        })
+            ->where('RefGroupe', 330)
             ->first();
+
+
+
+        $dataRefCompteClientCredit = Comptes::where(function ($query) use ($request) {
+            $query->where('NumCompte', $request->compte_a_crediter)
+                ->orWhere('NumAdherant', $request->compte_a_crediter)
+                ->orWhere('Num_Manuel', $request->compte_a_crediter);
+        })
+            ->where('RefGroupe', 330)
+            ->first();
+
+        // Notification pour le compte débiteur (si c'est un compte client)
         if ($dataRefCompteClientDebit) {
-            if ($dataRefCompteClientDebit->CodeMonnaie == 1) {
-                $devise = "USD"; //USD
-                $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientDebit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientDebit->TypeTransaction, $request->Libelle);
-            } else if ($dataRefCompteClientDebit->CodeMonnaie == 2) {
-                $devise = "CDF"; //CDF
-                $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientDebit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientDebit->TypeTransaction, $request->Libelle);
-            }
+            $devise = ($dataRefCompteClientDebit->CodeMonnaie == 1) ? "USD" : "CDF";
+            $this->sendNotification->sendNotificationComptabilite(
+                $dataRefCompteClientDebit->NumAdherant,   // ← correction ici
+                $devise,
+                $request->Montant,
+                'D',                                     // ← type fixe : débit
+                $request->Libelle
+            );
         }
+
+        // Notification pour le compte créditeur (si c'est un compte client)
         if ($dataRefCompteClientCredit) {
-            if ($dataRefCompteClientCredit->CodeMonnaie == 1) {
-                $devise = "USD"; //USD
-                $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientCredit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientCredit->TypeTransaction, $request->Libelle);
-            } else if ($dataRefCompteClientCredit->CodeMonnaie == 2) {
-                $devise = "CDF"; //CDF
-                $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientCredit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientCredit->TypeTransaction, $request->Libelle);
-            }
+            $devise = ($dataRefCompteClientCredit->CodeMonnaie == 1) ? "USD" : "CDF";
+            $this->sendNotification->sendNotificationComptabilite(
+                $dataRefCompteClientCredit->NumAdherant,  // ← correction ici
+                $devise,
+                $request->Montant,
+                'C',                                     // ← type fixe : crédit
+                $request->Libelle
+            );
         }
 
 

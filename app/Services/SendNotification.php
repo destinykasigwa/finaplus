@@ -105,7 +105,7 @@ class SendNotification
 
                         $message = $getMembreInfo2->NomCompte . ", Votre compte CDF-" . $NumCompte .
                             ($typeTransaction == "C" ? " est credite " : " est debite ") .
-                            "de " . $montant .
+                            " de " . $montant .
                             ($typeTransaction == "C" ? " depot de " : " retrait de ") . $operant . " Votre nouveau solde est de " . number_format($soldeMembreCDF->soldeMembreCDF, 2, ',', ' ') . " CDF";
 
                         $receiver_number = $getMembreInfo->Telephone;
@@ -159,7 +159,7 @@ class SendNotification
 
                         $message = $getMembreInfo2->NomCompte . " Votre compte USD-" . $NumCompte .
                             ($typeTransaction == "C" ? " est credite " : " est debite ") .
-                            "de " . $montant . ($typeTransaction == "C" ? " depot de " : " retrait de ") . $operant . ". Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
+                            " de " . $montant . ($typeTransaction == "C" ? " depot de " : " retrait de ") . $operant . ". Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
 
                         $receiver_number = $getMembreInfo->Telephone;
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
@@ -418,7 +418,7 @@ class SendNotification
                         //     : (($getMembreInfo2->sexe == "Femme")
                         //         ? "Bonjour Madame "
                         //         : "Bonjour ");
-                        $message =   $getMembreInfo2->NomCompte . " Votre compte CDF-" . $NumCompte . ($typeTransaction == "C" ? " est credite " : "debite ") . " de " . $montant . " " . $libelle . "  Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
+                        $message =   $getMembreInfo2->NomCompte . " Votre compte CDF-" . $NumCompte . ($typeTransaction == "C" ? " est credite " : " debite ") . " de " . $montant . " " . $libelle . "  Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
                         $receiver_number = $getMembreInfo->Telephone;
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
                         //Log::info(json_encode($response));
@@ -466,7 +466,7 @@ class SendNotification
                         //         ? "Bonjour Madame "
                         //         : "Bonjour ");
 
-                        $message =   $getMembreInfo2->NomCompte . ", Votre compte USD-" . $NumCompte . ($typeTransaction == "C" ? " est credite" : "debite ") . " de " . $montant . " " . $libelle . "  Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
+                        $message =   $getMembreInfo2->NomCompte . ", Votre compte USD-" . $NumCompte . ($typeTransaction == "C" ? " est credite" : " debite ") . " de " . $montant . " " . $libelle . "  Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
                         $receiver_number = $getMembreInfo->Telephone;
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
 
