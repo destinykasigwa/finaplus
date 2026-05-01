@@ -42,19 +42,19 @@ class TransactionsController extends Controller
     //protected $africaTalking;
 
     protected $sendNotification;
-    protected $numCompteCaissePrUSD;
-    protected $numCompteCaissePrCDF;
-    protected $compteVirementInterGuichetUSD;
-    protected $compteVirementInterGuichetCDF;
+    // protected $numCompteCaissePrUSD;
+    // protected $numCompteCaissePrCDF;
+    // protected $compteVirementInterGuichetUSD;
+    // protected $compteVirementInterGuichetCDF;
 
     public function __construct()
     {
         $this->middleware("auth");
         $this->sendNotification = app(SendNotification::class);
-        $this->numCompteCaissePrUSD = "570201";
-        $this->numCompteCaissePrCDF = "570202";
-        $this->compteVirementInterGuichetUSD = "590201";
-        $this->compteVirementInterGuichetCDF = "590202";
+        // $this->numCompteCaissePrUSD = "570201";
+        // $this->numCompteCaissePrCDF = "570202";
+        // $this->compteVirementInterGuichetUSD = "590201";
+        // $this->compteVirementInterGuichetCDF = "590202";
     }
 
 
@@ -96,49 +96,93 @@ class TransactionsController extends Controller
     //     }
     // }
 
+    // public function getSeachedAccount(Request $request)
+    // {
+    //     if (!isset($request->searched_account)) {
+    //         return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
+    //     }
+
+    //     // Récupération de l'agence courante
+    //     $currentAgence = session('current_agence');
+    //     $codeAgence = $currentAgence['code_agence'] ?? null;
+    //     if (!$codeAgence) {
+    //         return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
+    //     }
+
+    //     $search = $request->searched_account;
+
+    //     // Recherche des comptes de niveau 5 appartenant à l'agence courante
+    //     $data = Comptes::where('niveau', 5)
+    //         ->where('CodeAgence', $codeAgence)
+    //         ->where(function ($query) use ($search) {
+    //             $query->where('NumCompte', $search)
+    //                 ->orWhere('NumAdherant', $search)
+    //                 ->orWhere('Num_Manuel', $search);
+    //         })
+    //         ->get();
+
+    //     if ($data->isEmpty()) {
+    //         return response()->json(["status" => 0, "msg" => "Aucun compte trouvé dans votre agence pour ce numéro."]);
+    //     }
+
+    //     // Récupération des infos complémentaires (signature, mandataire)
+    //     $compte = $data->first();
+    //     $membreSignature = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->first();
+    //     $madantairedata = Mandataires::where("refCompte", $compte->NumAdherant)->get();
+    //     $numDocument = CompteurDocument::latest()->first();
+
+    //     return response()->json([
+    //         "status"          => 1,
+    //         "data"            => $data,
+    //         "membreSignature" => $membreSignature,
+    //         "numDocument"     => $numDocument,
+    //         "madantairedata"  => $madantairedata
+    //     ]);
+    // }
+
     public function getSeachedAccount(Request $request)
-    {
-        if (!isset($request->searched_account)) {
-            return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
-        }
-
-        // Récupération de l'agence courante
-        $currentAgence = session('current_agence');
-        $codeAgence = $currentAgence['code_agence'] ?? null;
-        if (!$codeAgence) {
-            return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
-        }
-
-        $search = $request->searched_account;
-
-        // Recherche des comptes de niveau 5 appartenant à l'agence courante
-        $data = Comptes::where('niveau', 5)
-            ->where('CodeAgence', $codeAgence)
-            ->where(function ($query) use ($search) {
-                $query->where('NumCompte', $search)
-                    ->orWhere('NumAdherant', $search)
-                    ->orWhere('Num_Manuel', $search);
-            })
-            ->get();
-
-        if ($data->isEmpty()) {
-            return response()->json(["status" => 0, "msg" => "Aucun compte trouvé dans votre agence pour ce numéro."]);
-        }
-
-        // Récupération des infos complémentaires (signature, mandataire)
-        $compte = $data->first();
-        $membreSignature = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->first();
-        $madantairedata = Mandataires::where("refCompte", $compte->NumAdherant)->get();
-        $numDocument = CompteurDocument::latest()->first();
-
-        return response()->json([
-            "status"          => 1,
-            "data"            => $data,
-            "membreSignature" => $membreSignature,
-            "numDocument"     => $numDocument,
-            "madantairedata"  => $madantairedata
-        ]);
+{
+    if (!isset($request->searched_account)) {
+        return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
     }
+
+    // Récupération de l'agence courante
+    $currentAgence = session('current_agence');
+    $codeAgence = $currentAgence['code_agence'] ?? null;
+    if (!$codeAgence) {
+        return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
+    }
+
+    $search = $request->searched_account;
+
+    // Recherche des comptes de niveau 5 appartenant à l'agence courante
+    $data = Comptes::where('niveau', 5)
+        ->where('CodeAgence', $codeAgence)
+        ->where(function ($query) use ($search) {
+            $query->where('NumCompte', $search)
+                  ->orWhere('NumAdherant', $search)
+                  ->orWhere('Num_Manuel', $search);
+        })
+        ->get();
+
+    if ($data->isEmpty()) {
+        return response()->json(["status" => 0, "msg" => "Aucun compte trouvé dans votre agence pour ce numéro."]);
+    }
+
+    // Récupération des infos complémentaires
+    $compte = $data->first();
+    $membreSignature = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->first();
+    $madantairedata = Mandataires::where("refCompte", $compte->NumAdherant)->get();
+    $numDocument = CompteurDocument::latest()->first();
+
+    return response()->json([
+        "status"          => 1,
+        "data"            => $data,
+        "membreSignature" => $membreSignature,
+        "numDocument"     => $numDocument,
+        "madantairedata"  => $madantairedata
+    ]);
+}
 
     // public function getSeachedAccount2(Request $request)
     // {
@@ -2718,7 +2762,15 @@ class TransactionsController extends Controller
             $dataCaissier = User::where("id", "=", $request->CaissierId)->first();
 
             if ($request->devise == "CDF") {
-                $numCompteCaissePrCDF = $this->numCompteCaissePrCDF;
+                   $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'];
+       $agence = Agences::where('code_agence', $codeAgence)->first();
+      
+
+
+
+
+                $numCompteCaissePrCDF =  $agence->compte_caisse_cdf;
                 $soldeComptePrincip = Transactions::select(
                     DB::raw("SUM(Debitfc)-SUM(Creditfc) as soldeCompte"),
                 )->where("NumCompte", '=', $numCompteCaissePrCDF)
@@ -2761,8 +2813,12 @@ class TransactionsController extends Controller
                     return response()->json(["status" => 0, "msg" => "Le montant saisi est superieur au solde de la caisse principale son solde est: " . $soldeComptePrincip->soldeCompte]);
                 }
             } else if ($request->devise == "USD") {
+$currentAgence = session('current_agence');
+$codeAgence = $currentAgence['code_agence'];
+ $agence = Agences::where('code_agence', $codeAgence)->first();
 
-                $numCompteCaissePrUSD = $this->numCompteCaissePrUSD;
+// Compte caisse principale (USD) 
+$numCompteCaissePrUSD = $agence->compte_caisse_usd;
                 $soldeComptePrincip = Transactions::select(
                     DB::raw("SUM(Debitusd)-SUM(Creditusd) as soldeCompte"),
                 )->where("NumCompte", '=', $numCompteCaissePrUSD)
@@ -2834,8 +2890,13 @@ class TransactionsController extends Controller
                 $dataCaissier = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", 2)->first();
                 $numCompteCaissierCDF = $dataCaissier->NumCompte;
                 $tauxDuJour = TauxEtDateSystem::latest()->first()->TauxEnFc;
-                $numCompteCaissePrCDF = $this->numCompteCaissePrCDF;
-                $compteVirementInterGuichetCDF = $this->compteVirementInterGuichetCDF;
+                             $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'];
+       $agence = Agences::where('code_agence', $codeAgence)->first();
+      
+
+                $numCompteCaissePrCDF = $agence->compte_caisse_cdf;
+                $compteVirementInterGuichetCDF = $agence->compte_virement_caisse_cdf;
 
                 //COMPTEUR DES OPERATIONS
                 $numOperation = [];
@@ -2850,7 +2911,7 @@ class TransactionsController extends Controller
                     "Taux" => 1,
                     "TypeTransaction" => "D",
                     "CodeMonnaie" => 2,
-                    "CodeAgence" => "20",
+                    "CodeAgence" => $codeAgence,
                     "NumDossier" => "DOS00" . $numOperation->id,
                     "NumDemande" => "V00" . $numOperation->id,
                     "NumCompte" => $compteVirementInterGuichetCDF,
@@ -2870,7 +2931,7 @@ class TransactionsController extends Controller
                     "Taux" => 1,
                     "TypeTransaction" => "C",
                     "CodeMonnaie" => 2,
-                    "CodeAgence" => "20",
+                    "CodeAgence" =>$codeAgence,
                     "NumDossier" => "DOS00" . $numOperation->id,
                     "NumDemande" => "V00" . $numOperation->id,
                     "NumCompte" => $compteVirementInterGuichetCDF,
@@ -2890,7 +2951,7 @@ class TransactionsController extends Controller
                     "Taux" => 1,
                     "TypeTransaction" => "C",
                     "CodeMonnaie" => 2,
-                    "CodeAgence" => "20",
+                    "CodeAgence" => $codeAgence,
                     "NumDossier" => "DOS00" . $numOperation->id,
                     "NumDemande" => "V00" . $numOperation->id,
                     "NumCompte" => $numCompteCaissePrCDF,
@@ -2910,7 +2971,7 @@ class TransactionsController extends Controller
                     "Taux" => 1,
                     "TypeTransaction" => "D",
                     "CodeMonnaie" => 2,
-                    "CodeAgence" => "20",
+                    "CodeAgence" => $codeAgence,
                     "NumDossier" => "DOS00" . $numOperation->id,
                     "NumDemande" => "V00" . $numOperation->id,
                     "NumCompte" => $numCompteCaissierCDF,
@@ -2958,8 +3019,12 @@ class TransactionsController extends Controller
                 $dataCaissier = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", 1)->first();
                 $numCompteCaissierUSD = $dataCaissier->NumCompte;
                 $tauxDuJour = TauxEtDateSystem::latest()->first()->TauxEnFc;
-                $numCompteCaissePrUSD = $this->numCompteCaissePrUSD;
-                $compteVirementInterGuichetUSD = $this->compteVirementInterGuichetUSD;
+                $currentAgence = session('current_agence');
+$codeAgence = $currentAgence['code_agence'];
+ $agence = Agences::where('code_agence', $codeAgence)->first();
+$numCompteCaissePrUSD = $agence->compte_caisse_usd;
+  
+                $compteVirementInterGuichetUSD =$agence->compte_virement_caisse_usd;
 
                 //COMPTEUR DES OPERATIONS
                 $numOperation = [];
@@ -2974,7 +3039,7 @@ class TransactionsController extends Controller
                     "Taux" => 1,
                     "TypeTransaction" => "D",
                     "CodeMonnaie" => 1,
-                    "CodeAgence" => "20",
+                    "CodeAgence" => $codeAgence,
                     "NumDossier" => "DOS00" . $numOperation->id,
                     "NumDemande" => "V00" . $numOperation->id,
                     "NumCompte" => $compteVirementInterGuichetUSD,
@@ -2996,7 +3061,7 @@ class TransactionsController extends Controller
                     "Taux" => 1,
                     "TypeTransaction" => "C",
                     "CodeMonnaie" => 1,
-                    "CodeAgence" => "20",
+                    "CodeAgence" => $codeAgence,
                     "NumDossier" => "DOS00" . $numOperation->id,
                     "NumDemande" => "V00" . $numOperation->id,
                     "NumCompte" => $compteVirementInterGuichetUSD,
@@ -3016,7 +3081,7 @@ class TransactionsController extends Controller
                     "Taux" => 1,
                     "TypeTransaction" => "D",
                     "CodeMonnaie" => 1,
-                    "CodeAgence" => "20",
+                    "CodeAgence" => $codeAgence,
                     "NumDossier" => "DOS00" . $numOperation->id,
                     "NumDemande" => "V00" . $numOperation->id,
                     "NumCompte" => $numCompteCaissePrUSD,
@@ -3036,7 +3101,7 @@ class TransactionsController extends Controller
                     "Taux" => 1,
                     "TypeTransaction" => "C",
                     "CodeMonnaie" => 1,
-                    "CodeAgence" => "20",
+                    "CodeAgence" => $codeAgence,
                     "NumDossier" => "DOS00" . $numOperation->id,
                     "NumDemande" => "V00" . $numOperation->id,
                     "NumCompte" => $numCompteCaissierUSD,
@@ -3107,8 +3172,13 @@ class TransactionsController extends Controller
         if (!$checkIfRowNotConfirmed) {
             $data = Delestages::where("id", $request->refDelestage)->first();
             $tauxDuJour = TauxEtDateSystem::latest()->first()->TauxEnFc;
-            $numCompteCaissePrUSD = $this->numCompteCaissePrUSD;
-            $compteVirementInterGuichetUSD = $this->compteVirementInterGuichetUSD;
+            $currentAgence = session('current_agence');
+            $codeAgence = $currentAgence['code_agence'];
+ $agence = Agences::where('code_agence', $codeAgence)->first();
+
+
+            $numCompteCaissePrUSD = $agence->compte_caisse_usd;
+            $compteVirementInterGuichetUSD = $agence->compte_virement_caisse_usd;
             $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
             //COMPTEUR DES OPERATIONS
             $numOperation = [];
@@ -3122,7 +3192,7 @@ class TransactionsController extends Controller
                 "Taux" => 1,
                 "TypeTransaction" => "D",
                 "CodeMonnaie" => 1,
-                "CodeAgence" => "20",
+                "CodeAgence" => $codeAgence,
                 "NumDossier" => "DOS00" . $numOperation->id,
                 "NumDemande" => "V00" . $numOperation->id,
                 "NumCompte" => $compteVirementInterGuichetUSD,
@@ -3144,7 +3214,7 @@ class TransactionsController extends Controller
                 "Taux" => 1,
                 "TypeTransaction" => "C",
                 "CodeMonnaie" => 1,
-                "CodeAgence" => "20",
+                "CodeAgence" => $codeAgence,
                 "NumDossier" => "DOS00" . $numOperation->id,
                 "NumDemande" => "V00" . $numOperation->id,
                 "NumCompte" => $compteVirementInterGuichetUSD,
@@ -3165,7 +3235,7 @@ class TransactionsController extends Controller
                 "Taux" => 1,
                 "TypeTransaction" => "D",
                 "CodeMonnaie" => 1,
-                "CodeAgence" => "20",
+                "CodeAgence" => $codeAgence,
                 "NumDossier" => "DOS00" . $numOperation->id,
                 "NumDemande" => "V00" . $numOperation->id,
                 "NumCompte" => $numCompteCaissePrUSD,
@@ -3186,7 +3256,7 @@ class TransactionsController extends Controller
                 "Taux" => 1,
                 "TypeTransaction" => "C",
                 "CodeMonnaie" => 1,
-                "CodeAgence" => "20",
+                "CodeAgence" => $codeAgence,
                 "NumDossier" => "DOS00" . $numOperation->id,
                 "NumDemande" => "V00" . $numOperation->id,
                 "NumCompte" => $data->NumCompteCaissier,
@@ -3222,8 +3292,13 @@ class TransactionsController extends Controller
         if (!$checkIfRowNotConfirmed) {
             $data = Delestages::where("id", $request->refDelestage)->first();
             $tauxDuJour = TauxEtDateSystem::latest()->first()->TauxEnFc;
-            $numCompteCaissePrCDF = $this->numCompteCaissePrCDF;
-            $compteVirementInterGuichetCDF = $this->compteVirementInterGuichetCDF;
+
+               $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'];
+       $agence = Agences::where('code_agence', $codeAgence)->first();
+
+            $numCompteCaissePrCDF =  $agence->compte_caisse_cdf;
+            $compteVirementInterGuichetCDF = $agence->compte_virement_caisse_cdf;
             $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
             //COMPTEUR DES OPERATIONS
             $numOperation = [];
@@ -3237,7 +3312,7 @@ class TransactionsController extends Controller
                 "Taux" => 1,
                 "TypeTransaction" => "D",
                 "CodeMonnaie" => 2,
-                "CodeAgence" => "20",
+                "CodeAgence" => $codeAgence,
                 "NumDossier" => "DOS00" . $numOperation->id,
                 "NumDemande" => "V00" . $numOperation->id,
                 "NumCompte" => $compteVirementInterGuichetCDF,
@@ -3259,7 +3334,7 @@ class TransactionsController extends Controller
                 "Taux" => 1,
                 "TypeTransaction" => "C",
                 "CodeMonnaie" => 2,
-                "CodeAgence" => "20",
+                "CodeAgence" => $codeAgence,
                 "NumDossier" => "DOS00" . $numOperation->id,
                 "NumDemande" => "V00" . $numOperation->id,
                 "NumCompte" => $compteVirementInterGuichetCDF,
@@ -3280,7 +3355,7 @@ class TransactionsController extends Controller
                 "Taux" => 1,
                 "TypeTransaction" => "D",
                 "CodeMonnaie" => 2,
-                "CodeAgence" => "20",
+                "CodeAgence" => $codeAgence,
                 "NumDossier" => "DOS00" . $numOperation->id,
                 "NumDemande" => "V00" . $numOperation->id,
                 "NumCompte" => $numCompteCaissePrCDF,
@@ -3301,7 +3376,7 @@ class TransactionsController extends Controller
                 "Taux" => 1,
                 "TypeTransaction" => "C",
                 "CodeMonnaie" => 2,
-                "CodeAgence" => "20",
+                "CodeAgence" => $codeAgence,
                 "NumDossier" => "DOS00" . $numOperation->id,
                 "NumDemande" => "V00" . $numOperation->id,
                 "NumCompte" => $data->NumCompteCaissier,
@@ -4917,34 +4992,4 @@ class TransactionsController extends Controller
         return response()->json(["status" => 1, "data" => $data, "type_recu" => $type_recu]);
     }
 
-
-
-
-
-
-
-
-    // function recalculateBalances()
-    // {
-    //     $accounts = DB::table('comptes')->select('NumCompte')->get();
-
-    //     foreach ($accounts as $account) {
-    //         // Initialize the balance
-    //         $balance = 0;
-    //         // Fetch all transactions for the account, ordered by date and reference
-    //         $transactions = Transactions::where('NumCompte', $account->NumCompte)
-    //             ->orderBy('DateTransaction')
-    //             ->orderBy('RefTransaction')
-    //             ->get();
-
-    //         foreach ($transactions as $transaction) {
-    //             $balance += $transaction->Debitfc - $transaction->Creditfc;
-    //             // Update the transaction with the new balance
-    //             $transaction->solde = $balance;
-    //             $transaction->save();
-    //         }
-    //     }
-
-    //     Log::info('Recalculation of balances completed successfully.');
-    // }
 }

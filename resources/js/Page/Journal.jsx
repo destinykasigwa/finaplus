@@ -455,11 +455,7 @@ const Journal = () => {
                             <span className="badge bg-info">Agence: {AgenceFrom}</span>
                         </div>
                     )}
-                    {UserName && (
-                        <div className="col-auto">
-                            <span className="badge bg-success">Utilisateur: {UserName}</span>
-                        </div>
-                    )}
+                  
                     {checkboxValues.SuspensTransactions && (
                         <div className="col-auto">
                             <span className="badge bg-warning">Opérations En suspens</span>
@@ -490,7 +486,11 @@ const Journal = () => {
                 </h4></div>
 
                 {/* Éventuels badges de filtre (inchangés) */}
-                ...
+                  {UserName && (
+                        <div className="col-auto">
+                           <h2> <span className="badge bg-success">Utilisateur: {UserName}</span></h2>
+                        </div>
+                    )}
 
                 <div className="table-responsive">
                     <table className="table table-bordered table-striped" style={{ fontSize: "13px" }}>

@@ -273,7 +273,7 @@ class AdhesionController extends Controller
         // Création du mandataire
         Mandataires::create([
             "refCompte" => $refCompte,
-            "CodeAgence"=>$codeAgence,
+            "CodeAgence" => $codeAgence,
             "mendataireName" => $request->intitule_compte,
             "lieuNaissM" => $request->lieu_naissance,
             "dateNaissM" => $request->date_naissance,
@@ -498,120 +498,266 @@ class AdhesionController extends Controller
     // }
 
     // CREATE NEW ACCOUNT FOR CUSTOMER
-//    public function createAccount(Request $request)
-// {
-//     if (!isset($request->compteAbrege)) {
-//         return response()->json(["status" => 0, "msg" => "Aucun compte renseigné"]);
-//     }
+    //    public function createAccount(Request $request)
+    // {
+    //     if (!isset($request->compteAbrege)) {
+    //         return response()->json(["status" => 0, "msg" => "Aucun compte renseigné"]);
+    //     }
 
-//     // Récupérer l'agence de travail de l'utilisateur connecté
-//     $currentAgence = session('current_agence');
-//     if (!$currentAgence || !isset($currentAgence['code_agence'])) {
-//         return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
-//     }
-//     $codeAgenceUtil = $currentAgence['code_agence'];
-//     $nomAgenceUtil = $currentAgence['nom_agence'] ?? $codeAgenceUtil;
+    //     // Récupérer l'agence de travail de l'utilisateur connecté
+    //     $currentAgence = session('current_agence');
+    //     if (!$currentAgence || !isset($currentAgence['code_agence'])) {
+    //         return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+    //     }
+    //     $codeAgenceUtil = $currentAgence['code_agence'];
+    //     $nomAgenceUtil = $currentAgence['nom_agence'] ?? $codeAgenceUtil;
 
-//     // Récupérer les infos du membre depuis adhesion_membres
-//     $data = AdhesionMembre::where("compte_abrege", $request->compteAbrege)->first();
-//     if (!$data) {
-//         return response()->json(["status" => 0, "msg" => "Membre introuvable avec ce numéro abrégé"]);
-//     }
+    //     // Récupérer les infos du membre depuis adhesion_membres
+    //     $data = AdhesionMembre::where("compte_abrege", $request->compteAbrege)->first();
+    //     if (!$data) {
+    //         return response()->json(["status" => 0, "msg" => "Membre introuvable avec ce numéro abrégé"]);
+    //     }
 
-//     // Vérifier que le membre appartient à l'agence de l'utilisateur
-//     if ($data->code_agence != $codeAgenceUtil) {
-//         $agenceMembre = Agences::where('code_agence', $data->code_agence)->first();
-//         $nomAgenceMembre = $agenceMembre ? $agenceMembre->nom_agence : $data->code_agence;
-//         return response()->json([
-//             "status" => 0,
-//             "msg" => "Ce membre appartient à l'agence '{$nomAgenceMembre}'. Vous travaillez actuellement sur l'agence '{$nomAgenceUtil}'. Veuillez changer d'agence via le sélecteur en haut pour créer le compte de ce membre."
-//         ]);
-//     }
+    //     // Vérifier que le membre appartient à l'agence de l'utilisateur
+    //     if ($data->code_agence != $codeAgenceUtil) {
+    //         $agenceMembre = Agences::where('code_agence', $data->code_agence)->first();
+    //         $nomAgenceMembre = $agenceMembre ? $agenceMembre->nom_agence : $data->code_agence;
+    //         return response()->json([
+    //             "status" => 0,
+    //             "msg" => "Ce membre appartient à l'agence '{$nomAgenceMembre}'. Vous travaillez actuellement sur l'agence '{$nomAgenceUtil}'. Veuillez changer d'agence via le sélecteur en haut pour créer le compte de ce membre."
+    //         ]);
+    //     }
 
-//     $codeAgence = $data->code_agence; // ex: "20", "21"
-//     $abrege = (int) $request->compteAbrege;
+    //     $codeAgence = $data->code_agence; // ex: "20", "21"
+    //     $abrege = (int) $request->compteAbrege;
 
-//     if ($request->devise_compte == "CDF") {
-//         // Vérifier si le compte CDF n'existe pas déjà
-//         $checkCompteExist = Comptes::where("NumAdherant", $abrege)->where("CodeMonnaie", 2)->first();
-//         if ($checkCompteExist) {
-//             return response()->json(["status" => 0, "msg" => "Le compte en CDF existe déjà pour ce membre."]);
-//         }
+    //     if ($request->devise_compte == "CDF") {
+    //         // Vérifier si le compte CDF n'existe pas déjà
+    //         $checkCompteExist = Comptes::where("NumAdherant", $abrege)->where("CodeMonnaie", 2)->first();
+    //         if ($checkCompteExist) {
+    //             return response()->json(["status" => 0, "msg" => "Le compte en CDF existe déjà pour ce membre."]);
+    //         }
 
-//         // Le numéro de compte CDF a été construit lors de l'adhésion
-//         Comptes::create([
-//             'CodeAgence'    => $data->code_agence,
-//             'NumCompte'     => $data->num_compte,
-//             'Num_Manuel'    => $data->Num_Manuel,
-//             'NomCompte'     => $data->intitule_compte,
-//             'RefTypeCompte' => "3",
-//             'RefCadre'      => "33",
-//             'RefGroupe'     => "330",
-//             'RefSousGroupe' => "3301",
-//             'CodeMonnaie'   => 2,
-//             'NumeTelephone' => $data->telephone,
-//             'DateNaissance' => $data->date_naissance,
-//             'NumAdherant'   => $abrege,
-//             'nature_compte' => "PASSIF",
-//             'niveau'        => 5,
-//             'est_classe'    => 0,
-//             'compte_parent' => "3300",
-//         ]);
-//         return response()->json(["status" => 1, "msg" => "Compte CDF bien créé"]);
-//     } elseif ($request->devise_compte == "USD") {
-//         // Vérifier si le compte USD n'existe pas déjà
-//         $checkCompteExist = Comptes::where("NumAdherant", $abrege)->where("CodeMonnaie", 1)->first();
-//         if ($checkCompteExist) {
-//             return response()->json(["status" => 0, "msg" => "Le compte en USD existe déjà pour ce membre."]);
-//         }
+    //         // Le numéro de compte CDF a été construit lors de l'adhésion
+    //         Comptes::create([
+    //             'CodeAgence'    => $data->code_agence,
+    //             'NumCompte'     => $data->num_compte,
+    //             'Num_Manuel'    => $data->Num_Manuel,
+    //             'NomCompte'     => $data->intitule_compte,
+    //             'RefTypeCompte' => "3",
+    //             'RefCadre'      => "33",
+    //             'RefGroupe'     => "330",
+    //             'RefSousGroupe' => "3301",
+    //             'CodeMonnaie'   => 2,
+    //             'NumeTelephone' => $data->telephone,
+    //             'DateNaissance' => $data->date_naissance,
+    //             'NumAdherant'   => $abrege,
+    //             'nature_compte' => "PASSIF",
+    //             'niveau'        => 5,
+    //             'est_classe'    => 0,
+    //             'compte_parent' => "3300",
+    //         ]);
+    //         return response()->json(["status" => 1, "msg" => "Compte CDF bien créé"]);
+    //     } elseif ($request->devise_compte == "USD") {
+    //         // Vérifier si le compte USD n'existe pas déjà
+    //         $checkCompteExist = Comptes::where("NumAdherant", $abrege)->where("CodeMonnaie", 1)->first();
+    //         if ($checkCompteExist) {
+    //             return response()->json(["status" => 0, "msg" => "Le compte en USD existe déjà pour ce membre."]);
+    //         }
 
-//         // Construction du numéro de compte USD (3300...)
-//         $codeAgenceNum = (string) $codeAgence;
+    //         // Construction du numéro de compte USD (3300...)
+    //         $codeAgenceNum = (string) $codeAgence;
 
-//         if ($abrege < 10) {
-//             $compteEnDollars = "330000000" . $abrege . $codeAgenceNum . "1";
-//         } elseif ($abrege < 100) {
-//             $compteEnDollars = "33000000" . $abrege . $codeAgenceNum . "1";
-//         } elseif ($abrege < 1000) {
-//             $compteEnDollars = "3300000" . $abrege . $codeAgenceNum . "1";
-//         } elseif ($abrege < 10000) {
-//             $compteEnDollars = "330000" . $abrege . $codeAgenceNum . "1";
-//         } elseif ($abrege < 100000) {
-//             $compteEnDollars = "33000" . $abrege . $codeAgenceNum . "1";
-//         } elseif ($abrege < 1000000) {
-//             $compteEnDollars = "3300" . $abrege . $codeAgenceNum . "1";
-//         } elseif ($abrege < 10000000) {
-//             $compteEnDollars = "330" . $abrege . $codeAgenceNum . "1";
-//         } else {
-//             return response()->json(["status" => 0, "msg" => "Limite de membres atteinte"]);
-//         }
+    //         if ($abrege < 10) {
+    //             $compteEnDollars = "330000000" . $abrege . $codeAgenceNum . "1";
+    //         } elseif ($abrege < 100) {
+    //             $compteEnDollars = "33000000" . $abrege . $codeAgenceNum . "1";
+    //         } elseif ($abrege < 1000) {
+    //             $compteEnDollars = "3300000" . $abrege . $codeAgenceNum . "1";
+    //         } elseif ($abrege < 10000) {
+    //             $compteEnDollars = "330000" . $abrege . $codeAgenceNum . "1";
+    //         } elseif ($abrege < 100000) {
+    //             $compteEnDollars = "33000" . $abrege . $codeAgenceNum . "1";
+    //         } elseif ($abrege < 1000000) {
+    //             $compteEnDollars = "3300" . $abrege . $codeAgenceNum . "1";
+    //         } elseif ($abrege < 10000000) {
+    //             $compteEnDollars = "330" . $abrege . $codeAgenceNum . "1";
+    //         } else {
+    //             return response()->json(["status" => 0, "msg" => "Limite de membres atteinte"]);
+    //         }
 
-//         Comptes::create([
-//             'CodeAgence'    => $data->code_agence,
-//             'NumCompte'     => $compteEnDollars,
-//             'Num_Manuel'    => $data->Num_Manuel,
-//             'NomCompte'     => $data->intitule_compte,
-//             'RefTypeCompte' => "3",
-//             'RefCadre'      => "33",
-//             'RefGroupe'     => "330",
-//             'RefSousGroupe' => "3300",
-//             'CodeMonnaie'   => 1,
-//             'NumeTelephone' => $data->telephone,
-//             'DateNaissance' => $data->date_naissance,
-//             'NumAdherant'   => $abrege,
-//             'nature_compte' => "PASSIF",
-//             'niveau'        => 5,
-//             'est_classe'    => 0,
-//             'compte_parent' => "3300",
-//         ]);
-//         return response()->json(["status" => 1, "msg" => "Compte USD bien créé"]);
-//     } else {
-//         return response()->json(["status" => 0, "msg" => "Devise non reconnue"]);
-//     }
-// }
+    //         Comptes::create([
+    //             'CodeAgence'    => $data->code_agence,
+    //             'NumCompte'     => $compteEnDollars,
+    //             'Num_Manuel'    => $data->Num_Manuel,
+    //             'NomCompte'     => $data->intitule_compte,
+    //             'RefTypeCompte' => "3",
+    //             'RefCadre'      => "33",
+    //             'RefGroupe'     => "330",
+    //             'RefSousGroupe' => "3300",
+    //             'CodeMonnaie'   => 1,
+    //             'NumeTelephone' => $data->telephone,
+    //             'DateNaissance' => $data->date_naissance,
+    //             'NumAdherant'   => $abrege,
+    //             'nature_compte' => "PASSIF",
+    //             'niveau'        => 5,
+    //             'est_classe'    => 0,
+    //             'compte_parent' => "3300",
+    //         ]);
+    //         return response()->json(["status" => 1, "msg" => "Compte USD bien créé"]);
+    //     } else {
+    //         return response()->json(["status" => 0, "msg" => "Devise non reconnue"]);
+    //     }
+    // }
 
 
-public function createAccount(Request $request)
+    // public function createAccount(Request $request)
+    // {
+    //     if (!isset($request->compteAbrege)) {
+    //         return response()->json(["status" => 0, "msg" => "Aucun compte renseigné"]);
+    //     }
+
+    //     // Récupérer l'agence de travail de l'utilisateur
+    //     $currentAgence = session('current_agence');
+    //     if (!$currentAgence || !isset($currentAgence['code_agence'])) {
+    //         return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+    //     }
+    //     $codeAgenceUtil = $currentAgence['code_agence'];
+    //     $nomAgenceUtil = $currentAgence['nom_agence'] ?? $codeAgenceUtil;
+
+    //     $search = trim($request->compteAbrege);
+    //     $data = null;
+
+    //     // 1. Si c'est un Num_Manuel (2 lettres + chiffres) → recherche directe
+    //     if (preg_match('/^[A-Za-z]{2}\d+$/', $search)) {
+    //         $data = AdhesionMembre::where('Num_Manuel', $search)->first();
+    //         if (!$data) {
+    //             return response()->json(["status" => 0, "msg" => "Aucun membre avec ce Num_Manuel"]);
+    //         }
+    //         // Autoriser la création même si l'agence diffère (l'utilisateur a explicitement utilisé le Num_Manuel)
+    //     }
+    //     // 2. Si c'est un numéro de compte complet (13 chiffres)
+    //     elseif (strlen($search) === 13 && ctype_digit($search)) {
+    //         $data = AdhesionMembre::where('num_compte', $search)->first();
+    //         if (!$data) {
+    //             return response()->json(["status" => 0, "msg" => "Aucun membre avec ce numéro de compte"]);
+    //         }
+    //     }
+    //     // 3. Sinon, c'est un numéro abrégé numérique
+    //     else {
+    //         // Chercher d'abord dans l'agence courante
+    //         $data = AdhesionMembre::where('compte_abrege', $search)
+    //             ->where('code_agence', $codeAgenceUtil)
+    //             ->first();
+    //         if (!$data) {
+    //             // Vérifier si ce numéro existe dans une autre agence
+    //             $autre = AdhesionMembre::where('compte_abrege', $search)->first();
+    //             if ($autre) {
+    //                 $agenceMembre = Agences::where('code_agence', $autre->code_agence)->first();
+    //                 $nomAgenceMembre = $agenceMembre ? $agenceMembre->nom_agence : $autre->code_agence;
+    //                 return response()->json([
+    //                     "status" => 0,
+    //                     "msg" => "Ce numéro abrégé correspond à un membre de l'agence '{$nomAgenceMembre}'. Vous travaillez sur '{$nomAgenceUtil}'. Veuillez utiliser son Num_Manuel ('{$autre->Num_Manuel}') ou changer d'agence."
+    //                 ]);
+    //             }
+    //             return response()->json(["status" => 0, "msg" => "Aucun membre trouvé avec ce numéro abrégé"]);
+    //         }
+    //     }
+
+    //     // Vérification facultative : si le membre est d'une agence différente et que l'utilisateur n'a pas utilisé le Num_Manuel, on bloque
+    //     if ($data->code_agence != $codeAgenceUtil && !preg_match('/^[A-Za-z]{2}\d+$/', $search) && strlen($search) !== 13) {
+    //         $agenceMembre = Agences::where('code_agence', $data->code_agence)->first();
+    //         $nomAgenceMembre = $agenceMembre ? $agenceMembre->nom_agence : $data->code_agence;
+    //         return response()->json([
+    //             "status" => 0,
+    //             "msg" => "Ce membre appartient à l'agence '{$nomAgenceMembre}'. Vous travaillez sur '{$nomAgenceUtil}'. Pour créer son compte, utilisez son Num_Manuel ('{$data->Num_Manuel}') ou changez d'agence."
+    //         ]);
+    //     }
+
+    //     // Si on arrive ici, on peut créer le compte
+    //     $codeAgence = $data->code_agence;
+    //     $abrege = (int) $data->compte_abrege;
+
+    //     if ($request->devise_compte == "CDF") {
+    //         //CHECK IF THE ACCOUNT NOT ALREADY CREATED
+    //         $checkCompteExist = Comptes::where("NumAdherant", $request->compteAbrege)->where("CodeMonnaie", 2)->first();
+    //         if (!$checkCompteExist) {
+    //             $data = AdhesionMembre::where("compte_abrege", $request->compteAbrege)->first();
+    //             Comptes::create([
+    //                 'CodeAgence' => $data->code_agence,
+    //                 'NumCompte' => $data->num_compte,
+    //                 'Num_Manuel' => $data->Num_Manuel,
+    //                 'NomCompte' => $data->intitule_compte,
+    //                 'RefTypeCompte' => "3",
+    //                 'RefCadre' => "33",
+    //                 'RefGroupe' => "330",
+    //                 'RefSousGroupe' => "3301",
+    //                 'CodeMonnaie' => 2,
+    //                 'NumeTelephone' => $data->telephone,
+    //                 'DateNaissance' => $data->date_naissance,
+    //                 'NumAdherant' => $data->compte_abrege,
+    //                 'nature_compte' => "PASSIF",
+    //                 'niveau' => "5",
+    //                 'est_classe' => 0,
+    //                 'compte_parent' => "3300",
+
+    //             ]);
+    //             return response()->json(["status" => 1, "msg" => "Compte bien crée"]);
+    //         } else {
+    //             return response()->json(["status" => 0, "msg" => "Le compte en CDF existe déjà pour ce membre."]);
+    //         }
+    //     } else if ($request->devise_compte == "USD") {
+    //         // Construction du numéro de compte USD (3300...)
+    //         $codeAgenceNum = (string) $codeAgence;
+
+    //         if ($abrege < 10) {
+    //             $compteEnDollars = "330000000" . $abrege . $codeAgenceNum . "1";
+    //         } elseif ($abrege < 100) {
+    //             $compteEnDollars = "33000000" . $abrege . $codeAgenceNum . "1";
+    //         } elseif ($abrege < 1000) {
+    //             $compteEnDollars = "3300000" . $abrege . $codeAgenceNum . "1";
+    //         } elseif ($abrege < 10000) {
+    //             $compteEnDollars = "330000" . $abrege . $codeAgenceNum . "1";
+    //         } elseif ($abrege < 100000) {
+    //             $compteEnDollars = "33000" . $abrege . $codeAgenceNum . "1";
+    //         } elseif ($abrege < 1000000) {
+    //             $compteEnDollars = "3300" . $abrege . $codeAgenceNum . "1";
+    //         } elseif ($abrege < 10000000) {
+    //             $compteEnDollars = "330" . $abrege . $codeAgenceNum . "1";
+    //         } else {
+    //             return response()->json(["status" => 0, "msg" => "Limite de membres atteinte"]);
+    //         }
+
+    //         $checkCompteExist = AdhesionMembre::where("NumCompte", $compteEnDollars)->first();
+    //         if (!$checkCompteExist) {
+    //             Comptes::create([
+    //                 'CodeAgence'    => $data->code_agence,
+    //                 'NumCompte'     => $compteEnDollars,
+    //                 'Num_Manuel'    => $data->Num_Manuel,
+    //                 'NomCompte'     => $data->intitule_compte,
+    //                 'RefTypeCompte' => "3",
+    //                 'RefCadre'      => "33",
+    //                 'RefGroupe'     => "330",
+    //                 'RefSousGroupe' => "3300",
+    //                 'CodeMonnaie'   => 1,
+    //                 'NumeTelephone' => $data->telephone,
+    //                 'DateNaissance' => $data->date_naissance,
+    //                 'NumAdherant'   => $abrege,
+    //                 'nature_compte' => "PASSIF",
+    //                 'niveau'        => 5,
+    //                 'est_classe'    => 0,
+    //                 'compte_parent' => "3300",
+    //             ]);
+    //         } else {
+    //             return response()->json(["status" => 0, "msg" => "Le compte en USD compte existe déjà pour ce membre"]);
+    //         }
+
+    //         return response()->json(["status" => 1, "msg" => "Compte USD bien créé"]);
+    //     }
+    // }
+
+
+    public function createAccount(Request $request)
 {
     if (!isset($request->compteAbrege)) {
         return response()->json(["status" => 0, "msg" => "Aucun compte renseigné"]);
@@ -628,24 +774,21 @@ public function createAccount(Request $request)
     $search = trim($request->compteAbrege);
     $data = null;
 
-    // 1. Si c'est un Num_Manuel (2 lettres + chiffres) → recherche directe
+    // 🔍 Recherche intelligente du membre
     if (preg_match('/^[A-Za-z]{2}\d+$/', $search)) {
+        // C'est un Num_Manuel
         $data = AdhesionMembre::where('Num_Manuel', $search)->first();
         if (!$data) {
             return response()->json(["status" => 0, "msg" => "Aucun membre avec ce Num_Manuel"]);
         }
-        // Autoriser la création même si l'agence diffère (l'utilisateur a explicitement utilisé le Num_Manuel)
-    }
-    // 2. Si c'est un numéro de compte complet (13 chiffres)
-    elseif (strlen($search) === 13 && ctype_digit($search)) {
+    } elseif (strlen($search) === 13 && ctype_digit($search)) {
+        // C'est un numéro de compte complet (13 chiffres)
         $data = AdhesionMembre::where('num_compte', $search)->first();
         if (!$data) {
             return response()->json(["status" => 0, "msg" => "Aucun membre avec ce numéro de compte"]);
         }
-    }
-    // 3. Sinon, c'est un numéro abrégé numérique
-    else {
-        // Chercher d'abord dans l'agence courante
+    } else {
+        // C'est un numéro abrégé : chercher d'abord dans l'agence courante
         $data = AdhesionMembre::where('compte_abrege', $search)
                               ->where('code_agence', $codeAgenceUtil)
                               ->first();
@@ -664,7 +807,7 @@ public function createAccount(Request $request)
         }
     }
 
-    // Vérification facultative : si le membre est d'une agence différente et que l'utilisateur n'a pas utilisé le Num_Manuel, on bloque
+    // Vérification supplémentaire : si le membre n'est pas de l'agence courante et que l'utilisateur n'a pas utilisé Num_Manuel (ou complet), on bloque
     if ($data->code_agence != $codeAgenceUtil && !preg_match('/^[A-Za-z]{2}\d+$/', $search) && strlen($search) !== 13) {
         $agenceMembre = Agences::where('code_agence', $data->code_agence)->first();
         $nomAgenceMembre = $agenceMembre ? $agenceMembre->nom_agence : $data->code_agence;
@@ -674,15 +817,50 @@ public function createAccount(Request $request)
         ]);
     }
 
-    // Si on arrive ici, on peut créer le compte
     $codeAgence = $data->code_agence;
     $abrege = (int) $data->compte_abrege;
 
+    // -------------------- CDF --------------------
+    if ($request->devise_compte == "CDF") {
+        // Vérifier si le compte CDF n'existe pas déjà
+        $checkCompteExist = Comptes::where("NumAdherant", $abrege)->where("CodeMonnaie", 2)->first();
+        if ($checkCompteExist) {
+            return response()->json(["status" => 0, "msg" => "Le compte en CDF existe déjà pour ce membre."]);
+        }
 
-    
-        // Construction du numéro de compte USD (3300...)
-        $codeAgenceNum = (string) $codeAgence;
+        // Le numéro de compte CDF a été construit lors de l'adhésion (dans $data->num_compte)
+        Comptes::create([
+            'CodeAgence'    => $data->code_agence,
+            'NumCompte'     => $data->num_compte,
+            'Num_Manuel'    => $data->Num_Manuel,
+            'NomCompte'     => $data->intitule_compte,
+            'RefTypeCompte' => "3",
+            'RefCadre'      => "33",
+            'RefGroupe'     => "330",
+            'RefSousGroupe' => "3301",
+            'CodeMonnaie'   => 2,
+            'NumeTelephone' => $data->telephone,
+            'DateNaissance' => $data->date_naissance,
+            'NumAdherant'   => $abrege,
+            'nature_compte' => "PASSIF",
+            'niveau'        => 5,
+            'est_classe'    => 0,
+            'compte_parent' => "3300",
+        ]);
+        return response()->json(["status" => 1, "msg" => "Compte CDF bien créé"]);
+    }
 
+    // -------------------- USD --------------------
+    elseif ($request->devise_compte == "USD") {
+        // Vérifier si le compte USD n'existe pas déjà
+        $checkCompteExist = Comptes::where("NumAdherant", $abrege)->where("CodeMonnaie", 1)->first();
+        if ($checkCompteExist) {
+            return response()->json(["status" => 0, "msg" => "Le compte en USD existe déjà pour ce membre."]);
+        }
+
+        $codeAgenceNum = (string) $codeAgence; // "20", "21"
+
+        // Construction du numéro de compte USD
         if ($abrege < 10) {
             $compteEnDollars = "330000000" . $abrege . $codeAgenceNum . "1";
         } elseif ($abrege < 100) {
@@ -699,6 +877,11 @@ public function createAccount(Request $request)
             $compteEnDollars = "330" . $abrege . $codeAgenceNum . "1";
         } else {
             return response()->json(["status" => 0, "msg" => "Limite de membres atteinte"]);
+        }
+
+        // Vérification de longueur (sécurité)
+        if (strlen($compteEnDollars) > 13) {
+            return response()->json(["status" => 0, "msg" => "Erreur technique : numéro de compte trop long."]);
         }
 
         Comptes::create([
@@ -720,8 +903,11 @@ public function createAccount(Request $request)
             'compte_parent' => "3300",
         ]);
         return response()->json(["status" => 1, "msg" => "Compte USD bien créé"]);
+    }
 
-    // ... le reste de votre code pour créer le compte (CDF ou USD) inchangé ...
+    else {
+        return response()->json(["status" => 0, "msg" => "Devise non reconnue"]);
+    }
 }
 
     public function ajoutMandataire(Request $request)
@@ -746,34 +932,34 @@ public function createAccount(Request $request)
         }
     }
 
-   public function getMandataire(Request $request)
-{
-    if (!isset($request->compte_to_search)) {
-        return response()->json(["status" => 0, "msg" => "Aucun compte renseigné"]);
+    public function getMandataire(Request $request)
+    {
+        if (!isset($request->compte_to_search)) {
+            return response()->json(["status" => 0, "msg" => "Aucun compte renseigné"]);
+        }
+
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
+        if (!$codeAgence) {
+            return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+        }
+
+        // Récupérer l'adhésion pour connaître le code_agence du membre (sécurité)
+        $adhesion = AdhesionMembre::where('compte_abrege', $request->compte_to_search)
+            ->orWhere('num_compte', $request->compte_to_search)
+            ->first();
+
+        if (!$adhesion) {
+            return response()->json(["status" => 0, "msg" => "Membre introuvable"]);
+        }
+
+        // Récupérer les mandataires du membre pour l'agence courante (ou toutes, selon besoin)
+        $data = Mandataires::where('refCompte', $adhesion->compte_abrege)
+            ->where('CodeAgence', $codeAgence) // filtre par agence de l'utilisateur
+            ->get();
+
+        return response()->json(["status" => 1, "data" => $data]);
     }
-
-    $currentAgence = session('current_agence');
-    $codeAgence = $currentAgence['code_agence'] ?? null;
-    if (!$codeAgence) {
-        return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
-    }
-
-    // Récupérer l'adhésion pour connaître le code_agence du membre (sécurité)
-    $adhesion = AdhesionMembre::where('compte_abrege', $request->compte_to_search)
-                ->orWhere('num_compte', $request->compte_to_search)
-                ->first();
-
-    if (!$adhesion) {
-        return response()->json(["status" => 0, "msg" => "Membre introuvable"]);
-    }
-
-    // Récupérer les mandataires du membre pour l'agence courante (ou toutes, selon besoin)
-    $data = Mandataires::where('refCompte', $adhesion->compte_abrege)
-                       ->where('CodeAgence', $codeAgence) // filtre par agence de l'utilisateur
-                       ->get();
-
-    return response()->json(["status" => 1, "data" => $data]);
-}
 
     public function deleteMandataire($id)
     {

@@ -361,13 +361,141 @@ class ReportsController extends Controller
 // }
 
 
+// public function getSearchedJournal(Request $request)
+// {
+//     $user = auth()->user();
+
+//     // ---------- Gestion du filtre agence (obligatoire) ----------
+//     $agenceFilter = $request->agence_filter ?? 'current';
+//     $codeAgence = null;
+//     if ($agenceFilter === 'current') {
+//         $currentAgence = session('current_agence');
+//         $codeAgence = $currentAgence['code_agence'] ?? null;
+//         if (!$codeAgence) {
+//             return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
+//         }
+//     } elseif ($agenceFilter !== 'all') {
+//         $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
+//         if (!$agence) {
+//             return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
+//         }
+//         $codeAgence = $agence->code_agence;
+//     }
+//     if (!$codeAgence) {
+//         return response()->json(['status' => 0, 'msg' => 'Code agence requis']);
+//     }
+
+//     // ---------- Autres filtres ----------
+//     $dateDebut = $request->DateDebut ?? null;
+//     $dateFin   = $request->DateFin ?? null;
+//     $userName  = $request->UserName ?? null;
+//     $isSuspens = $request->AutresCriteres['SuspensTransactions'] ?? false;
+
+//     // Conditions SQL communes
+//     $conditions = ["t.CodeAgence = '$codeAgence'"];
+//     if ($dateDebut && $dateFin) $conditions[] = "t.DateTransaction BETWEEN '$dateDebut' AND '$dateFin'";
+//     if ($userName) $conditions[] = "t.NomUtilisateur = '$userName'";
+//     if ($isSuspens) $conditions[] = "t.isSuspens = 1";
+//     $whereClause = implode(" AND ", $conditions);
+
+//     // Fonction pour récupérer les lignes brutes d'une devise
+//     $getRawLines = function ($codeMonnaie, $debitCol, $creditCol) use ($whereClause) {
+//         return DB::select("
+//             SELECT 
+//                 t.NumTransaction,
+//                 t.DateTransaction,
+//                 t.CodeMonnaie,
+//                 t.NumCompte,
+//                 c.NomCompte,
+//                 t.$debitCol AS MontantDebit,
+//                 t.$creditCol AS MontantCredit,
+//                 t.Libelle
+//             FROM transactions t
+//             JOIN comptes c ON t.NumCompte = c.NumCompte
+//             WHERE $whereClause
+//               AND t.CodeMonnaie = $codeMonnaie
+//               AND (t.$debitCol != 0 OR t.$creditCol != 0)
+//             ORDER BY t.DateTransaction, t.NumTransaction
+//         ");
+//     };
+
+//     // Regroupement en PHP : une ligne par transaction
+//     $buildGrouped = function ($rawLines) {
+//         $grouped = [];
+//         foreach ($rawLines as $line) {
+//             $key = $line->NumTransaction . '_' . $line->DateTransaction;
+//             if (!isset($grouped[$key])) {
+//                 $grouped[$key] = (object)[
+//                     'NumTransaction'   => $line->NumTransaction,
+//                     'DateTransaction'  => $line->DateTransaction,
+//                     'CodeMonnaie'      => $line->CodeMonnaie,
+//                     'CompteDebit'      => null,
+//                     'NomCompteDebit'   => null,
+//                     'CompteCredit'     => null,
+//                     'NomCompteCredit'  => null,
+//                     'MontantDebit'     => 0,
+//                     'MontantCredit'    => 0,
+//                     'Libelle'          => $line->Libelle,
+//                 ];
+//             }
+//             // Ligne débit
+//             if ($line->MontantDebit > 0) {
+//                 $grouped[$key]->CompteDebit    = $line->NumCompte;
+//                 $grouped[$key]->NomCompteDebit = $line->NomCompte;
+//                 $grouped[$key]->MontantDebit   = $line->MontantDebit;
+//             }
+//             // Ligne crédit
+//             if ($line->MontantCredit > 0) {
+//                 $grouped[$key]->CompteCredit    = $line->NumCompte;
+//                 $grouped[$key]->NomCompteCredit = $line->NomCompte;
+//                 $grouped[$key]->MontantCredit   = $line->MontantCredit;
+//             }
+//         }
+//         return array_values($grouped);
+//     };
+
+//     // Exécution pour CDF (CodeMonnaie = 2)
+//     $rawCDF = $getRawLines(2, 'Debitfc', 'Creditfc');
+//     $dataCDF = $buildGrouped($rawCDF);
+
+//     // Exécution pour USD (CodeMonnaie = 1)
+//     $rawUSD = $getRawLines(1, 'Debitusd', 'Creditusd');
+//     $dataUSD = $buildGrouped($rawUSD);
+
+//     if (empty($dataCDF) && empty($dataUSD)) {
+//         return response()->json(['status' => 0, 'msg' => 'Pas de données trouvées']);
+//     }
+
+//     // Totaux après regroupement
+//     $totCDF = (object)['TotalDebit' => 0, 'TotalCredit' => 0];
+//     foreach ($dataCDF as $row) {
+//         $totCDF->TotalDebit  += $row->MontantDebit;
+//         $totCDF->TotalCredit += $row->MontantCredit;
+//     }
+
+//     $totUSD = (object)['TotalDebit' => 0, 'TotalCredit' => 0];
+//     foreach ($dataUSD as $row) {
+//         $totUSD->TotalDebit  += $row->MontantDebit;
+//         $totUSD->TotalCredit += $row->MontantCredit;
+//     }
+
+//     return response()->json([
+//         'status'  => 1,
+//         'dataCDF' => $dataCDF,
+//         'dataUSD' => $dataUSD,
+//         'totCDF'  => $totCDF,
+//         'totUSD'  => $totUSD,
+//     ]);
+// }
+
 public function getSearchedJournal(Request $request)
 {
     $user = auth()->user();
 
-    // ---------- Gestion du filtre agence (obligatoire) ----------
+    // ---------- Gestion du filtre agence ----------
     $agenceFilter = $request->agence_filter ?? 'current';
     $codeAgence = null;
+
     if ($agenceFilter === 'current') {
         $currentAgence = session('current_agence');
         $codeAgence = $currentAgence['code_agence'] ?? null;
@@ -375,15 +503,14 @@ public function getSearchedJournal(Request $request)
             return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
         }
     } elseif ($agenceFilter !== 'all') {
+        // Sélection d'une agence spécifique (par son id)
         $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
         if (!$agence) {
             return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
         }
         $codeAgence = $agence->code_agence;
     }
-    if (!$codeAgence) {
-        return response()->json(['status' => 0, 'msg' => 'Code agence requis']);
-    }
+    // Pour 'all', $codeAgence reste null (pas de filtre d'agence)
 
     // ---------- Autres filtres ----------
     $dateDebut = $request->DateDebut ?? null;
@@ -391,12 +518,27 @@ public function getSearchedJournal(Request $request)
     $userName  = $request->UserName ?? null;
     $isSuspens = $request->AutresCriteres['SuspensTransactions'] ?? false;
 
-    // Conditions SQL communes
-    $conditions = ["t.CodeAgence = '$codeAgence'"];
-    if ($dateDebut && $dateFin) $conditions[] = "t.DateTransaction BETWEEN '$dateDebut' AND '$dateFin'";
-    if ($userName) $conditions[] = "t.NomUtilisateur = '$userName'";
-    if ($isSuspens) $conditions[] = "t.isSuspens = 1";
+    // Construction des conditions WHERE (seulement si agence spécifique)
+    $conditions = [];
+    if ($codeAgence) {
+        $conditions[] = "t.CodeAgence = '$codeAgence'";
+    }
+    if ($dateDebut && $dateFin) {
+        $conditions[] = "t.DateTransaction BETWEEN '$dateDebut' AND '$dateFin'";
+    }
+    if ($userName) {
+        $conditions[] = "t.NomUtilisateur = '$userName'";
+    }
+    if ($isSuspens) {
+        $conditions[] = "t.isSuspens = 1";
+    }
+
     $whereClause = implode(" AND ", $conditions);
+    if (!empty($whereClause)) {
+        $whereClause = " WHERE " . $whereClause;
+    } else {
+        $whereClause = "";
+    }
 
     // Fonction pour récupérer les lignes brutes d'une devise
     $getRawLines = function ($codeMonnaie, $debitCol, $creditCol) use ($whereClause) {
@@ -412,14 +554,14 @@ public function getSearchedJournal(Request $request)
                 t.Libelle
             FROM transactions t
             JOIN comptes c ON t.NumCompte = c.NumCompte
-            WHERE $whereClause
+            $whereClause
               AND t.CodeMonnaie = $codeMonnaie
               AND (t.$debitCol != 0 OR t.$creditCol != 0)
             ORDER BY t.DateTransaction, t.NumTransaction
         ");
     };
 
-    // Regroupement en PHP : une ligne par transaction
+    // Regroupement en PHP
     $buildGrouped = function ($rawLines) {
         $grouped = [];
         foreach ($rawLines as $line) {
@@ -438,13 +580,11 @@ public function getSearchedJournal(Request $request)
                     'Libelle'          => $line->Libelle,
                 ];
             }
-            // Ligne débit
             if ($line->MontantDebit > 0) {
                 $grouped[$key]->CompteDebit    = $line->NumCompte;
                 $grouped[$key]->NomCompteDebit = $line->NomCompte;
                 $grouped[$key]->MontantDebit   = $line->MontantDebit;
             }
-            // Ligne crédit
             if ($line->MontantCredit > 0) {
                 $grouped[$key]->CompteCredit    = $line->NumCompte;
                 $grouped[$key]->NomCompteCredit = $line->NomCompte;
@@ -454,11 +594,11 @@ public function getSearchedJournal(Request $request)
         return array_values($grouped);
     };
 
-    // Exécution pour CDF (CodeMonnaie = 2)
+    // Exécution CDF
     $rawCDF = $getRawLines(2, 'Debitfc', 'Creditfc');
     $dataCDF = $buildGrouped($rawCDF);
 
-    // Exécution pour USD (CodeMonnaie = 1)
+    // Exécution USD
     $rawUSD = $getRawLines(1, 'Debitusd', 'Creditusd');
     $dataUSD = $buildGrouped($rawUSD);
 
@@ -466,7 +606,7 @@ public function getSearchedJournal(Request $request)
         return response()->json(['status' => 0, 'msg' => 'Pas de données trouvées']);
     }
 
-    // Totaux après regroupement
+    // Totaux
     $totCDF = (object)['TotalDebit' => 0, 'TotalCredit' => 0];
     foreach ($dataCDF as $row) {
         $totCDF->TotalDebit  += $row->MontantDebit;
@@ -1275,33 +1415,424 @@ public function getEcheancier(Request $request)
     }
 
 
-    //GET BILAN DATA 
+    //GET BILAN REPORTS 
 
- public function getBilanCompte(Request $request)
+//  public function getBilanCompte(Request $request)
+// {
+//     $date1 = $request->date_debut_balance;
+//     $date2 = $request->date_fin_balance;
+//     $devise = $request->devise;
+//     $agenceFilter = $request->agence_filter ?? 'current';
+
+//     // Déterminer le code agence à utiliser pour le filtrage (null = toutes les agences)
+//     $codeAgence = null;
+//     $user = auth()->user();
+
+//     if ($agenceFilter === 'current') {
+//         $currentAgence = session('current_agence');
+//         $codeAgence = $currentAgence['code_agence'] ?? null;
+//         if (!$codeAgence) {
+//             return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie pour cet utilisateur']);
+//         }
+//     } elseif ($agenceFilter === 'all') {
+//         $codeAgence = null; // pas de filtre
+//     } else {
+//         // agenceFilter est un id (ex: 1,2,3...)
+//         // Vérifier que l'agence appartient bien à l'utilisateur
+//         $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
+//         if (!$agence) {
+//             return response()->json(['status' => 0, 'msg' => 'Agence non autorisée pour cet utilisateur']);
+//         }
+//         $codeAgence = $agence->code_agence;
+//     }
+
+//     $debitCol = $devise === 'USD' ? 'Debitusd' : 'Debitfc';
+//     $creditCol = $devise === 'USD' ? 'Creditusd' : 'Creditfc';
+//     $monnaieValue = $devise === 'USD' ? 1 : 2;
+
+//     // Helper pour ajouter condition WHERE sur CodeAgence si nécessaire
+//     $addAgenceWhere = function($query) use ($codeAgence) {
+//         if ($codeAgence) {
+//             $query->where('CodeAgence', $codeAgence);
+//         }
+//         return $query;
+//     };
+
+//     // Provision 38
+//     $provision38 = DB::table('transactions as t')
+//         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
+//         ->where('c.RefCadre', '38')
+//         ->where('t.CodeMonnaie', $monnaieValue)
+//         ->where('t.DateTransaction', '<=', $date2)
+//         ->when($codeAgence, function($q) use ($codeAgence) {
+//             return $q->where('c.CodeAgence', $codeAgence);
+//         })
+//         ->select(DB::raw("COALESCE(SUM(t.$creditCol - t.$debitCol), 0) as total38"))
+//         ->first();
+
+//     // ==================== ACTIF ====================
+//     $actifQuery = DB::table('comptes as c')
+//         ->leftJoin('comptes as c_individuel', function($join) use ($codeAgence) {
+//             $join->on('c.NumCompte', '=', 'c_individuel.compte_parent');
+//             if ($codeAgence) {
+//                 $join->where('c_individuel.CodeAgence', $codeAgence);
+//             }
+//         })
+//         ->leftJoin('transactions as t', function ($join) use ($monnaieValue, $codeAgence) {
+//             $join->on('c_individuel.NumCompte', '=', 't.NumCompte')
+//                  ->where('t.CodeMonnaie', '=', $monnaieValue);
+//             if ($codeAgence) {
+//                 $join->where('t.CodeAgence', $codeAgence);
+//             }
+//         })
+//         ->select(
+//             'c.NumCompte',
+//             'c.NomCompte',
+//             'c.RefCadre',
+//             'c.RefGroupe',
+//             'c.RefSousGroupe',
+//             'c.RefTypeCompte',
+//             'c.nature_compte',
+//             DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN t.$debitCol - t.$creditCol ELSE 0 END),0) AS soldeDebut"),
+//             DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN t.$debitCol - t.$creditCol ELSE 0 END),0) AS soldeFin")
+//         )
+//         ->where('c.niveau', 4)
+//         ->where('c.est_classe', 1)
+//         ->where('c.nature_compte', 'ACTIF')
+//         ->when($codeAgence, function($q) use ($codeAgence) {
+//             return $q->where('c.CodeAgence', $codeAgence);
+//         })
+//         ->groupBy('c.NumCompte', 'c.NomCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe', 'c.RefTypeCompte', 'c.nature_compte')
+//         ->orderBy('c.RefCadre')
+//         ->orderBy('c.RefGroupe')
+//         ->orderBy('c.RefSousGroupe');
+
+//     $actifData = $actifQuery->get();
+
+//     // Total 39 (brut)
+//     $total39 = DB::table('transactions as t')
+//         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
+//         ->where('c.RefCadre', '39')
+//         ->where('t.DateTransaction', '<=', $date2)
+//         ->where('t.CodeMonnaie', $monnaieValue)
+//         ->when($codeAgence, function($q) use ($codeAgence) {
+//             return $q->where('c.CodeAgence', $codeAgence);
+//         })
+//         ->select(DB::raw("COALESCE(SUM(t.$debitCol - t.$creditCol), 0) as total39"))
+//         ->value('total39');
+
+//     $provision = abs($provision38->total38 ?? 0);
+//     $solde39_brut = $total39;
+//     $solde38 = $provision;
+//     $solde39_net = $solde39_brut - $solde38;
+
+//     // Supprimer les lignes 39 et ajouter la ligne consolidée
+//     $actifData = collect($actifData)->reject(fn($item) => $item->RefCadre == '39')->values();
+//     $ligne39 = (object)[
+//         'NumCompte' => '39',
+//         'NomCompte' => 'Créances douteuses ou litigieuses (NET)',
+//         'RefCadre' => '39',
+//         'RefGroupe' => null,
+//         'RefSousGroupe' => null,
+//         'RefTypeCompte' => '3',
+//         'nature_compte' => 'ACTIF',
+//         'soldeDebut' => 0,
+//         'soldeFin' => $solde39_net,
+//     ];
+//     $actifData->push($ligne39);
+//     $actifData = $actifData->sortBy('NumCompte')->values();
+
+//     // ==================== PASSIF ====================
+//     $passifQuery = DB::table('comptes as c')
+//         ->leftJoin('comptes as c_individuel', function($join) use ($codeAgence) {
+//             $join->on('c.NumCompte', '=', 'c_individuel.compte_parent');
+//             if ($codeAgence) {
+//                 $join->where('c_individuel.CodeAgence', $codeAgence);
+//             }
+//         })
+//         ->leftJoin('transactions as t', function ($join) use ($monnaieValue, $codeAgence) {
+//             $join->on('c_individuel.NumCompte', '=', 't.NumCompte')
+//                  ->where('t.CodeMonnaie', '=', $monnaieValue);
+//             if ($codeAgence) {
+//                 $join->where('t.CodeAgence', $codeAgence);
+//             }
+//         })
+//         ->select(
+//             'c.NumCompte',
+//             'c.NomCompte',
+//             'c.RefCadre',
+//             'c.RefGroupe',
+//             'c.RefSousGroupe',
+//             'c.RefTypeCompte',
+//             'c.nature_compte',
+//             DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN t.$creditCol - t.$debitCol ELSE 0 END), 0) AS soldeDebut"),
+//             DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN t.$creditCol - t.$debitCol ELSE 0 END), 0) AS soldeFin")
+//         )
+//         ->where('c.niveau', 4)
+//         ->where('c.est_classe', 1)
+//         ->where('c.nature_compte', 'PASSIF')
+//         ->where('c.RefCadre', '!=', '38')
+//         ->when($codeAgence, function($q) use ($codeAgence) {
+//             return $q->where('c.CodeAgence', $codeAgence);
+//         })
+//         ->groupBy('c.NumCompte', 'c.NomCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe', 'c.RefTypeCompte', 'c.nature_compte')
+//         ->orderBy('c.RefCadre')
+//         ->orderBy('c.RefGroupe')
+//         ->orderBy('c.RefSousGroupe');
+
+//     $passifData = $passifQuery->get();
+
+//     // Résultat (Produit - Charge)
+//     $resultat = DB::table('transactions as t')
+//         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
+//         ->where('t.CodeMonnaie', $monnaieValue)
+//         ->where('t.DateTransaction', '<=', $date2)
+//         ->when($codeAgence, function($q) use ($codeAgence) {
+//             return $q->where('t.CodeAgence', $codeAgence)
+//                      ->where('c.CodeAgence', $codeAgence);
+//         })
+//         ->select(DB::raw("
+//             SUM(CASE WHEN c.nature_compte = 'PRODUIT' THEN t.$creditCol - t.$debitCol ELSE 0 END) -
+//             SUM(CASE WHEN c.nature_compte = 'CHARGE' THEN t.$debitCol - t.$creditCol ELSE 0 END) 
+//             as montant
+//         "))
+//         ->first();
+
+//     $soldeResultat = $resultat->montant ?? 0;
+//     if ($soldeResultat != 0) {
+//         $estBenefice = $soldeResultat > 0;
+//         $passifData->push((object)[
+//             'NumCompte'     => $estBenefice ? '131' : '139',
+//             'NomCompte'     => $estBenefice ? 'RESULTAT NET : BENEFICE' : 'RESULTAT NET : PERTE',
+//             'RefCadre'      => '13',
+//             'nature_compte' => 'PASSIF',
+//             'soldeFin'      => abs($soldeResultat),
+//         ]);
+//     }
+
+//     $totalActif = $actifData->sum('soldeFin');
+//     $totalPassif = $passifData->sum('soldeFin');
+
+//     return response()->json([
+//         "status" => 1,
+//         "actif" => $actifData,
+//         "passif" => $passifData,
+//         "totaux" => [
+//             "actif" => $totalActif,
+//             "passif" => $totalPassif,
+//             "difference" => abs($totalActif - $totalPassif),
+//             "est_equilibre" => abs($totalActif - $totalPassif) < 0.01
+//         ]
+//     ]);
+// }
+
+// public function getBilanCompte(Request $request)
+// {
+//     $date1 = $request->date_debut_balance;
+//     $date2 = $request->date_fin_balance;
+//     $devise = $request->devise;
+//     $agenceFilter = $request->agence_filter ?? 'current';
+
+//     $user = auth()->user();
+//     $codeAgence = null;
+
+//     if ($agenceFilter === 'current') {
+//         $currentAgence = session('current_agence');
+//         $codeAgence = $currentAgence['code_agence'] ?? null;
+//         if (!$codeAgence) {
+//             return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
+//         }
+//     } elseif ($agenceFilter === 'all') {
+//         $codeAgence = null; // pas de filtre
+//     } else {
+//         $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
+//         if (!$agence) {
+//             return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
+//         }
+//         $codeAgence = $agence->code_agence;
+//     }
+
+//     $debitCol = $devise === 'USD' ? 'Debitusd' : 'Debitfc';
+//     $creditCol = $devise === 'USD' ? 'Creditusd' : 'Creditfc';
+//     $monnaieValue = $devise === 'USD' ? 1 : 2;
+
+//     // Provision 38
+//     $provision38 = DB::table('transactions as t')
+//         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
+//         ->where('c.RefCadre', '38')
+//         ->where('t.CodeMonnaie', $monnaieValue)
+//         ->where('t.DateTransaction', '<=', $date2)
+//         ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+//         ->selectRaw("COALESCE(SUM(t.$creditCol - t.$debitCol), 0) as total38")
+//         ->first();
+
+//     // ==================== ACTIF ====================
+//     $actifQuery = DB::table('comptes as c')
+//         ->leftJoin('comptes as c_individuel', function($join) use ($codeAgence) {
+//             $join->on('c.NumCompte', '=', 'c_individuel.compte_parent');
+//             if ($codeAgence) {
+//                 $join->where('c_individuel.CodeAgence', $codeAgence);
+//             }
+//         })
+//         ->leftJoin('transactions as t', function ($join) use ($monnaieValue, $codeAgence) {
+//             $join->on('c_individuel.NumCompte', '=', 't.NumCompte')
+//                  ->where('t.CodeMonnaie', '=', $monnaieValue);
+//             if ($codeAgence) {
+//                 $join->where('t.CodeAgence', $codeAgence);
+//             }
+//         })
+//         ->select(
+//             'c.NumCompte',
+//             DB::raw("MAX(c.NomCompte) as NomCompte"), // 🔥 libellé unique en cas de regroupement
+//             'c.RefCadre',
+//             'c.RefGroupe',
+//             'c.RefSousGroupe',
+//             'c.RefTypeCompte',
+//             'c.nature_compte',
+//             DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN t.$debitCol - t.$creditCol ELSE 0 END),0) AS soldeDebut"),
+//             DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN t.$debitCol - t.$creditCol ELSE 0 END),0) AS soldeFin")
+//         )
+//         ->where('c.niveau', 4)
+//         ->where('c.est_classe', 1)
+//         ->where('c.nature_compte', 'ACTIF')
+//         ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+//         ->groupBy('c.NumCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe', 'c.RefTypeCompte', 'c.nature_compte')
+//         ->orderBy('c.RefCadre')
+//         ->orderBy('c.RefGroupe')
+//         ->orderBy('c.RefSousGroupe');
+
+//     $actifData = $actifQuery->get();
+
+//     // Total 39 (brut)
+//     $total39 = DB::table('transactions as t')
+//         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
+//         ->where('c.RefCadre', '39')
+//         ->where('t.DateTransaction', '<=', $date2)
+//         ->where('t.CodeMonnaie', $monnaieValue)
+//         ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+//         ->value(DB::raw("COALESCE(SUM(t.$debitCol - t.$creditCol), 0) as total39"));
+
+//     $provision = abs($provision38->total38 ?? 0);
+//     $solde39_net = $total39 - $provision;
+
+//     // Supprimer les lignes 39 et ajouter la ligne consolidée
+//     $actifData = collect($actifData)->reject(fn($item) => $item->RefCadre == '39')->values();
+//     $ligne39 = (object)[
+//         'NumCompte' => '39',
+//         'NomCompte' => 'Créances douteuses ou litigieuses (NET)',
+//         'RefCadre' => '39',
+//         'RefGroupe' => null,
+//         'RefSousGroupe' => null,
+//         'RefTypeCompte' => '3',
+//         'nature_compte' => 'ACTIF',
+//         'soldeDebut' => 0,
+//         'soldeFin' => $solde39_net,
+//     ];
+//     $actifData->push($ligne39);
+//     $actifData = $actifData->sortBy('NumCompte')->values();
+
+//     // ==================== PASSIF ====================
+//     $passifQuery = DB::table('comptes as c')
+//         ->leftJoin('comptes as c_individuel', function($join) use ($codeAgence) {
+//             $join->on('c.NumCompte', '=', 'c_individuel.compte_parent');
+//             if ($codeAgence) {
+//                 $join->where('c_individuel.CodeAgence', $codeAgence);
+//             }
+//         })
+//         ->leftJoin('transactions as t', function ($join) use ($monnaieValue, $codeAgence) {
+//             $join->on('c_individuel.NumCompte', '=', 't.NumCompte')
+//                  ->where('t.CodeMonnaie', '=', $monnaieValue);
+//             if ($codeAgence) {
+//                 $join->where('t.CodeAgence', $codeAgence);
+//             }
+//         })
+//         ->select(
+//             'c.NumCompte',
+//             DB::raw("MAX(c.NomCompte) as NomCompte"),
+//             'c.RefCadre',
+//             'c.RefGroupe',
+//             'c.RefSousGroupe',
+//             'c.RefTypeCompte',
+//             'c.nature_compte',
+//             DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN t.$creditCol - t.$debitCol ELSE 0 END), 0) AS soldeDebut"),
+//             DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN t.$creditCol - t.$debitCol ELSE 0 END), 0) AS soldeFin")
+//         )
+//         ->where('c.niveau', 4)
+//         ->where('c.est_classe', 1)
+//         ->where('c.nature_compte', 'PASSIF')
+//         ->where('c.RefCadre', '!=', '38')
+//         ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+//         ->groupBy('c.NumCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe', 'c.RefTypeCompte', 'c.nature_compte')
+//         ->orderBy('c.RefCadre')
+//         ->orderBy('c.RefGroupe')
+//         ->orderBy('c.RefSousGroupe');
+
+//     $passifData = $passifQuery->get();
+
+//     // Résultat (Produit - Charge)
+//     $resultat = DB::table('transactions as t')
+//         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
+//         ->where('t.CodeMonnaie', $monnaieValue)
+//         ->where('t.DateTransaction', '<=', $date2)
+//         ->when($codeAgence, fn($q) => $q->where('t.CodeAgence', $codeAgence)->where('c.CodeAgence', $codeAgence))
+//         ->selectRaw("
+//             SUM(CASE WHEN c.nature_compte = 'PRODUIT' THEN t.$creditCol - t.$debitCol ELSE 0 END) -
+//             SUM(CASE WHEN c.nature_compte = 'CHARGE' THEN t.$debitCol - t.$creditCol ELSE 0 END) 
+//             as montant
+//         ")
+//         ->first();
+
+//     $soldeResultat = $resultat->montant ?? 0;
+//     if ($soldeResultat != 0) {
+//         $estBenefice = $soldeResultat > 0;
+//         $passifData->push((object)[
+//             'NumCompte'     => $estBenefice ? '131' : '139',
+//             'NomCompte'     => $estBenefice ? 'RESULTAT NET : BENEFICE' : 'RESULTAT NET : PERTE',
+//             'RefCadre'      => '13',
+//             'nature_compte' => 'PASSIF',
+//             'soldeFin'      => abs($soldeResultat),
+//         ]);
+//     }
+
+//     $totalActif = $actifData->sum('soldeFin');
+//     $totalPassif = $passifData->sum('soldeFin');
+
+//     return response()->json([
+//         "status" => 1,
+//         "actif" => $actifData,
+//         "passif" => $passifData,
+//         "totaux" => [
+//             "actif" => $totalActif,
+//             "passif" => $totalPassif,
+//             "difference" => abs($totalActif - $totalPassif),
+//             "est_equilibre" => abs($totalActif - $totalPassif) < 0.01
+//         ]
+//     ]);
+// }
+
+
+public function getBilanCompte(Request $request)
 {
     $date1 = $request->date_debut_balance;
     $date2 = $request->date_fin_balance;
     $devise = $request->devise;
     $agenceFilter = $request->agence_filter ?? 'current';
 
-    // Déterminer le code agence à utiliser pour le filtrage (null = toutes les agences)
-    $codeAgence = null;
     $user = auth()->user();
+    $codeAgence = null;
 
     if ($agenceFilter === 'current') {
         $currentAgence = session('current_agence');
         $codeAgence = $currentAgence['code_agence'] ?? null;
         if (!$codeAgence) {
-            return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie pour cet utilisateur']);
+            return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
         }
     } elseif ($agenceFilter === 'all') {
-        $codeAgence = null; // pas de filtre
+        $codeAgence = null;
     } else {
-        // agenceFilter est un id (ex: 1,2,3...)
-        // Vérifier que l'agence appartient bien à l'utilisateur
         $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
         if (!$agence) {
-            return response()->json(['status' => 0, 'msg' => 'Agence non autorisée pour cet utilisateur']);
+            return response()->json(['status' => 0, 'msg' => 'Agence non autorisée']);
         }
         $codeAgence = $agence->code_agence;
     }
@@ -1310,83 +1841,67 @@ public function getEcheancier(Request $request)
     $creditCol = $devise === 'USD' ? 'Creditusd' : 'Creditfc';
     $monnaieValue = $devise === 'USD' ? 1 : 2;
 
-    // Helper pour ajouter condition WHERE sur CodeAgence si nécessaire
-    $addAgenceWhere = function($query) use ($codeAgence) {
-        if ($codeAgence) {
-            $query->where('CodeAgence', $codeAgence);
-        }
-        return $query;
-    };
-
     // Provision 38
     $provision38 = DB::table('transactions as t')
         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
         ->where('c.RefCadre', '38')
         ->where('t.CodeMonnaie', $monnaieValue)
         ->where('t.DateTransaction', '<=', $date2)
-        ->when($codeAgence, function($q) use ($codeAgence) {
-            return $q->where('c.CodeAgence', $codeAgence);
-        })
-        ->select(DB::raw("COALESCE(SUM(t.$creditCol - t.$debitCol), 0) as total38"))
+        ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+        ->selectRaw("COALESCE(SUM(t.$creditCol - t.$debitCol), 0) as total38")
         ->first();
 
+    // Sous-requête : soldes des comptes de niveau 5 par parent
+    $subQuery = DB::table('transactions as t')
+        ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
+        ->where('c.niveau', 5)
+        ->where('c.est_classe', 0)
+        ->where('t.CodeMonnaie', $monnaieValue)
+        ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+        ->select(
+            'c.compte_parent',
+            DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN t.$debitCol - t.$creditCol ELSE 0 END), 0) AS soldeDebut"),
+            DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN t.$debitCol - t.$creditCol ELSE 0 END), 0) AS soldeFin")
+        )
+        ->groupBy('c.compte_parent');
+
     // ==================== ACTIF ====================
-    $actifQuery = DB::table('comptes as c')
-        ->leftJoin('comptes as c_individuel', function($join) use ($codeAgence) {
-            $join->on('c.NumCompte', '=', 'c_individuel.compte_parent');
-            if ($codeAgence) {
-                $join->where('c_individuel.CodeAgence', $codeAgence);
-            }
-        })
-        ->leftJoin('transactions as t', function ($join) use ($monnaieValue, $codeAgence) {
-            $join->on('c_individuel.NumCompte', '=', 't.NumCompte')
-                 ->where('t.CodeMonnaie', '=', $monnaieValue);
-            if ($codeAgence) {
-                $join->where('t.CodeAgence', $codeAgence);
-            }
-        })
+    $actifData = DB::table('comptes as c')
+        ->leftJoinSub($subQuery, 's', 'c.NumCompte', '=', 's.compte_parent')
         ->select(
             'c.NumCompte',
-            'c.NomCompte',
+            DB::raw("MAX(c.NomCompte) as NomCompte"), // agrégation pour éviter doublon
             'c.RefCadre',
             'c.RefGroupe',
             'c.RefSousGroupe',
             'c.RefTypeCompte',
             'c.nature_compte',
-            DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN t.$debitCol - t.$creditCol ELSE 0 END),0) AS soldeDebut"),
-            DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN t.$debitCol - t.$creditCol ELSE 0 END),0) AS soldeFin")
+            DB::raw("MAX(COALESCE(s.soldeDebut, 0)) as soldeDebut"),
+            DB::raw("MAX(COALESCE(s.soldeFin, 0)) as soldeFin")
         )
         ->where('c.niveau', 4)
         ->where('c.est_classe', 1)
         ->where('c.nature_compte', 'ACTIF')
-        ->when($codeAgence, function($q) use ($codeAgence) {
-            return $q->where('c.CodeAgence', $codeAgence);
-        })
-        ->groupBy('c.NumCompte', 'c.NomCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe', 'c.RefTypeCompte', 'c.nature_compte')
+        ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+        ->groupBy('c.NumCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe', 'c.RefTypeCompte', 'c.nature_compte')
         ->orderBy('c.RefCadre')
         ->orderBy('c.RefGroupe')
-        ->orderBy('c.RefSousGroupe');
+        ->orderBy('c.RefSousGroupe')
+        ->get();
 
-    $actifData = $actifQuery->get();
-
-    // Total 39 (brut)
+    // Total 39 brut
     $total39 = DB::table('transactions as t')
         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
         ->where('c.RefCadre', '39')
         ->where('t.DateTransaction', '<=', $date2)
         ->where('t.CodeMonnaie', $monnaieValue)
-        ->when($codeAgence, function($q) use ($codeAgence) {
-            return $q->where('c.CodeAgence', $codeAgence);
-        })
-        ->select(DB::raw("COALESCE(SUM(t.$debitCol - t.$creditCol), 0) as total39"))
-        ->value('total39');
+        ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+        ->value(DB::raw("COALESCE(SUM(t.$debitCol - t.$creditCol), 0)"));
 
     $provision = abs($provision38->total38 ?? 0);
-    $solde39_brut = $total39;
-    $solde38 = $provision;
-    $solde39_net = $solde39_brut - $solde38;
+    $solde39_net = $total39 - $provision;
 
-    // Supprimer les lignes 39 et ajouter la ligne consolidée
+    // Supprimer les anciennes lignes 39 et ajouter la ligne consolidée
     $actifData = collect($actifData)->reject(fn($item) => $item->RefCadre == '39')->values();
     $ligne39 = (object)[
         'NumCompte' => '39',
@@ -1403,59 +1918,41 @@ public function getEcheancier(Request $request)
     $actifData = $actifData->sortBy('NumCompte')->values();
 
     // ==================== PASSIF ====================
-    $passifQuery = DB::table('comptes as c')
-        ->leftJoin('comptes as c_individuel', function($join) use ($codeAgence) {
-            $join->on('c.NumCompte', '=', 'c_individuel.compte_parent');
-            if ($codeAgence) {
-                $join->where('c_individuel.CodeAgence', $codeAgence);
-            }
-        })
-        ->leftJoin('transactions as t', function ($join) use ($monnaieValue, $codeAgence) {
-            $join->on('c_individuel.NumCompte', '=', 't.NumCompte')
-                 ->where('t.CodeMonnaie', '=', $monnaieValue);
-            if ($codeAgence) {
-                $join->where('t.CodeAgence', $codeAgence);
-            }
-        })
+    $passifData = DB::table('comptes as c')
+        ->leftJoinSub($subQuery, 's', 'c.NumCompte', '=', 's.compte_parent')
         ->select(
             'c.NumCompte',
-            'c.NomCompte',
+            DB::raw("MAX(c.NomCompte) as NomCompte"),
             'c.RefCadre',
             'c.RefGroupe',
             'c.RefSousGroupe',
             'c.RefTypeCompte',
             'c.nature_compte',
-            DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN t.$creditCol - t.$debitCol ELSE 0 END), 0) AS soldeDebut"),
-            DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN t.$creditCol - t.$debitCol ELSE 0 END), 0) AS soldeFin")
+            DB::raw("MAX(COALESCE(s.soldeDebut, 0)) as soldeDebut"),
+            DB::raw("MAX(COALESCE(s.soldeFin, 0)) as soldeFin")
         )
         ->where('c.niveau', 4)
         ->where('c.est_classe', 1)
         ->where('c.nature_compte', 'PASSIF')
         ->where('c.RefCadre', '!=', '38')
-        ->when($codeAgence, function($q) use ($codeAgence) {
-            return $q->where('c.CodeAgence', $codeAgence);
-        })
-        ->groupBy('c.NumCompte', 'c.NomCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe', 'c.RefTypeCompte', 'c.nature_compte')
+        ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+        ->groupBy('c.NumCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe', 'c.RefTypeCompte', 'c.nature_compte')
         ->orderBy('c.RefCadre')
         ->orderBy('c.RefGroupe')
-        ->orderBy('c.RefSousGroupe');
-
-    $passifData = $passifQuery->get();
+        ->orderBy('c.RefSousGroupe')
+        ->get();
 
     // Résultat (Produit - Charge)
     $resultat = DB::table('transactions as t')
         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
         ->where('t.CodeMonnaie', $monnaieValue)
         ->where('t.DateTransaction', '<=', $date2)
-        ->when($codeAgence, function($q) use ($codeAgence) {
-            return $q->where('t.CodeAgence', $codeAgence)
-                     ->where('c.CodeAgence', $codeAgence);
-        })
-        ->select(DB::raw("
+        ->when($codeAgence, fn($q) => $q->where('t.CodeAgence', $codeAgence)->where('c.CodeAgence', $codeAgence))
+        ->selectRaw("
             SUM(CASE WHEN c.nature_compte = 'PRODUIT' THEN t.$creditCol - t.$debitCol ELSE 0 END) -
             SUM(CASE WHEN c.nature_compte = 'CHARGE' THEN t.$debitCol - t.$creditCol ELSE 0 END) 
             as montant
-        "))
+        ")
         ->first();
 
     $soldeResultat = $resultat->montant ?? 0;
@@ -1487,8 +1984,9 @@ public function getEcheancier(Request $request)
 }
 
 
-    //GRAND LIVRE 
 
+
+    //GRAND LIVRE 
     // public function getGrandLivre(Request $request)
     // {
     //     $date_debut = $request->date_debut;

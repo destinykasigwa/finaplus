@@ -509,7 +509,7 @@ class ComptesParamController extends Controller
 {
     $currentAgence = session('current_agence');
     $codeAgence = $currentAgence['code_agence'] ?? null;
-
+    
     if (!$codeAgence) {
         throw new \Exception('Aucune agence courante définie');
     }
@@ -520,6 +520,8 @@ class ComptesParamController extends Controller
                       ->where('CodeAgence', $codeAgence)
                       ->exists();
     };
+
+
 
     // Niveau 1: Classe (RefTypeCompte)
     if (!$compteExiste($request->RefTypeCompte)) {

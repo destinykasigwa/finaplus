@@ -549,7 +549,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
             <span className="spinner-border spinner-border-sm text-muted"></span>
         ) : (
             <select
-                className={`form-control`}
+                className="modern-select"
                 style={{ borderRadius: "8px" }}
                 value={adhesion.code_agence || ""}
                 onChange={(e) => setAdhesion(prev => ({ ...prev, code_agence: e.target.value }))}
@@ -589,7 +589,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     style={{
                                                                         borderRadius:
                                                                             "8px",
@@ -629,7 +629,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className={`form-control ${error.type_epargne ? "is-invalid" : ""}`}
+                                                                    className={`modern-select ${error.type_epargne ? "is-invalid" : ""}`}
                                                                     style={{
                                                                         borderRadius:
                                                                             "8px",
@@ -691,7 +691,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className={`form-control ${error.type_client ? "is-invalid" : ""}`}
+                                                                    className={`modern-select ${error.type_client ? "is-invalid" : ""}`}
                                                                     style={{
                                                                         borderRadius:
                                                                             "8px",
@@ -965,7 +965,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     style={{
                                                                         borderRadius:
                                                                             "6px",
@@ -1083,7 +1083,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     style={{
                                                                         borderRadius:
                                                                             "6px",
@@ -1143,7 +1143,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     style={{
                                                                         borderRadius:
                                                                             "6px",
@@ -1199,7 +1199,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     style={{
                                                                         borderRadius:
                                                                             "6px",
@@ -1287,7 +1287,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     style={{
                                                                         borderRadius:
                                                                             "6px",
@@ -1608,7 +1608,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     style={{
                                                                         borderRadius:
                                                                             "6px",
@@ -1665,7 +1665,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className={`form-control ${error.critere ? "is-invalid" : ""}`}
+                                                                    className={`modern-select ${error.critere ? "is-invalid" : ""}`}
                                                                     style={{
                                                                         borderRadius:
                                                                             "6px",
@@ -1867,7 +1867,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     style={{
                                                                         borderRadius:
                                                                             "8px",
@@ -1910,7 +1910,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     style={{
                                                                         borderRadius:
                                                                             "8px",
@@ -1968,7 +1968,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     style={{
                                                                         borderRadius:
                                                                             "8px",
@@ -2294,7 +2294,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     onChange={(
                                                                         e,
                                                                     ) =>
@@ -2345,7 +2345,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     onChange={(
                                                                         e,
                                                                     ) =>
@@ -2396,7 +2396,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     onChange={(
                                                                         e,
                                                                     ) =>
@@ -2465,7 +2465,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     onChange={(
                                                                         e,
                                                                     ) =>
@@ -2666,7 +2666,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                             </td>
                                                             <td>
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     onChange={(
                                                                         e,
                                                                     ) =>
@@ -2710,7 +2710,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                             </td>
                                                             <td>
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     onChange={(
                                                                         e,
                                                                     ) =>
@@ -3206,7 +3206,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                                 }}
                                                             >
                                                                 <select
-                                                                    className="form-control"
+                                                                    className="modern-select"
                                                                     style={{
                                                                         borderRadius:
                                                                             "8px",
