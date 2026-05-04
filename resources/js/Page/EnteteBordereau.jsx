@@ -3,6 +3,7 @@ import axios from "axios";
 
 export const EnteteBordereau = () => {
     const [data, setData] = useState(null);
+    const [agenceNom, setAgenceNom] = useState("");
 
     const getData = async () => {
         try {
@@ -17,6 +18,14 @@ export const EnteteBordereau = () => {
 
     useEffect(() => {
         getData();
+        // Récupérer l'agence courante (via API)
+        axios.get("/eco/agence/courante")
+            .then(res => {
+                if (res.data.status === 1) {
+                    setAgenceNom(res.data.nom_agence);
+                }
+            })
+            .catch(err => console.error("Erreur chargement agence", err));
     }, []);
 
     if (!data) {
@@ -31,20 +40,16 @@ export const EnteteBordereau = () => {
                         src={`https://app.ihdemunis.org/uploads/images/logo/1696413083.jpg`}
                         alt="Logo"
                     />
-                       {/* <img
-                        src={`https://app.nuru.clindrc.com/uploads/images/logo/1736022909.PNG`}
-                        alt="Logo"
-                    /> */}
                 </div>
                 <div className="entete-infos">
                     <div className="entete-denomination">
                         {data.denomination}
                     </div>
-                    <div className="entete-sigle">{data.sigle}</div>
+                    <div className="entete-sigle">
+                        {data.sigle} - AGENCE DE {agenceNom || "..."}
+                    </div>
                     <div className="entete-coordonnees">
-                        <span>
-                            {data.ville}, {data.pays}
-                        </span>
+                        <span>{data.ville}, {data.pays}</span>
                         <span>{data.tel}</span>
                         <span>{data.email}</span>
                     </div>

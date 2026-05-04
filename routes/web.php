@@ -212,6 +212,10 @@ Route::middleware(['web'])->group(function () {
     Route::post('eco/page/transaction/positionnement', [TransactionsController::class, 'Positionnement']);
 
 
+    //PERMET DE FAIRE UN POSITIONNEMENT
+    Route::get('/eco/page/visa/operations-recentes', [TransactionsController::class, 'getLastestVisa']);
+
+
     //FETCH A SPECIFIC ACCOUNT
     Route::post('eco/page/depot-espece/get-account/specific', [TransactionsController::class, 'GetAccount']);
 
@@ -624,6 +628,10 @@ Route::post('eco/agence/change', [UtilisateurController::class, 'changeActiveAge
 
 
 Route::get('eco/pages/user-agences', [AdhesionController::class, 'getUserAgencesForAdhesion']);
+
+
+Route::get('/eco/agence/courante', [ReportsController::class, 'getCurrentAgence']);
+
 
 
 

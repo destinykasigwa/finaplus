@@ -273,6 +273,20 @@ const Balance = () => {
         });
     };
 
+
+        const getAgenceNom = () => {
+    if (agenceFilter === 'current') {
+         return "AGENCE DE " +currentAgence?.nom_agence || "Non définie";
+    }
+    if (agenceFilter === 'all') {
+        return "TOUTES AGENCES";
+    }
+    // agenceFilter est un id
+    const agence = userAgences.find(a => a.id == agenceFilter);
+    // return agence ? `${agence.code_agence} - ${agence.nom_agence}` : "Non définie";
+    return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
+};
+
     return (
         <div className="balance-container">
             {loading && (
@@ -479,7 +493,7 @@ const Balance = () => {
                             <EnteteRapport />
 
                             <h3 className="fw-bold">
-                                BALANCE GENERALE DES COMPTES
+                                BALANCE GENERALE DES COMPTES {getAgenceNom()}
                             </h3>
 
                             <p>

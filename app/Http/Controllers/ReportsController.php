@@ -782,7 +782,9 @@ public function getEcheancier(Request $request)
     if (isset($request->radioValue) and $request->radioValue == "echeancier") {
         //VERIFIE SI LE NUMERO DE DOSSIER EXISTE 
         if (isset($request->searched_num_dossier)) {
-            $checkNumDossier = Echeancier::where("NumDossier", "=", $request->searched_num_dossier)->first();
+            $currentAgence = session('current_agence');
+            $codeAgence = $currentAgence['code_agence'] ?? null;
+            $checkNumDossier = Echeancier::where("NumDossier", "=", $request->searched_num_dossier)->where("CodeAgence",$codeAgence)->first();
             if ($checkNumDossier) {
                 $data = Portefeuille::where("portefeuilles.NumDossier", "=", $request->searched_num_dossier)
                     ->join('echeanciers', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
@@ -1882,6 +1884,7 @@ public function getBilanCompte(Request $request)
         ->where('c.niveau', 4)
         ->where('c.est_classe', 1)
         ->where('c.nature_compte', 'ACTIF')
+        ->where('c.RefCadre', '!=', '45')
         ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
         ->groupBy('c.NumCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe', 'c.RefTypeCompte', 'c.nature_compte')
         ->orderBy('c.RefCadre')
@@ -1935,6 +1938,7 @@ public function getBilanCompte(Request $request)
         ->where('c.est_classe', 1)
         ->where('c.nature_compte', 'PASSIF')
         ->where('c.RefCadre', '!=', '38')
+        ->where('c.RefCadre', '!=', '45')
         ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
         ->groupBy('c.NumCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe', 'c.RefTypeCompte', 'c.nature_compte')
         ->orderBy('c.RefCadre')
@@ -1970,6 +1974,40 @@ public function getBilanCompte(Request $request)
     $totalActif = $actifData->sum('soldeFin');
     $totalPassif = $passifData->sum('soldeFin');
 
+  // Calcul direct du solde des comptes de liaison (RefCadre = 45) selon la convention passif (crédit - débit)
+$liaisonQuery = DB::table('transactions as t')
+    ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
+    ->where('c.RefCadre', '45')
+    ->where('c.niveau', 5) // ne prendre que les comptes individuels de liaison (niveau 5)
+    ->where('t.CodeMonnaie', $monnaieValue)
+    ->where('t.DateTransaction', '<=', $date2) // solde à la date de fin
+    ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+    ->selectRaw("COALESCE(SUM(t.$creditCol - t.$debitCol), 0) as solde")
+    ->first();
+
+$soldeLiaison = $liaisonQuery ? $liaisonQuery->solde : 0;
+
+if (abs($soldeLiaison) > 0.0001) {
+    $ligneLiaison = (object)[
+        'NumCompte' => '45',
+        'NomCompte' => 'COMPTE DE LIAISON INTER-AGENCE',
+        'RefCadre' => '45',
+        'RefGroupe' => null,
+        'RefSousGroupe' => null,
+        'RefTypeCompte' => '4',
+        'nature_compte' => ($soldeLiaison > 0 ? 'PASSIF' : 'ACTIF'),
+        'soldeDebut' => 0,
+        'soldeFin' => abs($soldeLiaison),
+    ];
+
+    if ($soldeLiaison > 0) {
+        $passifData->push($ligneLiaison);
+    } else {
+        $actifData->push($ligneLiaison);
+    }
+
+}
+
     return response()->json([
         "status" => 1,
         "actif" => $actifData,
@@ -1982,8 +2020,6 @@ public function getBilanCompte(Request $request)
         ]
     ]);
 }
-
-
 
 
     //GRAND LIVRE 
@@ -3211,4 +3247,15 @@ public function getBilanCompte(Request $request)
             return $this->reportService->generateExcelWithHeaders($reorderedData, $headers, $sheetName, $filename);
         }
     }
+
+
+
+    public function getCurrentAgence()
+{
+    $currentAgence = session('current_agence');
+    if (!$currentAgence || !isset($currentAgence['nom_agence'])) {
+        return response()->json(['status' => 0, 'msg' => 'Agence non définie']);
+    }
+    return response()->json(['status' => 1, 'nom_agence' => $currentAgence['nom_agence']]);
+}
 }

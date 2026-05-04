@@ -611,6 +611,10 @@ const Bilan = () => {
             groupedByCadre[cadre].items.push(item);
         });
 
+
+
+  
+
         return (
             <div className="mb-4">
                 <h5
@@ -868,6 +872,20 @@ const Bilan = () => {
         </div>
     );
 };
+
+
+      const getAgenceNom = () => {
+    if (agenceFilter === 'current') {
+        return "AGENCE DE " +currentAgence?.nom_agence || "Non définie";
+    }
+    if (agenceFilter === 'all') {
+        return "TOUTES AGENCES";
+    }
+    // agenceFilter est un id
+    const agence = userAgences.find(a => a.id == agenceFilter);
+    // return agence ? `${agence.code_agence} - ${agence.nom_agence}` : "Non définie";
+    return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
+};
     
     return (
         <>
@@ -1113,7 +1131,7 @@ const Bilan = () => {
                             </div> */}
                                 <div className="text-center mb-3">
                                     <h6 className="fw-bold">
-                                        BILAN SYNTHÈSE EN {devise}
+                                        BILAN SYNTHÈSE EN {devise} {getAgenceNom()}
                                     </h6>
                                     <p className="mb-0">
                                         Au {dateParser(date_fin_balance)}

@@ -183,6 +183,10 @@ const GrandLivre = () => {
             (_, i) => startPage + i,
         );
 
+
+
+
+
         return (
             <div className="pagination-modern">
                 <button
@@ -245,6 +249,20 @@ const GrandLivre = () => {
             </div>
         );
     };
+
+
+        const getAgenceNom = () => {
+    if (agenceFilter === 'current') {
+         return "AGENCE DE " +currentAgence?.nom_agence || "Non définie";
+    }
+    if (agenceFilter === 'all') {
+        return "TOUTES AGENCES";
+    }
+    // agenceFilter est un id
+    const agence = userAgences.find(a => a.id == agenceFilter);
+    // return agence ? `${agence.code_agence} - ${agence.nom_agence}` : "Non définie";
+    return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
+};
 
     return (
         <>
@@ -489,7 +507,7 @@ const GrandLivre = () => {
                         <div className="gl-report-card">
                             <div className="gl-report-header">
                                 <EnteteRapport />
-                                <h2>GRAND LIVRE</h2>
+                                <h2>GRAND LIVRE {getAgenceNom()}</h2>
                                 <p>
                                     Du {dateParser(date_debut)} au{" "}
                                     {dateParser(date_fin)} | Devise : {devise} |

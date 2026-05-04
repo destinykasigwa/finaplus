@@ -10,6 +10,7 @@ class Remboursementcredit extends Model
     use HasFactory;
     protected $fillable = [
         "RefEcheance",
+        "CodeAgence",
         "NumCompte",
         "NumCompteCredit",
         "NumDossie",

@@ -47,9 +47,10 @@ const EntreeT = () => {
                     timer: 8000,
                     confirmButtonText: "Okay",
                 });
-                setTimeout(function () {
-                    window.location.reload();
-                }, 2000);
+                GetInformation();
+                // setTimeout(function () {
+                //     window.location.reload();
+                // }, 2000);
             } else {
                 Swal.fire({
                     title: "Erreur",
@@ -78,9 +79,10 @@ const EntreeT = () => {
                     timer: 8000,
                     confirmButtonText: "Okay",
                 });
-                setTimeout(function () {
-                    window.location.reload();
-                }, 2000);
+                GetInformation();
+                // setTimeout(function () {
+                //     window.location.reload();
+                // }, 2000);
             } else {
                 Swal.fire({
                     title: "Erreur",

@@ -9,6 +9,7 @@ class JourRetard extends Model
 {
     use HasFactory;
     protected $fillable = [
+        "CodeAgence",
         "NumcompteEpargne",
         "NumcompteCredit",
         "NumCompteCreanceLitigieuse",

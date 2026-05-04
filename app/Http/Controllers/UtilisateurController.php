@@ -192,7 +192,7 @@ class UtilisateurController extends Controller
             //CREATE USD ACCOUNT
             Comptes::create([
                 'CodeAgence' => $codeAgence,
-                'NumCompte' => "5700" . $request->userId . $codeAgence. "1",
+                'NumCompte' => "570" . $request->userId . $codeAgence. "1",
                 'NomCompte' =>"CAISSE ". $userData->name." USD" ,
                 'RefTypeCompte' => "5",
                 'RefCadre' => "57",
@@ -210,7 +210,7 @@ class UtilisateurController extends Controller
             //CREATE CDF ACCOUNT
             Comptes::create([
                 'CodeAgence' => $codeAgence,
-                'NumCompte' => "5700" . $request->userId . $codeAgence."2",
+                'NumCompte' => "570" . $request->userId . $codeAgence."2",
                  'NomCompte' =>"CAISSE ". $userData->name." CDF" ,
                 'RefTypeCompte' => "5",
                 'RefCadre' => "57",

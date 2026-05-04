@@ -66,16 +66,20 @@ class ClotureJourneeCopy
         // $this->dateSystem = date("Y-m-d");
         $this->tauxDuJour = $latestTauxEtDateSystem ? $latestTauxEtDateSystem->TauxEnFc : null;
         $this->accountsConfig = $porteFeuilleConfig;
-        $this->compteDotationAuProvisionCDF = "6901000000202";
-        $this->compteDotationAuProvisionUSD = "6900000000201";
-        $this->compteRepriseDeProvisionCDF = "7901000000202";
-        $this->compteRepriseDeProvisionUSD = "7900000000201";
-        $this->compteCreanceLitigeuseUSD = "3900000000201";
-        $this->compteCreanceLitigeuseCDF = "3901000000202";
-        $this->compteCreditAuxMembreCDF = "3210000000202";
-        $this->compteCreditAuxMembreUSD = "3210000000201";
-        $this->compteProvisionCDF = "3801000000202";
-        $this->compteProvisionUSD = "3800000000201";
+
+        // $this->compteDotationAuProvisionCDF = "6901000000202";
+        // $this->compteDotationAuProvisionUSD = "6900000000201";
+        // $this->compteRepriseDeProvisionCDF = "7901000000202";
+        // $this->compteRepriseDeProvisionUSD = "7900000000201";
+
+
+
+        // $this->compteCreanceLitigeuseUSD = "3900000000201";
+        // $this->compteCreanceLitigeuseCDF = "3901000000202";
+        // $this->compteCreditAuxMembreCDF = "3210000000202";
+        // $this->compteCreditAuxMembreUSD = "3210000000201";
+        // $this->compteProvisionCDF = "3801000000202";
+        // $this->compteProvisionUSD = "3800000000201";
         $this->montantRemboursementManuel = $request->montantRemboursementManuel;
         $this->remboursAnticipe = $request->remboursAnticipe;
         $this->numDossier = $request->numDossier;
@@ -269,6 +273,94 @@ class ClotureJourneeCopy
         );
     }
 
+
+
+    /**
+     * Crée un compte s'il n'existe pas déjà.
+     * @param string $numCompte
+     * @param string $nomCompte
+     * @param string $nature (CHARGE ou PRODUIT)
+     * @param string $codeAgence
+     * @param int $codeMonnaie (1 = USD, 2 = CDF)
+     */
+    private function ensureAccountExists($numCompte, $nomCompte, $nature, $codeAgence, $codeMonnaie)
+    {
+        if (!Comptes::where('NumCompte', $numCompte)->exists()) {
+            // Déduire les références hiérarchiques à partir du numéro
+            $refTypeCompte = substr($numCompte, 0, 1);   // 6 ou 7
+            $refCadre = substr($numCompte, 0, 2);       // 69 ou 79
+            $refGroupe = substr($numCompte, 0, 3);      // 690 ou 790
+            $refSousGroupe = substr($numCompte, 0, 4);  // 6901 ou 7901
+
+            Comptes::create([
+                'CodeAgence'    => $codeAgence,
+                'NumCompte'     => $numCompte,
+                'NomCompte'     => $nomCompte,
+                'RefTypeCompte' => $refTypeCompte,
+                'RefCadre'      => $refCadre,
+                'RefGroupe'     => $refGroupe,
+                'RefSousGroupe' => $refSousGroupe,
+                'CodeMonnaie'   => $codeMonnaie,
+                'DateOuverture' => date('Y-m-d'),
+                'NumAdherant'   => null,
+                'nature_compte' => $nature,
+                'niveau'        => 5,
+                'est_classe'    => 0,
+                'compte_parent' => $refSousGroupe,
+            ]);
+        }
+    }
+
+    /**
+     * Génère le compte de dotation aux provisions (69) pour une agence et un code devise.
+     * @param string $codeAgence
+     * @param int $codeMonnaie (1 = USD, 2 = CDF)
+     * @return string
+     */
+
+    /**
+     * Obtient (ou crée) le compte de dotation aux provisions (69) pour une agence et une devise.
+     * @param string $codeAgence
+     * @param int $codeMonnaie (1 = USD, 2 = CDF)
+     * @return string
+     */
+    private function getCompteDotationProvision($codeAgence, $codeMonnaie)
+    {
+        $codeAgencePad = str_pad($codeAgence, 2, '0', STR_PAD_LEFT);
+        if ($codeMonnaie == 1) {
+            $numCompte = "6900000000" . $codeAgencePad . "1";
+            $nomCompte = "Dotation aux provisions USD - Agence " . $codeAgence;
+            $nature = 'CHARGE';
+        } else {
+            $numCompte = "6901000000" . $codeAgencePad . "2";
+            $nomCompte = "Dotation aux provisions CDF - Agence " . $codeAgence;
+            $nature = 'CHARGE';
+        }
+        $this->ensureAccountExists($numCompte, $nomCompte, $nature, $codeAgence, $codeMonnaie);
+        return $numCompte;
+    }
+
+    /**
+     * Obtient (ou crée) le compte de reprise de provisions (79) pour une agence et une devise.
+     * @param string $codeAgence
+     * @param int $codeMonnaie (1 = USD, 2 = CDF)
+     * @return string
+     */
+    private function getCompteRepriseProvision($codeAgence, $codeMonnaie)
+    {
+        $codeAgencePad = str_pad($codeAgence, 2, '0', STR_PAD_LEFT);
+        if ($codeMonnaie == 1) {
+            $numCompte = "7900000000" . $codeAgencePad . "1";
+            $nomCompte = "Reprise sur provisions USD - Agence " . $codeAgence;
+            $nature = 'PRODUIT';
+        } else {
+            $numCompte = "7901000000" . $codeAgencePad . "2";
+            $nomCompte = "Reprise sur provisions CDF - Agence " . $codeAgence;
+            $nature = 'PRODUIT';
+        }
+        $this->ensureAccountExists($numCompte, $nomCompte, $nature, $codeAgence, $codeMonnaie);
+        return $numCompte;
+    }
 
 
     /**
@@ -1044,22 +1136,21 @@ class ClotureJourneeCopy
                             }
                         } else {
                             $this->gererProvisions();
-                           
-                                    $this->insertInTransactionRepriseProvision(
-                                        round($soldeMembre, 2),
-                                        $creditRet->CodeMonnaie,
-                                        $this->dateSystem,
-                                        $creditRet->CodeAgence,
-                                        $this->tauxDuJour,
-                                        $typeRemboursement,
-                                        $creditRet->NumCompteEpargne,
-                                        $creditRet->NbreJour,
-                                        $creditRet->DateTranch,
-                                        $creditRet->MontantAccorde,
-                                        $creditRet->NumDossier,
-                                        $creditRet->Gestionnaire,
-                                    );
-                             
+
+                            $this->insertInTransactionRepriseProvision(
+                                round($soldeMembre, 2),
+                                $creditRet->CodeMonnaie,
+                                $this->dateSystem,
+                                $creditRet->CodeAgence,
+                                $this->tauxDuJour,
+                                $typeRemboursement,
+                                $creditRet->NumCompteEpargne,
+                                $creditRet->NbreJour,
+                                $creditRet->DateTranch,
+                                $creditRet->MontantAccorde,
+                                $creditRet->NumDossier,
+                                $creditRet->Gestionnaire,
+                            );
                         }
 
                         $this->RenseignePayementPourPaiementQuiEtaitEnMoitieCapital(
@@ -1098,40 +1189,38 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteCredit
                             );
 
-                          
-                                    $this->insertInTransactionRepriseProvision(
-                                        round($soldeMembre, 2),
-                                        $creditRet->CodeMonnaie,
-                                        $this->dateSystem,
-                                        $creditRet->CodeAgence,
-                                        $this->tauxDuJour,
-                                        $typeRemboursement,
-                                        $creditRet->NumCompteEpargne,
-                                        $creditRet->NbreJour,
-                                        $creditRet->DateTranch,
-                                        $creditRet->MontantAccorde,
-                                        $creditRet->NumDossier,
-                                        $creditRet->Gestionnaire,
-                                    );
-                             
+
+                            $this->insertInTransactionRepriseProvision(
+                                round($soldeMembre, 2),
+                                $creditRet->CodeMonnaie,
+                                $this->dateSystem,
+                                $creditRet->CodeAgence,
+                                $this->tauxDuJour,
+                                $typeRemboursement,
+                                $creditRet->NumCompteEpargne,
+                                $creditRet->NbreJour,
+                                $creditRet->DateTranch,
+                                $creditRet->MontantAccorde,
+                                $creditRet->NumDossier,
+                                $creditRet->Gestionnaire,
+                            );
                         } else {
                             $this->gererProvisions();
-                          
-                                    $this->insertInTransactionRepriseProvision(
-                                        round($soldeMembre, 2),
-                                        $creditRet->CodeMonnaie,
-                                        $this->dateSystem,
-                                        $creditRet->CodeAgence,
-                                        $this->tauxDuJour,
-                                        $typeRemboursement,
-                                        $creditRet->NumCompteEpargne,
-                                        $creditRet->NbreJour,
-                                        $creditRet->DateTranch,
-                                        $creditRet->MontantAccorde,
-                                        $creditRet->NumDossier,
-                                        $creditRet->Gestionnaire,
-                                    );
-                               
+
+                            $this->insertInTransactionRepriseProvision(
+                                round($soldeMembre, 2),
+                                $creditRet->CodeMonnaie,
+                                $this->dateSystem,
+                                $creditRet->CodeAgence,
+                                $this->tauxDuJour,
+                                $typeRemboursement,
+                                $creditRet->NumCompteEpargne,
+                                $creditRet->NbreJour,
+                                $creditRet->DateTranch,
+                                $creditRet->MontantAccorde,
+                                $creditRet->NumDossier,
+                                $creditRet->Gestionnaire,
+                            );
                         }
 
                         $this->RenseignePayementPourPaiementQuiEtaitEnMoitieCapital(
@@ -1159,7 +1248,7 @@ class ClotureJourneeCopy
                     } elseif ($soldeMembre < $CapitalRestant) {
                         $montantRembourse = $soldeMembre;
                         $numTransaction = null;
-                      
+
                         if ($isFirstDelay && $typeRemboursement == "partiel") {
                             // $numTransaction = $this->remboursementPartielPremierRetard($creditRet, $montantRembourse);
                             $this->gererProvisions();
@@ -1170,22 +1259,21 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteCredit
                             );
 
-                           
-                                    $this->insertInTransactionRepriseProvision(
-                                        round($soldeMembre, 2),
-                                        $creditRet->CodeMonnaie,
-                                        $this->dateSystem,
-                                        $creditRet->CodeAgence,
-                                        $this->tauxDuJour,
-                                        $typeRemboursement,
-                                        $creditRet->NumCompteEpargne,
-                                        $creditRet->NbreJour,
-                                        $creditRet->DateTranch,
-                                        $creditRet->MontantAccorde,
-                                        $creditRet->NumDossier,
-                                        $creditRet->Gestionnaire,
-                                    );
-                          
+
+                            $this->insertInTransactionRepriseProvision(
+                                round($soldeMembre, 2),
+                                $creditRet->CodeMonnaie,
+                                $this->dateSystem,
+                                $creditRet->CodeAgence,
+                                $this->tauxDuJour,
+                                $typeRemboursement,
+                                $creditRet->NumCompteEpargne,
+                                $creditRet->NbreJour,
+                                $creditRet->DateTranch,
+                                $creditRet->MontantAccorde,
+                                $creditRet->NumDossier,
+                                $creditRet->Gestionnaire,
+                            );
                         } else {
                             $this->gererProvisions();
                             $numTransaction = $this->insertInTransactionRepriseProvision(
@@ -1231,7 +1319,7 @@ class ClotureJourneeCopy
                     $capitalApayer = $creditRet->CapAmmorti;
                     if ($soldeMembre > $capitalApayer) {
                         $montantRembourse = $capitalApayer;
-                      
+
                         $libelle = "Remboursement capital du crédit de " . $creditRet->MontantAccorde . " pour la "
                             . $creditRet->NbreJour . "e tranche du " . $creditRet->DateTranch . " dossier " . $creditRet->NumDossier;
 
@@ -1249,22 +1337,22 @@ class ClotureJourneeCopy
                             $creditRet->NumDossier
                         );
 
-                      
-                                $this->insertInTransactionRepriseProvision(
-                                    round($soldeMembre, 2),
-                                    $creditRet->CodeMonnaie,
-                                    $this->dateSystem,
-                                    $creditRet->CodeAgence,
-                                    $this->tauxDuJour,
-                                    $typeRemboursement,
-                                    $creditRet->NumCompteEpargne,
-                                    $creditRet->NbreJour,
-                                    $creditRet->DateTranch,
-                                    $creditRet->MontantAccorde,
-                                    $creditRet->NumDossier,
-                                    $creditRet->Gestionnaire,
-                                );
-                        
+
+                        $this->insertInTransactionRepriseProvision(
+                            round($soldeMembre, 2),
+                            $creditRet->CodeMonnaie,
+                            $this->dateSystem,
+                            $creditRet->CodeAgence,
+                            $this->tauxDuJour,
+                            $typeRemboursement,
+                            $creditRet->NumCompteEpargne,
+                            $creditRet->NbreJour,
+                            $creditRet->DateTranch,
+                            $creditRet->MontantAccorde,
+                            $creditRet->NumDossier,
+                            $creditRet->Gestionnaire,
+                        );
+
 
                         if ($isFirstDelay && $typeRemboursement == "partiel") {
                             $this->gererProvisions();
@@ -1275,39 +1363,37 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteCredit
                             );
 
-                          
-                                    $this->insertInTransactionRepriseProvision(
-                                        round($soldeMembre, 2),
-                                        $creditRet->CodeMonnaie,
-                                        $this->dateSystem,
-                                        $creditRet->CodeAgence,
-                                        $this->tauxDuJour,
-                                        $typeRemboursement,
-                                        $creditRet->NumCompteEpargne,
-                                        $creditRet->NbreJour,
-                                        $creditRet->DateTranch,
-                                        $creditRet->MontantAccorde,
-                                        $creditRet->NumDossier,
-                                        $creditRet->Gestionnaire,
-                                    );
-                           
+
+                            $this->insertInTransactionRepriseProvision(
+                                round($soldeMembre, 2),
+                                $creditRet->CodeMonnaie,
+                                $this->dateSystem,
+                                $creditRet->CodeAgence,
+                                $this->tauxDuJour,
+                                $typeRemboursement,
+                                $creditRet->NumCompteEpargne,
+                                $creditRet->NbreJour,
+                                $creditRet->DateTranch,
+                                $creditRet->MontantAccorde,
+                                $creditRet->NumDossier,
+                                $creditRet->Gestionnaire,
+                            );
                         } else {
-                           
-                                    $this->insertInTransactionRepriseProvision(
-                                        round($soldeMembre, 2),
-                                        $creditRet->CodeMonnaie,
-                                        $this->dateSystem,
-                                        $creditRet->CodeAgence,
-                                        $this->tauxDuJour,
-                                        $typeRemboursement,
-                                        $creditRet->NumCompteEpargne,
-                                        $creditRet->NbreJour,
-                                        $creditRet->DateTranch,
-                                        $creditRet->MontantAccorde,
-                                        $creditRet->NumDossier,
-                                        $creditRet->Gestionnaire,
-                                    );
-                           
+
+                            $this->insertInTransactionRepriseProvision(
+                                round($soldeMembre, 2),
+                                $creditRet->CodeMonnaie,
+                                $this->dateSystem,
+                                $creditRet->CodeAgence,
+                                $this->tauxDuJour,
+                                $typeRemboursement,
+                                $creditRet->NumCompteEpargne,
+                                $creditRet->NbreJour,
+                                $creditRet->DateTranch,
+                                $creditRet->MontantAccorde,
+                                $creditRet->NumDossier,
+                                $creditRet->Gestionnaire,
+                            );
                         }
                         $this->ClotureTranche($creditRet->ReferenceEch);
                         $this->sendNotification->sendNotificationRemboursementCredit(
@@ -1319,7 +1405,7 @@ class ClotureJourneeCopy
                         );
                     } elseif ($soldeMembre == $capitalApayer) {
                         $montantRembourse = $capitalApayer;
-                       
+
                         $libelle = "Remboursement capital du crédit de " . $creditRet->MontantAccorde . " pour la "
                             . $creditRet->NbreJour . "e tranche du " . $creditRet->DateTranch . " dossier " . $creditRet->NumDossier;
 
@@ -1360,39 +1446,37 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteCredit
                             );
 
-                                    $this->insertInTransactionRepriseProvision(
-                                        round($soldeMembre, 2),
-                                        $creditRet->CodeMonnaie,
-                                        $this->dateSystem,
-                                        $creditRet->CodeAgence,
-                                        $this->tauxDuJour,
-                                        $typeRemboursement,
-                                        $creditRet->NumCompteEpargne,
-                                        $creditRet->NbreJour,
-                                        $creditRet->DateTranch,
-                                        $creditRet->MontantAccorde,
-                                        $creditRet->NumDossier,
-                                        $creditRet->Gestionnaire,
-                                    );
-                              
+                            $this->insertInTransactionRepriseProvision(
+                                round($soldeMembre, 2),
+                                $creditRet->CodeMonnaie,
+                                $this->dateSystem,
+                                $creditRet->CodeAgence,
+                                $this->tauxDuJour,
+                                $typeRemboursement,
+                                $creditRet->NumCompteEpargne,
+                                $creditRet->NbreJour,
+                                $creditRet->DateTranch,
+                                $creditRet->MontantAccorde,
+                                $creditRet->NumDossier,
+                                $creditRet->Gestionnaire,
+                            );
                         } else {
                             $this->gererProvisions();
-                          
-                                    $this->insertInTransactionRepriseProvision(
-                                        round($soldeMembre, 2),
-                                        $creditRet->CodeMonnaie,
-                                        $this->dateSystem,
-                                        $creditRet->CodeAgence,
-                                        $this->tauxDuJour,
-                                        $typeRemboursement,
-                                        $creditRet->NumCompteEpargne,
-                                        $creditRet->NbreJour,
-                                        $creditRet->DateTranch,
-                                        $creditRet->MontantAccorde,
-                                        $creditRet->NumDossier,
-                                        $creditRet->Gestionnaire,
-                                    );
-                               
+
+                            $this->insertInTransactionRepriseProvision(
+                                round($soldeMembre, 2),
+                                $creditRet->CodeMonnaie,
+                                $this->dateSystem,
+                                $creditRet->CodeAgence,
+                                $this->tauxDuJour,
+                                $typeRemboursement,
+                                $creditRet->NumCompteEpargne,
+                                $creditRet->NbreJour,
+                                $creditRet->DateTranch,
+                                $creditRet->MontantAccorde,
+                                $creditRet->NumDossier,
+                                $creditRet->Gestionnaire,
+                            );
                         }
                         $this->ClotureTranche($creditRet->ReferenceEch);
                         $this->sendNotification->sendNotificationRemboursementCredit(
@@ -1405,7 +1489,7 @@ class ClotureJourneeCopy
                     } elseif ($soldeMembre > 0 && $soldeMembre < $capitalApayer) {
                         $montantRembourse = $soldeMembre;
 
-                      
+
                         $libelle = "Remboursement partiel capital du crédit de " . $creditRet->MontantAccorde . " pour la "
                             . $creditRet->NbreJour . "e tranche du " . $creditRet->DateTranch . " dossier " . $creditRet->NumDossier;
 
@@ -1420,22 +1504,21 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteCredit
                             );
 
-                          
-                                    $this->insertInTransactionRepriseProvision(
-                                        round($soldeMembre, 2),
-                                        $creditRet->CodeMonnaie,
-                                        $this->dateSystem,
-                                        $creditRet->CodeAgence,
-                                        $this->tauxDuJour,
-                                        $typeRemboursement,
-                                        $creditRet->NumCompteEpargne,
-                                        $creditRet->NbreJour,
-                                        $creditRet->DateTranch,
-                                        $creditRet->MontantAccorde,
-                                        $creditRet->NumDossier,
-                                        $creditRet->Gestionnaire,
-                                    );
-                               
+
+                            $this->insertInTransactionRepriseProvision(
+                                round($soldeMembre, 2),
+                                $creditRet->CodeMonnaie,
+                                $this->dateSystem,
+                                $creditRet->CodeAgence,
+                                $this->tauxDuJour,
+                                $typeRemboursement,
+                                $creditRet->NumCompteEpargne,
+                                $creditRet->NbreJour,
+                                $creditRet->DateTranch,
+                                $creditRet->MontantAccorde,
+                                $creditRet->NumDossier,
+                                $creditRet->Gestionnaire,
+                            );
                         } else {
                             $numTransaction = $this->insertInTransactionCapital(
                                 round($montantRembourse, 2),
@@ -1451,23 +1534,21 @@ class ClotureJourneeCopy
                                 $creditRet->NumDossier
                             );
                             $this->gererProvisions();
-                          
-                                    $this->insertInTransactionRepriseProvision(
-                                        round($soldeMembre, 2),
-                                        $creditRet->CodeMonnaie,
-                                        $this->dateSystem,
-                                        $creditRet->CodeAgence,
-                                        $this->tauxDuJour,
-                                        $typeRemboursement,
-                                        $creditRet->NumCompteEpargne,
-                                        $creditRet->NbreJour,
-                                        $creditRet->DateTranch,
-                                        $creditRet->MontantAccorde,
-                                        $creditRet->NumDossier,
-                                        $creditRet->Gestionnaire,
-                                    );
-                               
-                            
+
+                            $this->insertInTransactionRepriseProvision(
+                                round($soldeMembre, 2),
+                                $creditRet->CodeMonnaie,
+                                $this->dateSystem,
+                                $creditRet->CodeAgence,
+                                $this->tauxDuJour,
+                                $typeRemboursement,
+                                $creditRet->NumCompteEpargne,
+                                $creditRet->NbreJour,
+                                $creditRet->DateTranch,
+                                $creditRet->MontantAccorde,
+                                $creditRet->NumDossier,
+                                $creditRet->Gestionnaire,
+                            );
                         }
 
                         $this->RenseignePayementPourPaiementQuiEtaitEnMoitieCapital(
@@ -1579,7 +1660,7 @@ class ClotureJourneeCopy
         //     ->first();
         // $SoldeCreditRestant = $soldeRestant->soldeRestant;
         $SoldeCreditRestant = $soldeRestant;
-      
+
 
         $capitaRetard =  Echeancier::selectRaw('
         echeanciers.NumDossier,
@@ -1840,7 +1921,7 @@ class ClotureJourneeCopy
     ) {
 
 
-      $montant = round($montantInteret, 2);
+        $montant = round($montantInteret, 2);
 
         if ($montant <= 0) {
             return null;
@@ -2076,26 +2157,26 @@ class ClotureJourneeCopy
 
         if ($devise == 2) {
             if ($refCompteMembre < 10) {
-                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre .$CodeAgence."2";
+                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence . "2";
             } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
-                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence . "2";
             } else if ($refCompteMembre >= 100 && $refCompteMembre < 1000) {
-                $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "3901000" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "3901000" . $refCompteMembre . $CodeAgence . "2";
             } else if ($refCompteMembre >= 1000 && $refCompteMembre < 10000) {
-                $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "390100" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "390100" . $refCompteMembre . $CodeAgence . "2";
             } else if ($refCompteMembre >= 10000 && $refCompteMembre < 100000) {
-                $compteProvisionCDF = "38010" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "39010" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "38010" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "39010" . $refCompteMembre . $CodeAgence . "2";
             } else if ($refCompteMembre >= 100000 && $refCompteMembre < 1000000) {
-                $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence . "2";
             } else {
-                $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence . "2";
             }
 
 
@@ -2179,26 +2260,26 @@ class ClotureJourneeCopy
         } else if ($devise == 1) {
 
             if ($refCompteMembre < 10) {
-                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence . "1";
             } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
-                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence . "1";
             } else if ($refCompteMembre >= 100 && $refCompteMembre < 1000) {
-                $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "3900000" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "3900000" . $refCompteMembre . $CodeAgence . "1";
             } else if ($refCompteMembre >= 1000 && $refCompteMembre < 10000) {
-                $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "390000" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "390000" . $refCompteMembre . $CodeAgence . "1";
             } else if ($refCompteMembre >= 10000 && $refCompteMembre < 100000) {
-                $compteProvisionUSD = "38000" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "39000" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "38000" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "39000" . $refCompteMembre . $CodeAgence . "1";
             } else if ($refCompteMembre >= 100000 && $refCompteMembre < 1000000) {
-                $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence . "1";
             } else {
-                $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence . "1";
             }
 
 
@@ -2351,7 +2432,7 @@ class ClotureJourneeCopy
 
         /* DEBUT Constatation PROVISION */
         $NumTransaction = $this->generateTransactionNumber();
-
+        $compteDotation = $this->getCompteDotationProvision($CodeAgence, $codeMonnaie);
         //DEBITE 69 POUR DOTATION AUX PROVISION
         Transactions::create([
             "NumTransaction" => $NumTransaction,
@@ -2361,7 +2442,7 @@ class ClotureJourneeCopy
             "CodeMonnaie" => $devise,
             "CodeAgence" => $CodeAgence,
             "NumDossier" => $NumDossier,
-            "NumCompte" => $devise == 2 ? $this->compteDotationAuProvisionCDF : $this->compteDotationAuProvisionUSD,
+            "NumCompte" => $compteDotation,
             "NumComptecp" => $compteProvisionCDF,
             "Debit" =>  $devise == 1 ? ($SoldeCreditRestant) * $provisionPourcentage / 100 : ($SoldeCreditRestant) * $provisionPourcentage / 100,
             "Operant" =>  $Gestionnaire,
@@ -2403,6 +2484,7 @@ class ClotureJourneeCopy
         // ]);
 
         //FAIT LA PROVISION  CREDITE 38 DU CLIENT
+        $compteDotation = $this->getCompteDotationProvision($CodeAgence, $codeMonnaie);
         Transactions::create([
             "NumTransaction" => $NumTransaction,
             "DateTransaction" => $dateSystem,
@@ -2412,7 +2494,7 @@ class ClotureJourneeCopy
             "CodeAgence" => $CodeAgence,
             "NumDossier" => $NumDossier,
             "NumCompte" => $devise == 2 ? $compteProvisionCDF : $compteProvisionUSD,
-            "NumComptecp" => $devise == 2 ? $this->compteDotationAuProvisionCDF : $this->compteDotationAuProvisionUSD,
+            "NumComptecp" => $compteDotation,
             "Credit" =>  $devise == 1 ? ($SoldeCreditRestant) * $provisionPourcentage / 100 : ($SoldeCreditRestant) * $provisionPourcentage / 100,
             "Operant" =>  $Gestionnaire,
             "Creditfc" =>  $devise == 2 ? ($SoldeCreditRestant) * $provisionPourcentage / 100 : ($SoldeCreditRestant) * $provisionPourcentage / 100 * ($tauxDuJour),
@@ -2456,7 +2538,7 @@ class ClotureJourneeCopy
 
 
 
-    
+
         if ($provisionTranche == 1) {
             $montantProvision = $SoldeCreditRestant * 5 / 100;
         } else if ($provisionTranche == 2) {
@@ -2514,7 +2596,7 @@ class ClotureJourneeCopy
         //ANNULE L'ANCIENNE PROVISION 38
         // COMPTE DU CLIENT 38
         $NumTransaction = $this->generateTransactionNumber();
-
+        $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
         Transactions::create([
             "NumTransaction" => $NumTransaction,
             "DateTransaction" => $this->dateSystem,
@@ -2524,7 +2606,7 @@ class ClotureJourneeCopy
             "CodeAgence" => $CodeAgence,
             "NumDossier" => $NumDossier,
             "NumCompte" => $compteProvisionCustomer,
-            "NumComptecp" => $codeMonnaie == 2 ? $this->compteRepriseDeProvisionCDF : $this->compteRepriseDeProvisionCDF,
+            "NumComptecp" => $compteReprise,
             "Debit" =>  $montantProvision,
             "Operant" =>  $Gestionnaire,
             "Debitfc" =>  $codeMonnaie == 2 ? $montantProvision : $montantProvision * $tauxDuJour,
@@ -2555,6 +2637,7 @@ class ClotureJourneeCopy
         // ]);
 
         //CREDITE UN COMPTE DE PRODUIT POUR REPRISE SUR PROVISION 
+        $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
         Transactions::create([
             "NumTransaction" => $NumTransaction,
             "DateTransaction" => $this->dateSystem,
@@ -2563,7 +2646,7 @@ class ClotureJourneeCopy
             "CodeMonnaie" => $codeMonnaie,
             "CodeAgence" => $CodeAgence,
             "NumDossier" => $NumDossier,
-            "NumCompte" => $codeMonnaie == 2 ? $this->compteRepriseDeProvisionCDF : $this->compteRepriseDeProvisionUSD,
+            "NumCompte" => $compteReprise,
             "NumComptecp" => $compteProvisionCustomer,
             "Credit" =>  $montantProvision,
             "Operant" =>  $Gestionnaire,
@@ -2700,6 +2783,7 @@ class ClotureJourneeCopy
                             // ]);
 
                             //DEBITE LE COMPTE  38 DU CLIENT
+                            $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
                             Transactions::create([
                                 "NumTransaction" => $NumTransaction,
                                 "DateTransaction" => $dateSystem,
@@ -2710,7 +2794,7 @@ class ClotureJourneeCopy
                                 "NumDossier" => $NumDossier,
                                 "NumDemande" => "V0" . $NumTransaction,
                                 "NumCompte" =>   $compteProvisionCustomer,
-                                "NumComptecp" => $devise == 2 ? $this->compteRepriseDeProvisionCDF : $this->compteRepriseDeProvisionUSD,
+                                "NumComptecp" => $compteReprise,
                                 "Debit" => $montantReprise,
                                 "Operant" =>  $Gestionnaire,
                                 "Debitfc" => $devise == 2 ? $montantReprise : $montantReprise * ($tauxDuJour),
@@ -2720,6 +2804,7 @@ class ClotureJourneeCopy
                             ]);
 
                             //CREDITE LE COMPTE 79
+                            $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
                             Transactions::create([
                                 "NumTransaction" => $NumTransaction,
                                 "DateTransaction" => $dateSystem,
@@ -2728,8 +2813,8 @@ class ClotureJourneeCopy
                                 "CodeMonnaie" => $devise,
                                 "CodeAgence" => $CodeAgence,
                                 "NumDossier" => $NumDossier,
-                                "NumCompte" =>   $devise == 2 ? $this->compteRepriseDeProvisionCDF : $this->compteRepriseDeProvisionUSD,
-                                "NumComptecp" => $devise == 2 ? $this->compteProvisionCDF : $this->compteProvisionUSD,
+                                "NumCompte" =>   $compteReprise,
+                                "NumComptecp" => $devise == 2 ? $compteProvisionCustomer : $compteProvisionCustomer,
                                 "Credit" => $montantReprise,
                                 "Operant" =>  $Gestionnaire,
                                 "Creditfc" => $devise == 2 ? $montantReprise : $montantReprise * ($tauxDuJour),
@@ -2895,6 +2980,7 @@ class ClotureJourneeCopy
                         // ]);
 
                         //DEBITE LE COMPTE  38 DU CLIENT
+                        $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
                             "DateTransaction" => $dateSystem,
@@ -2905,7 +2991,7 @@ class ClotureJourneeCopy
                             "NumDossier" => $NumDossier,
                             "NumDemande" => "V0" . $NumTransaction,
                             "NumCompte" =>   $compteProvisionCustomer,
-                            "NumComptecp" => $devise == 2 ? $this->compteRepriseDeProvisionCDF : $this->compteRepriseDeProvisionUSD,
+                            "NumComptecp" => $compteReprise,
                             "Debit" => $soldeProvision,
                             "Operant" =>  $Gestionnaire,
                             "Debitfc" => $devise == 2 ? $soldeProvision : $soldeProvision * ($tauxDuJour),
@@ -2935,6 +3021,7 @@ class ClotureJourneeCopy
                         ]);
 
                         //CREDITE LE COMPTE 79
+                        $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
                             "DateTransaction" => $dateSystem,
@@ -2943,8 +3030,8 @@ class ClotureJourneeCopy
                             "CodeMonnaie" => $devise,
                             "CodeAgence" => $CodeAgence,
                             "NumDossier" => $NumDossier,
-                            "NumCompte" =>   $devise == 2 ? $this->compteRepriseDeProvisionCDF : $this->compteRepriseDeProvisionUSD,
-                            "NumComptecp" => $devise == 2 ? $this->compteProvisionCDF : $this->compteProvisionUSD,
+                            "NumCompte" =>   $compteReprise,
+                            "NumComptecp" => $devise == 2 ? $compteProvisionCustomer : $compteProvisionCustomer,
                             "Credit" => $soldeProvision,
                             "Operant" =>  $Gestionnaire,
                             "Creditfc" => $devise == 2 ? $soldeProvision : $soldeProvision * ($tauxDuJour),
@@ -3158,11 +3245,11 @@ class ClotureJourneeCopy
                 ->groupBy("NumCompte")
                 ->first();
 
-                
-        // ✅ Protection : si aucun résultat, retourner 0
-        if (!$soldeMembre) {
-            return 0;
-        }
+
+            // ✅ Protection : si aucun résultat, retourner 0
+            if (!$soldeMembre) {
+                return 0;
+            }
 
             $this->checkAndStopOnError(
                 !$soldeMembre,
@@ -3187,40 +3274,40 @@ class ClotureJourneeCopy
     //CETE FONCTION VA PERMETTRE A SELECTIONNEE LE SOLDE DU MEMBRE
     public function checkSoldeMembreACTIF($codeMonnaie, $NumCompte, $NumDossier)
     {
-         try {
-        // Si le montant manuel est défini et supérieur à 0, on l'utilise
-        if (!is_null($this->montantRemboursementManuel) && $this->montantRemboursementManuel > 0 && !$this->remboursAnticipe) {
-            return $this->montantRemboursementManuel;
-        }
-        // dd($this->montantRemboursementManuel);
+        try {
+            // Si le montant manuel est défini et supérieur à 0, on l'utilise
+            if (!is_null($this->montantRemboursementManuel) && $this->montantRemboursementManuel > 0 && !$this->remboursAnticipe) {
+                return $this->montantRemboursementManuel;
+            }
+            // dd($this->montantRemboursementManuel);
 
-        $soldeMembre = Transactions::select(
-            DB::raw("SUM(Debitfc)-SUM(Creditfc) as soldeMembreCDF"),
-            DB::raw("SUM(Debitusd)-SUM(Creditusd) as soldeMembreUSD"),
-        )->where("NumCompte", '=', $NumCompte)
-            ->where("NumDossier", '=', $NumDossier)
-            ->groupBy("NumCompte")
-            ->first();
+            $soldeMembre = Transactions::select(
+                DB::raw("SUM(Debitfc)-SUM(Creditfc) as soldeMembreCDF"),
+                DB::raw("SUM(Debitusd)-SUM(Creditusd) as soldeMembreUSD"),
+            )->where("NumCompte", '=', $NumCompte)
+                ->where("NumDossier", '=', $NumDossier)
+                ->groupBy("NumCompte")
+                ->first();
 
-        // ✅ Protection : si aucun résultat, retourner 0
-        if (!$soldeMembre) {
-            return 0;
-        }
-          $this->checkAndStopOnError(
+            // ✅ Protection : si aucun résultat, retourner 0
+            if (!$soldeMembre) {
+                return 0;
+            }
+            $this->checkAndStopOnError(
                 !$soldeMembre,
                 "Impossible de récupérer les transactions pour le compte {$NumCompte}",
                 "ERR_TRANSACTIONS_001"
             );
-        if ($codeMonnaie == 1) {
-            info("soldeUSD: " . $soldeMembre->soldeMembreUSD);
-            $solde = $soldeMembre->soldeMembreUSD;
-            return $solde;
-        } else {
-            $solde = $soldeMembre->soldeMembreCDF;
-            info("soldeCDF: " . $soldeMembre->soldeMembreCDF);
-            return $solde;
-        }
-         } catch (\Exception $e) {
+            if ($codeMonnaie == 1) {
+                info("soldeUSD: " . $soldeMembre->soldeMembreUSD);
+                $solde = $soldeMembre->soldeMembreUSD;
+                return $solde;
+            } else {
+                $solde = $soldeMembre->soldeMembreCDF;
+                info("soldeCDF: " . $soldeMembre->soldeMembreCDF);
+                return $solde;
+            }
+        } catch (\Exception $e) {
             $this->checkAndStopOnError(true, "Erreur dans checkSoldeMembrePASSIF: " . $e->getMessage(), "ERR_SOLDE_003");
         }
     }
@@ -3254,8 +3341,11 @@ class ClotureJourneeCopy
         $NumTransaction = null
     ) {
 
+        $getCodeAgence = Portefeuille::where("NumDossier", $NumDossier)->first();
+        $codeAgence = $getCodeAgence ? $getCodeAgence->CodeAgence : null;
         Remboursementcredit::create([
             "RefEcheance" => $ReferenceEch,
+            "CodeAgence" => $codeAgence,
             "NumCompte" => $NumCompteEpargne,
             "NumCompteCredit" => $NumCompteCredit,
             "NumDossie" => $NumDossier,
@@ -3354,8 +3444,11 @@ class ClotureJourneeCopy
     ) {
         $checkRowExist = Remboursementcredit::where("RefEcheance", $ReferenceEch)->first();
         if (!$checkRowExist) {
+            $getCodeAgence = Portefeuille::where("NumDossier", $NumDossier)->first();
+            $codeAgence = $getCodeAgence ? $getCodeAgence->CodeAgence : null;
             Remboursementcredit::create([
                 "RefEcheance" => $ReferenceEch,
+                "CodeAgence" => $codeAgence,
                 "NumCompte" => $NumCompteEpargne,
                 "NumCompteCredit" => $NumCompteCredit,
                 "NumDossie" => $NumDossier,
@@ -3414,7 +3507,7 @@ class ClotureJourneeCopy
             $getMonnaie = Portefeuille::where("NumDossier", $NumDossier)->first();
             $CodeMonnaie = $getMonnaie->CodeMonnaie;
             $refCompteMembre = $getMonnaie->numAdherant;
-            $CodeAgence=$getMonnaie->CodeAgence;
+            $CodeAgence = $getMonnaie->CodeAgence;
             if ($record) {
                 // Vérifie si la DateRetard est différente de la date actuelle
                 if ($record->DateRetard !== $dateSystem) {
@@ -3445,56 +3538,58 @@ class ClotureJourneeCopy
 
                 if ($devise == 2) {
                     if ($refCompteMembre < 10) {
-                        $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence."2";
-                        $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence."2";
+                        $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence . "2";
+                        $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence . "2";
                     } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
-                        $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence."2";
-                        $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence."2";
+                        $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence . "2";
+                        $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence . "2";
                     } else if ($refCompteMembre >= 100 && $refCompteMembre < 1000) {
-                        $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence."2";
-                        $compteCreanceLitigieuseCDF = "3901000" . $refCompteMembre . $CodeAgence."2";
+                        $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence . "2";
+                        $compteCreanceLitigieuseCDF = "3901000" . $refCompteMembre . $CodeAgence . "2";
                     } else if ($refCompteMembre >= 1000 && $refCompteMembre < 10000) {
-                        $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence."2";
-                        $compteCreanceLitigieuseCDF = "390100" . $refCompteMembre . $CodeAgence."2";
+                        $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence . "2";
+                        $compteCreanceLitigieuseCDF = "390100" . $refCompteMembre . $CodeAgence . "2";
                     } else if ($refCompteMembre >= 10000 && $refCompteMembre < 100000) {
-                        $compteProvisionCDF = "38010" . $refCompteMembre . $CodeAgence."2";
-                        $compteCreanceLitigieuseCDF = "39010" . $refCompteMembre . $CodeAgence."2";
+                        $compteProvisionCDF = "38010" . $refCompteMembre . $CodeAgence . "2";
+                        $compteCreanceLitigieuseCDF = "39010" . $refCompteMembre . $CodeAgence . "2";
                     } else if ($refCompteMembre >= 100000 && $refCompteMembre < 1000000) {
-                        $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence."2";
-                        $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence."2";
+                        $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence . "2";
+                        $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence . "2";
                     } else {
-                        $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence."2";
-                        $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence."2";
+                        $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence . "2";
+                        $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence . "2";
                     }
                 } else if ($devise == 1) {
 
                     if ($refCompteMembre < 10) {
-                        $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence."1";
-                        $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence."1";
+                        $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence . "1";
+                        $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence . "1";
                     } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
-                        $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence."1";
-                        $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence."1";
+                        $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence . "1";
+                        $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence . "1";
                     } else if ($refCompteMembre >= 100 && $refCompteMembre < 1000) {
-                        $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence."1";
-                        $compteCreanceLitigieuseUSD = "3900000" . $refCompteMembre . $CodeAgence."1";
+                        $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence . "1";
+                        $compteCreanceLitigieuseUSD = "3900000" . $refCompteMembre . $CodeAgence . "1";
                     } else if ($refCompteMembre >= 1000 && $refCompteMembre < 10000) {
-                        $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence."1";
-                        $compteCreanceLitigieuseUSD = "390000" . $refCompteMembre . $CodeAgence."1";
+                        $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence . "1";
+                        $compteCreanceLitigieuseUSD = "390000" . $refCompteMembre . $CodeAgence . "1";
                     } else if ($refCompteMembre >= 10000 && $refCompteMembre < 100000) {
-                        $compteProvisionUSD = "38000" . $refCompteMembre . $CodeAgence."1";
-                        $compteCreanceLitigieuseUSD = "39000" . $refCompteMembre . $CodeAgence."1";
+                        $compteProvisionUSD = "38000" . $refCompteMembre . $CodeAgence . "1";
+                        $compteCreanceLitigieuseUSD = "39000" . $refCompteMembre . $CodeAgence . "1";
                     } else if ($refCompteMembre >= 100000 && $refCompteMembre < 1000000) {
-                        $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence."1";
-                        $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence."1";
+                        $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence . "1";
+                        $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence . "1";
                     } else {
-                        $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence."1";
-                        $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence."1";
+                        $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence . "1";
+                        $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence . "1";
                     }
                 }
                 $dateMinusOneDay = Carbon::parse($dateSystem)->subDay();
                 $dateMinusOneday = $dateMinusOneDay->toDateString();
                 // Crée un nouvel enregistrement si aucun n'existe
+
                 JourRetard::create([
+                    "CodeAgence" => $CodeAgence,
                     "NumcompteEpargne" => $NumCompteEpargne,
                     "NumcompteCredit" => $NumCompteCredit,
                     "CompteProvision" => $devise == 2 ? $compteProvisionCDF : $compteProvisionUSD,
@@ -3617,26 +3712,26 @@ class ClotureJourneeCopy
 
         if ($devise == 2) {
             if ($refCompteMembre < 10) {
-                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence . "2";
             } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
-                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence . "2";
             } else if ($refCompteMembre >= 100 && $refCompteMembre < 1000) {
-                $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "3901000" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "3901000" . $refCompteMembre . $CodeAgence . "2";
             } else if ($refCompteMembre >= 1000 && $refCompteMembre < 10000) {
-                $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "390100" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "3801000" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "390100" . $refCompteMembre . $CodeAgence . "2";
             } else if ($refCompteMembre >= 10000 && $refCompteMembre < 100000) {
-                $compteProvisionCDF = "38010" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "39010" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "38010" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "39010" . $refCompteMembre . $CodeAgence . "2";
             } else if ($refCompteMembre >= 100000 && $refCompteMembre < 1000000) {
-                $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence . "2";
             } else {
-                $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence."2";
-                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence."2";
+                $compteProvisionCDF = "3801" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "3901" . $refCompteMembre . $CodeAgence . "2";
             }
 
 
@@ -3701,26 +3796,26 @@ class ClotureJourneeCopy
         } else if ($devise == 1) {
 
             if ($refCompteMembre < 10) {
-                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence . "1";
             } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
-                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence . "1";
             } else if ($refCompteMembre >= 100 && $refCompteMembre < 1000) {
-                $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "3900000" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "3900000" . $refCompteMembre . $CodeAgence . "1";
             } else if ($refCompteMembre >= 1000 && $refCompteMembre < 10000) {
-                $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "390000" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "3800000" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "390000" . $refCompteMembre . $CodeAgence . "1";
             } else if ($refCompteMembre >= 10000 && $refCompteMembre < 100000) {
-                $compteProvisionUSD = "38000" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "39000" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "38000" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "39000" . $refCompteMembre . $CodeAgence . "1";
             } else if ($refCompteMembre >= 100000 && $refCompteMembre < 1000000) {
-                $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence . "1";
             } else {
-                $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence."1";
-                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence."1";
+                $compteProvisionUSD = "3800" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "3900" . $refCompteMembre . $CodeAgence . "1";
             }
 
 
@@ -3825,7 +3920,7 @@ class ClotureJourneeCopy
                         return 25;
                     }
 
-                    
+
                     return 10;
                 }
                 return 5;

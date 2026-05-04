@@ -577,7 +577,7 @@
                         </a>
                     </li>
 
-                    <li class="nav-item dropdown">
+                    {{-- <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="rapportDropdown"
                             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-chart-bar me-1"></i> Rapport
@@ -604,14 +604,60 @@
                             <a class="dropdown-item" href="{{ route('eco.pages.journal') }}">
                                 <i class="fas fa-book me-2"></i>Journal
                             </a>
-                            <a class="dropdown-item" href="{{ route('eco.pages.repertoire') }}">
+                             <a class="dropdown-item" href="{{ route('eco.pages.repertoire') }}">
                                 <i class="fas fa-address-book me-2"></i>Répertoire C
                             </a>
+                           
                             <a class="dropdown-item" href="{{ route('eco.pages.remboursement-attendu') }}">
                                 <i class="fas fa-hourglass-half me-2"></i>Remboursement attendu
                             </a>
                             <a class="dropdown-item" href="{{ route('eco.pages.sommaire-compte') }}">
                                 <i class="fas fa-chart-pie me-2"></i>Sommaire de compte
+                            </a>
+                        </div>
+                    </li> --}}
+
+                     <!-- Menu Rapport avec sous-catégories (modernisé) -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="rapportDropdown" data-bs-toggle="dropdown"
+                           aria-expanded="false">
+                            <i class="fas fa-chart-bar me-1"></i> Rapport
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="rapportDropdown">
+                            <h6 class="dropdown-header">Rapports financiers</h6>
+                            <a class="dropdown-item" href="{{ route('eco.pages.balance') }}">
+                                <i class="fas fa-balance-scale me-2"></i>Balance
+                            </a>
+                            <a class="dropdown-item" href="{{ route('eco.pages.bilan') }}">
+                                <i class="fas fa-chart-line me-2"></i>Bilan
+                            </a>
+                            <a class="dropdown-item" href="{{ route('eco.pages.grandlivre') }}">
+                                <i class="fas fa-book me-2"></i>Grand Livre
+                            </a>
+                            <a class="dropdown-item" href="{{ route('eco.pages.tfr') }}">
+                                <i class="fas fa-file-invoice me-2"></i>TFR
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">Rapports de crédit</h6>
+                            <a class="dropdown-item" href="{{ route('eco.pages.rapport-credit') }}">
+                                <i class="fas fa-credit-card me-2"></i>Rapport crédit
+                            </a>
+                            <a class="dropdown-item" href="{{ route('eco.pages.remboursement-attendu') }}">
+                                <i class="fas fa-hourglass-half me-2"></i>Remboursement attendu
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">Suivi clientèle</h6>
+                            <a class="dropdown-item" href="{{ route('eco.pages.releve') }}">
+                                <i class="fas fa-receipt me-2"></i>Relevé
+                            </a>
+                            <a class="dropdown-item" href="{{ route('eco.pages.sommaire-compte') }}">
+                                <i class="fas fa-chart-pie me-2"></i>Sommaire de compte
+                            </a>
+                            <a class="dropdown-item" href="{{ route('eco.pages.journal') }}">
+                                <i class="fas fa-book me-2"></i>Journal
+                            </a>
+                            <a class="dropdown-item" href="{{ route('eco.pages.repertoire') }}">
+                                <i class="fas fa-address-book me-2"></i>Répertoire C
                             </a>
                         </div>
                     </li>

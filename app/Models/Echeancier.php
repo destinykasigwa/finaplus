@@ -10,6 +10,7 @@ class Echeancier extends Model
     use HasFactory;
     protected $fillable = [
         "RefEcheancier",
+        "CodeAgence",
         "IdMembreGs",
         "NumDossier",
         "NumMensualite",

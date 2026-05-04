@@ -14,6 +14,8 @@ class Agences extends Model
          "compte_liaison_cdf",
          "compte_liaison_usd",
          "last_ref_compte",
+         "last_ref_num_visa",
+         "last_ref_numdossier",
          "compte_virement_caisse_cdf",
           "compte_virement_caisse_usd",
          "compte_caisse_usd",

@@ -199,7 +199,7 @@ const MontageCredit = () => {
             tot_general,
             date_demande,
             epargne_caution: fetchData.epargneCaution,
-            NumDossier: "ND000" + getNumDossier.id,
+            NumDossier: getNumDossier,
             seachedAccount: Search_field,
             NumAdherant: fetchData.data.NumAdherant,
         });
@@ -847,8 +847,8 @@ const handleMontantChange = (e) => {
                                                         }}
                                                         value={
                                                             getNumDossier &&
-                                                            "ND000" +
-                                                                getNumDossier.id
+                                                             
+                                                                getNumDossier
                                                         }
                                                         disabled
                                                     />

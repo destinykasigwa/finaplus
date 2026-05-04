@@ -797,7 +797,7 @@ const Releve = () => {
                                                     padding: "0 15px 8px",
                                                 }}
                                             >
-                                                RELEVÉ DE COMPTE
+                                                RELEVÉ DE COMPTE 
                                             </h4>
                                         </div>
 

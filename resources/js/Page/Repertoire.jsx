@@ -245,6 +245,20 @@ const Repertoire = () => {
 
         return parts.join(".");
     }
+
+
+    const getAgenceNom = () => {
+    if (agenceFilter === 'current') {
+         return "AGENCE DE " +currentAgence?.nom_agence || "Non définie";
+    }
+    if (agenceFilter === 'all') {
+        return "TOUTES AGENCES";
+    }
+    // agenceFilter est un id
+    const agence = userAgences.find(a => a.id == agenceFilter);
+    // return agence ? `${agence.code_agence} - ${agence.nom_agence}` : "Non définie";
+    return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
+};
     return (
         <div className="container-fluid" style={{ marginTop: "10px", padding: "0 15px" }}>
     {/* En-tête moderne */}
@@ -410,7 +424,7 @@ const Repertoire = () => {
                             borderLeft: "5px solid #20c997"
                         }}>
                             <i className="fas fa-address-book me-2"></i>
-                            RÉPERTOIRE CAISSE
+                            RÉPERTOIRE CAISSE {getAgenceNom()}
                             <br />
                             <small style={{ fontSize: "14px" }}>
                                 Du {dateDebut ? dateParser(dateDebut) : dateParser(getdefaultDateDebut)} 

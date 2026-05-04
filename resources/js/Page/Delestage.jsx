@@ -31,6 +31,52 @@ const Delestage = () => {
         }
     };
 
+    // const saveOperation = async (e) => {
+    //     e.preventDefault();
+    //     setloading(true);
+    //     Swal.fire({
+    //         title: "Confirmation !",
+    //         text: "Etes vous sûr d'effectuer ce délestage ?",
+    //         icon: "warning",
+    //         showCancelButton: true,
+    //         confirmButtonColor: "#3085d6",
+    //         cancelButtonColor: "#d33",
+    //         confirmButtonText: "Oui Délester!",
+    //     }).then(async (result) => {
+    //         if (result.isConfirmed) {
+    //             setloading(false);
+    //             const res = await axios.post("/eco/page/delestage/validation", {
+    //                 devise: devise,
+    //             });
+    //             if (res.data.status == 1) {
+    //                 Swal.fire({
+    //                     title: "Succès",
+    //                     text: res.data.msg,
+    //                     icon: "success",
+    //                     timer: 8000,
+    //                     confirmButtonText: "Okay",
+    //                 });
+    //                 // Rafraîchir les données (billetterie + historique)
+    //                 getLastestOperation();
+    //                 GetInformation();
+    //                 // Marque que le délestage a été fait -> bouton désactivé
+    //                 setDelesteRealise(true);
+    //             } else {
+    //                 setloading(false);
+    //                 Swal.fire({
+    //                     title: "Erreur",
+    //                     text: res.data.msg,
+    //                     icon: "error",
+    //                     timer: 8000,
+    //                     confirmButtonText: "Okay",
+    //                 });
+    //             }
+    //         } else {
+    //             setloading(false);
+    //         }
+    //     });
+    // };
+
     const saveOperation = async (e) => {
         e.preventDefault();
         setloading(true);
@@ -59,8 +105,7 @@ const Delestage = () => {
                     // Rafraîchir les données (billetterie + historique)
                     getLastestOperation();
                     GetInformation();
-                    // Marque que le délestage a été fait -> bouton désactivé
-                    setDelesteRealise(true);
+                    // NE PAS MODIFIER DE ETAT DE MASQUAGE
                 } else {
                     setloading(false);
                     Swal.fire({
@@ -76,7 +121,6 @@ const Delestage = () => {
             }
         });
     };
-
     const GetInformation = async () => {
         const res = await axios.get("/eco/page/delestage/get-billetage-caissier");
         if (res.data.status == 1) {
@@ -311,6 +355,9 @@ const Delestage = () => {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Bouton : désactivé si le montant de la devise courante est nul */}
+
                             </>
                         )}
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Agences;
 use App\Models\User;
 use App\Models\Comptes;
 use App\Models\Echeancier;
@@ -214,7 +215,11 @@ class SuiviCreditController extends Controller
             ]);
         } else {
             //VERIFIE SI LA PERSONNE N'A PAS UN CREDIT ENCOURS OU QU'IL N'A PAS ENCORE SOLDE
-            $getCompteAbrege = Comptes::where("NumCompte", $request->seachedAccount)->orWhere("NumAdherant", $request->seachedAccount)->first();
+            $getCompteAbrege = Comptes::where(function ($query) use ($request) {
+                $query->where('NumCompte', $request->seachedAccount)
+                    ->orWhere('NumAdherant', $request->seachedAccount)
+                    ->orWhere('Num_Manuel', $request->seachedAccount);
+            })->first();
             $getTypeCreditName = TypeCredit::where("id", $request->type_credit)->first();
             Portefeuille::create([
                 "RefTypeCredit" => $request->type_credit,
@@ -240,9 +245,18 @@ class SuiviCreditController extends Controller
                 "Gestionnaire" => $request->gestionnaire,
                 "numAdherant" => $request->NumAdherant,
             ]);
-            CompteurDossierCredit::create([
-                "0000",
-            ]);
+            // CompteurDossierCredit::create([
+            //     "0000",
+            // ]);
+            $currentAgence = session('current_agence');
+            $codeAgence = $currentAgence['code_agence'] ?? null;
+            $agence = Agences::where('code_agence', $codeAgence)->first();
+            if (!$codeAgence) {
+                return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+            }
+            $numDocument = $agence->last_ref_numdossier + 1;
+            $agence->last_ref_numdossier = $numDocument;
+            $agence->save();
             return response()->json([
                 'status' => 1,
                 'msg' => 'Ce dossier a été mis en place avec succès',
@@ -263,6 +277,7 @@ class SuiviCreditController extends Controller
             if (!$codeAgenceCourante) {
                 return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
             }
+
             // Recherche du compte (niveau 5) dans l'agence courante
             $data = Comptes::where('niveau', 5)
                 ->where('CodeAgence', $codeAgenceCourante)
@@ -273,15 +288,21 @@ class SuiviCreditController extends Controller
                 })
                 ->first();
 
+
             if (!$data) {
                 return response()->json(['status' => 0, 'msg' => "Ce numéro de compte n'existe pas dans votre agence."]);
             }
 
             // Vérification d'un crédit non clôturé
-            $checkNumExist = Comptes::where("NumAdherant", $request->seachedAccount)->orWhere("NumCompte", $request->seachedAccount)->first();
+            // $checkNumExist = Comptes::where("NumAdherant", $request->seachedAccount)->orWhere("NumCompte", $request->seachedAccount)->first();
 
-            if ($checkNumExist) {
-                $checkCreditNonCloture = Portefeuille::where("NumCompteEpargne", $request->seachedAccount)->orWhere("numAdherant", $request->seachedAccount)->first();
+            if ($data) {
+                $checkCreditNonCloture = Portefeuille::where(function ($query) use ($request, $codeAgenceCourante) {
+                    $query->where("NumCompteEpargne", $request->seachedAccount)
+                        ->orWhere("numAdherant", $request->seachedAccount);
+                })->where("CodeAgence", $codeAgenceCourante)
+                    ->first();
+
                 if ($checkCreditNonCloture) {
                     if ($checkCreditNonCloture->Cloture == 0) {
                         return response()->json([
@@ -290,8 +311,27 @@ class SuiviCreditController extends Controller
                         ]);
                     }
                 }
-                $data_numdossier = DB::select("SELECT * FROM compteur_dossier_credits ORDER BY id DESC")[0];
-                $data = Comptes::where("NumAdherant", $request->seachedAccount)->orWhere("NumCompte", $request->seachedAccount)->first();
+                //  $data_numdossier = DB::select("SELECT * FROM compteur_dossier_credits ORDER BY id DESC")[0];
+                // Récupérer l'agence depuis la base
+                $currentAgence = session('current_agence');
+                $codeAgence = $currentAgence['code_agence'] ?? null;
+                $agence = Agences::where('code_agence', $codeAgence)->first();
+                if (!$codeAgence) {
+                    return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+                }
+                $numDocument = $agence->last_ref_numdossier + 1;
+                $agence->last_ref_numdossier = $numDocument;
+                // $agence->save();
+                $data_numdossier ="ND".$currentAgence."0". $numDocument;
+
+                $data = Comptes::where('niveau', 5)
+                    ->where('CodeAgence', $codeAgenceCourante)
+                    ->where(function ($query) use ($search) {
+                        $query->where('NumCompte', $search)
+                            ->orWhere('NumAdherant', $search)
+                            ->orWhere('Num_Manuel', $search);
+                    })
+                    ->first();
                 $codeAgence = $data->CodeAgence;
                 if ($data->CodeMonnaie == 2) {
                     if ($data->NumAdherant < 10) {
@@ -414,13 +454,15 @@ class SuiviCreditController extends Controller
         } else {
 
             if (isset($request->NumDossier)) {
+                  $currentAgence = session('current_agence');
+                 $codeAgence = $currentAgence['code_agence'] ?? null;
                 //VERIFIE SI L'ECHEACHIER N'ETAIT PAS DEJA GENERER POUR CE CREDIT
-                $checkRow = Echeancier::where("NumDossier", $request->NumDossier)->first();
+                $checkRow = Echeancier::where("NumDossier", $request->NumDossier)->where("CodeAgence",$codeAgence)->first();
                 //POUR REECHELONNER LE CREDIT
                 if ($request->reechelonne and $checkRow) {
                     //VERIFIE SI LE CREDIT N'EST PAS EN RETARD CAR INTERDIT DE REECHELONNER UN CREDIT EN RETARD
                     $chechCreditRetard = JourRetard::where("NumDossier", $request->NumDossier)
-                        ->where("NbrJrRetard", ">", 0)->first();
+                        ->where("NbrJrRetard", ">", 0)->where("CodeAgence",$codeAgence)->first();
                     if (!$chechCreditRetard) {
                         //RECUPERE LE RESTANT DU DU CREDIT
                         $soldeRestant =  Echeancier::selectRaw('
@@ -464,12 +506,13 @@ class SuiviCreditController extends Controller
                 //SI L'ECHEANCIER ETAIT DEJA GENERER POUR CE CREDIT EST QUE C PAS UN REECHELONNEMENT
                 if ($checkRow and !$request->reechelonne) {
                     //VERIFIE S'IL N'EXISTE PAS UN REMBOURSEMENT DEJA EFFECTUE
-                    $chechRembours = Remboursementcredit::where("NumDossie", $request->NumDossier)
-                        ->where(function ($query) {
-                            $query->where("CapitalPaye", ">", 0)
-                                ->orWhere("InteretPaye", ">", 0);
-                        })
-                        ->first();
+                   $chechRembours = Remboursementcredit::where("NumDossie", $request->NumDossier)
+                    ->where(function ($query) {
+                        $query->where("CapitalPaye", ">", 0)
+                              ->orWhere("InteretPaye", ">", 0);
+                    })
+                    ->where('CodeAgence', $codeAgence) // ← ajout du filtre agence
+                    ->first();
                     if (!$chechRembours) {
 
                         Echeancier::where("NumDossier", "=", $request->NumDossier)->delete();
@@ -542,8 +585,11 @@ class SuiviCreditController extends Controller
         $NumDossier,
     ) {
 
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
         //RECUPERE LES INFORMATIONS SUR LE CREDIT DANS LE DB 
-        $data = Portefeuille::where("NumDossier", $NumDossier)->first();
+        $data = Portefeuille::where("NumDossier", $NumDossier)->where("CodeAgence",$codeAgence)->first();
+       
         //MET  LE PORTE FEUILLE A JOUR
         Portefeuille::where("NumDossier", "=", $NumDossier)->update([
             "Decision" => $desicion,
@@ -559,6 +605,7 @@ class SuiviCreditController extends Controller
 
         if ($getTypeCredit->type_credit == "CREDIT TUINUKE FC" or $getTypeCredit->type_credit == "CREDIT TUINUKE USD") {
             Echeancier::create([
+                "CodeAgence"=>$codeAgence,
                 "NumDossier" => $NumDossier,
                 "NumMensualite"  => 0,
                 "NbreJour" => 0,
@@ -569,7 +616,6 @@ class SuiviCreditController extends Controller
                 // "SoldeCapital" => $request->MontantAccorde,
                 // "SoldeInteret" => 0,
             ]);
-
 
 
             //COMPLETE L'ECHEANCIER
@@ -589,6 +635,7 @@ class SuiviCreditController extends Controller
 
                     $lastRowData  = Echeancier::orderBy('ReferenceEch', 'desc')->first();
                     Echeancier::create([
+                        "CodeAgence"=>$codeAgence,
                         "NumDossier" => $NumDossier,
                         "NumMensualite" => 0,
                         "NbreJour" => $lastRowData->NbreJour + 1,
@@ -610,6 +657,7 @@ class SuiviCreditController extends Controller
                 foreach ($dates as $dt) {
                     $lastRowData  = Echeancier::orderBy('ReferenceEch', 'desc')->first();
                     Echeancier::create([
+                        "CodeAgence"=>$codeAgence,
                         "NumDossier" => $NumDossier,
                         "NumMensualite" => 0,
                         "NbreJour" => $lastRowData->NbreJour + 1,
@@ -629,6 +677,7 @@ class SuiviCreditController extends Controller
             }
         } else if ($getTypeCredit->type_credit == "CREDIT INUKA FC" or $getTypeCredit->type_credit == "CREDIT INUKA USD") {
             Echeancier::create([
+                "CodeAgence"=>$codeAgence,
                 "NumDossier" => $NumDossier,
                 "NumMensualite"  => 0,
                 "NbreJour" => 0,
@@ -656,6 +705,7 @@ class SuiviCreditController extends Controller
                     $totalAp = $interetApayer + $capitalAmorti;
                     $lastRowData  = Echeancier::orderBy('ReferenceEch', 'desc')->first();
                     Echeancier::create([
+                        "CodeAgence"=>$codeAgence,
                         "NumDossier" => $NumDossier,
                         "NumMensualite" => 0,
                         "NbreJour" => $lastRowData->NbreJour + 1,
@@ -687,6 +737,7 @@ class SuiviCreditController extends Controller
                     $totalAp = $interetApayer + $capitalAmorti +  $epargneObligatoire;
 
                     Echeancier::create([
+                        "CodeAgence"=>$codeAgence,
                         "NumDossier" => $NumDossier,
                         "NumMensualite" => 0,
                         "NbreJour" => $lastRowData->NbreJour + 1,
@@ -709,6 +760,7 @@ class SuiviCreditController extends Controller
         } else if ($getTypeCredit->type_credit == "C. A LA CONSOMMATION FC" or  $getTypeCredit->type_credit == "C. PETIT COMMERCE FC" or $getTypeCredit->type_credit == "C. A LA CONSOMMATION USD" or  $getTypeCredit->type_credit == "C. PETIT COMMERCE USD") {
 
             Echeancier::create([
+                "CodeAgence"=>$codeAgence,
                 "NumDossier" => $NumDossier,
                 "NumMensualite"  => 0,
                 "NbreJour" => 0,
@@ -734,6 +786,7 @@ class SuiviCreditController extends Controller
                     $totalAp = $interetApayer + $capitalAmorti;
                     $lastRowData  = Echeancier::orderBy('ReferenceEch', 'desc')->first();
                     Echeancier::create([
+                        "CodeAgence"=>$codeAgence,
                         "NumDossier" => $NumDossier,
                         "NumMensualite" => 0,
                         "NbreJour" => $lastRowData->NbreJour + 1,
@@ -760,6 +813,7 @@ class SuiviCreditController extends Controller
                     $capitalAmorti = $capital / $data->NbrTranche;
                     $totalAp = $interetApayer + $capitalAmorti;
                     Echeancier::create([
+                        "CodeAgence"=>$codeAgence,
                         "NumDossier" => $NumDossier,
                         "NumMensualite" => 0,
                         "NbreJour" => $lastRowData->NbreJour + 1,

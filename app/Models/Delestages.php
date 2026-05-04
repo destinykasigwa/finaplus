@@ -10,6 +10,7 @@ class Delestages extends Model
     use HasFactory;
     protected $fillable = [
         "Reference",
+        "code_agence",
         "NumCompteCaissier",
         "vightMilleFranc",
         "dixMilleFranc",

@@ -1,3 +1,62 @@
+const TableWithPagination = ({ data, itemsPerPage, renderRow }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = Math.ceil(data.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentData = data.slice(startIndex, endIndex);
+
+    const goToPage = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    if (totalPages === 0) return null;
+
+    return (
+        <>
+            <div className="table-responsive">
+                <table className="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr style={{ color: "steelblue" }}>
+                            <th>Réf.</th>
+                            <th>Montant</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {currentData.map(renderRow)}
+                    </tbody>
+                </table>
+            </div>
+            {totalPages > 1 && (
+                <div className="d-flex justify-content-between align-items-center p-1 border-top">
+                    <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => goToPage(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        style={{ padding: "2px 6px", fontSize: "11px" }}
+                    >
+                        <i className="fas fa-chevron-left"></i> Préc.
+                    </button>
+                    <span className="small text-muted" style={{ fontSize: "10px" }}>
+                        {currentPage}/{totalPages}
+                    </span>
+                    <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => goToPage(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        style={{ padding: "2px 6px", fontSize: "11px" }}
+                    >
+                        Suiv. <i className="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            )}
+        </>
+    );
+};
+
+
 // import styles from "../styles/RegisterForm.module.css";
 import { useState, use, useEffect } from "react";
 import axios from "axios";
@@ -256,6 +315,9 @@ const DepotEspece = () => {
         border: "0px",
         height: "200px",
     };
+
+
+    
     return (
         <>
             {loadingData ? (
@@ -1358,248 +1420,80 @@ const DepotEspece = () => {
                                 </div>
                             </div>
 
-                            {/* Historique des opérations */}
-                            <div
-                                className="card border-0 shadow-sm rounded-3"
-                                style={{
-                                    maxHeight: "450px",
-                                    overflowY: "auto",
-                                }}
-                            >
-                                <div className="card-header bg-white border-0 pt-3  bg-white">
-                                    {/* sticky-top */}
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-history me-2"></i>
-                                        Opérations récentes
-                                    </h6>
-                                </div>
-                                <div className="card-body p-0">
-                                    {getBilletageCDF &&
-                                        getBilletageCDF.length > 0 && (
-                                            <>
-                                                <div
-                                                    className="px-3 py-2"
-                                                    style={{
-                                                        backgroundColor:
-                                                            "#e6f2f9",
-                                                    }}
-                                                >
-                                                    <small
-                                                        className="fw-bold"
-                                                        style={{
-                                                            color: "steelblue",
-                                                        }}
-                                                    >
-                                                        CDF
-                                                    </small>
-                                                </div>
-                                                <div className="table-responsive">
-                                                    <table className="table table-sm table-hover mb-3">
-                                                        <thead>
-                                                            <tr
-                                                                style={{
-                                                                    color: "steelblue",
-                                                                }}
-                                                            >
-                                                                <th>Réf.</th>
-                                                                <th>Montant</th>
-                                                                <th>
-                                                                    Déposant
-                                                                </th>
-                                                                <th>Action</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {getBilletageCDF.map(
-                                                                (
-                                                                    res,
-                                                                    index,
-                                                                ) => (
-                                                                    <tr
-                                                                        key={
-                                                                            index
-                                                                        }
-                                                                    >
-                                                                        <td>
-                                                                            <small>
-                                                                                {
-                                                                                    res.refOperation
-                                                                                }
-                                                                            </small>
-                                                                        </td>
-                                                                        <td className="fw-bold">
-                                                                            {res.montantEntre?.toLocaleString()}
-                                                                        </td>
-                                                                        <td>
-                                                                            <small>
-                                                                                {
-                                                                                    res.Beneficiaire
-                                                                                }
-                                                                            </small>
-                                                                        </td>
-                                                                        <td>
-                                                                            <button
-                                                                onClick={() => handlePrintClick(res)}
-                                                                className="btn btn-primary rounded-10"
-                                                                data-toggle="modal"
-                                                                data-target="#modal-delestage-cdf"
-                                                                    
-                                                                style={{ background: "teal", color: "white", borderRadius: "6px", padding: "2px 8px", fontSize: "11px" }}
-                                                                
-                                                            >
-                                                                <i className="fas fa-print"></i>
-                                                            </button>
-                                                                            {/* <button
-                                                                                onClick={() =>
-                                                                                    handlePrintClick(
-                                                                                        res,
-                                                                                    )
-                                                                                }
-                                                                                className="btn btn-primary rounded-10"
-                                                                                {...(GetRecuConfig ===
-                                                                                    "Thermique" && {
-                                                                                    "data-toggle":
-                                                                                        "modal",
-                                                                                    "data-target":
-                                                                                        "#modal-delestage-cdf",
-                                                                                })}
-                                                                                style={{
-                                                                                    background:
-                                                                                        "teal",
-                                                                                    color: "white",
-                                                                                    borderRadius:
-                                                                                        "6px",
-                                                                                    padding:
-                                                                                        "2px 8px",
-                                                                                    fontSize:
-                                                                                        "11px",
-                                                                                }}
-                                                                            >
-                                                                                <i className="fas fa-print"></i>
-                                                                            </button> */}
-                                                                        </td>
-                                                                    </tr>
-                                                                ),
-                                                            )}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </>
-                                        )}
+                           {/* Historique des opérations avec pagination */}
+<div className="card border-0 shadow-sm rounded-3" style={{ maxHeight: "450px", overflowY: "auto" }}>
+    <div className="card-header bg-white border-0 pt-3 sticky-top bg-white">
+        <h6 className="fw-bold" style={{ color: "steelblue" }}>
+            <i className="fas fa-history me-2"></i>
+            Opérations récentes
+        </h6>
+    </div>
+    <div className="card-body p-0">
+        {/* Section CDF */}
+        {getBilletageCDF && getBilletageCDF.length > 0 && (
+            <>
+                <div className="px-3 py-2" style={{ backgroundColor: "#e6f2f9" }}>
+                    <small className="fw-bold" style={{ color: "steelblue" }}>CDF</small>
+                </div>
+                <TableWithPagination
+                    data={getBilletageCDF}
+                    itemsPerPage={3}
+                    renderRow={(res, idx) => (
+                        <tr key={idx}>
+                            <td><small>{res.refOperation}</small></td>
+                            <td className="fw-bold">{res.montantEntre?.toLocaleString()}</td>
+                            <td>
+                                <button
+                                    onClick={() => handlePrintClick(res)}
+                                    className="btn btn-primary rounded-10"
+                                    style={{ background: "teal", color: "white", borderRadius: "6px", padding: "2px 8px", fontSize: "11px" }}
+                                >
+                                    <i className="fas fa-print"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    )}
+                />
+            </>
+        )}
 
-                                    {getBilletageUSD &&
-                                        getBilletageUSD.length > 0 && (
-                                            <>
-                                                <div
-                                                    className="px-3 py-2 mt-2"
-                                                    style={{
-                                                        backgroundColor:
-                                                            "#e6f2f9",
-                                                    }}
-                                                >
-                                                    <small
-                                                        className="fw-bold"
-                                                        style={{
-                                                            color: "steelblue",
-                                                        }}
-                                                    >
-                                                        USD
-                                                    </small>
-                                                </div>
-                                                <div className="table-responsive">
-                                                    <table className="table table-sm table-hover">
-                                                        <thead>
-                                                            <tr
-                                                                style={{
-                                                                    color: "steelblue",
-                                                                }}
-                                                            >
-                                                                <th>Réf.</th>
-                                                                <th>Montant</th>
-                                                                <th>
-                                                                    Déposant
-                                                                </th>
-                                                                <th>Action</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            {getBilletageUSD.map(
-                                                                (
-                                                                    res,
-                                                                    index,
-                                                                ) => (
-                                                                    <tr
-                                                                        key={
-                                                                            index
-                                                                        }
-                                                                    >
-                                                                        <td>
-                                                                            <small>
-                                                                                {
-                                                                                    res.refOperation
-                                                                                }
-                                                                            </small>
-                                                                        </td>
-                                                                        <td className="fw-bold">
-                                                                            {res.montantEntre?.toLocaleString()}
-                                                                        </td>
-                                                                        <td>
-                                                                            <small>
-                                                                                {
-                                                                                    res.Beneficiaire
-                                                                                }
-                                                                            </small>
-                                                                        </td>
-                                                                        <td>
-                                                                            <button
-                                                                                onClick={() =>
-                                                                                    handlePrintClick(
-                                                                                        res,
-                                                                                    )
-                                                                                }
-                                                                                data-toggle="modal"
-                                                                                data-target="#modal-delestage-cdf"
-                                                                                className="btn btn-primary rounded-10"
-                                                                                style={{
-                                                                                    background:
-                                                                                        "teal",
-                                                                                    color: "white",
-                                                                                    borderRadius:
-                                                                                        "6px",
-                                                                                    padding:
-                                                                                        "2px 8px",
-                                                                                    fontSize:
-                                                                                        "11px",
-                                                                                }}
-                                                                            >
-                                                                                <i className="fas fa-print"></i>
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                ),
-                                                            )}
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </>
-                                        )}
+        {/* Section USD */}
+        {getBilletageUSD && getBilletageUSD.length > 0 && (
+            <>
+                <div className="px-3 py-2 mt-2" style={{ backgroundColor: "#e6f2f9" }}>
+                    <small className="fw-bold" style={{ color: "steelblue" }}>USD</small>
+                </div>
+                <TableWithPagination
+                    data={getBilletageUSD}
+                    itemsPerPage={3}
+                    renderRow={(res, idx) => (
+                        <tr key={idx}>
+                            <td><small>{res.refOperation}</small></td>
+                            <td className="fw-bold">{res.montantEntre?.toLocaleString()}</td>
+                            <td>
+                                <button
+                                    onClick={() => handlePrintClick(res)}
+                                    className="btn btn-primary rounded-10"
+                                    style={{ background: "teal", color: "white", borderRadius: "6px", padding: "2px 8px", fontSize: "11px" }}
+                                >
+                                    <i className="fas fa-print"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    )}
+                />
+            </>
+        )}
 
-                                    {(!getBilletageCDF ||
-                                        getBilletageCDF.length === 0) &&
-                                        (!getBilletageUSD ||
-                                            getBilletageUSD.length === 0) && (
-                                            <div className="text-center py-5 text-muted">
-                                                <i className="fas fa-inbox fa-3x mb-2 opacity-50"></i>
-                                                <p className="mb-0">
-                                                    Aucune opération récente
-                                                </p>
-                                            </div>
-                                        )}
-                                </div>
-                            </div>
+        {(!getBilletageCDF || getBilletageCDF.length === 0) &&
+         (!getBilletageUSD || getBilletageUSD.length === 0) && (
+            <div className="text-center py-5 text-muted">
+                <i className="fas fa-inbox fa-3x mb-2 opacity-50"></i>
+                <p className="mb-0">Aucune opération récente</p>
+            </div>
+        )}
+    </div>
+</div>
                         </div>
                     </div>
 

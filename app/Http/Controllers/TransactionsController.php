@@ -141,48 +141,60 @@ class TransactionsController extends Controller
     // }
 
     public function getSeachedAccount(Request $request)
-{
-    if (!isset($request->searched_account)) {
-        return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
+    {
+        if (!isset($request->searched_account)) {
+            return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
+        }
+
+        // Récupération de l'agence courante
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
+        if (!$codeAgence) {
+            return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
+        }
+
+        $search = $request->searched_account;
+
+        // Recherche des comptes de niveau 5 appartenant à l'agence courante
+        $data = Comptes::where('niveau', 5)
+            ->where('CodeAgence', $codeAgence)
+            ->where(function ($query) use ($search) {
+                $query->where('NumCompte', $search)
+                    ->orWhere('NumAdherant', $search)
+                    ->orWhere('Num_Manuel', $search);
+            })
+            ->get();
+
+        if ($data->isEmpty()) {
+            return response()->json(["status" => 0, "msg" => "Aucun compte trouvé dans votre agence pour ce numéro."]);
+        }
+
+        // Récupération des infos complémentaires
+        $compte = $data->first();
+
+        $membreSignature = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->where("code_agence", $compte->CodeAgence)->first();
+        $madantairedata = Mandataires::where("refCompte", $compte->NumAdherant)->where("CodeAgence", $compte->CodeAgence)->get();
+
+        // Récupérer l'agence depuis la base
+        $agence = Agences::where('code_agence', $codeAgence)->first();
+        if (!$agence) {
+            return response()->json(['status' => 0, 'msg' => 'Agence introuvable']);
+        }
+        $NomAgence = $agence->nom_agence;
+        // Incrémenter le compteur propre à l'agence
+        $numDocument = $agence->last_ref_num_visa + 1;
+        $agence->last_ref_num_visa = $numDocument;
+        // $agence->save();
+        //$numDocument = CompteurDocument::latest()->first();
+
+        return response()->json([
+            "status"          => 1,
+            "data"            => $data,
+            "membreSignature" => $membreSignature,
+            "numDocument"     => $numDocument,
+            "madantairedata"  => $madantairedata
+        ]);
     }
-
-    // Récupération de l'agence courante
-    $currentAgence = session('current_agence');
-    $codeAgence = $currentAgence['code_agence'] ?? null;
-    if (!$codeAgence) {
-        return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
-    }
-
-    $search = $request->searched_account;
-
-    // Recherche des comptes de niveau 5 appartenant à l'agence courante
-    $data = Comptes::where('niveau', 5)
-        ->where('CodeAgence', $codeAgence)
-        ->where(function ($query) use ($search) {
-            $query->where('NumCompte', $search)
-                  ->orWhere('NumAdherant', $search)
-                  ->orWhere('Num_Manuel', $search);
-        })
-        ->get();
-
-    if ($data->isEmpty()) {
-        return response()->json(["status" => 0, "msg" => "Aucun compte trouvé dans votre agence pour ce numéro."]);
-    }
-
-    // Récupération des infos complémentaires
-    $compte = $data->first();
-    $membreSignature = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->first();
-    $madantairedata = Mandataires::where("refCompte", $compte->NumAdherant)->get();
-    $numDocument = CompteurDocument::latest()->first();
-
-    return response()->json([
-        "status"          => 1,
-        "data"            => $data,
-        "membreSignature" => $membreSignature,
-        "numDocument"     => $numDocument,
-        "madantairedata"  => $madantairedata
-    ]);
-}
 
     // public function getSeachedAccount2(Request $request)
     // {
@@ -313,84 +325,106 @@ class TransactionsController extends Controller
 
 
     public function getSeachedAccount2(Request $request)
-{
-    if (!isset($request->searched_account)) {
-        return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
-    }
-
-    $search = trim($request->searched_account);
-    $currentAgence = session('current_agence');
-    $codeAgenceUtil = $currentAgence['code_agence'] ?? null;
-    $nomAgenceUtil = $currentAgence['nom_agence'] ?? $codeAgenceUtil;
-
-    $compte = null;
-    $typeRecherche = '';
-
-    // 1. Si c'est un Num_Manuel (ex: GM500)
-    if (preg_match('/^[A-Za-z]{2}\d+$/', $search)) {
-        $compte = Comptes::where('num_manuel', $search)->where('RefGroupe', 330)->first();
-        $typeRecherche = 'num_manuel';
-    }
-    // 2. Si c'est un numéro de compte complet (13 chiffres)
-    elseif (strlen($search) === 13 && ctype_digit($search)) {
-        $compte = Comptes::where('NumCompte', $search)->where('RefGroupe', 330)->first();
-        $typeRecherche = 'NumCompte';
-    }
-    // 3. Sinon, c'est un numéro abrégé numérique
-    elseif (ctype_digit($search)) {
-        // Chercher d'abord dans l'agence courante
-        $compte = Comptes::where('NumAdherant', $search)
-                        ->where('CodeAgence', $codeAgenceUtil)
-                        ->where('RefGroupe', 330)
-                        ->first();
-        if ($compte) {
-            $typeRecherche = 'NumAdherant (même agence)';
-        } else {
-            // Vérifier si ce numéro abrégé existe dans une autre agence
-            $compteAutre = Comptes::where('NumAdherant', $search)->where('RefGroupe', 330)->first();
-            if ($compteAutre) {
-                // Récupérer le nom de l'agence correspondante
-                $agence = Agences::where('code_agence', $compteAutre->CodeAgence)->first();
-                $nomAgence = $agence ? $agence->nom_agence : $compteAutre->CodeAgence;
-                return response()->json([
-                    "status" => 0,
-                    "msg" => "Ce numéro abrégé correspond à un compte de l'agence '{$nomAgence}'. Vous travaillez sur '{$nomAgenceUtil}'. Veuillez utiliser son Num_Manuel ('{$compteAutre->num_manuel}') ou son numéro de compte complet ('{$compteAutre->NumCompte}')."
-                ]);
-            }
-            // Aucun compte trouvé
-            return response()->json(["status" => 0, "msg" => "Aucun compte trouvé avec ce numéro abrégé dans votre agence."]);
+    {
+        if (!isset($request->searched_account)) {
+            return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
         }
-    } else {
-        return response()->json(["status" => 0, "msg" => "Format de recherche non reconnu."]);
-    }
 
-    if (!$compte) {
-        return response()->json(["status" => 0, "msg" => "Aucun compte trouvé."]);
-    }
+        $search = trim($request->searched_account);
+        $currentAgence = session('current_agence');
+        $codeAgenceUtil = $currentAgence['code_agence'] ?? null;
+        $nomAgenceUtil = $currentAgence['nom_agence'] ?? $codeAgenceUtil;
 
-    $numDocument = CompteurDocument::latest()->first();
+        $compte = null;
+        $typeRecherche = '';
 
-    // Récupérer les comptes (la requête originale retourne une collection, mais ici on a un seul compte)
-    $data = Comptes::where(function ($query) use ($search) {
+        // 1. Si c'est un Num_Manuel (ex: GM500)
+        if (preg_match('/^[A-Za-z]{2}\d+$/', $search)) {
+            $compte = Comptes::where('Num_Manuel', $search)->where('RefGroupe', 330)->first();
+            $typeRecherche = 'Num_Manuel';
+        }
+        // 2. Si c'est un numéro de compte complet (13 chiffres)
+        elseif (strlen($search) === 13 && ctype_digit($search)) {
+            $compte = Comptes::where('NumCompte', $search)->where('RefGroupe', 330)->first();
+            $typeRecherche = 'NumCompte';
+        }
+        // 3. Sinon, c'est un numéro abrégé numérique
+        elseif (ctype_digit($search)) {
+            // Chercher d'abord dans l'agence courante
+            $compte = Comptes::where('NumAdherant', $search)
+                ->where('CodeAgence', $codeAgenceUtil)
+                ->where('RefGroupe', 330)
+                ->first();
+            if ($compte) {
+                $typeRecherche = 'NumAdherant (même agence)';
+            } else {
+                // Vérifier si ce numéro abrégé existe dans une autre agence
+                $compteAutre = Comptes::where('NumAdherant', $search)->where('RefGroupe', 330)->first();
+                if ($compteAutre) {
+                    // Récupérer le nom de l'agence correspondante
+                    $agence = Agences::where('code_agence', $compteAutre->CodeAgence)->first();
+                    $nomAgence = $agence ? $agence->nom_agence : $compteAutre->CodeAgence;
+                    return response()->json([
+                        "status" => 0,
+                        "msg" => "Ce numéro abrégé correspond à un compte de l'agence '{$nomAgence}'. Vous travaillez sur '{$nomAgenceUtil}'. Veuillez utiliser son Num_Manuel ('{$compteAutre->Num_Manuel}') ou son numéro de compte complet ('{$compteAutre->NumCompte}')."
+                    ]);
+                }
+                // Aucun compte trouvé
+                return response()->json(["status" => 0, "msg" => "Aucun compte trouvé avec ce numéro abrégé dans votre agence."]);
+            }
+        } else {
+            return response()->json(["status" => 0, "msg" => "Format de recherche non reconnu."]);
+        }
+
+        if (!$compte) {
+            return response()->json(["status" => 0, "msg" => "Aucun compte trouvé."]);
+        }
+
+        $numDocument = CompteurDocument::latest()->first();
+
+        // Récupérer les comptes (la requête originale retourne une collection, mais ici on a un seul compte)
+        $data = Comptes::where(function ($query) use ($search) {
             $query->where('NumCompte', $search)
-                  ->orWhere('NumAdherant', $search)
-                  ->orWhere('num_manuel', $search);
+                ->orWhere('NumAdherant', $search)
+                ->orWhere('Num_Manuel', $search);
         })
-        ->where('niveau', 5)
-        ->where('RefGroupe', 330)
-        ->get();
+            ->where('niveau', 5)
+            ->where('RefGroupe', 330)
+            ->get();
 
-    $membreSignature = AdhesionMembre::where('compte_abrege', $compte->NumAdherant)->first();
-    $madantairedata = Mandataires::where('refCompte', $compte->NumAdherant)->get();
+        // $membreSignature = AdhesionMembre::where('compte_abrege', $compte->NumAdherant)->first();
+        // $madantairedata = Mandataires::where('refCompte', $compte->NumAdherant)->get();
 
-    return response()->json([
-        "status" => 1,
-        "data" => $data,
-        "membreSignature" => $membreSignature,
-        "numDocument" => $numDocument,
-        "madantairedata" => $madantairedata
-    ]);
-}
+        // return response()->json([
+        //     "status" => 1,
+        //     "data" => $data,
+        //     "membreSignature" => $membreSignature,
+        //     "numDocument" => $numDocument,
+        //     "madantairedata" => $madantairedata
+        // ]);
+        $membreSignature = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->where("code_agence", $compte->CodeAgence)->first();
+        $madantairedata = Mandataires::where("refCompte", $compte->NumAdherant)->where("CodeAgence", $compte->CodeAgence)->get();
+
+        // Récupérer l'agence depuis la base
+        $agence = Agences::where('code_agence', $codeAgenceUtil)->first();
+        if (!$agence) {
+            return response()->json(['status' => 0, 'msg' => 'Agence introuvable']);
+        }
+        $NomAgence = $agence->nom_agence;
+        // Incrémenter le compteur propre à l'agence
+        $numDocument = $agence->last_ref_num_visa + 1;
+        $agence->last_ref_num_visa = $numDocument;
+        // $agence->save();
+        //$numDocument = CompteurDocument::latest()->first();
+
+        return response()->json([
+            "status"          => 1,
+            "data"            => $data,
+            "membreSignature" => $membreSignature,
+            "numDocument"     => $numDocument,
+            "madantairedata"  => $madantairedata
+        ]);
+    }
 
     //RECUPERE UN NUMERO DE COMPTE SPECIFIQUE
 
@@ -1303,6 +1337,14 @@ class TransactionsController extends Controller
     public function Positionnement(Request $request)
     {
         if (isset($request->refCompte)) {
+
+            // Récupérer l'agence depuis la base
+            $currentAgence = session('current_agence');
+            $codeAgence = $currentAgence['code_agence'] ?? null;
+            $agence = Agences::where('code_agence', $codeAgence)->first();
+            if (!$codeAgence) {
+                return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+            }
             $validator = validator::make($request->all(), [
                 'devise' => 'required',
                 'benecifiaire' => 'required',
@@ -1326,7 +1368,8 @@ class TransactionsController extends Controller
                 // $getCompte = Comptes::where("NumAdherant", $request->refCompte)->where("CodeMonnaie", 2)->first();
                 $getCompte = Comptes::where(function ($query) use ($request) {
                     $query->where("NumAdherant", $request->refCompte)
-                        ->orWhere("NumCompte", $request->refCompte);
+                        ->orWhere("NumCompte", $request->refCompte)
+                        ->orWhere("Num_Manuel", $request->refCompte);  // ← ajout
                 })
                     ->where("CodeMonnaie", 2)
                     ->first();
@@ -1341,6 +1384,7 @@ class TransactionsController extends Controller
                     //VERIFIE SI LE SOLDE EST INFERIEUR OU EGAL AU SOLDE QU'ON ESSAIE DE POSITIONNER
                     if ($request->Montant <= $soldeMembreCDF->soldeMembreCDF or $getCompte->RefTypeCompte == 4) {
                         Positionnements::create([
+                            "code_agence" => $codeAgence,
                             "NumCompte" => $getCompte->NumCompte,
                             "Montant" => $request->Montant,
                             "CodeMonnaie" => "CDF",
@@ -1362,9 +1406,14 @@ class TransactionsController extends Controller
                             "RefCompte" => $request->refCompte
                         ]);
                         //PERMET D'INCREMENTER LA TABLE POUR LE COMPTEUR DE DOSSIER
-                        CompteurDocument::create([
-                            "fakenumber" => 000,
-                        ]);
+                        // CompteurDocument::create([
+                        //     "fakenumber" => 000,
+                        // ]);
+                        // Incrémenter le compteur propre à l'agence
+                        $numDocument = $agence->last_ref_num_visa + 1;
+                        $agence->last_ref_num_visa = $numDocument;
+                        $agence->save();
+
                         return response()->json(['status' => 1, 'msg' => "Opération bien enregistrée.", 'validate_error' => $validator->messages()]);
                     } else {
                         return response()->json(['status' => 0, 'msg' => "Le solde du compte est insuffissant.", 'validate_error' => $validator->messages()]);
@@ -1374,11 +1423,13 @@ class TransactionsController extends Controller
                     return response()->json(['status' => 0, 'msg' => "Le compte en franc n'existe pas pour ce client vous devez d'abord le crée.", 'validate_error' => $validator->messages()]);
                 }
             } else if ($request->devise == "USD") {
+
                 $dataSystem = TauxEtDateSystem::latest()->first();
                 //RECUPERE LE NUMERO DE COMPTE DU CLIENT
                 $getCompte = Comptes::where(function ($query) use ($request) {
                     $query->where("NumAdherant", $request->refCompte)
-                        ->orWhere("NumCompte", $request->refCompte);
+                        ->orWhere("NumCompte", $request->refCompte)
+                        ->orWhere("Num_Manuel", $request->refCompte);  // ← ajout
                 })
                     ->where("CodeMonnaie", 1)
                     ->first();
@@ -1414,9 +1465,14 @@ class TransactionsController extends Controller
                             "RefCompte" => $request->refCompte
                         ]);
                         //PERMET D'INCREMENTER LA TABLE POUR LE COMPTEUR DE DOSSIER
-                        CompteurDocument::create([
-                            "fakenumber" => 000,
-                        ]);
+
+                        // Incrémenter le compteur propre à l'agence
+                        $numDocument = $agence->last_ref_num_visa + 1;
+                        $agence->last_ref_num_visa = $numDocument;
+                        $agence->save();
+                        // CompteurDocument::create([
+                        //     "fakenumber" => 000,
+                        // ]);
                         return response()->json(['status' => 1, 'msg' => "Opération bien enregistrée.", 'validate_error' => $validator->messages()]);
                     } else {
                         return response()->json(['status' => 0, 'msg' => "Le solde du compte est insuffissant.", 'validate_error' => $validator->messages()]);
@@ -1429,6 +1485,33 @@ class TransactionsController extends Controller
         }
     }
 
+    //PERMET DE RECUPERER LES DERNIERES INFORMATIONS DE VISA POUR LA DATE ENCOURS
+
+    public function getLastestVisa()
+    {
+        // Date système
+        $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
+
+        $user = auth()->user();
+        $query = Positionnements::where('DateTransaction', $date);
+
+        // Si l'utilisateur n'est pas admin => filtrer par son nom et son agence courante
+        if ($user->admin != 1) {
+            $currentAgence = session('current_agence');
+            $codeAgence = $currentAgence['code_agence'] ?? null;
+            $query->where('NomUtilisateur', $user->name)
+                ->where('CodeAgence', $codeAgence);
+        }
+
+        // Récupérer les opérations
+        $getData = $query->orderBy('created_at', 'desc')->get();
+
+        return response()->json([
+            'status' => 1,
+            'data' => $getData,
+            'message' => $getData->isEmpty() ? 'Aucune opération visée aujourd\'hui' : null
+        ]);
+    }
     //GET RETRAIT ESPECE HOME PAGE
 
     public function getRetraitHomePage()
@@ -1932,11 +2015,25 @@ class TransactionsController extends Controller
     {
         if (isset($request->NumAbrege)) {
 
+
+            // 🔥 Récupération de l'agence courante du caissier
+            $currentAgence = session('current_agence');
+            if (!$currentAgence || !isset($currentAgence['code_agence'])) {
+                return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+            }
+            $codeAgenceCourante = $currentAgence['code_agence'];
+            //VERIFIE SIN AUCUN DELESTAGE N'EST DEJA ETAIT FAIT 
+            $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
+            $checkDelestage = Delestages::where("NomUtilisateur", "=", Auth::user()->name)
+                ->where("DateTransaction", "=", $date)->where("code_agence", $codeAgenceCourante)
+                ->where("code_agence", $codeAgenceCourante)->where("received", 0)->first();
+            if ($checkDelestage) {
+                return response()->json(['status' => 0, "msg" => "Vous avez un delestage en attente de validation impossible d'effectuer un retrait demander au chef caisse de le valider puis demander un nouveau appro!"]);
+            }
             // ========================= CDF =========================
             if ($request->devise == "CDF") {
 
                 // Récupération du billetage disponible (inchangé)
-                $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
                 $billetageCDF = BilletageCDF::select(
                     DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFran"),
                     DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFran"),
@@ -1985,12 +2082,7 @@ class TransactionsController extends Controller
                     })->where('CodeMonnaie', 2)->first();
 
                     if ($dataCompte) {
-                        // 🔥 Récupération de l'agence courante du caissier
-                        $currentAgence = session('current_agence');
-                        if (!$currentAgence || !isset($currentAgence['code_agence'])) {
-                            return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
-                        }
-                        $codeAgenceCourante = $currentAgence['code_agence'];
+
 
                         // 🔥 Récupérer le compte caisse CDF correspondant à cette agence
                         $compteCaisse = Comptes::where("caissierId", Auth::user()->id)
@@ -2607,7 +2699,8 @@ class TransactionsController extends Controller
 
     public function ValidateDelestage(Request $request)
     {
-
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'];
         if (isset($request->devise)) {
             if ($request->devise == "CDF") {
                 CompteurTransaction::create([
@@ -2618,7 +2711,7 @@ class TransactionsController extends Controller
                 $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
                 $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
                 //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
-                $numCompteCaissierCDF = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "2")->first();
+                $numCompteCaissierCDF = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "2")->where("CodeAgence", $codeAgence)->first();
                 $CompteCaissierCDF = $numCompteCaissierCDF->NumCompte;
 
                 //RECUPERE LE BILLETAGE EN FRANC CONGOLAIS
@@ -2649,6 +2742,7 @@ class TransactionsController extends Controller
 
                 Delestages::create([
                     "Reference" => $NumTransaction,
+                    "code_agence" => $codeAgence,
                     "NumCompteCaissier" => $CompteCaissierCDF,
                     "vightMilleFranc" => $billetageCDF->vightMilleFranc,
                     "dixMilleFranc" => $billetageCDF->dixMilleFranc,
@@ -2678,7 +2772,7 @@ class TransactionsController extends Controller
                 $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
                 //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
                 //RECUPERE LE COMPTE DU CAISSIER CONCERNE USD
-                $numCompteCaissierUSD = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "1")->first();
+                $numCompteCaissierUSD = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "1")->where("CodeAgence", $codeAgence)->first();
                 $CompteCaissierUSD = $numCompteCaissierUSD->NumCompte;
 
                 //RECUPERE LE BILLETAGE EN DOLLARS
@@ -2708,6 +2802,7 @@ class TransactionsController extends Controller
 
                 Delestages::create([
                     "Reference" => $NumTransaction,
+                    "code_agence" => $codeAgence,
                     "NumCompteCaissier" => $CompteCaissierUSD,
                     "centDollars" => $billetageUSD->centDollars,
                     "cinquanteDollars" => $billetageUSD->cinquanteDollars,
@@ -2747,7 +2842,9 @@ class TransactionsController extends Controller
 
     public function getAllCaissiers()
     {
-        $data = Comptes::where("isCaissier", 1)->where("CodeMonnaie", 2)->get();
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'];
+        $data = Comptes::where("isCaissier", 1)->where("CodeMonnaie", 2)->where("CodeAgence", $codeAgence)->get();
         //$data = Comptes::where("isCaissier", 1)->where("CodeMonnaie", 2)->where("isChefCaisse", 0)->get();
         $chefIfIsChefCaisse = Comptes::where("caissierId", Auth::user()->id)->where("isChefCaisse", 1)->first();
         return response()->json(["status" => 1, "data" => $data, "chefcaisse" => $chefIfIsChefCaisse]);
@@ -2762,24 +2859,34 @@ class TransactionsController extends Controller
             $dataCaissier = User::where("id", "=", $request->CaissierId)->first();
 
             if ($request->devise == "CDF") {
-                   $currentAgence = session('current_agence');
-        $codeAgence = $currentAgence['code_agence'];
-       $agence = Agences::where('code_agence', $codeAgence)->first();
-      
+                $currentAgence = session('current_agence');
+                $codeAgence = $currentAgence['code_agence'] ?? null;
 
+                if (!$codeAgence) {
+                    return response()->json(['status' => 0, 'msg' => 'Agence non définie']);
+                }
 
+                $agence = Agences::where('code_agence', $codeAgence)->first();
+                if (!$agence) {
+                    return response()->json(['status' => 0, 'msg' => 'Agence introuvable']);
+                }
 
+                $numCompteCaissePrCDF = $agence->compte_caisse_cdf;
+                if (!$numCompteCaissePrCDF) {
+                    return response()->json(['status' => 0, 'msg' => 'Compte caisse principal CDF non défini pour cette agence']);
+                }
 
-                $numCompteCaissePrCDF =  $agence->compte_caisse_cdf;
                 $soldeComptePrincip = Transactions::select(
                     DB::raw("SUM(Debitfc)-SUM(Creditfc) as soldeCompte"),
-                )->where("NumCompte", '=', $numCompteCaissePrCDF)
+                )
+                    ->where("NumCompte", $numCompteCaissePrCDF)
                     ->where("CodeMonnaie", 2)
                     ->groupBy("NumCompte")
                     ->first();
 
+                // ✅ Protection : solde = 0 si aucun résultat
                 $montant = (int) $request->Montant;
-                $solde = abs($soldeComptePrincip->soldeCompte);
+                $solde = $soldeComptePrincip ? abs($soldeComptePrincip->soldeCompte) : 0;
                 if ($solde >= $montant) {
                     $caissierEccount = Comptes::where("caissierId", $request->CaissierId)->where("CodeMonnaie", 2)->first();
                     //RECUPERE SUR LA TABLE USERS LE NOM QUI CORRESPOND A CE ID CDF
@@ -2810,15 +2917,23 @@ class TransactionsController extends Controller
 
                     return response()->json(["status" => 1, "msg" => "Appro en attente de Validation"]);
                 } else {
-                    return response()->json(["status" => 0, "msg" => "Le montant saisi est superieur au solde de la caisse principale son solde est: " . $soldeComptePrincip->soldeCompte]);
+                    return response()->json(["status" => 0, "msg" => "Le montant saisi est superieur au solde de la caisse principale en CDF son solde est: " . $solde]);
                 }
             } else if ($request->devise == "USD") {
-$currentAgence = session('current_agence');
-$codeAgence = $currentAgence['code_agence'];
- $agence = Agences::where('code_agence', $codeAgence)->first();
+                $currentAgence = session('current_agence');
+                $codeAgence = $currentAgence['code_agence'] ?? null;
 
-// Compte caisse principale (USD) 
-$numCompteCaissePrUSD = $agence->compte_caisse_usd;
+                if (!$codeAgence) {
+                    return response()->json(['status' => 0, 'msg' => 'Agence non définie']);
+                }
+
+                $agence = Agences::where('code_agence', $codeAgence)->first();
+                if (!$agence) {
+                    return response()->json(['status' => 0, 'msg' => 'Agence introuvable']);
+                }
+
+                // Compte caisse principale (USD) 
+                $numCompteCaissePrUSD = $agence->compte_caisse_usd;
                 $soldeComptePrincip = Transactions::select(
                     DB::raw("SUM(Debitusd)-SUM(Creditusd) as soldeCompte"),
                 )->where("NumCompte", '=', $numCompteCaissePrUSD)
@@ -2826,7 +2941,7 @@ $numCompteCaissePrUSD = $agence->compte_caisse_usd;
                     ->groupBy("NumCompte")
                     ->first();
                 $montant = (int) $request->Montant;
-                $solde = abs($soldeComptePrincip->soldeCompte);
+                $solde = $soldeComptePrincip ? abs($soldeComptePrincip->soldeCompte) : 0;
                 if ($solde >= $montant) {
                     $caissierEccount = Comptes::where("caissierId", $request->CaissierId)->where("CodeMonnaie", 1)->first();
                     $numOperation = [];
@@ -2851,7 +2966,7 @@ $numCompteCaissePrUSD = $agence->compte_caisse_usd;
                     ]);
                     return response()->json(["status" => 1, "msg" => "Appro en attente de Validation"]);
                 } else {
-                    return response()->json(["status" => 0, "msg" => "Le montant saisi est superieur au solde de la caisse principale son solde est: " . $soldeComptePrincip->soldeCompte]);
+                    return response()->json(["status" => 0, "msg" => "Le montant saisi est superieur au solde de la caisse principale en USD son solde est: " . $solde]);
                 }
             }
         } else {
@@ -2890,10 +3005,10 @@ $numCompteCaissePrUSD = $agence->compte_caisse_usd;
                 $dataCaissier = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", 2)->first();
                 $numCompteCaissierCDF = $dataCaissier->NumCompte;
                 $tauxDuJour = TauxEtDateSystem::latest()->first()->TauxEnFc;
-                             $currentAgence = session('current_agence');
-        $codeAgence = $currentAgence['code_agence'];
-       $agence = Agences::where('code_agence', $codeAgence)->first();
-      
+                $currentAgence = session('current_agence');
+                $codeAgence = $currentAgence['code_agence'];
+                $agence = Agences::where('code_agence', $codeAgence)->first();
+
 
                 $numCompteCaissePrCDF = $agence->compte_caisse_cdf;
                 $compteVirementInterGuichetCDF = $agence->compte_virement_caisse_cdf;
@@ -2931,7 +3046,7 @@ $numCompteCaissePrUSD = $agence->compte_caisse_usd;
                     "Taux" => 1,
                     "TypeTransaction" => "C",
                     "CodeMonnaie" => 2,
-                    "CodeAgence" =>$codeAgence,
+                    "CodeAgence" => $codeAgence,
                     "NumDossier" => "DOS00" . $numOperation->id,
                     "NumDemande" => "V00" . $numOperation->id,
                     "NumCompte" => $compteVirementInterGuichetCDF,
@@ -3020,11 +3135,11 @@ $numCompteCaissePrUSD = $agence->compte_caisse_usd;
                 $numCompteCaissierUSD = $dataCaissier->NumCompte;
                 $tauxDuJour = TauxEtDateSystem::latest()->first()->TauxEnFc;
                 $currentAgence = session('current_agence');
-$codeAgence = $currentAgence['code_agence'];
- $agence = Agences::where('code_agence', $codeAgence)->first();
-$numCompteCaissePrUSD = $agence->compte_caisse_usd;
-  
-                $compteVirementInterGuichetUSD =$agence->compte_virement_caisse_usd;
+                $codeAgence = $currentAgence['code_agence'];
+                $agence = Agences::where('code_agence', $codeAgence)->first();
+                $numCompteCaissePrUSD = $agence->compte_caisse_usd;
+
+                $compteVirementInterGuichetUSD = $agence->compte_virement_caisse_usd;
 
                 //COMPTEUR DES OPERATIONS
                 $numOperation = [];
@@ -3157,10 +3272,13 @@ $numCompteCaissePrUSD = $agence->compte_caisse_usd;
 
     public function GetDelestedItem()
     {
+
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'];
         $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
-        $data = Delestages::where("received", 0)->where("DateTransaction", $dateSystem)->get();
-        $billetageUSD = Delestages::where("received", 0)->where("DateTransaction", $dateSystem)->where("montantUSD", ">", 0)->first();
-        $billetageCDF = Delestages::where("received", 0)->where("DateTransaction", $dateSystem)->where("montantCDF", ">", 0)->first();
+        $data = Delestages::where("received", 0)->where("DateTransaction", $dateSystem)->where("code_agence", $codeAgence)->get();
+        $billetageUSD = Delestages::where("received", 0)->where("DateTransaction", $dateSystem)->where("montantUSD", ">", 0)->where("code_agence", $codeAgence)->first();
+        $billetageCDF = Delestages::where("received", 0)->where("DateTransaction", $dateSystem)->where("montantCDF", ">", 0)->where("code_agence", $codeAgence)->first();
         return response()->json(["status" => 1, "data" => $data, "billetageCDF" => $billetageCDF, "billetageUSD" => $billetageUSD]);
     }
 
@@ -3174,7 +3292,7 @@ $numCompteCaissePrUSD = $agence->compte_caisse_usd;
             $tauxDuJour = TauxEtDateSystem::latest()->first()->TauxEnFc;
             $currentAgence = session('current_agence');
             $codeAgence = $currentAgence['code_agence'];
- $agence = Agences::where('code_agence', $codeAgence)->first();
+            $agence = Agences::where('code_agence', $codeAgence)->first();
 
 
             $numCompteCaissePrUSD = $agence->compte_caisse_usd;
@@ -3293,9 +3411,9 @@ $numCompteCaissePrUSD = $agence->compte_caisse_usd;
             $data = Delestages::where("id", $request->refDelestage)->first();
             $tauxDuJour = TauxEtDateSystem::latest()->first()->TauxEnFc;
 
-               $currentAgence = session('current_agence');
-        $codeAgence = $currentAgence['code_agence'];
-       $agence = Agences::where('code_agence', $codeAgence)->first();
+            $currentAgence = session('current_agence');
+            $codeAgence = $currentAgence['code_agence'];
+            $agence = Agences::where('code_agence', $codeAgence)->first();
 
             $numCompteCaissePrCDF =  $agence->compte_caisse_cdf;
             $compteVirementInterGuichetCDF = $agence->compte_virement_caisse_cdf;
@@ -4991,5 +5109,4 @@ $numCompteCaissePrUSD = $agence->compte_caisse_usd;
 
         return response()->json(["status" => 1, "data" => $data, "type_recu" => $type_recu]);
     }
-
 }

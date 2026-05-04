@@ -9,6 +9,7 @@ class Positionnements extends Model
 {
     use HasFactory;
     protected $fillable = [
+        "code_agence",
         "Reference",
         "NumCompte",
         "NomCompte",
