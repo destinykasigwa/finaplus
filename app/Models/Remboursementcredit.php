@@ -30,6 +30,7 @@ class Remboursementcredit extends Model
         "EpargneS",
         "CodeGuichet",
         "NumAdherent",
-        "NumTransaction"
+        "NumTransaction",
+        "NumTransactionInteret",
     ];
 }

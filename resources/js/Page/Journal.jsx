@@ -42,7 +42,14 @@ const Journal = () => {
         totUSD: "",
     });
 
+    const [userAgences, setUserAgences] = useState([]);
+const [currentAgence, setCurrentAgence] = useState(null);
+
+
     useEffect(() => {
+          // Récupération des données injectées par Blade
+    if (window.userAgences) setUserAgences(window.userAgences);
+    if (window.currentAgence) setCurrentAgence(window.currentAgence);
         GetInformation();
         getDefaultDate();
         getJournalDropMenu();
@@ -260,16 +267,13 @@ const Journal = () => {
     }
 
 
-     const getAgenceNom = () => {
+ const getAgenceNom = () => {
+    if (!userAgences || userAgences.length === 0) return "Agence non définie";
     if (agenceFilter === 'current') {
-        return "AGENCE DE " +currentAgence?.nom_agence || "Non définie";
+        return "AGENCE DE " + (currentAgence?.nom_agence || "Non définie");
     }
-    if (agenceFilter === 'all') {
-        return "TOUTES AGENCES";
-    }
-    // agenceFilter est un id
+    if (agenceFilter === 'all') return "TOUTES AGENCES";
     const agence = userAgences.find(a => a.id == agenceFilter);
-    // return agence ? `${agence.code_agence} - ${agence.nom_agence}` : "Non définie";
     return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
 };
     let compteur = 1;
@@ -416,35 +420,25 @@ const Journal = () => {
                         </div>
                         <div className="card-body pt-2">
                             <select
-                                className="modern-select w-100"
-                                value={agenceFilter}
-                                onChange={(e) =>
-                                    setAgenceFilter(e.target.value)
-                                }
-                                disabled={userAgences.length <= 1}
-                            >
-                                <option value="current">
-                                    Agence courante (
-                                    {currentAgence?.nom_agence || "Non définie"}
-                                    )
-                                </option>
-                                {userAgences.length > 1 && (
-                                    <>
-                                        <option value="all">
-                                            Toutes mes agences
-                                        </option>
-                                        {userAgences.map((agence) => (
-                                            <option
-                                                key={agence.id}
-                                                value={agence.id}
-                                            >
-                                                {agence.code_agence} -{" "}
-                                                {agence.nom_agence}
-                                            </option>
-                                        ))}
-                                    </>
-                                )}
-                            </select>
+    className="modern-select w-100"
+    value={agenceFilter}
+    onChange={(e) => setAgenceFilter(e.target.value)}
+    disabled={!userAgences || userAgences.length <= 1}
+>
+    <option value="current">
+        Agence courante ({currentAgence?.nom_agence || "Non définie"})
+    </option>
+    {userAgences && userAgences.length > 1 && (
+        <>
+            <option value="all">Toutes mes agences</option>
+            {userAgences.map((agence) => (
+                <option key={agence.id} value={agence.id}>
+                    {agence.code_agence} - {agence.nom_agence}
+                </option>
+            ))}
+        </>
+    )}
+</select>
                         </div>
                     </div>
                 </div>
@@ -587,7 +581,7 @@ const Journal = () => {
 
                                             <div className="table-responsive">
                                                 <table
-                                                    className="table table-bordered table-striped"
+                                                    className="table table-bordered table-striped table-sm"
                                                     style={{ fontSize: "13px" }}
                                                 >
                                                     <thead

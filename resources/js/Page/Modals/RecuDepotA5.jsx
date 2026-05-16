@@ -512,7 +512,7 @@ svg {
         <>
             <div
                 className="modal fade card-body h-200"
-                id="modal-delestage-cdf"
+                id="modal-bordereau"
                 style={{
                     background: "#dcdcdc",
                 }}

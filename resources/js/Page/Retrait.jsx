@@ -989,7 +989,7 @@ const RetraitEspece = () => {
                         >
                             {fetchData && fetchData.CodeMonnaie == "USD" ? (
                                 <div className="table-responsive">
-                                    <table className="table table-bordered table-sm">
+                                    <table className="table table-bordered table-sm table-ultra-compact">
                                         <thead
                                             style={{
                                                 backgroundColor: "#e6f2f9",
@@ -1122,7 +1122,7 @@ const RetraitEspece = () => {
                                 </div>
                             ) : (
                                 <div className="table-responsive">
-                                    <table className="table table-bordered table-sm">
+                                    <table className="table table-bordered table-sm table-ultra-compact">
                                         <thead
                                             style={{
                                                 backgroundColor: "#e6f2f9",
@@ -1421,12 +1421,12 @@ const RetraitEspece = () => {
                     )}
                 </div>
                       </div> */}
-                    {/* Historique des opérations avec pagination */}
+                    {/* Historique des opérations avec pagination sticky-top*/}
                     <div
                         className="card border-0 shadow-sm rounded-3"
                         style={{ maxHeight: "450px", overflowY: "auto" }}
                     >
-                        <div className="card-header bg-white border-0 pt-3 sticky-top bg-white">
+                        <div className="card-header bg-white border-0 pt-3  bg-white">
                             <h6
                                 className="fw-bold"
                                 style={{ color: "steelblue" }}
@@ -1476,7 +1476,7 @@ const RetraitEspece = () => {
                                                             )
                                                         }
                                                         data-toggle="modal"
-                                                        data-target="#modal-delestage-cdf"
+                                                        data-target="#modal-bordereau"
                                                         className="btn btn-sm"
                                                         style={{
                                                             background:
@@ -1536,7 +1536,7 @@ const RetraitEspece = () => {
                                                             )
                                                         }
                                                         data-toggle="modal"
-                                                        data-target="#modal-delestage-cdf"
+                                                        data-target="#modal-bordereau"
                                                         className="btn btn-sm"
                                                         style={{
                                                             background:
@@ -1580,19 +1580,19 @@ const RetraitEspece = () => {
                     <RecuDepotA5 data={selectedData} />
                 ) : null)}
             <style>
-                {`
-        /* Styles personnalisés pour un tableau ultra compact */
-.table-ultra-compact {
-    border-collapse: collapse;
-}
+                    {`
+                /* Styles personnalisés pour un tableau ultra compact */
+                .table-ultra-compact {
+                 border-collapse: collapse;
+                  }
 
-.table-ultra-compact th,
-.table-ultra-compact td {
-    padding: 0.2rem 0.35rem; /* Réduction drastique du padding */
-    line-height: 1.2;
-    font-size: 0.8rem; /* Optionnel : légère réduction de la police */
-}
-        `}
+                .table-ultra-compact th,
+                .table-ultra-compact td {
+                 padding: 0.2rem 0.35rem; /* Réduction drastique du padding */
+                 line-height: 1;
+                 font-size: 0.8rem; /* Optionnel : légère réduction de la police */
+                 }
+                `}
             </style>
         </div>
     );

@@ -27,7 +27,8 @@ class User extends Authenticatable
         'attempt_times',
         'expirate_password',
         'admin',
-        'reseted_password'
+        'reseted_password',
+        'role'
     ];
 
     /**

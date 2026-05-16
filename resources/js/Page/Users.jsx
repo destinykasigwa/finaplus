@@ -1191,7 +1191,7 @@ const customStyles = {
                         <label className="form-label fw-semibold small">Nom utilisateur</label>
                         <input
                           id="userName"
-                          className="form-control form-control-sm"
+                          className="form-control form-control-sm modern-input"
                           style={{ backgroundColor: "#f8f9fa" }}
                           type="text"
                           name="name"
@@ -1211,7 +1211,7 @@ const customStyles = {
                         <label className="form-label fw-semibold small">Email</label>
                         <input
                           id="Email"
-                          className="form-control form-control-sm"
+                          className="form-control form-control-sm modern-input"
                           style={{ backgroundColor: "#f8f9fa" }}
                           type="email"
                           name="email"
@@ -1402,7 +1402,7 @@ const customStyles = {
                     <label className="form-label fw-semibold small">Nom du profil</label>
                     <input
                       id="profilName"
-                      className="form-control form-control-sm"
+                      className="form-control form-control-sm modern-input"
                       type="text"
                       name="profilName"
                       required

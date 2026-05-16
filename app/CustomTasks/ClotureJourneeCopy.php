@@ -62,8 +62,8 @@ class ClotureJourneeCopy
         // Récupération des dernières valeurs de la base de données et initialisation des propriétés
         $latestTauxEtDateSystem = TauxEtDateSystem::latest()->first();
         $porteFeuilleConfig = PorteFeuilleConfing::first();
-        $this->dateSystem = $latestTauxEtDateSystem ? $latestTauxEtDateSystem->DateSystem : null;
-        // $this->dateSystem = date("Y-m-d");
+        // $this->dateSystem = $latestTauxEtDateSystem ? $latestTauxEtDateSystem->DateSystem : null;
+        $this->dateSystem = date("Y-m-d");
         $this->tauxDuJour = $latestTauxEtDateSystem ? $latestTauxEtDateSystem->TauxEnFc : null;
         $this->accountsConfig = $porteFeuilleConfig;
 
@@ -194,7 +194,8 @@ class ClotureJourneeCopy
             }
 
             // Lancer une exception pour arrêter l'exécution
-            throw new \Exception($errorMessage, $errorCode ?: 500);
+           $code = (is_numeric($errorCode) && $errorCode !== null) ? (int) $errorCode : 500;
+           throw new \Exception($errorMessage, $code);
         }
     }
 
@@ -327,6 +328,10 @@ class ClotureJourneeCopy
     private function getCompteDotationProvision($codeAgence, $codeMonnaie)
     {
         $codeAgencePad = str_pad($codeAgence, 2, '0', STR_PAD_LEFT);
+        // Normalisation : accepter entier ou string
+        if (is_string($codeMonnaie)) {
+            $codeMonnaie = $codeMonnaie === 'USD' ? 1 : 2;
+        }
         if ($codeMonnaie == 1) {
             $numCompte = "6900000000" . $codeAgencePad . "1";
             $nomCompte = "Dotation aux provisions USD - Agence " . $codeAgence;
@@ -348,6 +353,10 @@ class ClotureJourneeCopy
      */
     private function getCompteRepriseProvision($codeAgence, $codeMonnaie)
     {
+        // Normalisation : accepter entier ou string
+        if (is_string($codeMonnaie)) {
+            $codeMonnaie = $codeMonnaie === 'USD' ? 1 : 2;
+        }
         $codeAgencePad = str_pad($codeAgence, 2, '0', STR_PAD_LEFT);
         if ($codeMonnaie == 1) {
             $numCompte = "7900000000" . $codeAgencePad . "1";
@@ -571,6 +580,7 @@ class ClotureJourneeCopy
             $credit->NumDossier,
             $libelle,
             $credit->Gestionnaire,
+            $credit->ReferenceEch
         );
         // $this->CheckTransactionStatus();
         //ENVOIE UN MESSAGE AU CLIENT INTERET COMPLET
@@ -598,7 +608,8 @@ class ClotureJourneeCopy
             $credit->numAdherant,
             $libelle,
             $credit->Gestionnaire,
-            $credit->NumDossier
+            $credit->NumDossier,
+            $credit->ReferenceEch
         );
         //RENSEIGNE LE PAYEMENT DANS LA TABLE REMBOURSEMENT
         $this->RenseignePayement(
@@ -628,9 +639,20 @@ class ClotureJourneeCopy
     protected function recupererCreditsEnRetard()
     {
         // On joint avec portefeuilles pour avoir accès à Cloture
+        // $query = Echeancier::join('portefeuilles', DB::raw('TRIM(echeanciers.NumDossier)'), '=', DB::raw('TRIM(portefeuilles.NumDossier)'))
+        //     ->where('echeanciers.RetardPayement', 1)
+        //     ->where('portefeuilles.Cloture', '=', 0); // Vérification que le crédit n'est pas clôturé
+
+        $today = $this->dateSystem;
         $query = Echeancier::join('portefeuilles', DB::raw('TRIM(echeanciers.NumDossier)'), '=', DB::raw('TRIM(portefeuilles.NumDossier)'))
-            ->where('echeanciers.RetardPayement', 1)
-            ->where('portefeuilles.Cloture', '=', 0); // Vérification que le crédit n'est pas clôturé
+            ->where('portefeuilles.Cloture', '=', 0)
+            ->whereDate('echeanciers.DateTranch', '<=', $today)
+            ->where(function ($q) use ($today) {
+                $q->whereRaw('(echeanciers.CapAmmorti - (SELECT COALESCE(SUM(CapitalPaye),0) FROM remboursementcredits 
+                        WHERE RefEcheance = echeanciers.ReferenceEch AND DateTranche <= ?)) > 0', [$today])
+                    ->orWhereRaw('(echeanciers.Interet - (SELECT COALESCE(SUM(InteretPaye),0) FROM remboursementcredits 
+                        WHERE RefEcheance = echeanciers.ReferenceEch AND DateTranche <= ?)) > 0', [$today]);
+            });
 
         if (!is_null($this->numDossier) and !is_null($this->montantRemboursementManuel) and $this->montantRemboursementManuel > 0) {
             // Cas d'un remboursement manuel pour un dossier spécifique
@@ -726,6 +748,7 @@ class ClotureJourneeCopy
                                 $creditRet->NumDossier,
                                 $libelle,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                             //PERMET DE METTRE A JOUR LE RESULTAT NET
                             // $this->CheckTransactionStatus();
@@ -769,6 +792,7 @@ class ClotureJourneeCopy
                                 $creditRet->NumDossier,
                                 $libelle,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                             //PERMET DE METTRE A JOUR LE RESULTAT NET
                             // $this->CheckTransactionStatus();
@@ -807,6 +831,7 @@ class ClotureJourneeCopy
                                 $creditRet->NumDossier,
                                 $libelle,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
 
                             //PERMET DE METTRE A JOUR LE RESULTAT NET
@@ -863,6 +888,7 @@ class ClotureJourneeCopy
                                 $creditRet->NumDossier,
                                 $libelle,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                             //PERMET DE METTRE A JOUR LE RESULTAT NET
                             // $this->CheckTransactionStatus();
@@ -903,6 +929,7 @@ class ClotureJourneeCopy
                                 $creditRet->NumDossier,
                                 $libelle,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                             //PERMET DE METTRE A JOUR LE RESULTAT NET
                             // $this->CheckTransactionStatus();
@@ -941,6 +968,7 @@ class ClotureJourneeCopy
                                 $creditRet->NumDossier,
                                 $libelle,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                             //PERMET DE METTRE A JOUR LE RESULTAT NET
                             // $this->CheckTransactionStatus();
@@ -1048,18 +1076,34 @@ class ClotureJourneeCopy
         $CodeMonnaie = $creditRet->CodeMonnaie == "USD" ? 1 : 2;
         $soldeMembre = $this->checkSoldeMembrePASSIF($CodeMonnaie, $NumCompte);
 
+        //     $getCapitaRetard = Echeancier::selectRaw('
+        //     echeanciers.NumDossier,
+        //     SUM(echeanciers.Interet) - SUM(COALESCE(remboursementcredits.InteretPaye, 0)) AS sommeInteretRetard,
+        //     SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS sommeCapitalRetard
+        // ')
+        //         ->leftJoin('remboursementcredits', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
+        //         ->where('echeanciers.RetardPayement', 1)
+        //         ->where('echeanciers.NumDossier', $creditRet->NumDossier)
+        //         ->groupBy('echeanciers.NumDossier')
+        //         ->first();
+
+        $today = $this->dateSystem;
         $getCapitaRetard = Echeancier::selectRaw('
-        echeanciers.NumDossier,
-        SUM(echeanciers.Interet) - SUM(COALESCE(remboursementcredits.InteretPaye, 0)) AS sommeInteretRetard,
-        SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS sommeCapitalRetard
-    ')
-            ->leftJoin('remboursementcredits', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
-            ->where('echeanciers.RetardPayement', 1)
+                echeanciers.NumDossier,
+                SUM(echeanciers.Interet) - SUM(COALESCE(remboursementcredits.InteretPaye, 0)) AS sommeInteretRetard,
+                SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS sommeCapitalRetard
+                                                          ')
+            ->leftJoin('remboursementcredits', function ($join) use ($today) {
+                $join->on('echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
+                    ->whereDate('remboursementcredits.DateTranche', '<=', $today);
+            })
             ->where('echeanciers.NumDossier', $creditRet->NumDossier)
+            ->whereDate('echeanciers.DateTranch', '<=', $today)   // ← on ne prend que les échéances échues
             ->groupBy('echeanciers.NumDossier')
             ->first();
 
-        $capitalEnRetard = $getCapitaRetard->sommeCapitalRetard;
+        $capitalEnRetard =  $getCapitaRetard ? $getCapitaRetard->sommeCapitalRetard : 0;
+
         if ($soldeMembre >= $capitalEnRetard) {
             $typeRemboursement = "complet";
         } else {
@@ -1129,6 +1173,7 @@ class ClotureJourneeCopy
                                         $creditRet->MontantAccorde,
                                         $creditRet->NumDossier,
                                         $creditRet->Gestionnaire,
+                                        $creditRet->ReferenceEch
                                     );
                                 } catch (\Exception $e) {
                                     Log::warning("Insertion ignorée", ['msg' => $e->getMessage()]);
@@ -1150,6 +1195,7 @@ class ClotureJourneeCopy
                                 $creditRet->MontantAccorde,
                                 $creditRet->NumDossier,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                         }
 
@@ -1203,6 +1249,7 @@ class ClotureJourneeCopy
                                 $creditRet->MontantAccorde,
                                 $creditRet->NumDossier,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                         } else {
                             $this->gererProvisions();
@@ -1220,6 +1267,7 @@ class ClotureJourneeCopy
                                 $creditRet->MontantAccorde,
                                 $creditRet->NumDossier,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                         }
 
@@ -1273,6 +1321,7 @@ class ClotureJourneeCopy
                                 $creditRet->MontantAccorde,
                                 $creditRet->NumDossier,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                         } else {
                             $this->gererProvisions();
@@ -1288,7 +1337,8 @@ class ClotureJourneeCopy
                                 $creditRet->DateTranch,
                                 $creditRet->MontantAccorde,
                                 $creditRet->NumDossier,
-                                $creditRet->Gestionnaire
+                                $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                         }
 
@@ -1334,7 +1384,8 @@ class ClotureJourneeCopy
                             $creditRet->numAdherant,
                             $libelle,
                             $creditRet->Gestionnaire,
-                            $creditRet->NumDossier
+                            $creditRet->NumDossier,
+                            $creditRet->ReferenceEch
                         );
 
 
@@ -1351,6 +1402,7 @@ class ClotureJourneeCopy
                             $creditRet->MontantAccorde,
                             $creditRet->NumDossier,
                             $creditRet->Gestionnaire,
+                            $creditRet->ReferenceEch
                         );
 
 
@@ -1377,6 +1429,7 @@ class ClotureJourneeCopy
                                 $creditRet->MontantAccorde,
                                 $creditRet->NumDossier,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                         } else {
 
@@ -1393,6 +1446,7 @@ class ClotureJourneeCopy
                                 $creditRet->MontantAccorde,
                                 $creditRet->NumDossier,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                         }
                         $this->ClotureTranche($creditRet->ReferenceEch);
@@ -1420,7 +1474,8 @@ class ClotureJourneeCopy
                             $creditRet->numAdherant,
                             $libelle,
                             $creditRet->Gestionnaire,
-                            $creditRet->NumDossier
+                            $creditRet->NumDossier,
+                            $creditRet->ReferenceEch
                         );
 
                         $this->RenseignePayementPourPaiementQuiEtaitEnMoitieCapital(
@@ -1459,6 +1514,7 @@ class ClotureJourneeCopy
                                 $creditRet->MontantAccorde,
                                 $creditRet->NumDossier,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                         } else {
                             $this->gererProvisions();
@@ -1476,6 +1532,7 @@ class ClotureJourneeCopy
                                 $creditRet->MontantAccorde,
                                 $creditRet->NumDossier,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                         }
                         $this->ClotureTranche($creditRet->ReferenceEch);
@@ -1518,6 +1575,7 @@ class ClotureJourneeCopy
                                 $creditRet->MontantAccorde,
                                 $creditRet->NumDossier,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                         } else {
                             $numTransaction = $this->insertInTransactionCapital(
@@ -1531,7 +1589,8 @@ class ClotureJourneeCopy
                                 $creditRet->numAdherant,
                                 $libelle,
                                 $creditRet->Gestionnaire,
-                                $creditRet->NumDossier
+                                $creditRet->NumDossier,
+                                $creditRet->ReferenceEch
                             );
                             $this->gererProvisions();
 
@@ -1548,6 +1607,7 @@ class ClotureJourneeCopy
                                 $creditRet->MontantAccorde,
                                 $creditRet->NumDossier,
                                 $creditRet->Gestionnaire,
+                                $creditRet->ReferenceEch
                             );
                         }
 
@@ -1629,6 +1689,7 @@ class ClotureJourneeCopy
         if ($record) {
             // Vérifie si la DateRetard est différente de la date actuelle
             if ($record->DateRetard !== $this->dateSystem) {
+
                 $this->provisionCreditRetard($creditProv);
             }
         }
@@ -1662,13 +1723,30 @@ class ClotureJourneeCopy
         $SoldeCreditRestant = $soldeRestant;
 
 
-        $capitaRetard =  Echeancier::selectRaw('
+        //         $capitaRetard =  Echeancier::selectRaw('
+        //         echeanciers.NumDossier,
+        //        SUM(echeanciers.Interet) - SUM(COALESCE(remboursementcredits.InteretPaye, 0)) AS sommeInteretRetard,
+        //        SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS sommeCapitalRetard
+        //    ')
+        //             ->leftJoin('remboursementcredits', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
+        //             ->where('echeanciers.RetardPayement', 1)
+        //             ->where('echeanciers.NumDossier', $creditProv->NumDossier)
+        //             ->groupBy('echeanciers.NumDossier')
+        //             ->first();
+
+
+
+        $today = $this->dateSystem;
+        $capitaRetard = Echeancier::selectRaw('
         echeanciers.NumDossier,
-       SUM(echeanciers.Interet) - SUM(COALESCE(remboursementcredits.InteretPaye, 0)) AS sommeInteretRetard,
-       SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS sommeCapitalRetard
-   ')
-            ->leftJoin('remboursementcredits', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
-            ->where('echeanciers.RetardPayement', 1)
+        SUM(echeanciers.Interet) - SUM(COALESCE(remboursementcredits.InteretPaye, 0)) AS sommeInteretRetard,
+        SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS sommeCapitalRetard
+    ')
+            ->leftJoin('remboursementcredits', function ($join) use ($today) {
+                $join->on('echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
+                    ->whereDate('remboursementcredits.DateTranche', '<=', $today);
+            })
+            ->whereDate('echeanciers.DateTranch', '<=', $today)
             ->where('echeanciers.NumDossier', $creditProv->NumDossier)
             ->groupBy('echeanciers.NumDossier')
             ->first();
@@ -1698,10 +1776,11 @@ class ClotureJourneeCopy
         } else {
             $sommeCapitalDejaPaye = 0;
         }
-        $capitalApayer = $capitaRetard->sommeCapitalRetard;
+
+        $capitalApayer = $capitaRetard ? $capitaRetard->sommeCapitalRetard : 0;
+           if ($capitalApayer > 0) {
         if ($creditProv->NbrJrRetard <= 30 and $creditProv->provision1 == 0) {
             //
-
             $this->insertInTransactionProvision(
                 abs($sommeCapitalDejaPaye),
                 $creditProv->CodeMonnaie,
@@ -1718,6 +1797,7 @@ class ClotureJourneeCopy
                 5,
                 "1 à 30jrs",
                 $creditProv->Gestionnaire,
+                $creditProv->RefEcheance
             );
             // $this->CheckTransactionStatus();
 
@@ -1740,6 +1820,7 @@ class ClotureJourneeCopy
                 "1 à 30jrs",
                 $creditProv->Gestionnaire,
                 $creditProv->NumCompteCredit,
+                $creditProv->RefEcheance
             );
 
             $this->insertInTransactionProvision(
@@ -1758,6 +1839,7 @@ class ClotureJourneeCopy
                 10,
                 "31 à 60jrs",
                 $creditProv->Gestionnaire,
+                $creditProv->RefEcheance
             );
 
             // $this->CheckTransactionStatus();
@@ -1781,6 +1863,7 @@ class ClotureJourneeCopy
                 "31 à 60jrs",
                 $creditProv->Gestionnaire,
                 $creditProv->NumCompteCredit,
+                $creditProv->RefEcheance
             );
 
             $this->insertInTransactionProvision(
@@ -1799,6 +1882,7 @@ class ClotureJourneeCopy
                 25,
                 "61 à 90jrs",
                 $creditProv->Gestionnaire,
+                $creditProv->RefEcheance
             );
 
             // $this->CheckTransactionStatus();
@@ -1821,6 +1905,7 @@ class ClotureJourneeCopy
                 "61 à 90jrs",
                 $creditProv->Gestionnaire,
                 $creditProv->NumCompteCredit,
+                $creditProv->RefEcheance
             );
 
 
@@ -1840,6 +1925,7 @@ class ClotureJourneeCopy
                 75,
                 "91 à 180jrs",
                 $creditProv->Gestionnaire,
+                $creditProv->RefEcheance
             );
 
             // $this->CheckTransactionStatus();
@@ -1863,6 +1949,7 @@ class ClotureJourneeCopy
                 "91 à 180jrs",
                 $creditProv->Gestionnaire,
                 $creditProv->NumCompteCredit,
+                $creditProv->RefEcheance
             );
             $this->insertInTransactionProvision(
                 abs($sommeCapitalDejaPaye),
@@ -1880,6 +1967,7 @@ class ClotureJourneeCopy
                 100,
                 "plus de 180jrs",
                 $creditProv->Gestionnaire,
+                $creditProv->RefEcheance
             );
 
             // $this->CheckTransactionStatus();
@@ -1887,6 +1975,7 @@ class ClotureJourneeCopy
             JourRetard::where("NumDossier", $creditProv->NumDossier)->update([
                 "provision5" => 1,
             ]);
+        }
         }
     }
 
@@ -1918,6 +2007,7 @@ class ClotureJourneeCopy
         $NumDossier,
         $Libelle,
         $Gestionnaire,
+        $RefEcheance
     ) {
 
 
@@ -1954,6 +2044,7 @@ class ClotureJourneeCopy
             "NomUtilisateur" => "AUTO",
             "Libelle" => $Libelle,
             "refCompteMembre" => $refCompteMembre,
+            "RefEcheance" => $RefEcheance
         ]);
         // CREDITE LE COMPTE INTERET
         Transactions::create([
@@ -1974,6 +2065,7 @@ class ClotureJourneeCopy
             "NomUtilisateur" => "AUTO",
             "Libelle" => $Libelle,
             "refCompteMembre" => $refCompteMembre,
+            "RefEcheance" => $RefEcheance
         ]);
 
 
@@ -1994,7 +2086,8 @@ class ClotureJourneeCopy
         $refCompteMembre,
         $Libelle,
         $Gestionnaire,
-        $NumDossier
+        $NumDossier,
+        $RefEcheance
     ) {
 
 
@@ -2032,6 +2125,7 @@ class ClotureJourneeCopy
             "NomUtilisateur" => "AUTO",
             "Libelle" => $Libelle,
             "refCompteMembre" => $refCompteMembre,
+            "RefEcheance" => $RefEcheance
         ]);
 
 
@@ -2063,6 +2157,7 @@ class ClotureJourneeCopy
                 "NomUtilisateur" => "AUTO",
                 "Libelle" => $Libelle,
                 "refCompteMembre" => $refCompteMembre,
+                "RefEcheance" => $RefEcheance
             ]);
         } else {
             //CREDITE LE COMPTE CREDIT DU MEMBRE 
@@ -2084,6 +2179,7 @@ class ClotureJourneeCopy
                 "NomUtilisateur" => "AUTO",
                 "Libelle" => $Libelle,
                 "refCompteMembre" => $refCompteMembre,
+                "RefEcheance" => $RefEcheance
             ]);
         }
 
@@ -2133,6 +2229,7 @@ class ClotureJourneeCopy
         $provisionPourcentage,
         $provisionRang,
         $Gestionnaire,
+        $RefEcheance
     ) {
 
 
@@ -2157,8 +2254,8 @@ class ClotureJourneeCopy
 
         if ($devise == 2) {
             if ($refCompteMembre < 10) {
-                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence . "2";
-                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence . "2";
+                $compteProvisionCDF = "380100000" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "390100000" . $refCompteMembre . $CodeAgence . "2";
             } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
                 $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence . "2";
                 $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence . "2";
@@ -2260,8 +2357,8 @@ class ClotureJourneeCopy
         } else if ($devise == 1) {
 
             if ($refCompteMembre < 10) {
-                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence . "1";
-                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence . "1";
+                $compteProvisionUSD = "380000000" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "390000000" . $refCompteMembre . $CodeAgence . "1";
             } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
                 $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence . "1";
                 $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence . "1";
@@ -2383,6 +2480,7 @@ class ClotureJourneeCopy
                 "NomUtilisateur" => "AUTO",
                 "Libelle" => "Imputation de " . $SoldeCreditRestant . "  dans la tranche de crédit en retard de 1 à 30 jrs dossier " . $NumDossier . " pour " . $capitalApayer . " impayé",
                 "refCompteMembre" => $refCompteMembre,
+                "RefEcheance" => $RefEcheance
             ]);
 
             $NumTransaction = $this->generateTransactionNumber();
@@ -2425,6 +2523,7 @@ class ClotureJourneeCopy
                 "NomUtilisateur" => "AUTO",
                 "Libelle" => "Imputation de " . $SoldeCreditRestant . "  dans la tranche de crédit en retard de 1 à 30 jrs dossier " . $NumDossier . " pour " . $capitalApayer . " impayé",
                 "refCompteMembre" => $refCompteMembre,
+                "RefEcheance" => $RefEcheance
             ]);
             /* FIN Constatation crédit en retard */
         }
@@ -2456,6 +2555,7 @@ class ClotureJourneeCopy
                 . " dossier " . $NumDossier
                 . " pour " . $capitalApayer . " impayé",
             "refCompteMembre" => $refCompteMembre,
+            "RefEcheance" => $RefEcheance
         ]);
 
         //FAIT LA PROVISION  CREDITE 38 COMPTABILITE (MISE A PAUSE)
@@ -2507,7 +2607,7 @@ class ClotureJourneeCopy
                 . " dossier " . $NumDossier
                 . " pour " . $capitalApayer . " impayé",
             "refCompteMembre" => $refCompteMembre,
-            "refCompteMembre" => $refCompteMembre,
+            "RefEcheance" => $RefEcheance
         ]);
 
 
@@ -2532,7 +2632,8 @@ class ClotureJourneeCopy
         $ProvisionPourcentage,
         $ProvisionDuree,
         $Gestionnaire,
-        $NumcompteCredit
+        $NumcompteCredit,
+        $RefEcheance
 
     ) {
 
@@ -2614,6 +2715,7 @@ class ClotureJourneeCopy
             "NomUtilisateur" => "AUTO",
             "Libelle" => "Reprise sur provision de " . $ProvisionPourcentage . " sur l'encours de " . $SoldeCreditRestant . "  en retard de " . $ProvisionDuree . " dossier " . $NumDossier . " pour " . $montantRetard . " impayé",
             "refCompteMembre" => $refCompteMembre,
+            "RefEcheance" => $RefEcheance
         ]);
 
         //POUR LE COMPTE DU CLIENT  (MISE EN PAUSE)
@@ -2655,6 +2757,7 @@ class ClotureJourneeCopy
             "NomUtilisateur" => "AUTO",
             "Libelle" => "Reprise sur provision de " . $ProvisionPourcentage . " sur l'encours de " . $SoldeCreditRestant . " en retard de " . $ProvisionDuree . " dossier " . $NumDossier . " pour " . $montantRetard . " impayé",
             "refCompteMembre" => $refCompteMembre,
+            "RefEcheance" => $RefEcheance
         ]);
 
 
@@ -2675,6 +2778,7 @@ class ClotureJourneeCopy
         $MontantAccorde,
         $NumDossier,
         $Gestionnaire,
+        $RefEcheance
     ) {
 
 
@@ -2801,6 +2905,7 @@ class ClotureJourneeCopy
                                 "Debitusd" =>  $devise == 1 ? $montantReprise : $montantReprise / ($tauxDuJour),
                                 "NomUtilisateur" => "AUTO",
                                 "Libelle" => "Reprise sur provision dossier " . $NumDossier,
+                                "RefEcheance" => $RefEcheance
                             ]);
 
                             //CREDITE LE COMPTE 79
@@ -2821,6 +2926,7 @@ class ClotureJourneeCopy
                                 "Creditusd" =>  $devise == 1 ? $montantReprise : $montantReprise / ($tauxDuJour),
                                 "NomUtilisateur" => "AUTO",
                                 "Libelle" => "Reprise sur provision dossier " . $NumDossier,
+                                "RefEcheance" => $RefEcheance
                             ]);
                         }
                         $NumTransaction = $this->generateTransactionNumber();
@@ -2861,13 +2967,13 @@ class ClotureJourneeCopy
                             "Debitusd" =>  $devise == 1 ? $capitalPaye : $capitalPaye / ($tauxDuJour),
                             "NomUtilisateur" => "AUTO",
                             "Libelle" => "Remboursement partiel capital de " . $capitalPaye . ($devise == 1 ? "USD " : "CDF ") . $trancheNumber . " e tranche tombée le " . $dateTranche . " sur votre crédit de " . $MontantAccorde . " dossier " . $NumDossier,
+                            "RefEcheance" => $RefEcheance
                         ]);
 
 
                         //ICI ON VERIFIE SI LE COMPTE DU CLIENT 39 A UN SOLDE SI OUI  DONC IL ETAIT DEJA EN RETARD on CREDITE 39
                         $solde39 = $this->checkSoldeMembreACTIF($devise, $compteCreanceLitigieuseCustomer, $NumDossier);
                         if ($solde39 > 0) {
-
                             Transactions::create([
                                 "NumTransaction" => $NumTransaction,
                                 "DateTransaction" => $dateSystem,
@@ -2884,9 +2990,11 @@ class ClotureJourneeCopy
                                 "Creditusd" =>  $devise == 1 ? $capitalPaye : $capitalPaye / ($tauxDuJour),
                                 "NomUtilisateur" => "AUTO",
                                 "Libelle" => "Remboursement partiel de " . $capitalPaye . ($devise == 1 ? "USD " : "CDF ") . $trancheNumber . " e tranche tombée le " . $dateTranche . " sur votre crédit de " . $MontantAccorde . " dossier " . $NumDossier,
+                                "RefEcheance" => $RefEcheance
+
                             ]);
 
-                            //SINON CREDITE 39 DU CLIENT MONTANT PARTIEL REMBOURSEMENT
+                            //SINON CREDITE 32 DU CLIENT MONTANT PARTIEL REMBOURSEMENT
                         } else {
 
                             Transactions::create([
@@ -2905,6 +3013,7 @@ class ClotureJourneeCopy
                                 "Creditusd" =>  $devise == 1 ? $capitalPaye : $capitalPaye / ($tauxDuJour),
                                 "NomUtilisateur" => "AUTO",
                                 "Libelle" => "Remboursement partiel de " . $capitalPaye . ($devise == 1 ? "USD " : "CDF ") . $trancheNumber . " e tranche tombée le " . $dateTranche . " sur votre crédit de " . $MontantAccorde . " dossier " . $NumDossier,
+                                "RefEcheance" => $RefEcheance
                             ]);
                         }
 
@@ -2998,27 +3107,30 @@ class ClotureJourneeCopy
                             "Debitusd" =>  $devise == 1 ? $soldeProvision : $soldeProvision / ($tauxDuJour),
                             "NomUtilisateur" => "AUTO",
                             "Libelle" => "Reprise sur provision crédit sain dossier " . $NumDossier,
+                            "RefEcheance" => $RefEcheance
                         ]);
 
 
                         //DEBITE LE COMPTE DU CLIENT DE CE MONTANT
-                        Transactions::create([
-                            "NumTransaction" => $NumTransaction,
-                            "DateTransaction" => $dateSystem,
-                            "DateSaisie" => $dateSystem,
-                            "TypeTransaction" => "D",
-                            "CodeMonnaie" => $devise,
-                            "CodeAgence" => $CodeAgence,
-                            "NumDossier" => $NumDossier,
-                            "NumCompte" => $compteEpargneCustomer,
-                            "NumComptecp" => $compteCreanceLitigieuseCustomer,
-                            "Debit" => $capitalPaye,
-                            "Operant" =>  $Gestionnaire,
-                            "Debitfc" => $devise == 2 ? $capitalPaye : $capitalPaye * ($tauxDuJour),
-                            "Debitusd" =>  $devise == 1 ? $capitalPaye : $capitalPaye / ($tauxDuJour),
-                            "NomUtilisateur" => "AUTO",
-                            "Libelle" => "Remboursement de " . $capitalPaye . ($devise == 1 ? "USD " : "CDF ") . $trancheNumber . " e tranche tombée le " . $dateTranche . " sur votre crédit de " . $MontantAccorde . " dossier " . $NumDossier,
-                        ]);
+                        // Transactions::create([
+                        //     "NumTransaction" => $NumTransaction,
+                        //     "DateTransaction" => $dateSystem,
+                        //     "DateSaisie" => $dateSystem,
+                        //     "TypeTransaction" => "D",
+                        //     "CodeMonnaie" => $devise,
+                        //     "CodeAgence" => $CodeAgence,
+                        //     "NumDossier" => $NumDossier,
+                        //     "NumCompte" => $compteEpargneCustomer,
+                        //     "NumComptecp" => $compteCreanceLitigieuseCustomer,
+                        //     "Debit" => $capitalPaye,
+                        //     "Operant" =>  $Gestionnaire,
+                        //     "Debitfc" => $devise == 2 ? $capitalPaye : $capitalPaye * ($tauxDuJour),
+                        //     "Debitusd" =>  $devise == 1 ? $capitalPaye : $capitalPaye / ($tauxDuJour),
+                        //     "NomUtilisateur" => "AUTO",
+                        //     "Libelle" => "Remboursement de " . $capitalPaye . ($devise == 1 ? "USD " : "CDF ") . $trancheNumber . " e tranche tombée le " . $dateTranche . " sur votre crédit de " . $MontantAccorde . " dossier " . $NumDossier,
+                        //     "RefEcheance"=>$RefEcheance
+
+                        //     ]);
 
                         //CREDITE LE COMPTE 79
                         $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
@@ -3038,6 +3150,7 @@ class ClotureJourneeCopy
                             "Creditusd" =>  $devise == 1 ? $soldeProvision : $soldeProvision / ($tauxDuJour),
                             "NomUtilisateur" => "AUTO",
                             "Libelle" => "Reprise sur provision crédit sain dossier " . $NumDossier,
+                            "RefEcheance" => $RefEcheance
                         ]);
                         //CREDITE 39 DU MONTANT  REMBOURSE MISE EN PAUSE
                         // Transactions::create([
@@ -3129,7 +3242,6 @@ class ClotureJourneeCopy
                         // ]);
 
                         //DEBITE LE COMPTE CREDIT DU CLIENT
-
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
                             "DateTransaction" => $dateSystem,
@@ -3146,6 +3258,7 @@ class ClotureJourneeCopy
                             "Debitusd" =>  $devise == 1 ? $soldeCreanceL : $soldeCreanceL / ($tauxDuJour),
                             "NomUtilisateur" => "AUTO",
                             "Libelle" => "Imputation de " . $soldeCreanceL . ($devise == 1 ? "USD" : "CDF") . " dans la tranche des crédits sain dossier " . $NumDossier,
+                            "RefEcheance" => $RefEcheance
                         ]);
 
 
@@ -3186,6 +3299,7 @@ class ClotureJourneeCopy
                             "Creditusd" =>  $devise == 1 ? $soldeCreanceL : $soldeCreanceL / ($tauxDuJour),
                             "NomUtilisateur" => "AUTO",
                             "Libelle" => "Imputation de " . $soldeCreanceL . ($devise == 1 ? "USD" : "CDF") . " dans la tranche des crédits sain dossier " . $NumDossier,
+                            "RefEcheance" => $RefEcheance
                         ]);
 
                         //ANNULE JOUR RETARD 
@@ -3359,6 +3473,7 @@ class ClotureJourneeCopy
             "CodeGuichet" => $CodeAgence,
             "NumAdherent" => $numAdherant,
             "NumTransaction" => $NumTransaction
+
         ]);
     }
 
@@ -3538,8 +3653,8 @@ class ClotureJourneeCopy
 
                 if ($devise == 2) {
                     if ($refCompteMembre < 10) {
-                        $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence . "2";
-                        $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence . "2";
+                        $compteProvisionCDF = "380100000" . $refCompteMembre . $CodeAgence . "2";
+                        $compteCreanceLitigieuseCDF = "390100000" . $refCompteMembre . $CodeAgence . "2";
                     } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
                         $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence . "2";
                         $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence . "2";
@@ -3562,8 +3677,8 @@ class ClotureJourneeCopy
                 } else if ($devise == 1) {
 
                     if ($refCompteMembre < 10) {
-                        $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence . "1";
-                        $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence . "1";
+                        $compteProvisionUSD = "380000000" . $refCompteMembre . $CodeAgence . "1";
+                        $compteCreanceLitigieuseUSD = "390000000" . $refCompteMembre . $CodeAgence . "1";
                     } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
                         $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence . "1";
                         $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence . "1";
@@ -3712,8 +3827,8 @@ class ClotureJourneeCopy
 
         if ($devise == 2) {
             if ($refCompteMembre < 10) {
-                $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence . "2";
-                $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence . "2";
+                $compteProvisionCDF = "380100000" . $refCompteMembre . $CodeAgence . "2";
+                $compteCreanceLitigieuseCDF = "390100000" . $refCompteMembre . $CodeAgence . "2";
             } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
                 $compteProvisionCDF = "38010000" . $refCompteMembre . $CodeAgence . "2";
                 $compteCreanceLitigieuseCDF = "39010000" . $refCompteMembre . $CodeAgence . "2";
@@ -3796,8 +3911,8 @@ class ClotureJourneeCopy
         } else if ($devise == 1) {
 
             if ($refCompteMembre < 10) {
-                $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence . "1";
-                $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence . "1";
+                $compteProvisionUSD = "380000000" . $refCompteMembre . $CodeAgence . "1";
+                $compteCreanceLitigieuseUSD = "390000000" . $refCompteMembre . $CodeAgence . "1";
             } else if ($refCompteMembre >= 10 && $refCompteMembre < 100) {
                 $compteProvisionUSD = "38000000" . $refCompteMembre . $CodeAgence . "1";
                 $compteCreanceLitigieuseUSD = "39000000" . $refCompteMembre . $CodeAgence . "1";
@@ -3882,8 +3997,6 @@ class ClotureJourneeCopy
             }
         }
     }
-
-
     //PERMET DE VERIFIER QUELLE FONCTION EST PRIORITAIRE QUE L'AUTRE ENTRE GERER PROVISON ET REPRISE
     /**
      * Détermine le pourcentage de provision en fonction des flags de provision
@@ -3934,13 +4047,508 @@ class ClotureJourneeCopy
     }
 
 
+    // /**
+    //  * Génère un numéro de transaction unique de façon atomique
+    //  * @return string
+    //  */
+    // protected function generateTransactionNumber()
+    // {
+    //     // Insertion atomique avec retour de l'ID
+    //     $id = DB::table('compteur_transactions')->insertGetId([
+    //         'fakevalue' => '0000',
+    //         'created_at' => now(),
+    //         'updated_at' => now(),
+    //     ]);
+    //     return "AT00" . $id;
+    // }
+    // /**
+    //  * Annule un remboursement à partir du numéro de transaction (AT...)
+    //  * @param string $referenceTransaction
+    //  * @return bool
+    //  * @throws \Exception
+    //  */
+    // public function annulerRemboursementParReference($referenceTransaction)
+    // {
+    //     // Récupérer le remboursement via le numéro de transaction stocké
+    //     $remboursement = Remboursementcredit::where('NumTransaction', $referenceTransaction)->first();
+    //     if (!$remboursement) {
+    //         throw new \Exception("Aucun remboursement trouvé pour ce numéro de transaction.");
+    //     }
+    //     // Appeler la méthode d'annulation avec la référence d'échéance
+    //     return $this->annulerRemboursement($remboursement->RefEcheance);
+    // }
+
+    // /**
+    //  * Annule un remboursement pour une échéance donnée
+    //  * @param string $refEcheance
+    //  * @param string $motif
+    //  * @return bool
+    //  * @throws \Exception
+    //  */
+    // public function annulerRemboursement($refEcheance, $motif = 'Annulation manuelle')
+    // {
+    //     DB::beginTransaction();
+    //     try {
+    //         $remboursement = Remboursementcredit::where('RefEcheance', $refEcheance)->first();
+    //         if (!$remboursement) {
+    //             throw new \Exception("Aucun remboursement trouvé pour cette échéance.");
+    //         }
+
+    //         $capitalPaye = $remboursement->CapitalPaye;
+    //         $interetPaye = $remboursement->InteretPaye;
+    //         if ($capitalPaye == 0 && $interetPaye == 0) {
+    //             throw new \Exception("Remboursement déjà nul, rien à annuler.");
+    //         }
+
+    //         $originalNum = $remboursement->NumTransaction;
+    //         if (!$originalNum) {
+    //             throw new \Exception("Aucun numéro de transaction associé à ce remboursement.");
+    //         }
+
+    //         $originals = Transactions::where('NumTransaction', $originalNum)->get();
+    //         if ($originals->isEmpty()) {
+    //             throw new \Exception("Écritures originales non trouvées pour ce remboursement.");
+    //         }
+
+    //         foreach ($originals as $orig) {
+    //             $this->createAnnulationWriting($orig, $originalNum, $capitalPaye, $interetPaye, $motif);
+    //         }
+
+    //         $remboursement->CapitalPaye = 0;
+    //         $remboursement->InteretPaye = 0;
+    //         $remboursement->save();
+
+    //         $echeance = Echeancier::where('ReferenceEch', $refEcheance)->first();
+    //         if (!$echeance) {
+    //             throw new \Exception("Échéance non trouvée.");
+    //         }
+
+    //         $retard = ($echeance->DateTranch < $this->dateSystem) ? 1 : 0;
+    //         Echeancier::where('ReferenceEch', $refEcheance)->update([
+    //             'statutPayement' => 0,
+    //             'posted' => 0,
+    //             'RetardPayement' => $retard
+    //         ]);
+
+    //         $this->recalculerRetardEtProvisions($echeance->NumDossier);
+
+    //         DB::commit();
+    //         return true;
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         Log::error("Annulation remboursement échouée", ['ref' => $refEcheance, 'error' => $e->getMessage()]);
+    //         throw $e;
+    //     }
+    // }
+
+    // /**
+    //  * Crée une écriture inverse (annulation) à partir d'une transaction originale
+    //  * en réutilisant le même numéro de transaction
+    //  */
+    // protected function createAnnulationWriting($original, $numTransaction, $capitalAnnule, $interetAnnule, $motif)
+    // {
+    //     // Déterminer le montant à annuler selon le type de ligne (capital ou intérêt)
+    //     $montant = 0;
+    //     if (stripos($original->Libelle, 'capital') !== false) {
+    //         $montant = $capitalAnnule;
+    //     } elseif (stripos($original->Libelle, 'intérêt') !== false || stripos($original->Libelle, 'interet') !== false) {
+    //         $montant = $interetAnnule;
+    //     } else {
+    //         // Pour les lignes de frais ou autres, on annule la totalité
+    //         $montant = $original->Debit ?: $original->Credit;
+    //     }
+    //     if ($montant <= 0) return;
+
+    //     // Créer une nouvelle ligne (pas de réplicate pour éviter l'ID)
+    //     $new = new Transactions();
+    //     $new->NumTransaction = $numTransaction;  // MÊME numéro que l'original
+    //     $new->DateTransaction = now();
+    //     $new->DateSaisie = now();
+    //     $new->TypeTransaction = ($original->TypeTransaction == 'D') ? 'C' : 'D';
+    //     $new->CodeMonnaie = $original->CodeMonnaie;
+    //     $new->CodeAgence = $original->CodeAgence;
+    //     $new->NumDossier = $original->NumDossier;
+    //     $new->NumDemande = $original->NumDemande;
+    //     $new->NumCompte = $original->NumCompte;
+    //     $new->NumComptecp = $original->NumComptecp;
+    //     $new->Operant = $original->Operant;
+    //     $new->NomUtilisateur = auth()->user()->name ?? 'SYSTEM';
+    //     $new->Libelle = "ANNULATION - $motif - " . $original->Libelle;
+    //     $new->extourner = 0; // si vous avez ce champ
+
+    //     // Inverser les montants
+    //     $new->Debit = 0;
+    //     $new->Credit = 0;
+    //     $new->Debitfc = 0;
+    //     $new->Creditfc = 0;
+    //     $new->Debitusd = 0;
+    //     $new->Creditusd = 0;
+
+    //     $taux = $this->tauxDuJour ?? 1;
+
+    //     if ($original->TypeTransaction == 'D') {
+    //         $new->Credit = $montant;
+    //         if ($original->CodeMonnaie == 1) {
+    //             $new->Creditusd = $montant;
+    //             $new->Creditfc = $montant * $taux;
+    //         } else {
+    //             $new->Creditfc = $montant;
+    //             $new->Creditusd = $montant / $taux;
+    //         }
+    //     } else {
+    //         $new->Debit = $montant;
+    //         if ($original->CodeMonnaie == 1) {
+    //             $new->Debitusd = $montant;
+    //             $new->Debitfc = $montant * $taux;
+    //         } else {
+    //             $new->Debitfc = $montant;
+    //             $new->Debitusd = $montant / $taux;
+    //         }
+    //     }
+
+    //     $new->save();
+    // }
+
+    // /**
+    //  * Recalcule les jours de retard et les provisions pour un dossier après annulation
+    //  */
+    // protected function recalculerRetardEtProvisions($numDossier)
+    // {
+    //     $jourRetard = JourRetard::firstOrNew(['NumDossier' => $numDossier]);
+
+    //     // Compter les échéances en retard non soldées
+    //     $echeancesRetard = Echeancier::where('NumDossier', $numDossier)
+    //         ->where('DateTranch', '<', $this->dateSystem)
+    //         ->where(function ($q) {
+    //             $q->where('statutPayement', 0)
+    //                 ->orWhere('RetardPayement', 1);
+    //         })
+    //         ->count();
+    //     $jourRetard->NbrJrRetard = $echeancesRetard;
+    //     $jourRetard->DateRetard = $this->dateSystem;
+
+    //     // Réinitialiser les flags de provision (ils seront recalculés par provisionCreditRetard)
+    //     $jourRetard->provision1 = 0;
+    //     $jourRetard->provision2 = 0;
+    //     $jourRetard->provision3 = 0;
+    //     $jourRetard->provision4 = 0;
+    //     $jourRetard->provision5 = 0;
+    //     $jourRetard->save();
+
+
+    //     // Re-provisionner si nécessaire
+    //     if ($jourRetard->NbrJrRetard > 0) {
+
+    //         $portefeuille = Portefeuille::where('NumDossier', $numDossier)->first();
+    //         if ($portefeuille) {
+    //             $this->provisionCreditRetard($portefeuille);
+    //         }
+    //     }
+    // }
+
+
+
+
+    /**
+     * Génère un numéro de transaction unique de façon atomique
+     * @return string
+     */
+// protected function generateTransactionNumber()
+// {
+//     $id = DB::table('compteur_transactions')->insertGetId([
+//         'fakevalue' => '0000',
+//         'created_at' => now(),
+//         'updated_at' => now(),
+//     ]);
+//     return "AT00" . $id;
+// }
+
+    /**
+     * Annule un remboursement à partir d'un numéro de transaction (AT...)
+     * Détecte automatiquement s'il s'agit du capital ou de l'intérêt
+     * @param string $referenceTransaction
+     * @return bool
+     * @throws \Exception
+     */
+// public function annulerRemboursementParReference($referenceTransaction, $motif = 'Annulation manuelle')
+// {
+//     $remboursement = Remboursementcredit::where('NumTransaction', $referenceTransaction)
+//         ->orWhere('NumTransactionInteret', $referenceTransaction)
+//         ->first();
+
+//     if (!$remboursement) {
+//         throw new \Exception("Aucun remboursement trouvé pour ce numéro de transaction.");
+//     }
+
+//     // Déterminer quel type de remboursement on annule
+//     if ($remboursement->NumTransaction == $referenceTransaction) {
+//         // Annulation du capital
+//         return $this->annulerPartieRemboursement($remboursement->RefEcheance, 'capital', $referenceTransaction, $motif);
+//     } elseif ($remboursement->NumTransactionInteret == $referenceTransaction) {
+//         // Annulation des intérêts
+//         return $this->annulerPartieRemboursement($remboursement->RefEcheance, 'interet', $referenceTransaction, $motif);
+//     }
+
+//     throw new \Exception("Impossible de déterminer le type de remboursement à annuler.");
+// }
+
+    /**
+     * Annule une partie spécifique d'un remboursement (capital ou intérêt)
+     * @param string $refEcheance
+     * @param string $type 'capital' ou 'interet'
+     * @param string $numTransaction Le numéro de transaction original de cette partie
+     * @param string $motif
+     * @return bool
+     * @throws \Exception
+     */
+// public function annulerPartieRemboursement($refEcheance, $type, $numTransaction, $motif = 'Annulation manuelle')
+// {
+//     DB::beginTransaction();
+//     try {
+//         $remboursement = Remboursementcredit::where('RefEcheance', $refEcheance)->first();
+//         if (!$remboursement) {
+//             throw new \Exception("Aucun remboursement trouvé pour cette échéance.");
+//         }
+
+//         $montantAnnule = 0;
+//         if ($type == 'capital') {
+//             $montantAnnule = $remboursement->CapitalPaye;
+//             if ($montantAnnule == 0) {
+//                 throw new \Exception("Le capital est déjà nul, rien à annuler.");
+//             }
+//         } else { // interet
+//             $montantAnnule = $remboursement->InteretPaye;
+//             if ($montantAnnule == 0) {
+//                 throw new \Exception("Les intérêts sont déjà nuls, rien à annuler.");
+//             }
+//         }
+
+//         // Récupérer les écritures originales correspondant à ce numéro de transaction
+//         $originals = Transactions::where('NumTransaction', $numTransaction)->get();
+//         if ($originals->isEmpty()) {
+//             throw new \Exception("Écritures originales non trouvées pour ce numéro de transaction.");
+//         }
+
+//         // Créer les écritures d'annulation inverses
+//         foreach ($originals as $orig) {
+//             // On n'annule que le montant correspondant au type (l'autre sera 0)
+//             $capitalAnnule = ($type == 'capital') ? $montantAnnule : 0;
+//             $interetAnnule = ($type == 'interet') ? $montantAnnule : 0;
+//             $this->createAnnulationWriting($orig, $numTransaction, $capitalAnnule, $interetAnnule, $motif);
+//         }
+
+//         // Mettre à zéro le champ correspondant dans Remboursementcredits
+//         if ($type == 'capital') {
+//             $remboursement->CapitalPaye = 0;
+//         } else {
+//             $remboursement->InteretPaye = 0;
+//         }
+//         $remboursement->save();
+
+//         // Mise à jour de l'échéance seulement si les deux parties (capital ET intérêts) sont soldées
+//         // Sinon l'échéance reste considérée comme partiellement payée.
+//         $echeance = Echeancier::where('ReferenceEch', $refEcheance)->first();
+//         if (!$echeance) {
+//             throw new \Exception("Échéance non trouvée.");
+//         }
+
+//         $capitalPayeApres = $remboursement->CapitalPaye;
+//         $interetPayeApres = $remboursement->InteretPaye;
+
+//         if ($capitalPayeApres == 0 && $interetPayeApres == 0) {
+//             // Plus rien de payé : l'échéance redevient impayée
+//             $retard = ($echeance->DateTranch < $this->dateSystem) ? 1 : 0;
+//             Echeancier::where('ReferenceEch', $refEcheance)->update([
+//                 'statutPayement' => 0,
+//                 'posted' => 0,
+//                 'RetardPayement' => $retard
+//             ]);
+//         } else {
+//             // Il reste au moins une partie payée (capital ou intérêts)
+//             // On ne met pas statutPayement à 0, on le laisse à 1 (partiellement payé)
+//             // Mais on s'assure que posted reste à 1 ? À voir selon votre logique.
+//             // Pour l'exemple, on ne change que si total = 0.
+//         }
+
+//         // Recalcul des retards et provisions
+//         $this->recalculerRetardEtProvisions($echeance->NumDossier);
+
+//         DB::commit();
+//         return true;
+//     } catch (\Exception $e) {
+//         DB::rollBack();
+//         Log::error("Annulation partielle échouée", ['ref' => $refEcheance, 'type' => $type, 'error' => $e->getMessage()]);
+//         throw $e;
+//     }
+// }
+
+    /**
+     * Annule complètement un remboursement (capital + intérêts) pour une échéance donnée
+     * @param string $refEcheance
+     * @param string $motif
+     * @return bool
+     * @throws \Exception
+     */
+// public function annulerRemboursement($refEcheance, $motif = 'Annulation manuelle')
+// {
+//     DB::beginTransaction();
+//     try {
+//         $remboursement = Remboursementcredit::where('RefEcheance', $refEcheance)->first();
+//         if (!$remboursement) {
+//             throw new \Exception("Aucun remboursement trouvé pour cette échéance.");
+//         }
+
+//         $capitalPaye = $remboursement->CapitalPaye;
+//         $interetPaye = $remboursement->InteretPaye;
+//         if ($capitalPaye == 0 && $interetPaye == 0) {
+//             throw new \Exception("Remboursement déjà nul, rien à annuler.");
+//         }
+
+//         // Annuler le capital si présent
+//         if ($capitalPaye > 0 && $remboursement->NumTransaction) {
+//             $this->annulerPartieRemboursement($refEcheance, 'capital', $remboursement->NumTransaction, $motif);
+//         }
+//         // Annuler les intérêts si présents
+//         if ($interetPaye > 0 && $remboursement->NumTransactionInteret) {
+//             $this->annulerPartieRemboursement($refEcheance, 'interet', $remboursement->NumTransactionInteret, $motif);
+//         }
+
+//         // Vérification finale (normalement déjà à zéro)
+//         $remboursement->refresh();
+//         if ($remboursement->CapitalPaye == 0 && $remboursement->InteretPaye == 0) {
+//             $echeance = Echeancier::where('ReferenceEch', $refEcheance)->first();
+//             if ($echeance) {
+//                 $retard = ($echeance->DateTranch < $this->dateSystem) ? 1 : 0;
+//                 Echeancier::where('ReferenceEch', $refEcheance)->update([
+//                     'statutPayement' => 0,
+//                     'posted' => 0,
+//                     'RetardPayement' => $retard
+//                 ]);
+//                 $this->recalculerRetardEtProvisions($echeance->NumDossier);
+//             }
+//         }
+
+//         DB::commit();
+//         return true;
+//     } catch (\Exception $e) {
+//         DB::rollBack();
+//         Log::error("Annulation complète échouée", ['ref' => $refEcheance, 'error' => $e->getMessage()]);
+//         throw $e;
+//     }
+// }
+
+    /**
+     * Crée une écriture inverse (annulation) à partir d'une transaction originale
+     * en réutilisant le même numéro de transaction
+     */
+// protected function createAnnulationWriting($original, $numTransaction, $capitalAnnule, $interetAnnule, $motif)
+// {
+//     // Déterminer le montant à annuler selon le type de ligne
+//     $montant = 0;
+//     $libelleLower = strtolower($original->Libelle);
+//     if (strpos($libelleLower, 'capital') !== false) {
+//         $montant = $capitalAnnule;
+//     } elseif (strpos($libelleLower, 'intérêt') !== false || strpos($libelleLower, 'interet') !== false) {
+//         $montant = $interetAnnule;
+//     } else {
+//         // Pour les lignes de frais ou autres, on annule la totalité (en prenant le débit ou crédit)
+//         $montant = $original->Debit ?: $original->Credit;
+//     }
+
+//     if ($montant <= 0) {
+//         return; // Rien à annuler pour cette ligne spécifique
+//     }
+
+//     // Créer une nouvelle ligne d'annulation
+//     $new = new Transactions();
+//     $new->NumTransaction = $numTransaction;  // MÊME numéro que l'original
+//     $new->DateTransaction = now();
+//     $new->DateSaisie = now();
+//     $new->TypeTransaction = ($original->TypeTransaction == 'D') ? 'C' : 'D';
+//     $new->CodeMonnaie = $original->CodeMonnaie;
+//     $new->CodeAgence = $original->CodeAgence;
+//     $new->NumDossier = $original->NumDossier;
+//     $new->NumDemande = $original->NumDemande;
+//     $new->NumCompte = $original->NumCompte;
+//     $new->NumComptecp = $original->NumComptecp;
+//     $new->Operant = $original->Operant;
+//     $new->NomUtilisateur = auth()->user()->name ?? 'SYSTEM';
+//     $new->Libelle = "ANNULATION - $motif - " . $original->Libelle;
+//     $new->extourner = 0; // si vous avez ce champ
+
+//     // Initialiser les montants à zéro
+//     $new->Debit = 0;
+//     $new->Credit = 0;
+//     $new->Debitfc = 0;
+//     $new->Creditfc = 0;
+//     $new->Debitusd = 0;
+//     $new->Creditusd = 0;
+
+//     $taux = $this->tauxDuJour ?? 1;
+
+//     if ($original->TypeTransaction == 'D') {
+//         $new->Credit = $montant;
+//         if ($original->CodeMonnaie == 1) {
+//             $new->Creditusd = $montant;
+//             $new->Creditfc = $montant * $taux;
+//         } else {
+//             $new->Creditfc = $montant;
+//             $new->Creditusd = $montant / $taux;
+//         }
+//     } else {
+//         $new->Debit = $montant;
+//         if ($original->CodeMonnaie == 1) {
+//             $new->Debitusd = $montant;
+//             $new->Debitfc = $montant * $taux;
+//         } else {
+//             $new->Debitfc = $montant;
+//             $new->Debitusd = $montant / $taux;
+//         }
+//     }
+
+//     $new->save();
+// }
+
+    /**
+     * Recalcule les jours de retard et les provisions pour un dossier après annulation
+     */
+// protected function recalculerRetardEtProvisions($numDossier)
+// {
+//     $jourRetard = JourRetard::firstOrNew(['NumDossier' => $numDossier]);
+
+//     $echeancesRetard = Echeancier::where('NumDossier', $numDossier)
+//         ->where('DateTranch', '<', $this->dateSystem)
+//         ->where(function ($q) {
+//             $q->where('statutPayement', 0)
+//                 ->orWhere('RetardPayement', 1);
+//         })
+//         ->count();
+//     $jourRetard->NbrJrRetard = $echeancesRetard;
+//     $jourRetard->DateRetard = $this->dateSystem;
+
+//     $jourRetard->provision1 = 0;
+//     $jourRetard->provision2 = 0;
+//     $jourRetard->provision3 = 0;
+//     $jourRetard->provision4 = 0;
+//     $jourRetard->provision5 = 0;
+//     $jourRetard->save();
+
+//     if ($jourRetard->NbrJrRetard > 0) {
+//         $portefeuille = Portefeuille::where('NumDossier', $numDossier)->first();
+//         if ($portefeuille) {
+//             $this->provisionCreditRetard($portefeuille);
+//         }
+//     }
+// }
+
+
+
     /**
      * Génère un numéro de transaction unique de façon atomique
      * @return string
      */
     protected function generateTransactionNumber()
     {
-        // Insertion atomique avec retour de l'ID
         $id = DB::table('compteur_transactions')->insertGetId([
             'fakevalue' => '0000',
             'created_at' => now(),
@@ -3948,31 +4556,90 @@ class ClotureJourneeCopy
         ]);
         return "AT00" . $id;
     }
+
     /**
-     * Annule un remboursement à partir du numéro de transaction (AT...)
-     * @param string $referenceTransaction
-     * @return bool
-     * @throws \Exception
+     * Retrouve la référence d'échéance à partir d'un numéro de transaction
+     * @param string $numTransaction
+     * @return string|null
      */
-    public function annulerRemboursementParReference($referenceTransaction)
+    protected function getEcheanceFromTransactionNumber($numTransaction)
     {
-        // Récupérer le remboursement via le numéro de transaction stocké
-        $remboursement = Remboursementcredit::where('NumTransaction', $referenceTransaction)->first();
-        if (!$remboursement) {
-            throw new \Exception("Aucun remboursement trouvé pour ce numéro de transaction.");
-        }
-        // Appeler la méthode d'annulation avec la référence d'échéance
-        return $this->annulerRemboursement($remboursement->RefEcheance);
+        $trans = Transactions::where('NumTransaction', $numTransaction)->first();
+        return $trans ? $trans->RefEcheance : null;
     }
 
     /**
-     * Annule un remboursement pour une échéance donnée
+     * Annule un remboursement à partir d'un numéro de transaction (capital ou intérêt)
+     * Par défaut annule tout le remboursement (capital + intérêts + frais) de l'échéance concernée.
+     * @param string $referenceTransaction
+     * @param string $motif
+     * @param string $type 'full', 'capital', 'interet'
+     * @return bool
+     * @throws \Exception
+     */
+    public function annulerRemboursementParReference($referenceTransaction, $motif = 'Annulation manuelle', $type = 'full')
+    {
+        $refEcheance = $this->getEcheanceFromTransactionNumber($referenceTransaction);
+        if (!$refEcheance) {
+            throw new \Exception("Aucune échéance trouvée pour ce numéro de transaction.");
+        }
+
+        if ($type == 'full') {
+            return $this->annulerRemboursementComplet($refEcheance, $motif);
+        } else {
+            return $this->annulerPartieRemboursement($refEcheance, $type, $motif);
+        }
+    }
+
+    /**
+     * Annule complètement un remboursement (capital + intérêts + frais) pour une échéance donnée.
      * @param string $refEcheance
      * @param string $motif
      * @return bool
      * @throws \Exception
      */
-    public function annulerRemboursement($refEcheance, $motif = 'Annulation manuelle')
+
+
+    /**
+     * Annule une partie (capital ou intérêt) d'un remboursement à partir d'un numéro de transaction.
+     * Le numéro de transaction doit correspondre à une écriture (capital ou intérêt) existante.
+     * 
+     * @param string $referenceTransaction Ex: "AT0012"
+     * @param string $motif
+     * @return bool
+     * @throws \Exception
+     */
+    public function annulerRemboursementPartielParReference($referenceTransaction, $motif = 'Annulation manuelle')
+    {
+        // 1. Récupérer l'écriture originale à partir du numéro de transaction
+        $transaction = Transactions::where('NumTransaction', $referenceTransaction)->first();
+        if (!$transaction) {
+            throw new \Exception("Aucune transaction trouvée avec ce numéro : $referenceTransaction");
+        }
+
+        // 2. Vérifier qu'elle est liée à une échéance
+        $refEcheance = $transaction->RefEcheance;
+        if (!$refEcheance) {
+            throw new \Exception("Cette transaction n'est liée à aucune échéance (RefEcheance manquante).");
+        }
+
+        // 3. Déterminer le type (capital ou intérêt) à partir du libellé
+        $libelle = strtolower($transaction->Libelle);
+        if (strpos($libelle, 'capital') !== false) {
+            $type = 'capital';
+        } elseif (strpos($libelle, 'intérêt') !== false || strpos($libelle, 'interet') !== false) {
+            $type = 'interet';
+        } else {
+            // Si le libellé ne contient ni capital ni intérêt, on peut annuler toute l'échéance
+            // ou lever une exception. Par défaut, on annule toute l'échéance.
+            return $this->annulerRemboursementComplet($refEcheance, $motif);
+        }
+
+        // 4. Annuler uniquement la partie correspondante
+        return $this->annulerPartieRemboursement($refEcheance, $type, $motif);
+    }
+
+    public function annulerRemboursementComplet($refEcheance, $motif = 'Annulation manuelle')
     {
         DB::beginTransaction();
         try {
@@ -3981,76 +4648,194 @@ class ClotureJourneeCopy
                 throw new \Exception("Aucun remboursement trouvé pour cette échéance.");
             }
 
-            $capitalPaye = $remboursement->CapitalPaye;
-            $interetPaye = $remboursement->InteretPaye;
-            if ($capitalPaye == 0 && $interetPaye == 0) {
-                throw new \Exception("Remboursement déjà nul, rien à annuler.");
-            }
-
-            $originalNum = $remboursement->NumTransaction;
-            if (!$originalNum) {
-                throw new \Exception("Aucun numéro de transaction associé à ce remboursement.");
-            }
-
-            $originals = Transactions::where('NumTransaction', $originalNum)->get();
+            // Récupérer toutes les écritures originales de cette échéance
+            $originals = Transactions::where('RefEcheance', $refEcheance)->get();
             if ($originals->isEmpty()) {
-                throw new \Exception("Écritures originales non trouvées pour ce remboursement.");
+                throw new \Exception("Aucune écriture trouvée pour cette échéance.");
             }
 
+            // Créer les écritures d'annulation pour chaque ligne originale
             foreach ($originals as $orig) {
-                $this->createAnnulationWriting($orig, $originalNum, $capitalPaye, $interetPaye, $motif);
+                $this->createAnnulationWriting($orig, $motif);
             }
 
+            // Remettre à zéro les montants dans Remboursementcredits
             $remboursement->CapitalPaye = 0;
             $remboursement->InteretPaye = 0;
             $remboursement->save();
 
-            $echeance = Echeancier::where('ReferenceEch', $refEcheance)->first();
-            if (!$echeance) {
-                throw new \Exception("Échéance non trouvée.");
-            }
+            // Mettre à jour l'échéance
+            // $echeance = Echeancier::where('ReferenceEch', $refEcheance)->first();
+            // if ($echeance) {
+            //     $retard = ($echeance->DateTranch < $this->dateSystem) ? 1 : 0;
+            //     Echeancier::where('ReferenceEch', $refEcheance)->update([
+            //         'statutPayement' => 0,
+            //         'posted' => 0,
+            //         'RetardPayement' => $retard
+            //     ]);
+            //     $this->recalculerRetardEtProvisions($echeance->NumDossier);
+            // }
+            // Mise à jour du statut (dans ce cas, ça repassera forcément à 0)
+            $this->mettreAJourStatutEcheance($refEcheance);
 
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Annulation complète échouée", ['ref' => $refEcheance, 'error' => $e->getMessage()]);
+            throw $e;
+        }
+    }
+
+
+
+    /**
+     * Met à jour le statut de l'échéance en fonction des montants réellement payés.
+     * @param string $refEcheance
+     */
+    protected function mettreAJourStatutEcheance($refEcheance)
+    {
+        $echeance = Echeancier::where('ReferenceEch', $refEcheance)->first();
+        if (!$echeance) {
+            return;
+        }
+
+        $remboursement = Remboursementcredit::where('RefEcheance', $refEcheance)->first();
+        if (!$remboursement) {
+            return;
+        }
+
+        $capitalDu = $echeance->CapAmmorti;
+        $interetDu = $echeance->Interet;
+        $capitalPaye = $remboursement->CapitalPaye;
+        $interetPaye = $remboursement->InteretPaye;
+
+        // L'échéance est totalement payée si les deux montants payés atteignent au moins le dû
+        $estTotalementPaye = ($capitalPaye >= $capitalDu && $interetPaye >= $interetDu);
+
+        if (!$estTotalementPaye) {
             $retard = ($echeance->DateTranch < $this->dateSystem) ? 1 : 0;
             Echeancier::where('ReferenceEch', $refEcheance)->update([
                 'statutPayement' => 0,
                 'posted' => 0,
                 'RetardPayement' => $retard
             ]);
+        }
+        // Si totalement payé, on ne touche pas à statutPayement (il reste à 1 ou 2)
 
-            $this->recalculerRetardEtProvisions($echeance->NumDossier);
+        // Recalcul des retards et provisions pour le dossier
+        $this->recalculerRetardEtProvisions($echeance->NumDossier);
+    }
+
+    /**
+     * Annule partiellement un remboursement (uniquement capital ou uniquement intérêts)
+     * pour une échéance donnée.
+     * @param string $refEcheance
+     * @param string $type 'capital' ou 'interet'
+     * @param string $motif
+     * @return bool
+     * @throws \Exception
+     */
+    public function annulerPartieRemboursement($refEcheance, $type, $motif = 'Annulation manuelle')
+    {
+        DB::beginTransaction();
+        try {
+            $remboursement = Remboursementcredit::where('RefEcheance', $refEcheance)->first();
+            if (!$remboursement) {
+                throw new \Exception("Aucun remboursement trouvé pour cette échéance.");
+            }
+
+            $typeLower = strtolower($type);
+            if ($typeLower == 'capital') {
+                $montantActuel = $remboursement->CapitalPaye;
+                $champ = 'CapitalPaye';
+                $searchLibelles = ['capital'];
+            } elseif ($typeLower == 'interet') {
+                $montantActuel = $remboursement->InteretPaye;
+                $champ = 'InteretPaye';
+                $searchLibelles = ['intérêt', 'interet'];
+            } else {
+                throw new \Exception("Type d'annulation invalide. Utilisez 'capital' ou 'interet'.");
+            }
+
+            if ($montantActuel == 0) {
+                throw new \Exception("Le montant à annuler est déjà nul pour le type '$type'.");
+            }
+
+            // Récupérer les écritures correspondant au type (capital ou intérêt)
+            $originals = Transactions::where('RefEcheance', $refEcheance)
+                ->where(function ($query) use ($searchLibelles) {
+                    foreach ($searchLibelles as $lib) {
+                        $query->orWhere('Libelle', 'like', '%' . $lib . '%');
+                    }
+                })
+                ->get();
+
+            if ($originals->isEmpty()) {
+                throw new \Exception("Aucune écriture trouvée pour le type '$type' sur cette échéance.");
+            }
+
+            // Créer les écritures d'annulation pour ces lignes
+            foreach ($originals as $orig) {
+                $this->createAnnulationWriting($orig, $motif);
+            }
+
+            // Mettre à zéro le champ correspondant dans Remboursementcredits
+            $remboursement->$champ = 0;
+            $remboursement->save();
+
+            // Si après annulation partielle, les deux champs sont à zéro, on repasse l'échéance en impayé
+            // if ($remboursement->CapitalPaye == 0 && $remboursement->InteretPaye == 0) {
+            //     $echeance = Echeancier::where('ReferenceEch', $refEcheance)->first();
+            //     if ($echeance) {
+            //         $retard = ($echeance->DateTranch < $this->dateSystem) ? 1 : 0;
+            //         Echeancier::where('ReferenceEch', $refEcheance)->update([
+            //             'statutPayement' => 0,
+            //             'posted' => 0,
+            //             'RetardPayement' => $retard
+            //         ]);
+            //         $this->recalculerRetardEtProvisions($echeance->NumDossier);
+            //     }
+            // } else {
+            //     // Il reste au moins une partie payée : on ne modifie pas statutPayement (reste à 1 ou 2)
+            //     // On recalcule juste les retards au cas où
+            //     $echeance = Echeancier::where('ReferenceEch', $refEcheance)->first();
+            //     if ($echeance) {
+            //         $this->recalculerRetardEtProvisions($echeance->NumDossier);
+            //     }
+            // }
+
+            // Mise à jour automatique du statut de l'échéance
+            $this->mettreAJourStatutEcheance($refEcheance);
 
             DB::commit();
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Annulation remboursement échouée", ['ref' => $refEcheance, 'error' => $e->getMessage()]);
+            Log::error("Annulation partielle échouée", ['ref' => $refEcheance, 'type' => $type, 'error' => $e->getMessage()]);
             throw $e;
         }
     }
 
     /**
-     * Crée une écriture inverse (annulation) à partir d'une transaction originale
-     * en réutilisant le même numéro de transaction
+     * Crée une écriture inverse (annulation) à partir d'une transaction originale.
+     * Génère un nouveau numéro de transaction pour l'annulation.
+     * @param Transactions $original
+     * @param string $motif
+     * @return Transactions
      */
-    protected function createAnnulationWriting($original, $numTransaction, $capitalAnnule, $interetAnnule, $motif)
+    protected function createAnnulationWriting($original, $motif)
     {
-        // Déterminer le montant à annuler selon le type de ligne (capital ou intérêt)
-        $montant = 0;
-        if (stripos($original->Libelle, 'capital') !== false) {
-            $montant = $capitalAnnule;
-        } elseif (stripos($original->Libelle, 'intérêt') !== false || stripos($original->Libelle, 'interet') !== false) {
-            $montant = $interetAnnule;
-        } else {
-            // Pour les lignes de frais ou autres, on annule la totalité
-            $montant = $original->Debit ?: $original->Credit;
-        }
-        if ($montant <= 0) return;
+        $newNumTransaction = $this->generateTransactionNumber();
+        // Récupérer la date système
+        $dateSysteme = TauxEtDateSystem::latest()->first()->DateSystem ?? now();
 
-        // Créer une nouvelle ligne (pas de réplicate pour éviter l'ID)
+
         $new = new Transactions();
-        $new->NumTransaction = $numTransaction;  // MÊME numéro que l'original
-        $new->DateTransaction = now();
-        $new->DateSaisie = now();
+        $new->NumTransaction = $newNumTransaction;
+        $new->RefEcheance = $original->RefEcheance; // conserve le lien
+        $new->DateTransaction = $dateSysteme;
+        $new->DateSaisie = $dateSysteme;
         $new->TypeTransaction = ($original->TypeTransaction == 'D') ? 'C' : 'D';
         $new->CodeMonnaie = $original->CodeMonnaie;
         $new->CodeAgence = $original->CodeAgence;
@@ -4063,7 +4848,7 @@ class ClotureJourneeCopy
         $new->Libelle = "ANNULATION - $motif - " . $original->Libelle;
         $new->extourner = 0; // si vous avez ce champ
 
-        // Inverser les montants
+        // Initialiser les montants à zéro
         $new->Debit = 0;
         $new->Credit = 0;
         $new->Debitfc = 0;
@@ -4074,6 +4859,8 @@ class ClotureJourneeCopy
         $taux = $this->tauxDuJour ?? 1;
 
         if ($original->TypeTransaction == 'D') {
+            // Original était débit, l'annulation est crédit
+            $montant = $original->Debit;
             $new->Credit = $montant;
             if ($original->CodeMonnaie == 1) {
                 $new->Creditusd = $montant;
@@ -4083,6 +4870,8 @@ class ClotureJourneeCopy
                 $new->Creditusd = $montant / $taux;
             }
         } else {
+            // Original était crédit, l'annulation est débit
+            $montant = $original->Credit;
             $new->Debit = $montant;
             if ($original->CodeMonnaie == 1) {
                 $new->Debitusd = $montant;
@@ -4094,6 +4883,7 @@ class ClotureJourneeCopy
         }
 
         $new->save();
+        return $new;
     }
 
     /**
@@ -4103,7 +4893,6 @@ class ClotureJourneeCopy
     {
         $jourRetard = JourRetard::firstOrNew(['NumDossier' => $numDossier]);
 
-        // Compter les échéances en retard non soldées
         $echeancesRetard = Echeancier::where('NumDossier', $numDossier)
             ->where('DateTranch', '<', $this->dateSystem)
             ->where(function ($q) {
@@ -4114,7 +4903,6 @@ class ClotureJourneeCopy
         $jourRetard->NbrJrRetard = $echeancesRetard;
         $jourRetard->DateRetard = $this->dateSystem;
 
-        // Réinitialiser les flags de provision (ils seront recalculés par provisionCreditRetard)
         $jourRetard->provision1 = 0;
         $jourRetard->provision2 = 0;
         $jourRetard->provision3 = 0;
@@ -4122,10 +4910,7 @@ class ClotureJourneeCopy
         $jourRetard->provision5 = 0;
         $jourRetard->save();
 
-
-        // Re-provisionner si nécessaire
         if ($jourRetard->NbrJrRetard > 0) {
-
             $portefeuille = Portefeuille::where('NumDossier', $numDossier)->first();
             if ($portefeuille) {
                 $this->provisionCreditRetard($portefeuille);

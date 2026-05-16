@@ -382,16 +382,6 @@
                             @else
                                 Agence
                             @endif
-
-                            {{-- @if ($currentAgence)
-    Connecté(e) à l'Agence de 
-    {{ $currentAgence['nom_agence'] ?? '' }}
-    @if (!empty($currentAgence['code_agence']))
-        -{{ $currentAgence['code_agence'] }}
-    @endif
-@else
-    Agence
-@endif --}}
                         </a>
                         <div class="dropdown-menu dropdown-menu-modern p-3" aria-labelledby="agenceDropdown"
                             style="min-width: 280px;">
@@ -415,7 +405,8 @@
                 @elseif(count($userAgences) == 1)
                     <li class="nav-item ms-auto">
                         <span class="nav-link text-white-50">
-                            <i class="fas fa-building me-1"></i> AGENCE DE    {{ $userAgences[0]['nom_agence'] }} -{{ $userAgences[0]['code_agence'] }}
+                            <i class="fas fa-building me-1"></i> AGENCE DE {{ $userAgences[0]['nom_agence'] }}
+                            -{{ $userAgences[0]['code_agence'] }}
                         </span>
                     </li>
                 @endif
@@ -577,6 +568,25 @@
                         </a>
                     </li>
 
+                     <li class="nav-item dropdown">
+
+                            <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-money-bill-wave me-1"></i> Immo
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
+
+                                <a class="dropdown-item" href="{{ route('eco.pages.enregistrement-imo') }}">
+                                    <i class="fas fa-charging-station me-2"></i>Ajouter
+                                </a>
+
+                                <a class="dropdown-item" href="">
+                                    <i class="fas fa-door-open me-2"></i>Tableau d'ammortissement
+                                </a>
+
+                            </div>
+                        </li>
+
                     {{-- <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="rapportDropdown"
                             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -617,10 +627,10 @@
                         </div>
                     </li> --}}
 
-                     <!-- Menu Rapport avec sous-catégories (modernisé) -->
+                    <!-- Menu Rapport avec sous-catégories (modernisé) -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="rapportDropdown" data-bs-toggle="dropdown"
-                           aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="rapportDropdown"
+                            data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-chart-bar me-1"></i> Rapport
                         </a>
                         <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="rapportDropdown">
@@ -661,10 +671,6 @@
                             </a>
                         </div>
                     </li>
-
-
-
-
                 </ul>
             </div>
         </div>

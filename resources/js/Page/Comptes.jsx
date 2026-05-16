@@ -8,6 +8,7 @@ import { jsPDF } from "jspdf";
 import * as FileSaver from "file-saver";
 import html2canvas from "html2canvas";
 import { Bars } from "react-loader-spinner";
+import AgencesManagement from "./AgencesManagement";
 // import DataTable from "react-data-table-component";
 
 const Comptes = () => {
@@ -211,7 +212,9 @@ const Comptes = () => {
 
     const [typeRecu, setTypeRecu] = useState("A5");
     const [FraisSMS, setFraisSMS] = useState();
-
+    const [epargneObligatoire, setEpargneObligatoire] = useState();
+    const [showForm, setShowForm] = useState(false);
+    const [selectedAgenceId, setSelectedAgenceId] = useState(null);
     useEffect(() => {
         getCompanyData();
     }, []);
@@ -247,6 +250,17 @@ const Comptes = () => {
         } else {
             setchargement(false);
         }
+    };
+
+    const handleEdit = (id) => {
+        setSelectedAgenceId(id);
+        setShowForm(true);
+    };
+
+    const handleSuccess = () => {
+        setShowForm(false);
+        setSelectedAgenceId(null);
+        // Rafraîchir la liste des agences
     };
 
     // const hideAccountSession = async (e) => {
@@ -530,9 +544,10 @@ const Comptes = () => {
                 res.data.adhesion_epargne_data.show_commission_pannel,
             );
 
-            setTypeRecu(res.data.adhesion_epargne_data.type_recu)
+            setTypeRecu(res.data.adhesion_epargne_data.type_recu);
 
-              setFraisSMS(res.data.adhesion_epargne_data.fraisSMS)
+            setFraisSMS(res.data.adhesion_epargne_data.fraisSMS);
+            setEpargneObligatoire(res.data.adhesion_epargne_data.epargneObligatoire);
 
             console.log(login_attempt);
         }
@@ -762,6 +777,7 @@ const Comptes = () => {
                 showCommissionPanel,
                 typeRecu,
                 FraisSMS,
+                epargneObligatoire
             },
         );
         if (res.data.status == 1) {
@@ -1286,6 +1302,21 @@ const Comptes = () => {
                         >
                             <i className="fas fa-table-list me-2"></i>
                             Comptes
+                        </a>
+                    </li>
+
+                    <li className="nav-item">
+                        <a
+                            className="nav-link"
+                            id="custom-tabs-five-6-tab"
+                            data-toggle="pill"
+                            href="#custom-tabs-six-6"
+                            role="tab"
+                            aria-controls="custom-tabs-six-6"
+                            aria-selected="false"
+                        >
+                            <i className="fas fa-table-list me-2"></i>
+                            Agence
                         </a>
                     </li>
                 </ul>
@@ -2259,7 +2290,7 @@ const Comptes = () => {
                                                             >
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     value={
                                                                         Ecompte_courant
                                                                     }
@@ -2306,7 +2337,7 @@ const Comptes = () => {
                                                             >
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     value={
                                                                         Ecompte_courant_usd
                                                                     }
@@ -2347,7 +2378,7 @@ const Comptes = () => {
                                                             >
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     value={
                                                                         Ecompte_courant_cdf
                                                                     }
@@ -2402,7 +2433,7 @@ const Comptes = () => {
                                                             >
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     value={
                                                                         Edebiteur
                                                                     }
@@ -2443,7 +2474,7 @@ const Comptes = () => {
                                                             >
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     value={
                                                                         Edebiteur_usd
                                                                     }
@@ -2484,7 +2515,7 @@ const Comptes = () => {
                                                             >
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     value={
                                                                         Edebiteur_fc
                                                                     }
@@ -2540,7 +2571,7 @@ const Comptes = () => {
                                                             >
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     value={
                                                                         Etontine_usd
                                                                     }
@@ -2581,7 +2612,7 @@ const Comptes = () => {
                                                             >
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     value={
                                                                         Etontine_fc
                                                                     }
@@ -2637,7 +2668,7 @@ const Comptes = () => {
                                                             >
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     value={
                                                                         D_a_terme
                                                                     }
@@ -2678,7 +2709,7 @@ const Comptes = () => {
                                                             >
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     value={
                                                                         solde_minimum
                                                                     }
@@ -2748,7 +2779,7 @@ const Comptes = () => {
                                                             }}
                                                         >
                                                             <select
-                                                                className="form-select form-select-sm"
+                                                                className="form-select form-select-sm modern-select"
                                                                 value={
                                                                     frais_adhesion
                                                                 }
@@ -2792,7 +2823,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     part_social
                                                                 }
@@ -2828,7 +2859,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     droit_entree
                                                                 }
@@ -2876,7 +2907,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     compte_papeterie
                                                                 }
@@ -2912,7 +2943,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     compte_papeterie_fc
                                                                 }
@@ -2948,7 +2979,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     compte_papeterie_usd
                                                                 }
@@ -2997,7 +3028,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     valeur_droit_entree
                                                                 }
@@ -3035,7 +3066,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     valeur_droit_entree_pysique
                                                                 }
@@ -3073,7 +3104,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     valeur_droit_entree_moral
                                                                 }
@@ -3109,7 +3140,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     valeur_frais_papeterie
                                                                 }
@@ -3189,7 +3220,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     groupe_c_virement
                                                                 }
@@ -3225,7 +3256,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     groupe_c_fond_non_servi
                                                                 }
@@ -3261,7 +3292,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     compte_revenu_virement_usd
                                                                 }
@@ -3297,7 +3328,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     compte_revenu_virement_fc
                                                                 }
@@ -3333,7 +3364,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     taux_tva_sur_vir
                                                                 }
@@ -3369,7 +3400,7 @@ const Comptes = () => {
                                                             }}
                                                         >
                                                             <select
-                                                                className="form-select form-select-sm"
+                                                                className="form-select form-select-sm modern-select"
                                                                 value={
                                                                     arrondir_frais_vir
                                                                 }
@@ -3427,7 +3458,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     Edebiteur_radie_usd
                                                                 }
@@ -3464,7 +3495,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     Edebiteur_radie_fc
                                                                 }
@@ -3500,7 +3531,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     engagement_sur_eparg_usd
                                                                 }
@@ -3536,7 +3567,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     engagement_sur_eparg_fc
                                                                 }
@@ -3572,7 +3603,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     rec_sur_epargne_radie_usd
                                                                 }
@@ -3608,7 +3639,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     rec_sur_epargne_radie_fc
                                                                 }
@@ -3766,7 +3797,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     pre_ordinanire
                                                                 }
@@ -3802,7 +3833,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     pre_ordinanire_au_dirigent
                                                                 }
@@ -3838,7 +3869,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     pre_ordinanire_au_membres
                                                                 }
@@ -3874,7 +3905,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     pre_ordinanire_au_agents
                                                                 }
@@ -3925,7 +3956,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     pre_en_billet_delabre
                                                                 }
@@ -3962,7 +3993,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     pre_en_billet_delabre_aux_dirigent
                                                                 }
@@ -3999,7 +4030,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     pre_en_billet_delabre_aux_membres
                                                                 }
@@ -4036,7 +4067,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     pre_en_billet_delabre_aux_agents
                                                                 }
@@ -4086,7 +4117,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     grpe_compte_pret_r_HB
                                                                 }
@@ -4123,7 +4154,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     compte_charge_radiation
                                                                 }
@@ -4159,7 +4190,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     compte_a_credite_HB
                                                                 }
@@ -4196,7 +4227,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     compte_a_credite_au_bilan
                                                                 }
@@ -4276,7 +4307,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     pret_ordi_en_retard
                                                                 }
@@ -4311,7 +4342,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     un_a_30_jours
                                                                 }
@@ -4346,7 +4377,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     trente_et_un_a_60_jours
                                                                 }
@@ -4381,7 +4412,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     soixante_et_un_a_90_jours
                                                                 }
@@ -4416,7 +4447,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     nonante_et_un_a_90_jours
                                                                 }
@@ -4452,7 +4483,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     plus_de_180_jours
                                                                 }
@@ -4503,7 +4534,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     p_billet_delabre_retard
                                                                 }
@@ -4538,7 +4569,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     un_a_30_jours_del
                                                                 }
@@ -4573,7 +4604,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     trente_et_un_a_60_jours_del
                                                                 }
@@ -4608,7 +4639,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     soixante_et_un_a_90_jours_del
                                                                 }
@@ -4643,7 +4674,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     nonante_et_un_a_180_jours_del
                                                                 }
@@ -4679,7 +4710,7 @@ const Comptes = () => {
                                                         >
                                                             <input
                                                                 type="text"
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm modern-input"
                                                                 value={
                                                                     plus_de_180_jours_del
                                                                 }
@@ -5633,7 +5664,7 @@ const Comptes = () => {
                                                             <div className="d-flex align-items-center gap-2">
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     style={{
                                                                         width: "100px",
                                                                     }}
@@ -5691,7 +5722,7 @@ const Comptes = () => {
                                                             <div className="d-flex align-items-center gap-2">
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     style={{
                                                                         width: "100px",
                                                                     }}
@@ -5735,7 +5766,9 @@ const Comptes = () => {
                                                                     color: "steelblue",
                                                                 }}
                                                             >
-                                                                <i class="fas fa-receipt"></i> Format papier Reçu
+                                                                <i class="fas fa-receipt"></i>{" "}
+                                                                Format papier
+                                                                Reçu
                                                             </label>
                                                         </td>
                                                         <td
@@ -5745,29 +5778,7 @@ const Comptes = () => {
                                                         >
                                                             <div className="d-flex align-items-center gap-2">
                                                                 <select
-                                                                    className="form-select form-select-sm"
-                                                                    style={{
-                                                                        width: "100px",
-                                                                        borderRadius:
-                                                                            "12px",
-                                                                        border: "1px solid #e2e8f0",
-                                                                        backgroundColor:
-                                                                            "#fff",
-                                                                        fontSize:
-                                                                            "0.875rem",
-                                                                        fontWeight:
-                                                                            "500",
-                                                                        color: "#1e293b",
-                                                                        cursor: "pointer",
-                                                                        transition:
-                                                                            "border 0.2s, box-shadow 0.2s",
-                                                                        // Optionnel : personnaliser la flèche Bootstrap
-                                                                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23475569' d='M8 11L3 6h10z'/%3E%3C/svg%3E")`,
-                                                                        backgroundPosition:
-                                                                            "right 0.75rem center",
-                                                                        backgroundSize:
-                                                                            "12px",
-                                                                    }}
+                                                                    className="form-select-sm modern-select"
                                                                     value={
                                                                         typeRecu
                                                                     }
@@ -5813,7 +5824,8 @@ const Comptes = () => {
                                                                     color: "steelblue",
                                                                 }}
                                                             >
-                                                               <i class="fas fa-sms"></i> Frais SMS
+                                                                <i class="fas fa-sms"></i>{" "}
+                                                                Frais SMS
                                                             </label>
                                                         </td>
                                                         <td
@@ -5824,7 +5836,7 @@ const Comptes = () => {
                                                             <div className="d-flex align-items-center gap-2">
                                                                 <input
                                                                     type="text"
-                                                                    className="form-control form-control-sm"
+                                                                    className="form-control form-control-sm modern-input"
                                                                     style={{
                                                                         width: "100px",
                                                                     }}
@@ -5859,6 +5871,62 @@ const Comptes = () => {
                                                             </small>
                                                         </td>
                                                     </tr>
+
+
+                                                    <tr>
+                                                        <td
+                                                            style={{
+                                                                padding: "8px",
+                                                            }}
+                                                        >
+                                                            <label
+                                                                className="small fw-semibold"
+                                                                style={{
+                                                                    color: "steelblue",
+                                                                }}
+                                                            >
+                                                                <i class="fas fa-sms"></i>{" "}
+                                                                Epargne Obligatoire en %
+                                                            </label>
+                                                        </td>
+                                                        <td
+                                                            style={{
+                                                                padding: "8px",
+                                                            }}
+                                                        >
+                                                            <div className="d-flex align-items-center gap-2">
+                                                                <input
+                                                                    type="text"
+                                                                    className="form-control form-control-sm modern-input"
+                                                                    style={{
+                                                                        width: "100px",
+                                                                    }}
+                                                                    value={
+                                                                        epargneObligatoire
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setEpargneObligatoire(
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                        )
+                                                                    }
+                                                                />
+                                                                <span className="text-muted small">
+                                                                   EPargne obligatoire en %
+                                                                </span>
+                                                            </div>
+                                                            <small className="text-muted d-block mt-1">
+                                                                <i className="fas fa-info-circle me-1"></i>
+                                                                il s'agit d'un
+                                                                paramètre en % pour specifier ou non si une Epargne obligatoire
+                                                                 est exigée au membre lors de l'octroie d'un crédit il est appliqué sur le montant global du crédit accordé 
+                                                            </small>
+                                                        </td>
+                                                    </tr>
+
 
                                                     <tr>
                                                         <td colSpan="2">
@@ -6268,7 +6336,7 @@ const Comptes = () => {
                                                     </span>
                                                 </label>
                                                 <select
-                                                    className="form-select"
+                                                    className="form-select modern-select"
                                                     style={{
                                                         borderRadius: "10px",
                                                     }}
@@ -7322,6 +7390,16 @@ const Comptes = () => {
                                 </div>
                             )}
                         </div>
+
+                        {/* AGENCE TAB */}
+                        <div
+                            className="tab-pane fade show"
+                            id="custom-tabs-six-6"
+                            role="tabpanel"
+                            aria-labelledby="custom-tabs-six-6-tab"
+                        >
+                            <AgencesManagement />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -7329,10 +7407,12 @@ const Comptes = () => {
             <style>
                 {`
                     .form-select-modern:focus {
-  border-color: #86b7fe;
-  outline: 0;
-  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
-}
+                     border-color: #86b7fe;
+                    outline: 0;
+                    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
+                     }
+
+
                     `}
             </style>
         </div>

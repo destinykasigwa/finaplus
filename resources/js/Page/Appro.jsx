@@ -268,7 +268,7 @@ const Appro = () => {
                 <div className="card-body pt-2" style={{ maxHeight: "450px", overflowY: "auto" }}>
                     {devise === "USD" ? (
                         <div className="table-responsive">
-                            <table className="table table-hover table-sm align-middle custom-table">
+                            <table className="table table-hover table-sm align-middle custom-table ">
                                 <thead className="table-light">
                                     <tr>
                                         <th>Coupure</th>

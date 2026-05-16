@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Validator};
-use App\Models\{CompanyModel, Comptes, EpargneAdhesionModel, ExpirateDateConfig, PorteFeuilleConfing, TauxEtDateSystem, Transactions, User};
+use App\Models\{Agences, CompanyModel, Comptes, EpargneAdhesionModel, ExpirateDateConfig, PorteFeuilleConfing, TauxEtDateSystem, Transactions, User};
 
 
 class ComptesParamController extends Controller
@@ -217,8 +217,9 @@ class ComptesParamController extends Controller
             $id = EpargneAdhesionModel::first()->id;
             EpargneAdhesionModel::where("id", $id)->update([
                 "show_commission_pannel" => $request->showCommissionPanel == true ? 1 : 0,
-                "type_recu"=>$request->typeRecu,
-                "fraisSMS" =>$request->FraisSMS
+                "type_recu" => $request->typeRecu,
+                "fraisSMS" => $request->FraisSMS,
+                "epargneObligatoire" => $request->epargneObligatoire
             ]);
 
             return response()->json(["status" => 1, "msg" => "Mise à jour réussie."]);
@@ -301,7 +302,7 @@ class ComptesParamController extends Controller
 
     public function saveNewAccount(Request $request)
     {
-     
+
         try {
             DB::beginTransaction();
 
@@ -336,11 +337,11 @@ class ComptesParamController extends Controller
             $this->creerComptesIndividuels($request, $date);
 
             DB::commit();
-              $currentAgence = session('current_agence');
-              $codeAgence = $currentAgence['code_agence'] ?? null;
+            $currentAgence = session('current_agence');
+            $codeAgence = $currentAgence['code_agence'] ?? null;
             return response()->json([
                 "status" => 1,
-                "msg" => "Comptes créés avec succès. Comptes individuels: " . $request->RefSousGroupe . $codeAgence."2 (CDF) et " . $request->RefSousGroupe . $codeAgence."1 (USD)"
+                "msg" => "Comptes créés avec succès. Comptes individuels: " . $request->RefSousGroupe . $codeAgence . "2 (CDF) et " . $request->RefSousGroupe . $codeAgence . "1 (USD)"
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -506,119 +507,119 @@ class ComptesParamController extends Controller
 
 
     private function creerHierarchieComptes($request, $date)
-{
-    $currentAgence = session('current_agence');
-    $codeAgence = $currentAgence['code_agence'] ?? null;
-    
-    if (!$codeAgence) {
-        throw new \Exception('Aucune agence courante définie');
+    {
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
+
+        if (!$codeAgence) {
+            throw new \Exception('Aucune agence courante définie');
+        }
+
+        // Helper pour vérifier l'existence d'un compte dans l'agence courante
+        $compteExiste = function ($numCompte) use ($codeAgence) {
+            return Comptes::where('NumCompte', $numCompte)
+                ->where('CodeAgence', $codeAgence)
+                ->exists();
+        };
+
+
+
+        // Niveau 1: Classe (RefTypeCompte)
+        if (!$compteExiste($request->RefTypeCompte)) {
+            Comptes::create([
+                "CodeAgence" => $codeAgence,
+                "NumCompte" => $request->RefTypeCompte,
+                "NomCompte" => $this->getNomClasse($request->RefTypeCompte),
+                "RefTypeCompte" => $request->RefTypeCompte,
+                "RefCadre" => null,
+                "RefGroupe" => null,
+                "RefSousGroupe" => null,
+                "CodeMonnaie" => null,
+                "DateOuverture" => $date,
+                "NumAdherant" => $request->RefTypeCompte,
+                "nature_compte" => $request->nature_compte ?? match ((int)$request->RefTypeCompte) {
+                    7 => "PRODUIT",
+                    6 => "CHARGE",
+                    default => $this->getNatureClasse($request->RefTypeCompte)
+                },
+                "niveau" => 1,
+                "est_classe" => 1,
+                "compte_parent" => null
+            ]);
+        }
+
+        // Niveau 2: Cadre
+        if ($request->RefCadre && !$compteExiste($request->RefCadre)) {
+            Comptes::create([
+                "CodeAgence" => $codeAgence,
+                "NumCompte" => $request->RefCadre,
+                "NomCompte" => $request->IntituleCompteNew,
+                "RefTypeCompte" => $request->RefTypeCompte,
+                "RefCadre" => $request->RefCadre,
+                "RefGroupe" => null,
+                "RefSousGroupe" => null,
+                "CodeMonnaie" => null,
+                "DateOuverture" => $date,
+                "NumAdherant" => $request->RefCadre,
+                "nature_compte" => $request->nature_compte ?? match ((int)$request->RefTypeCompte) {
+                    7 => "PRODUIT",
+                    6 => "CHARGE",
+                    default => $this->getNatureClasse($request->RefTypeCompte)
+                },
+                "niveau" => 2,
+                "est_classe" => 1,
+                "compte_parent" => $request->RefTypeCompte
+            ]);
+        }
+
+        // Niveau 3: Groupe
+        if ($request->RefGroupe && !$compteExiste($request->RefGroupe)) {
+            Comptes::create([
+                "CodeAgence" => $codeAgence,
+                "NumCompte" => $request->RefGroupe,
+                "NomCompte" => $request->IntituleCompteNew,
+                "RefTypeCompte" => $request->RefTypeCompte,
+                "RefCadre" => $request->RefCadre,
+                "RefGroupe" => $request->RefGroupe,
+                "RefSousGroupe" => null,
+                "CodeMonnaie" => null,
+                "DateOuverture" => $date,
+                "NumAdherant" => $request->RefGroupe,
+                "nature_compte" => $request->nature_compte ?? match ((int)$request->RefTypeCompte) {
+                    7 => "PRODUIT",
+                    6 => "CHARGE",
+                    default => $this->getNatureClasse($request->RefTypeCompte)
+                },
+                "niveau" => 3,
+                "est_classe" => 1,
+                "compte_parent" => $request->RefCadre
+            ]);
+        }
+
+        // Niveau 4: Sous-groupe
+        if ($request->RefSousGroupe && !$compteExiste($request->RefSousGroupe)) {
+            Comptes::create([
+                "CodeAgence" => $codeAgence,
+                "NumCompte" => $request->RefSousGroupe,
+                "NomCompte" => $request->IntituleCompteNew,
+                "RefTypeCompte" => $request->RefTypeCompte,
+                "RefCadre" => $request->RefCadre,
+                "RefGroupe" => $request->RefGroupe,
+                "RefSousGroupe" => $request->RefSousGroupe,
+                "CodeMonnaie" => null,
+                "DateOuverture" => $date,
+                "NumAdherant" => $request->RefSousGroupe,
+                "nature_compte" => $request->nature_compte ?? match ((int)$request->RefTypeCompte) {
+                    7 => "PRODUIT",
+                    6 => "CHARGE",
+                    default => $this->getNatureClasse($request->RefTypeCompte)
+                },
+                "niveau" => 4,
+                "est_classe" => 1,
+                "compte_parent" => $request->RefGroupe
+            ]);
+        }
     }
-
-    // Helper pour vérifier l'existence d'un compte dans l'agence courante
-    $compteExiste = function($numCompte) use ($codeAgence) {
-        return Comptes::where('NumCompte', $numCompte)
-                      ->where('CodeAgence', $codeAgence)
-                      ->exists();
-    };
-
-
-
-    // Niveau 1: Classe (RefTypeCompte)
-    if (!$compteExiste($request->RefTypeCompte)) {
-        Comptes::create([
-            "CodeAgence" => $codeAgence,
-            "NumCompte" => $request->RefTypeCompte,
-            "NomCompte" => $this->getNomClasse($request->RefTypeCompte),
-            "RefTypeCompte" => $request->RefTypeCompte,
-            "RefCadre" => null,
-            "RefGroupe" => null,
-            "RefSousGroupe" => null,
-            "CodeMonnaie" => null,
-            "DateOuverture" => $date,
-            "NumAdherant" => $request->RefTypeCompte,
-            "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
-                7 => "PRODUIT",
-                6 => "CHARGE",
-                default => $this->getNatureClasse($request->RefTypeCompte)
-            },
-            "niveau" => 1,
-            "est_classe" => 1,
-            "compte_parent" => null
-        ]);
-    }
-
-    // Niveau 2: Cadre
-    if ($request->RefCadre && !$compteExiste($request->RefCadre)) {
-        Comptes::create([
-            "CodeAgence" => $codeAgence,
-            "NumCompte" => $request->RefCadre,
-            "NomCompte" => $request->IntituleCompteNew,
-            "RefTypeCompte" => $request->RefTypeCompte,
-            "RefCadre" => $request->RefCadre,
-            "RefGroupe" => null,
-            "RefSousGroupe" => null,
-            "CodeMonnaie" => null,
-            "DateOuverture" => $date,
-            "NumAdherant" => $request->RefCadre,
-            "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
-                7 => "PRODUIT",
-                6 => "CHARGE",
-                default => $this->getNatureClasse($request->RefTypeCompte)
-            },
-            "niveau" => 2,
-            "est_classe" => 1,
-            "compte_parent" => $request->RefTypeCompte
-        ]);
-    }
-
-    // Niveau 3: Groupe
-    if ($request->RefGroupe && !$compteExiste($request->RefGroupe)) {
-        Comptes::create([
-            "CodeAgence" => $codeAgence,
-            "NumCompte" => $request->RefGroupe,
-            "NomCompte" => $request->IntituleCompteNew,
-            "RefTypeCompte" => $request->RefTypeCompte,
-            "RefCadre" => $request->RefCadre,
-            "RefGroupe" => $request->RefGroupe,
-            "RefSousGroupe" => null,
-            "CodeMonnaie" => null,
-            "DateOuverture" => $date,
-            "NumAdherant" => $request->RefGroupe,
-            "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
-                7 => "PRODUIT",
-                6 => "CHARGE",
-                default => $this->getNatureClasse($request->RefTypeCompte)
-            },
-            "niveau" => 3,
-            "est_classe" => 1,
-            "compte_parent" => $request->RefCadre
-        ]);
-    }
-
-    // Niveau 4: Sous-groupe
-    if ($request->RefSousGroupe && !$compteExiste($request->RefSousGroupe)) {
-        Comptes::create([
-            "CodeAgence" => $codeAgence,
-            "NumCompte" => $request->RefSousGroupe,
-            "NomCompte" => $request->IntituleCompteNew,
-            "RefTypeCompte" => $request->RefTypeCompte,
-            "RefCadre" => $request->RefCadre,
-            "RefGroupe" => $request->RefGroupe,
-            "RefSousGroupe" => $request->RefSousGroupe,
-            "CodeMonnaie" => null,
-            "DateOuverture" => $date,
-            "NumAdherant" => $request->RefSousGroupe,
-            "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
-                7 => "PRODUIT",
-                6 => "CHARGE",
-                default => $this->getNatureClasse($request->RefTypeCompte)
-            },
-            "niveau" => 4,
-            "est_classe" => 1,
-            "compte_parent" => $request->RefGroupe
-        ]);
-    }
-}
 
     // private function creerComptesIndividuels($request, $date)
     // {
@@ -680,78 +681,78 @@ class ComptesParamController extends Controller
 
 
     private function creerComptesIndividuels($request, $date)
-{
-    $currentAgence = session('current_agence');
-    $codeAgence = $currentAgence['code_agence'] ?? null;
+    {
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
 
-    if (!$codeAgence) {
-        return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
-    }
+        if (!$codeAgence) {
+            return response()->json(['status' => 0, 'msg' => 'Aucune agence courante définie']);
+        }
 
-    // Construction du numéro de compte pour CDF
-    $numCompteCDF = $request->RefSousGroupe . $codeAgence . "2";
-    if (!Comptes::where('NumCompte', $numCompteCDF)->exists()) {
-        Comptes::create([
-            "CodeAgence"    => $codeAgence,
-            "NumCompte"     => $numCompteCDF,
-            "NomCompte"     => $request->IntituleCompteNew,
-            "RefTypeCompte" => $request->RefTypeCompte,
-            "RefCadre"      => $request->RefCadre,
-            "RefGroupe"     => $request->RefGroupe,
-            "RefSousGroupe" => $request->RefSousGroupe,
-            "CodeMonnaie"   => 2,
-            "DateOuverture" => $date,
-            "NumAdherant"   => $numCompteCDF,
-            "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
-                7 => "PRODUIT",
-                6 => "CHARGE",
-                default => $this->getNatureClasse($request->RefTypeCompte)
-            },
-            "niveau"      => 5,
-            "est_classe"  => 0,
-            "compte_parent" => $request->RefSousGroupe
-        ]);
-    }
+        // Construction du numéro de compte pour CDF
+        $numCompteCDF = $request->RefSousGroupe . $codeAgence . "2";
+        if (!Comptes::where('NumCompte', $numCompteCDF)->exists()) {
+            Comptes::create([
+                "CodeAgence"    => $codeAgence,
+                "NumCompte"     => $numCompteCDF,
+                "NomCompte"     => $request->IntituleCompteNew,
+                "RefTypeCompte" => $request->RefTypeCompte,
+                "RefCadre"      => $request->RefCadre,
+                "RefGroupe"     => $request->RefGroupe,
+                "RefSousGroupe" => $request->RefSousGroupe,
+                "CodeMonnaie"   => 2,
+                "DateOuverture" => $date,
+                "NumAdherant"   => $numCompteCDF,
+                "nature_compte" => $request->nature_compte ?? match ((int)$request->RefTypeCompte) {
+                    7 => "PRODUIT",
+                    6 => "CHARGE",
+                    default => $this->getNatureClasse($request->RefTypeCompte)
+                },
+                "niveau"      => 5,
+                "est_classe"  => 0,
+                "compte_parent" => $request->RefSousGroupe
+            ]);
+        }
 
-    // Construction du numéro de compte pour USD
-    $numCompteUSD = $request->RefSousGroupe . $codeAgence . "1";
-    if (!Comptes::where('NumCompte', $numCompteUSD)->exists()) {
-        Comptes::create([
-            "CodeAgence"    => $codeAgence,
-            "NumCompte"     => $numCompteUSD,
-            "NomCompte"     => $request->IntituleCompteNew,
-            "RefTypeCompte" => $request->RefTypeCompte,
-            "RefCadre"      => $request->RefCadre,
-            "RefGroupe"     => $request->RefGroupe,
-            "RefSousGroupe" => $request->RefSousGroupe,
-            "CodeMonnaie"   => 1,
-            "DateOuverture" => $date,
-            "NumAdherant"   => $numCompteUSD,
-            "nature_compte" => $request->nature_compte ?? match((int)$request->RefTypeCompte) {
-                7 => "PRODUIT",
-                6 => "CHARGE",
-                default => $this->getNatureClasse($request->RefTypeCompte)
-            },
-            "niveau"      => 5,
-            "est_classe"  => 0,
-            "compte_parent" => $request->RefSousGroupe
-        ]);
+        // Construction du numéro de compte pour USD
+        $numCompteUSD = $request->RefSousGroupe . $codeAgence . "1";
+        if (!Comptes::where('NumCompte', $numCompteUSD)->exists()) {
+            Comptes::create([
+                "CodeAgence"    => $codeAgence,
+                "NumCompte"     => $numCompteUSD,
+                "NomCompte"     => $request->IntituleCompteNew,
+                "RefTypeCompte" => $request->RefTypeCompte,
+                "RefCadre"      => $request->RefCadre,
+                "RefGroupe"     => $request->RefGroupe,
+                "RefSousGroupe" => $request->RefSousGroupe,
+                "CodeMonnaie"   => 1,
+                "DateOuverture" => $date,
+                "NumAdherant"   => $numCompteUSD,
+                "nature_compte" => $request->nature_compte ?? match ((int)$request->RefTypeCompte) {
+                    7 => "PRODUIT",
+                    6 => "CHARGE",
+                    default => $this->getNatureClasse($request->RefTypeCompte)
+                },
+                "niveau"      => 5,
+                "est_classe"  => 0,
+                "compte_parent" => $request->RefSousGroupe
+            ]);
+        }
     }
-}
 
     //RECUPERER LA LISTE DE COMPTE INTERNE
 
     public function getCreatedAccount()
     {
         $data = Comptes::whereIn('nature_compte', [
-        // 'ACTIF',
-        // 'PASSIF',
-        'PRODUIT',
-        'CHARGE',
-        // 'HORS BILAN'
-    ])
-    ->where('niveau', 5)
-    ->orderByRaw("CASE 
+            'ACTIF',
+            'PASSIF',
+            'PRODUIT',
+            'CHARGE',
+            'HORS BILAN'
+        ])
+            ->where('niveau', 5)
+            ->orderByRaw("CASE 
         WHEN nature_compte = 'ACTIF' THEN 1
         WHEN nature_compte = 'PASSIF' THEN 2
         WHEN nature_compte = 'PRODUIT' THEN 3
@@ -759,8 +760,8 @@ class ComptesParamController extends Controller
         WHEN nature_compte = 'HORS BILAN' THEN 5
         ELSE 6
     END")
-    ->orderBy('NumCompte')
-    ->get();
+            ->orderBy('NumCompte')
+            ->get();
         return response()->json([
             "status" => 1,
             "data" => $data,
@@ -812,5 +813,54 @@ class ComptesParamController extends Controller
             "status" => 1,
             "compteEpargne" => $compteEpargne
         ]);
+    }
+
+
+
+    public function listAgences()
+    {
+        $agences = Agences::orderBy('created_at', 'desc')->get();
+
+        return response()->json($agences);
+    }
+
+    public function showAgence($id)
+    {
+        $agence = Agences::findOrFail($id);
+        return response()->json($agence);
+    }
+    public function deleteAgence($id)
+    {
+        // Vérifier que l'utilisateur est authentifié et a le rôle SuperAdmin
+        if (!auth()->check() || auth()->user()->role !== 'SuperAdmin') {
+            return response()->json([
+                'status' => 0,
+                'msg' => 'Vous n\'êtes pas autorisé à supprimer une agence.'
+            ], 403);
+        }
+
+        $agence = Agences::findOrFail($id);
+        $agence->delete();
+        return response()->json(['message' => 'Agence supprimée']);
+    }
+
+    // === Vos méthodes existantes (gardez-les) ===
+    public function storeNewAgence(Request $request)
+    {
+        $validated = $request->validate([
+            'code_agence' => 'required|unique:agences',
+            'nom_agence'  => 'required',
+        ]);
+
+
+        $agence = Agences::create($validated);
+        return response()->json($agence, 201);
+    }
+
+    public function updateNewAgence(Request $request, $id)
+    {
+        $agence = Agences::findOrFail($id);
+        $agence->update($request->all());
+        return response()->json($agence);
     }
 }

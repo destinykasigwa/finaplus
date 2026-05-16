@@ -19,6 +19,7 @@ use App\Http\Controllers\SMSBankingController;
 use App\Http\Controllers\SuiviCreditController;
 use App\Http\Controllers\UtilisateurController;
 use App\Http\Controllers\ComptesParamController;
+use App\Http\Controllers\ImmobilisationController;
 use App\Http\Controllers\TransactionsController;
 use App\Http\Middleware\Authenticate;
 use App\Models\AdhesionMembre;
@@ -634,13 +635,34 @@ Route::get('/eco/agence/courante', [ReportsController::class, 'getCurrentAgence'
 
 
 
+// Route::post('/eco/agences/store', [ComptesParamController::class, 'storeNewAgence'])->name('agences.store');
+// Route::put('/eco/agences/update/{id}', [ComptesParamController::class, 'updateNewAgence'])->name('agences.update');
 
 
+// Gestion des agences
+// Routes pour la liste et la suppression (sans préfixe)
+Route::get('/agences/list', [ComptesParamController::class, 'listAgences']);
+Route::delete('/agences/delete/{id}', [ComptesParamController::class, 'deleteAgence']);
+
+// Routes avec le préfixe /eco/agences (pour correspondre aux appels du formulaire)
+Route::prefix('eco/agences')->group(function () {
+    Route::get('/store/{id}', [ComptesParamController::class, 'showAgence']);      // ⚠️ GET pour récupérer une agence
+    Route::post('/store', [ComptesParamController::class, 'storeNewAgence']);      // création
+    Route::put('/update/{id}', [ComptesParamController::class, 'updateNewAgence']); // modification
+});
 
 
-
-
-
+// ==================== IMMOBILISATIONS ====================
+//RECUPERE LA PAGE D'ACCEUILLE POUR ENREGISTRER LES IMMOBILISATIONS
+Route::get('/eco/pages/enregistrement-imo', [ImmobilisationController::class, 'getImmoHomePage'])->name('eco.pages.enregistrement-imo');;
+Route::get('/eco/immo/types', [ImmobilisationController::class, 'getTypes']);
+Route::get('/eco/immo/liste', [ImmobilisationController::class, 'listeImmobilisations']);
+Route::post('/eco/immo/creer', [ImmobilisationController::class, 'creerImmobilisation']);
+Route::put('/eco/immo/modifier/{id}', [ImmobilisationController::class, 'modifierImmobilisation']);
+Route::delete('/eco/immo/supprimer/{id}', [ImmobilisationController::class, 'supprimerImmobilisation']);
+Route::get('/eco/comptes/immobilisations', [ImmobilisationController::class, 'getComptesImmobilisations']);
+Route::get('/eco/comptes/amortissements', [ImmobilisationController::class, 'getComptesAmortissements']);
+Route::post('/eco/immo/amortissement', [ImmobilisationController::class, 'calculerAmortissementMensuel']);
 
 });
 

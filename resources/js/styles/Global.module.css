@@ -8,3 +8,78 @@
     padding: 20px;
 
 }
+
+
+
+
+
+
+.modern-textarea {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-family: inherit; /* pour hériter de la police du formulaire */
+    transition: all 0.2s ease;
+    resize: vertical;   /* permet un redimensionnement vertical uniquement */
+    min-height: 80px;   /* hauteur de départ confortable */
+}
+
+.modern-textarea:focus {
+    border-color: #20c997;
+    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+    outline: none;
+}
+
+.modern-input {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+.modern-input:focus {
+    border-color: #20c997;
+    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+}
+.modern-select {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    background-color: white;
+    transition: all 0.2s ease;
+}
+.modern-select:focus {
+    border-color: #20c997;
+    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+}
+.label-modern {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 6px;
+    display: block;
+}
+.section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+.gradient-btn {
+    background: linear-gradient(135deg, #20c997, #198764);
+    border: none;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+.gradient-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(32, 201, 151, 0.3);
+}
+
+.modern-textarea {
+    width: 100%;        /* s’adapte au conteneur parent */
+    max-width: 500px;   /* optionnel : limite la largeur */
+    /* ou bien une largeur fixe : width: 300px; */
+}

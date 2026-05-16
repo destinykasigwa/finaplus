@@ -43,6 +43,7 @@ class EpargneAdhesionModel extends Model
         "rec_sur_epargne_radie_fc",
         "show_commission_pannel",
         "type_recu",
-        "fraisSMS"
+        "fraisSMS",
+        "epargneObligatoire"
     ];
 }

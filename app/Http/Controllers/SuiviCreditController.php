@@ -20,6 +20,7 @@ use App\Models\CompteurTransaction;
 use App\Models\Remboursementcredit;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CompteurDossierCredit;
+use App\Models\EpargneAdhesionModel;
 use App\Models\FrequenceRemboursement;
 use Illuminate\Support\Facades\Validator;
 
@@ -50,7 +51,12 @@ class SuiviCreditController extends Controller
     public function getCompteToUpdate(Request $request)
     {
 
-
+        // Récupérer l'agence courante de l'utilisateur (depuis la session)
+        $currentAgence = session('current_agence');
+        if (!$currentAgence || !isset($currentAgence['code_agence'])) {
+            return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+        }
+        $codeAgenceCourante = $currentAgence['code_agence'];
         if (isset($request->seachedAccount)) {
             //dd($request->seachedAccount);
             $data = Portefeuille::where(function ($query) use ($request) {
@@ -59,6 +65,7 @@ class SuiviCreditController extends Controller
             })
                 ->join("type_credits", "portefeuilles.RefTypeCredit", "=", "type_credits.id")
                 ->where("portefeuilles.Cloture", 0)
+                ->where("portefeuilles.CodeAgence", $codeAgenceCourante)
                 ->first();
             if ($data) {
                 $data = Portefeuille::where(function ($query) use ($request) {
@@ -267,63 +274,19 @@ class SuiviCreditController extends Controller
 
     public function getSeachedAccount(Request $request)
     {
-        if (isset($request->seachedAccount)) {
+        try {
+            if (isset($request->seachedAccount)) {
 
-            $search = $request->seachedAccount;
+                $search = $request->seachedAccount;
 
-            // Récupération de l'agence courante de l'utilisateur
-            $currentAgence = session('current_agence');
-            $codeAgenceCourante = $currentAgence['code_agence'] ?? null;
-            if (!$codeAgenceCourante) {
-                return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
-            }
-
-            // Recherche du compte (niveau 5) dans l'agence courante
-            $data = Comptes::where('niveau', 5)
-                ->where('CodeAgence', $codeAgenceCourante)
-                ->where(function ($query) use ($search) {
-                    $query->where('NumCompte', $search)
-                        ->orWhere('NumAdherant', $search)
-                        ->orWhere('Num_Manuel', $search);
-                })
-                ->first();
-
-
-            if (!$data) {
-                return response()->json(['status' => 0, 'msg' => "Ce numéro de compte n'existe pas dans votre agence."]);
-            }
-
-            // Vérification d'un crédit non clôturé
-            // $checkNumExist = Comptes::where("NumAdherant", $request->seachedAccount)->orWhere("NumCompte", $request->seachedAccount)->first();
-
-            if ($data) {
-                $checkCreditNonCloture = Portefeuille::where(function ($query) use ($request, $codeAgenceCourante) {
-                    $query->where("NumCompteEpargne", $request->seachedAccount)
-                        ->orWhere("numAdherant", $request->seachedAccount);
-                })->where("CodeAgence", $codeAgenceCourante)
-                    ->first();
-
-                if ($checkCreditNonCloture) {
-                    if ($checkCreditNonCloture->Cloture == 0) {
-                        return response()->json([
-                            'status' => 0,
-                            'msg' => "Vous devez d'abord clôturer le crédit encours avant de monter un nouveau."
-                        ]);
-                    }
-                }
-                //  $data_numdossier = DB::select("SELECT * FROM compteur_dossier_credits ORDER BY id DESC")[0];
-                // Récupérer l'agence depuis la base
+                // Récupération de l'agence courante de l'utilisateur
                 $currentAgence = session('current_agence');
-                $codeAgence = $currentAgence['code_agence'] ?? null;
-                $agence = Agences::where('code_agence', $codeAgence)->first();
-                if (!$codeAgence) {
+                $codeAgenceCourante = $currentAgence['code_agence'] ?? null;
+                if (!$codeAgenceCourante) {
                     return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
                 }
-                $numDocument = $agence->last_ref_numdossier + 1;
-                $agence->last_ref_numdossier = $numDocument;
-                // $agence->save();
-                $data_numdossier ="ND".$currentAgence."0". $numDocument;
 
+                // Recherche du compte (niveau 5) dans l'agence courante
                 $data = Comptes::where('niveau', 5)
                     ->where('CodeAgence', $codeAgenceCourante)
                     ->where(function ($query) use ($search) {
@@ -332,66 +295,114 @@ class SuiviCreditController extends Controller
                             ->orWhere('Num_Manuel', $search);
                     })
                     ->first();
-                $codeAgence = $data->CodeAgence;
-                if ($data->CodeMonnaie == 2) {
-                    if ($data->NumAdherant < 10) {
-                        $compteCreditEnFranc = "320100000" . $data->NumAdherant . $codeAgence . "2";
-                        $epargneCautionCDF = "334100000" . $data->NumAdherant . $codeAgence . "2";
-                    } else if ($data->NumAdherant >= 10 && $data->NumAdherant < 100) {
-                        $epargneCautionCDF = "33410000" . $data->NumAdherant . $codeAgence . "2";
-                        $compteCreditEnFranc = "32010000" . $data->NumAdherant . $codeAgence . "2";
-                    } else if ($data->NumAdherant >= 100 && $data->NumAdherant < 1000) {
-                        $epargneCautionCDF = "3341000" . $data->NumAdherant . $codeAgence . "2";
-                        $compteCreditEnFranc = "3201000" . $data->NumAdherant . $codeAgence . "2";
-                    } else if ($data->NumAdherant >= 1000 && $data->NumAdherant < 10000) {
-                        $epargneCautionCDF = "334100" . $data->NumAdherant . $codeAgence . "2";
-                        $compteCreditEnFranc = "320100" . $data->NumAdherant . $codeAgence . "2";
-                    } else if ($data->NumAdherant >= 10000 && $data->NumAdherant < 100000) {
-                        $epargneCautionCDF = "33410" . $data->NumAdherant . $codeAgence . "2";
-                        $compteCreditEnFranc = "32010" . $data->NumAdherant . $codeAgence . "2";
-                    } else if ($data->NumAdherant >= 100000 && $data->NumAdherant < 1000000) {
-                        $epargneCautionCDF = "3341" . $data->NumAdherant . $codeAgence . "2";
-                        $compteCreditEnFranc = "3201" . $data->NumAdherant . $codeAgence . "2";
-                    }
-                } else if ($data->CodeMonnaie == 1) {
-                    if ($data->NumAdherant < 10) {
-                        $compteCreditEnUSD = "320000000" . $data->NumAdherant . $codeAgence . "1";
-                        $epargneCautionUSD = "334000000" . $data->NumAdherant . $codeAgence . "1";
-                    } else if ($data->NumAdherant >= 10 && $data->NumAdherant < 100) {
-                        $epargneCautionUSD = "33400000" . $data->NumAdherant . $codeAgence . "1";
-                        $compteCreditEnUSD = "32000000" . $data->NumAdherant . $codeAgence . "1";
-                    } else if ($data->NumAdherant >= 100 && $data->NumAdherant < 1000) {
-                        $epargneCautionUSD = "3340000" . $data->NumAdherant . $codeAgence . "1";
-                        $compteCreditEnUSD = "3200000" . $data->NumAdherant . $codeAgence . "1";
-                    } else if ($data->NumAdherant >= 1000 && $data->NumAdherant < 10000) {
-                        $epargneCautionUSD = "334000" . $data->NumAdherant . $codeAgence . "1";
-                        $compteCreditEnUSD = "320000" . $data->NumAdherant . $codeAgence . "1";
-                    } else if ($data->NumAdherant >= 10000 && $data->NumAdherant < 100000) {
-                        $epargneCautionUSD = "33400" . $data->NumAdherant . $codeAgence . "1";
-                        $compteCreditEnUSD = "32000" . $data->NumAdherant . $codeAgence . "1";
-                    } else if ($data->NumAdherant >= 100000 && $data->NumAdherant < 1000000) {
-                        $epargneCautionUSD = "3340" . $data->NumAdherant . $codeAgence . "1";
-                        $compteCreditEnUSD = "3200" . $data->NumAdherant . $codeAgence . "1";
-                    }
+
+
+                if (!$data) {
+                    return response()->json(['status' => 0, 'msg' => "Ce numéro de compte n'existe pas dans votre agence."]);
                 }
-                return response()->json([
-                    "status" => 1,
-                    "data" => $data,
-                    "compteCredit" => $data->CodeMonnaie == 2 ? $compteCreditEnFranc : $compteCreditEnUSD,
-                    "EpargneCaution" => $data->CodeMonnaie == 2 ? $epargneCautionCDF : $epargneCautionUSD,
-                    "data_numdossier" => $data_numdossier
-                ]);
+
+                // Vérification d'un crédit non clôturé
+                // $checkNumExist = Comptes::where("NumAdherant", $request->seachedAccount)->orWhere("NumCompte", $request->seachedAccount)->first();
+
+                if ($data) {
+                    $checkCreditNonCloture = Portefeuille::where(function ($query) use ($request, $codeAgenceCourante) {
+                        $query->where("NumCompteEpargne", $request->seachedAccount)
+                            ->orWhere("numAdherant", $request->seachedAccount);
+                    })->where("CodeAgence", $codeAgenceCourante)
+                        ->first();
+
+                    if ($checkCreditNonCloture) {
+                        if ($checkCreditNonCloture->Cloture == 0) {
+                            return response()->json([
+                                'status' => 0,
+                                'msg' => "Vous devez d'abord clôturer le crédit encours avant de monter un nouveau."
+                            ]);
+                        }
+                    }
+                    //  $data_numdossier = DB::select("SELECT * FROM compteur_dossier_credits ORDER BY id DESC")[0];
+                    // Récupérer l'agence depuis la base
+                    $currentAgence = session('current_agence');
+                    $codeAgence = $currentAgence['code_agence'] ?? null;
+                    $agence = Agences::where('code_agence', $codeAgence)->first();
+                    if (!$codeAgence) {
+                        return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
+                    }
+                    $numDocument = $agence->last_ref_numdossier + 1;
+                    $agence->last_ref_numdossier = $numDocument;
+                    // $agence->save();
+                    $data_numdossier = "ND" . $codeAgence . "0" . $numDocument;
+
+                    $data = Comptes::where('niveau', 5)
+                        ->where('CodeAgence', $codeAgenceCourante)
+                        ->where(function ($query) use ($search) {
+                            $query->where('NumCompte', $search)
+                                ->orWhere('NumAdherant', $search)
+                                ->orWhere('Num_Manuel', $search);
+                        })
+                        ->first();
+                    $codeAgence = $data->CodeAgence;
+                    if ($data->CodeMonnaie == 2) {
+                        if ($data->NumAdherant < 10) {
+                            $compteCreditEnFranc = "320100000" . $data->NumAdherant . $codeAgence . "2";
+                            $epargneCautionCDF = "334100000" . $data->NumAdherant . $codeAgence . "2";
+                        } else if ($data->NumAdherant >= 10 && $data->NumAdherant < 100) {
+                            $epargneCautionCDF = "33410000" . $data->NumAdherant . $codeAgence . "2";
+                            $compteCreditEnFranc = "32010000" . $data->NumAdherant . $codeAgence . "2";
+                        } else if ($data->NumAdherant >= 100 && $data->NumAdherant < 1000) {
+                            $epargneCautionCDF = "3341000" . $data->NumAdherant . $codeAgence . "2";
+                            $compteCreditEnFranc = "3201000" . $data->NumAdherant . $codeAgence . "2";
+                        } else if ($data->NumAdherant >= 1000 && $data->NumAdherant < 10000) {
+                            $epargneCautionCDF = "334100" . $data->NumAdherant . $codeAgence . "2";
+                            $compteCreditEnFranc = "320100" . $data->NumAdherant . $codeAgence . "2";
+                        } else if ($data->NumAdherant >= 10000 && $data->NumAdherant < 100000) {
+                            $epargneCautionCDF = "33410" . $data->NumAdherant . $codeAgence . "2";
+                            $compteCreditEnFranc = "32010" . $data->NumAdherant . $codeAgence . "2";
+                        } else if ($data->NumAdherant >= 100000 && $data->NumAdherant < 1000000) {
+                            $epargneCautionCDF = "3341" . $data->NumAdherant . $codeAgence . "2";
+                            $compteCreditEnFranc = "3201" . $data->NumAdherant . $codeAgence . "2";
+                        }
+                    } else if ($data->CodeMonnaie == 1) {
+                        if ($data->NumAdherant < 10) {
+                            $compteCreditEnUSD = "320000000" . $data->NumAdherant . $codeAgence . "1";
+                            $epargneCautionUSD = "334000000" . $data->NumAdherant . $codeAgence . "1";
+                        } else if ($data->NumAdherant >= 10 && $data->NumAdherant < 100) {
+                            $epargneCautionUSD = "33400000" . $data->NumAdherant . $codeAgence . "1";
+                            $compteCreditEnUSD = "32000000" . $data->NumAdherant . $codeAgence . "1";
+                        } else if ($data->NumAdherant >= 100 && $data->NumAdherant < 1000) {
+                            $epargneCautionUSD = "3340000" . $data->NumAdherant . $codeAgence . "1";
+                            $compteCreditEnUSD = "3200000" . $data->NumAdherant . $codeAgence . "1";
+                        } else if ($data->NumAdherant >= 1000 && $data->NumAdherant < 10000) {
+                            $epargneCautionUSD = "334000" . $data->NumAdherant . $codeAgence . "1";
+                            $compteCreditEnUSD = "320000" . $data->NumAdherant . $codeAgence . "1";
+                        } else if ($data->NumAdherant >= 10000 && $data->NumAdherant < 100000) {
+                            $epargneCautionUSD = "33400" . $data->NumAdherant . $codeAgence . "1";
+                            $compteCreditEnUSD = "32000" . $data->NumAdherant . $codeAgence . "1";
+                        } else if ($data->NumAdherant >= 100000 && $data->NumAdherant < 1000000) {
+                            $epargneCautionUSD = "3340" . $data->NumAdherant . $codeAgence . "1";
+                            $compteCreditEnUSD = "3200" . $data->NumAdherant . $codeAgence . "1";
+                        }
+                    }
+                    return response()->json([
+                        "status" => 1,
+                        "data" => $data,
+                        "compteCredit" => $data->CodeMonnaie == 2 ? $compteCreditEnFranc : $compteCreditEnUSD,
+                        "EpargneCaution" => $data->CodeMonnaie == 2 ? $epargneCautionCDF : $epargneCautionUSD,
+                        "data_numdossier" => $data_numdossier
+                    ]);
+                } else {
+                    return response()->json([
+                        'status' => 0,
+                        'msg' => "Ce numero de compte n'existe pas."
+                    ]);
+                }
             } else {
                 return response()->json([
                     'status' => 0,
-                    'msg' => "Ce numero de compte n'existe pas."
+                    'msg' => "Veuillez renseigner un numero de compte"
                 ]);
             }
-        } else {
-            return response()->json([
-                'status' => 0,
-                'msg' => "Veuillez renseigner un numero de compte"
-            ]);
+        } catch (\Exception $e) {
+            return response()->json(["status" => 0, "msg" => "Erreur : " . $e->getMessage()]);
         }
     }
 
@@ -454,15 +465,19 @@ class SuiviCreditController extends Controller
         } else {
 
             if (isset($request->NumDossier)) {
-                  $currentAgence = session('current_agence');
-                 $codeAgence = $currentAgence['code_agence'] ?? null;
+                $currentAgence = session('current_agence');
+                $codeAgence = $currentAgence['code_agence'] ?? null;
                 //VERIFIE SI L'ECHEACHIER N'ETAIT PAS DEJA GENERER POUR CE CREDIT
-                $checkRow = Echeancier::where("NumDossier", $request->NumDossier)->where("CodeAgence",$codeAgence)->first();
+                $checkRow = Echeancier::where("NumDossier", $request->NumDossier)->where("CodeAgence", $codeAgence)->first();
                 //POUR REECHELONNER LE CREDIT
                 if ($request->reechelonne and $checkRow) {
+                    //ICI LES ECRITURES POUR FAIRES UNE REPRISE 
+
+
+
                     //VERIFIE SI LE CREDIT N'EST PAS EN RETARD CAR INTERDIT DE REECHELONNER UN CREDIT EN RETARD
                     $chechCreditRetard = JourRetard::where("NumDossier", $request->NumDossier)
-                        ->where("NbrJrRetard", ">", 0)->where("CodeAgence",$codeAgence)->first();
+                        ->where("NbrJrRetard", ">", 0)->where("CodeAgence", $codeAgence)->first();
                     if (!$chechCreditRetard) {
                         //RECUPERE LE RESTANT DU DU CREDIT
                         $soldeRestant =  Echeancier::selectRaw('
@@ -506,13 +521,13 @@ class SuiviCreditController extends Controller
                 //SI L'ECHEANCIER ETAIT DEJA GENERER POUR CE CREDIT EST QUE C PAS UN REECHELONNEMENT
                 if ($checkRow and !$request->reechelonne) {
                     //VERIFIE S'IL N'EXISTE PAS UN REMBOURSEMENT DEJA EFFECTUE
-                   $chechRembours = Remboursementcredit::where("NumDossie", $request->NumDossier)
-                    ->where(function ($query) {
-                        $query->where("CapitalPaye", ">", 0)
-                              ->orWhere("InteretPaye", ">", 0);
-                    })
-                    ->where('CodeAgence', $codeAgence) // ← ajout du filtre agence
-                    ->first();
+                    $chechRembours = Remboursementcredit::where("NumDossie", $request->NumDossier)
+                        ->where(function ($query) {
+                            $query->where("CapitalPaye", ">", 0)
+                                ->orWhere("InteretPaye", ">", 0);
+                        })
+                        ->where('CodeAgence', $codeAgence) // ← ajout du filtre agence
+                        ->first();
                     if (!$chechRembours) {
 
                         Echeancier::where("NumDossier", "=", $request->NumDossier)->delete();
@@ -588,8 +603,8 @@ class SuiviCreditController extends Controller
         $currentAgence = session('current_agence');
         $codeAgence = $currentAgence['code_agence'] ?? null;
         //RECUPERE LES INFORMATIONS SUR LE CREDIT DANS LE DB 
-        $data = Portefeuille::where("NumDossier", $NumDossier)->where("CodeAgence",$codeAgence)->first();
-       
+        $data = Portefeuille::where("NumDossier", $NumDossier)->where("CodeAgence", $codeAgence)->first();
+
         //MET  LE PORTE FEUILLE A JOUR
         Portefeuille::where("NumDossier", "=", $NumDossier)->update([
             "Decision" => $desicion,
@@ -605,7 +620,7 @@ class SuiviCreditController extends Controller
 
         if ($getTypeCredit->type_credit == "CREDIT TUINUKE FC" or $getTypeCredit->type_credit == "CREDIT TUINUKE USD") {
             Echeancier::create([
-                "CodeAgence"=>$codeAgence,
+                "CodeAgence" => $codeAgence,
                 "NumDossier" => $NumDossier,
                 "NumMensualite"  => 0,
                 "NbreJour" => 0,
@@ -635,7 +650,7 @@ class SuiviCreditController extends Controller
 
                     $lastRowData  = Echeancier::orderBy('ReferenceEch', 'desc')->first();
                     Echeancier::create([
-                        "CodeAgence"=>$codeAgence,
+                        "CodeAgence" => $codeAgence,
                         "NumDossier" => $NumDossier,
                         "NumMensualite" => 0,
                         "NbreJour" => $lastRowData->NbreJour + 1,
@@ -657,7 +672,7 @@ class SuiviCreditController extends Controller
                 foreach ($dates as $dt) {
                     $lastRowData  = Echeancier::orderBy('ReferenceEch', 'desc')->first();
                     Echeancier::create([
-                        "CodeAgence"=>$codeAgence,
+                        "CodeAgence" => $codeAgence,
                         "NumDossier" => $NumDossier,
                         "NumMensualite" => 0,
                         "NbreJour" => $lastRowData->NbreJour + 1,
@@ -677,7 +692,7 @@ class SuiviCreditController extends Controller
             }
         } else if ($getTypeCredit->type_credit == "CREDIT INUKA FC" or $getTypeCredit->type_credit == "CREDIT INUKA USD") {
             Echeancier::create([
-                "CodeAgence"=>$codeAgence,
+                "CodeAgence" => $codeAgence,
                 "NumDossier" => $NumDossier,
                 "NumMensualite"  => 0,
                 "NbreJour" => 0,
@@ -705,7 +720,7 @@ class SuiviCreditController extends Controller
                     $totalAp = $interetApayer + $capitalAmorti;
                     $lastRowData  = Echeancier::orderBy('ReferenceEch', 'desc')->first();
                     Echeancier::create([
-                        "CodeAgence"=>$codeAgence,
+                        "CodeAgence" => $codeAgence,
                         "NumDossier" => $NumDossier,
                         "NumMensualite" => 0,
                         "NbreJour" => $lastRowData->NbreJour + 1,
@@ -737,7 +752,7 @@ class SuiviCreditController extends Controller
                     $totalAp = $interetApayer + $capitalAmorti +  $epargneObligatoire;
 
                     Echeancier::create([
-                        "CodeAgence"=>$codeAgence,
+                        "CodeAgence" => $codeAgence,
                         "NumDossier" => $NumDossier,
                         "NumMensualite" => 0,
                         "NbreJour" => $lastRowData->NbreJour + 1,
@@ -760,7 +775,7 @@ class SuiviCreditController extends Controller
         } else if ($getTypeCredit->type_credit == "C. A LA CONSOMMATION FC" or  $getTypeCredit->type_credit == "C. PETIT COMMERCE FC" or $getTypeCredit->type_credit == "C. A LA CONSOMMATION USD" or  $getTypeCredit->type_credit == "C. PETIT COMMERCE USD") {
 
             Echeancier::create([
-                "CodeAgence"=>$codeAgence,
+                "CodeAgence" => $codeAgence,
                 "NumDossier" => $NumDossier,
                 "NumMensualite"  => 0,
                 "NbreJour" => 0,
@@ -786,7 +801,7 @@ class SuiviCreditController extends Controller
                     $totalAp = $interetApayer + $capitalAmorti;
                     $lastRowData  = Echeancier::orderBy('ReferenceEch', 'desc')->first();
                     Echeancier::create([
-                        "CodeAgence"=>$codeAgence,
+                        "CodeAgence" => $codeAgence,
                         "NumDossier" => $NumDossier,
                         "NumMensualite" => 0,
                         "NbreJour" => $lastRowData->NbreJour + 1,
@@ -813,7 +828,7 @@ class SuiviCreditController extends Controller
                     $capitalAmorti = $capital / $data->NbrTranche;
                     $totalAp = $interetApayer + $capitalAmorti;
                     Echeancier::create([
-                        "CodeAgence"=>$codeAgence,
+                        "CodeAgence" => $codeAgence,
                         "NumDossier" => $NumDossier,
                         "NumMensualite" => 0,
                         "NbreJour" => $lastRowData->NbreJour + 1,
@@ -852,285 +867,318 @@ class SuiviCreditController extends Controller
                     $compteEpargneCaution = $getDossier->NumCompteEpargneGarantie;
                     //dd($compteEpargneCaution);
                     $NumCompteCredit = $getDossier->NumCompteCredit;
-                    //VERIFIE SI LE COMPTE N PAS ENCORE CREE
-                    $checkCompteEpargne = Comptes::where("NumCompte", $compteEpargneCaution)->first();
-                    if (!$checkCompteEpargne) {
-                        //ON CREE SON COMPTE EPARGNE GARANTIE 
-                        Comptes::create([
-                            'CodeAgence' => $getDossier->CodeAgence,
-                            'NumCompte' => $compteEpargneCaution,
-                            'NomCompte' => $getDossier->NomCompte,
-                            'RefTypeCompte' => "3",
-                            'RefCadre' => "33",
-                            'RefGroupe' => "334",
-                            'RefSousGroupe' => "3340",
-                            'CodeMonnaie' => $getDossier->CodeMonnaie == "CDF" ? 2 : 1,
-                            'NumAdherant' => $getDossier->numAdherant,
-                            'nature_compte' => "PASSIF",
-                            'niveau' => "5",
-                            'est_classe' => 0,
-                            'compte_parent' => "3340",
-                        ]);
-                    }
-                    $checkCompteCredit = Comptes::where("NumCompte", $NumCompteCredit)->first();
-                    if (!$checkCompteCredit) {
-                        //ON CREE SON COMPTE CREDIT
-                        Comptes::create([
-                            'CodeAgence' => $getDossier->CodeAgence,
-                            'NumCompte' => $NumCompteCredit,
-                            'NomCompte' => $getDossier->NomCompte,
-                            'RefTypeCompte' => "3",
-                            'RefCadre' => "32",
-                            'RefGroupe' => $getDossier->CodeMonnaie == "CDF" ? "321" : "320",
-                            'RefSousGroupe' => $getDossier->CodeMonnaie == "CDF" ? "3210" : "3210",
-                            'CodeMonnaie' => $getDossier->CodeMonnaie == "CDF" ? 2 : 1,
-                            'NumAdherant' => $getDossier->numAdherant,
-                            'nature_compte' => "ACTIF",
-                            'niveau' => "5",
-                            'est_classe' => 0,
-                            'compte_parent' => "3200",
-                        ]);
-                    }
+                    $getTauxEpargneObligatoire = EpargneAdhesionModel::first();
+                    $tauxEpargneObligatoire = $getTauxEpargneObligatoire ? $getTauxEpargneObligatoire->epargneObligatoire : 0;
+                    if ($tauxEpargneObligatoire > 0) {
 
-                    //RECUPERE LE SOLDE SI C'EST UN CREDIT EN CDF
-                    //RECUPERE LES NUMERO DE COMPTE
-                    // $compteEpargneGarantieCDF = "3340000000202";
-                    // $compteEpargneGarantieUSD = "3340000000201";
-                    if ($getDossier->CodeMonnaie == "CDF") {
-                        $soldeMembreCDF = Transactions::select(
-                            DB::raw("SUM(Creditfc)-SUM(Debitfc) as soldeCDF"),
-                        )->where("NumCompte", '=', $NumCompteEpargne)
-                            ->groupBy("NumCompte")
-                            ->first();
-                        $montantAccorde = $getDossier->MontantAccorde;
-                        $garantieCredit = ($montantAccorde * 15) / 100;
-
-                        if ($soldeMembreCDF->soldeCDF >= $garantieCredit) {
-                            //ON RECUPERE LE 30% SUR LE COMPTE DE LA PERSONNE CONCERNEE POUR L'EPARGNE GARANTIE
-                            //CREE UN NUMERO DE TRANSACTION
-                            CompteurTransaction::create([
-                                'fakevalue' => "0000",
-                            ]);
-                            $numOperation = [];
-                            $numOperation = CompteurTransaction::latest()->first();
-                            $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "R00" . $numOperation->id;
-                            $dataSystem = TauxEtDateSystem::latest()->first();
-                            $tauxDuJour = $dataSystem->TauxEnFc;
-                            $dateSaisie = date("Y-m-d");
-                            //DEBITE LE COMPTE DU MEMBRE
-                            Transactions::create([
-                                "NumTransaction" => $NumTransaction,
-                                "DateTransaction" => $getDossier->DateOctroi,
-                                "DateSaisie" => $dateSaisie,
-                                "TypeTransaction" => "D",
-                                "CodeMonnaie" => 2,
-                                "CodeAgence" => $getDossier->CodeAgence,
-                                "NumDossier" => "DOS00" . $numOperation->id,
-                                "NumDemande" => "V00" . $numOperation->id,
-                                "NumCompte" => $NumCompteEpargne,
-                                "NumComptecp" => $compteEpargneCaution,
-                                "Debit"  => $garantieCredit,
-                                "Debitusd"  => $garantieCredit / $tauxDuJour,
-                                "Debitfc" => $garantieCredit,
-                                "NomUtilisateur" => Auth::user()->name,
-                                "Libelle" => "PRISE DE L'EPARGNE GARANTIE DE VOTRE CREDIT CREDIT ACCORDE EN DATE DU " . $dateSaisie,
-                            ]);
-
-                            //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LA COMPBALITE
-                            // Transactions::create([
-                            //     "NumTransaction" => $NumTransaction,
-                            //     "DateTransaction" => $getDossier->DateOctroi,
-                            //     "DateSaisie" => $dateSaisie,
-                            //     "TypeTransaction" => "C",
-                            //     "CodeMonnaie" => 2,
-                            //     "CodeAgence" => $getDossier->CodeAgence,
-                            //     "NumDossier" => "DOS00" . $numOperation->id,
-                            //     "NumDemande" => "V00" . $numOperation->id,
-                            //     "NumCompte" => $compteEpargneGarantieCDF,
-                            //     "NumComptecp" => $NumCompteEpargne,
-                            //     "Credit"  => $garantieCredit,
-                            //     "Creditusd"  => $garantieCredit / $tauxDuJour,
-                            //     "Creditfc" => $garantieCredit,
-                            //     "NomUtilisateur" => Auth::user()->name,
-                            //     "Libelle" => "MISE EN PLACE  DE  L'EPARGNE GARANTIE DU CREDIT OCRTROYE A " . $getDossier->NomCompte . " NUMERO DE COMPTE " . $NumCompteEpargne,
-                            // ]);
-                            //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LE CLIENT
-                            Transactions::create([
-                                "NumTransaction" => $NumTransaction,
-                                "DateTransaction" => $getDossier->DateOctroi,
-                                "DateSaisie" => $dateSaisie,
-                                "TypeTransaction" => "C",
-                                "CodeMonnaie" => 2,
-                                "CodeAgence" => $getDossier->CodeAgence,
-                                "NumDossier" => "DOS00" . $numOperation->id,
-                                "NumDemande" => "V00" . $numOperation->id,
-                                "NumCompte" => $compteEpargneCaution,
-                                "NumComptecp" => $NumCompteEpargne,
-                                "Credit"  => $garantieCredit,
-                                "Creditusd"  => $garantieCredit / $tauxDuJour,
-                                "Creditfc" => $garantieCredit,
-                                "NomUtilisateur" => Auth::user()->name,
-                                "Libelle" => "MISE EN PLACE  DE  L'EPARGNE GARANTIE DU CREDIT OCRTROYE A " . $getDossier->NomCompte . " NUMERO DE COMPTE " . $NumCompteEpargne,
-                            ]);
-
-                            //ENREGISTRE CA DANS UNE TABLE SPECIFIQUE
-
-                            LockedGarantie::create([
-                                "NumCompte" => $NumCompteEpargne,
-                                "EpargneGarantie" => $compteEpargneCaution,
-                                "NumAbrege" => $getDossier->numAdherant,
-                                "Montant" => $garantieCredit,
-                                "Devise" => "CDF",
-                            ]);
-                            //MET A JOUR LA TABLE POURTE FEUILLE 
-                            Portefeuille::where("NumDossier", $request->NumDossier)->update([
-                                "Accorde" => 1
-                            ]);
-
-
-                            //PERMET DE METTRE A JOUR LA TABLE PORTE FEUILLE POUR RENSEIGNE LA SOMME DES INTERET ET CAPITAL
-                            //GET SUM
-                            $soldeInteret = Echeancier::select(
-                                DB::raw("SUM(Interet) as sommeInteret"),
-                            )->where("NumDossier", '=', $request->NumDossier)
-                                ->groupBy("NumDossier")
-                                ->first();
-
-                            //UPADATE TABLE
-                            Portefeuille::where("NumDossier", $request->NumDossier)->update([
-                                "CompteInteret" => $CompteInteret,
-                                "InteretDu" => $soldeInteret->sommeInteret
-                            ]);
-
-                            return response()->json([
-                                'status' => 1,
-                                'msg' => "Crédit bien accordé"
-                            ]);
-                        } else {
-                            return response()->json([
-                                'status' => 0,
-                                'msg' => "Le solde pour constituer l'Epargne garantie de ce crédit est insiffusant"
+                        //VERIFIE SI LE COMPTE N PAS ENCORE CREE
+                        $checkCompteEpargne = Comptes::where("NumCompte", $compteEpargneCaution)->first();
+                        if (!$checkCompteEpargne) {
+                            //ON CREE SON COMPTE EPARGNE GARANTIE 
+                            Comptes::create([
+                                'CodeAgence' => $getDossier->CodeAgence,
+                                'NumCompte' => $compteEpargneCaution,
+                                'NomCompte' => $getDossier->NomCompte,
+                                'RefTypeCompte' => "3",
+                                'RefCadre' => "33",
+                                'RefGroupe' => "334",
+                                'RefSousGroupe' => "3340",
+                                'CodeMonnaie' => $getDossier->CodeMonnaie == "CDF" ? 2 : 1,
+                                'NumAdherant' => $getDossier->numAdherant,
+                                'nature_compte' => "PASSIF",
+                                'niveau' => "5",
+                                'est_classe' => 0,
+                                'compte_parent' => "3340",
                             ]);
                         }
-                    } else if ($getDossier->CodeMonnaie == "USD") {
-
-                        $soldeMembreUSD = Transactions::select(
-                            DB::raw("SUM(Creditusd)-SUM(Debitusd) as soldeUSD"),
-                        )->where("NumCompte", '=', $NumCompteEpargne)
-                            ->groupBy("NumCompte")
-                            ->first();
-                        $montantAccorde = $getDossier->MontantAccorde;
-                        $garantieCredit = ($montantAccorde * 15) / 100;
-                        if ($soldeMembreUSD->soldeUSD >= $garantieCredit) {
-                            //ON RECUPERE LE 30% SUR LE COMPTE DE LA PERSONNE CONCERNEE POUR L'EPARGNE GARANTIE
-                            //CREE UN NUMERO DE TRANSACTION
-                            CompteurTransaction::create([
-                                'fakevalue' => "0000",
-                            ]);
-                            $numOperation = [];
-                            $numOperation = CompteurTransaction::latest()->first();
-                            $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "R00" . $numOperation->id;
-                            $dataSystem = TauxEtDateSystem::latest()->first();
-                            $tauxDuJour = $dataSystem->TauxEnFc;
-                            $dateSaisie = date("Y-m-d");
-                            //DEBITE LE COMPTE DU MEMBRE
-                            Transactions::create([
-                                "NumTransaction" => $NumTransaction,
-                                "DateTransaction" => $getDossier->DateOctroi,
-                                "DateSaisie" => $dateSaisie,
-                                "TypeTransaction" => "D",
-                                "CodeMonnaie" => 1,
-                                "CodeAgence" => $getDossier->CodeAgence,
-                                "NumDossier" => "DOS00" . $numOperation->id,
-                                "NumDemande" => "V00" . $numOperation->id,
-                                "NumCompte" => $NumCompteEpargne,
-                                "NumComptecp" =>  $compteEpargneCaution,
-                                "Debit"  => $garantieCredit,
-                                "Debitusd"  => $garantieCredit,
-                                "Debitfc" => $garantieCredit * $tauxDuJour,
-                                "NomUtilisateur" => Auth::user()->name,
-                                "Libelle" => "PRISE DE L'EPARGNE GARANTIE DE VOTRE CREDIT CREDIT ACCORDE EN DATE DU " . $dateSaisie,
-                            ]);
-
-                            //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LA COMPBALITE
-                            // Transactions::create([
-                            //     "NumTransaction" => $NumTransaction,
-                            //     "DateTransaction" => $getDossier->DateOctroi,
-                            //     "DateSaisie" => $dateSaisie,
-                            //     "TypeTransaction" => "C",
-                            //     "CodeMonnaie" => 1,
-                            //     "CodeAgence" => $getDossier->CodeAgence,
-                            //     "NumDossier" => "DOS00" . $numOperation->id,
-                            //     "NumDemande" => "V00" . $numOperation->id,
-                            //     "NumCompte" => $compteEpargneGarantieUSD,
-                            //     "NumComptecp" => $NumCompteEpargne,
-                            //     "Credit"  => $garantieCredit,
-                            //     "Creditusd"  => $garantieCredit,
-                            //     "Creditfc" => $garantieCredit * $tauxDuJour,
-                            //     "NomUtilisateur" => Auth::user()->name,
-                            //     "Libelle" => "MISE EN PLACE  DE  L'EPARGNE GARANTIE DU CREDIT OCRTROYE A " . $getDossier->NomCompte . " NUMERO DE COMPTE " . $NumCompteEpargne,
-                            // ]);
-
-                            //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LE CLIENT
-                            Transactions::create([
-                                "NumTransaction" => $NumTransaction,
-                                "DateTransaction" => $getDossier->DateOctroi,
-                                "DateSaisie" => $dateSaisie,
-                                "TypeTransaction" => "C",
-                                "CodeMonnaie" => 1,
-                                "CodeAgence" => $getDossier->CodeAgence,
-                                "NumDossier" => "DOS00" . $numOperation->id,
-                                "NumDemande" => "V00" . $numOperation->id,
-                                "NumCompte" => $compteEpargneCaution,
-                                "NumComptecp" => $NumCompteEpargne,
-                                "Credit"  => $garantieCredit,
-                                "Creditusd"  => $garantieCredit,
-                                "Creditfc" => $garantieCredit * $tauxDuJour,
-                                "NomUtilisateur" => Auth::user()->name,
-                                "Libelle" => "MISE EN PLACE  DE  L'EPARGNE GARANTIE DU CREDIT OCRTROYE A " . $getDossier->NomCompte . " NUMERO DE COMPTE " . $NumCompteEpargne,
-                            ]);
-
-
-
-                            //ENREGISTRE CA DANS UNE TABLE SPECIFIQUE
-
-                            LockedGarantie::create([
-                                "NumCompte" => $NumCompteEpargne,
-                                "EpargneGarantie" => $compteEpargneCaution,
-                                "NumAbrege" => $getDossier->numAdherant,
-                                "Montant" => $garantieCredit,
-                                "Devise" => "USD",
-                            ]);
-                            //MET A JOUR LA TABLE POURTE FEUILLE 
-                            Portefeuille::where("NumDossier", $request->NumDossier)->update([
-                                "Accorde" => 1
-                            ]);
-
-                            //PERMET DE METTRE A JOUR LA TABLE PORTE FEUILLE POUR RENSEIGNE LA SOMME DES INTERET ET CAPITAL
-                            //GET SUM
-                            $soldeInteret = Echeancier::select(
-                                DB::raw("SUM(Interet) as sommeInteret"),
-                            )->where("NumDossier", '=', $request->NumDossier)
-                                ->groupBy("NumDossier")
-                                ->first();
-
-                            //UPADATE TABLE
-                            Portefeuille::where("NumDossier", $request->NumDossier)->update([
-                                "CompteInteret" => $CompteInteret,
-                                "InteretDu" => $soldeInteret->sommeInteret
-                            ]);
-
-                            return response()->json([
-                                'status' => 1,
-                                'msg' => "Crédit bien accordé"
-                            ]);
-                        } else {
-                            return response()->json([
-                                'status' => 0,
-                                'msg' => "Le solde pour constituer l'Epargne garantie de ce crédit est insiffusant"
+                        $checkCompteCredit = Comptes::where("NumCompte", $NumCompteCredit)->first();
+                        if (!$checkCompteCredit) {
+                            //ON CREE SON COMPTE CREDIT
+                            Comptes::create([
+                                'CodeAgence' => $getDossier->CodeAgence,
+                                'NumCompte' => $NumCompteCredit,
+                                'NomCompte' => $getDossier->NomCompte,
+                                'RefTypeCompte' => "3",
+                                'RefCadre' => "32",
+                                'RefGroupe' => $getDossier->CodeMonnaie == "CDF" ? "321" : "320",
+                                'RefSousGroupe' => $getDossier->CodeMonnaie == "CDF" ? "3210" : "3210",
+                                'CodeMonnaie' => $getDossier->CodeMonnaie == "CDF" ? 2 : 1,
+                                'NumAdherant' => $getDossier->numAdherant,
+                                'nature_compte' => "ACTIF",
+                                'niveau' => "5",
+                                'est_classe' => 0,
+                                'compte_parent' => "3200",
                             ]);
                         }
+
+                        //RECUPERE LE SOLDE SI C'EST UN CREDIT EN CDF
+                        //RECUPERE LES NUMERO DE COMPTE
+                        // $compteEpargneGarantieCDF = "3340000000202";
+                        // $compteEpargneGarantieUSD = "3340000000201";
+                        if ($getDossier->CodeMonnaie == "CDF") {
+
+                            $soldeMembreCDF = Transactions::select(
+                                DB::raw("SUM(Creditfc)-SUM(Debitfc) as soldeCDF"),
+                            )->where("NumCompte", '=', $NumCompteEpargne)
+                                ->groupBy("NumCompte")
+                                ->first();
+                            $montantAccorde = $getDossier->MontantAccorde;
+                            $garantieCredit = ($montantAccorde * $tauxEpargneObligatoire) / 100;
+
+                            if ($soldeMembreCDF->soldeCDF >= $garantieCredit) {
+                                //ON RECUPERE LE 30% SUR LE COMPTE DE LA PERSONNE CONCERNEE POUR L'EPARGNE GARANTIE
+                                //CREE UN NUMERO DE TRANSACTION
+                                CompteurTransaction::create([
+                                    'fakevalue' => "0000",
+                                ]);
+                                $numOperation = [];
+                                $numOperation = CompteurTransaction::latest()->first();
+                                $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "R00" . $numOperation->id;
+                                $dataSystem = TauxEtDateSystem::latest()->first();
+                                $tauxDuJour = $dataSystem->TauxEnFc;
+                                $dateSaisie = date("Y-m-d");
+                                $dataSystem = $dataSystem->DateSystem;
+                                //DEBITE LE COMPTE DU MEMBRE
+                                Transactions::create([
+                                    "NumTransaction" => $NumTransaction,
+                                    // "DateTransaction" => $getDossier->DateOctroi,
+                                    "DateTransaction" => $dataSystem,
+                                    "DateSaisie" => $dateSaisie,
+                                    "TypeTransaction" => "D",
+                                    "CodeMonnaie" => 2,
+                                    "CodeAgence" => $getDossier->CodeAgence,
+                                    "NumDossier" => "DOS00" . $numOperation->id,
+                                    "NumDemande" => "V00" . $numOperation->id,
+                                    "NumCompte" => $NumCompteEpargne,
+                                    "NumComptecp" => $compteEpargneCaution,
+                                    "Debit"  => $garantieCredit,
+                                    "Debitusd"  => $garantieCredit / $tauxDuJour,
+                                    "Debitfc" => $garantieCredit,
+                                    "NomUtilisateur" => Auth::user()->name,
+                                    "Libelle" => "PRISE DE L'EPARGNE GARANTIE DE VOTRE CREDIT CREDIT ACCORDE EN DATE DU " . $dateSaisie,
+                                ]);
+
+                                //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LA COMPBALITE
+                                // Transactions::create([
+                                //     "NumTransaction" => $NumTransaction,
+                                //     "DateTransaction" => $getDossier->DateOctroi,
+                                //     "DateSaisie" => $dateSaisie,
+                                //     "TypeTransaction" => "C",
+                                //     "CodeMonnaie" => 2,
+                                //     "CodeAgence" => $getDossier->CodeAgence,
+                                //     "NumDossier" => "DOS00" . $numOperation->id,
+                                //     "NumDemande" => "V00" . $numOperation->id,
+                                //     "NumCompte" => $compteEpargneGarantieCDF,
+                                //     "NumComptecp" => $NumCompteEpargne,
+                                //     "Credit"  => $garantieCredit,
+                                //     "Creditusd"  => $garantieCredit / $tauxDuJour,
+                                //     "Creditfc" => $garantieCredit,
+                                //     "NomUtilisateur" => Auth::user()->name,
+                                //     "Libelle" => "MISE EN PLACE  DE  L'EPARGNE GARANTIE DU CREDIT OCRTROYE A " . $getDossier->NomCompte . " NUMERO DE COMPTE " . $NumCompteEpargne,
+                                // ]);
+                                //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LE CLIENT
+                                Transactions::create([
+                                    "NumTransaction" => $NumTransaction,
+                                    "DateTransaction" => $dataSystem,
+                                    "DateSaisie" => $dateSaisie,
+                                    "TypeTransaction" => "C",
+                                    "CodeMonnaie" => 2,
+                                    "CodeAgence" => $getDossier->CodeAgence,
+                                    "NumDossier" => "DOS00" . $numOperation->id,
+                                    "NumDemande" => "V00" . $numOperation->id,
+                                    "NumCompte" => $compteEpargneCaution,
+                                    "NumComptecp" => $NumCompteEpargne,
+                                    "Credit"  => $garantieCredit,
+                                    "Creditusd"  => $garantieCredit / $tauxDuJour,
+                                    "Creditfc" => $garantieCredit,
+                                    "NomUtilisateur" => Auth::user()->name,
+                                    "Libelle" => "MISE EN PLACE  DE  L'EPARGNE GARANTIE DU CREDIT OCRTROYE A " . $getDossier->NomCompte . " NUMERO DE COMPTE " . $NumCompteEpargne,
+                                ]);
+
+                                //ENREGISTRE CA DANS UNE TABLE SPECIFIQUE
+
+                                LockedGarantie::create([
+                                    "NumCompte" => $NumCompteEpargne,
+                                    "EpargneGarantie" => $compteEpargneCaution,
+                                    "NumAbrege" => $getDossier->numAdherant,
+                                    "Montant" => $garantieCredit,
+                                    "Devise" => "CDF",
+                                ]);
+
+                                //MET A JOUR LA TABLE POURTE FEUILLE 
+                                Portefeuille::where("NumDossier", $request->NumDossier)->update([
+                                    "Accorde" => 1
+                                ]);
+
+
+                                //PERMET DE METTRE A JOUR LA TABLE PORTE FEUILLE POUR RENSEIGNE LA SOMME DES INTERET ET CAPITAL
+                                //GET SUM
+                                $soldeInteret = Echeancier::select(
+                                    DB::raw("SUM(Interet) as sommeInteret"),
+                                )->where("NumDossier", '=', $request->NumDossier)
+                                    ->groupBy("NumDossier")
+                                    ->first();
+
+                                //UPADATE TABLE
+                                Portefeuille::where("NumDossier", $request->NumDossier)->update([
+                                    "CompteInteret" => $CompteInteret,
+                                    "InteretDu" => $soldeInteret->sommeInteret
+                                ]);
+
+                                return response()->json([
+                                    'status' => 1,
+                                    'msg' => "Crédit bien accordé"
+                                ]);
+                            } else {
+                                return response()->json([
+                                    'status' => 0,
+                                    'msg' => "Le solde pour constituer l'Epargne garantie de ce crédit est insiffusant"
+                                ]);
+                            }
+                        } else if ($getDossier->CodeMonnaie == "USD") {
+
+                            $soldeMembreUSD = Transactions::select(
+                                DB::raw("SUM(Creditusd)-SUM(Debitusd) as soldeUSD"),
+                            )->where("NumCompte", '=', $NumCompteEpargne)
+                                ->groupBy("NumCompte")
+                                ->first();
+                            $montantAccorde = $getDossier->MontantAccorde;
+                            $garantieCredit = ($montantAccorde * $tauxEpargneObligatoire) / 100;
+                            if ($soldeMembreUSD->soldeUSD >= $garantieCredit) {
+                                //ON RECUPERE LE 30% SUR LE COMPTE DE LA PERSONNE CONCERNEE POUR L'EPARGNE GARANTIE
+                                //CREE UN NUMERO DE TRANSACTION
+                                CompteurTransaction::create([
+                                    'fakevalue' => "0000",
+                                ]);
+                                $numOperation = [];
+                                $numOperation = CompteurTransaction::latest()->first();
+                                $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "R00" . $numOperation->id;
+                                $dataSystem = TauxEtDateSystem::latest()->first();
+                                $tauxDuJour = $dataSystem->TauxEnFc;
+                                $dateSaisie = date("Y-m-d");
+                                //DEBITE LE COMPTE DU MEMBRE
+                                Transactions::create([
+                                    "NumTransaction" => $NumTransaction,
+                                    "DateTransaction" => $getDossier->DateOctroi,
+                                    "DateSaisie" => $dateSaisie,
+                                    "TypeTransaction" => "D",
+                                    "CodeMonnaie" => 1,
+                                    "CodeAgence" => $getDossier->CodeAgence,
+                                    "NumDossier" => "DOS00" . $numOperation->id,
+                                    "NumDemande" => "V00" . $numOperation->id,
+                                    "NumCompte" => $NumCompteEpargne,
+                                    "NumComptecp" =>  $compteEpargneCaution,
+                                    "Debit"  => $garantieCredit,
+                                    "Debitusd"  => $garantieCredit,
+                                    "Debitfc" => $garantieCredit * $tauxDuJour,
+                                    "NomUtilisateur" => Auth::user()->name,
+                                    "Libelle" => "PRISE DE L'EPARGNE GARANTIE DE VOTRE CREDIT CREDIT ACCORDE EN DATE DU " . $dateSaisie,
+                                ]);
+
+                                //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LA COMPBALITE
+                                // Transactions::create([
+                                //     "NumTransaction" => $NumTransaction,
+                                //     "DateTransaction" => $getDossier->DateOctroi,
+                                //     "DateSaisie" => $dateSaisie,
+                                //     "TypeTransaction" => "C",
+                                //     "CodeMonnaie" => 1,
+                                //     "CodeAgence" => $getDossier->CodeAgence,
+                                //     "NumDossier" => "DOS00" . $numOperation->id,
+                                //     "NumDemande" => "V00" . $numOperation->id,
+                                //     "NumCompte" => $compteEpargneGarantieUSD,
+                                //     "NumComptecp" => $NumCompteEpargne,
+                                //     "Credit"  => $garantieCredit,
+                                //     "Creditusd"  => $garantieCredit,
+                                //     "Creditfc" => $garantieCredit * $tauxDuJour,
+                                //     "NomUtilisateur" => Auth::user()->name,
+                                //     "Libelle" => "MISE EN PLACE  DE  L'EPARGNE GARANTIE DU CREDIT OCRTROYE A " . $getDossier->NomCompte . " NUMERO DE COMPTE " . $NumCompteEpargne,
+                                // ]);
+
+                                //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LE CLIENT
+                                Transactions::create([
+                                    "NumTransaction" => $NumTransaction,
+                                    "DateTransaction" => $getDossier->DateOctroi,
+                                    "DateSaisie" => $dateSaisie,
+                                    "TypeTransaction" => "C",
+                                    "CodeMonnaie" => 1,
+                                    "CodeAgence" => $getDossier->CodeAgence,
+                                    "NumDossier" => "DOS00" . $numOperation->id,
+                                    "NumDemande" => "V00" . $numOperation->id,
+                                    "NumCompte" => $compteEpargneCaution,
+                                    "NumComptecp" => $NumCompteEpargne,
+                                    "Credit"  => $garantieCredit,
+                                    "Creditusd"  => $garantieCredit,
+                                    "Creditfc" => $garantieCredit * $tauxDuJour,
+                                    "NomUtilisateur" => Auth::user()->name,
+                                    "Libelle" => "MISE EN PLACE  DE  L'EPARGNE GARANTIE DU CREDIT OCRTROYE A " . $getDossier->NomCompte . " NUMERO DE COMPTE " . $NumCompteEpargne,
+                                ]);
+
+
+
+                                //ENREGISTRE CA DANS UNE TABLE SPECIFIQUE
+
+                                LockedGarantie::create([
+                                    "NumCompte" => $NumCompteEpargne,
+                                    "EpargneGarantie" => $compteEpargneCaution,
+                                    "NumAbrege" => $getDossier->numAdherant,
+                                    "Montant" => $garantieCredit,
+                                    "Devise" => "USD",
+                                ]);
+                                //MET A JOUR LA TABLE POURTE FEUILLE 
+                                Portefeuille::where("NumDossier", $request->NumDossier)->update([
+                                    "Accorde" => 1
+                                ]);
+
+                                //PERMET DE METTRE A JOUR LA TABLE PORTE FEUILLE POUR RENSEIGNE LA SOMME DES INTERET ET CAPITAL
+                                //GET SUM
+                                $soldeInteret = Echeancier::select(
+                                    DB::raw("SUM(Interet) as sommeInteret"),
+                                )->where("NumDossier", '=', $request->NumDossier)
+                                    ->groupBy("NumDossier")
+                                    ->first();
+
+                                //UPADATE TABLE
+                                Portefeuille::where("NumDossier", $request->NumDossier)->update([
+                                    "CompteInteret" => $CompteInteret,
+                                    "InteretDu" => $soldeInteret->sommeInteret
+                                ]);
+
+                                return response()->json([
+                                    'status' => 1,
+                                    'msg' => "Crédit bien accordé"
+                                ]);
+                            } else {
+                                return response()->json([
+                                    'status' => 0,
+                                    'msg' => "Le solde pour constituer l'Epargne garantie de ce crédit est insiffusant"
+                                ]);
+                            }
+                        }
+                    } else {
+                        //MET A JOUR LA TABLE POURTE FEUILLE 
+                        Portefeuille::where("NumDossier", $request->NumDossier)->update([
+                            "Accorde" => 1
+                        ]);
+                        //PERMET DE METTRE A JOUR LA TABLE PORTE FEUILLE POUR RENSEIGNE LA SOMME DES INTERET ET CAPITAL
+                        //GET SUM
+                        $soldeInteret = Echeancier::select(
+                            DB::raw("SUM(Interet) as sommeInteret"),
+                        )->where("NumDossier", '=', $request->NumDossier)
+                            ->groupBy("NumDossier")
+                            ->first();
+
+                        //UPADATE TABLE
+                        Portefeuille::where("NumDossier", $request->NumDossier)->update([
+                            "CompteInteret" => $CompteInteret,
+                            "InteretDu" => $soldeInteret->sommeInteret
+                        ]);
+
+                         return response()->json([
+                        'status' => 1,
+                        'msg' => "Crédit bien accordé"
+                    ]);
                     }
+
                 } else {
                     return response()->json([
                         'status' => 0,
@@ -1186,7 +1234,7 @@ class SuiviCreditController extends Controller
                         "Taux" => 1,
                         "TypeTransaction" => "D",
                         "CodeMonnaie" => 2,
-                        "CodeAgence" => "20",
+                        "CodeAgence" => $getData->CodeAgence,
                         "NumDossier" => "DOS00" . $numOperation->id,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $getData->EpargneGarantie,
@@ -1206,7 +1254,7 @@ class SuiviCreditController extends Controller
                         "Taux" => 1,
                         "TypeTransaction" => "C",
                         "CodeMonnaie" => 2,
-                        "CodeAgence" => "20",
+                        "CodeAgence" => $getData->CodeAgence,
                         "NumDossier" => "DOS00" . $numOperation->id,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $NumCompte,
@@ -1238,7 +1286,7 @@ class SuiviCreditController extends Controller
                         "Taux" => 1,
                         "TypeTransaction" => "D",
                         "CodeMonnaie" => 1,
-                        "CodeAgence" => "20",
+                        "CodeAgence" => $getData->CodeAgence,
                         "NumDossier" => "DOS00" . $numOperation->id,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $getData->EpargneGarantie,
@@ -1258,7 +1306,7 @@ class SuiviCreditController extends Controller
                         "Taux" => 1,
                         "TypeTransaction" => "C",
                         "CodeMonnaie" => 1,
-                        "CodeAgence" => "20",
+                        "CodeAgence" => $getData->CodeAgence,
                         "NumDossier" => "DOS00" . $numOperation->id,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $NumCompte,
@@ -1293,7 +1341,10 @@ class SuiviCreditController extends Controller
     public function DecaissementCredit(Request $request)
     {
         if (isset($request->NumDossier)) {
-            $creditExist = Portefeuille::where("NumDossier", "=", $request->NumDossier)->first();
+            $currentAgence = session('current_agence');
+            $codeAgence = $currentAgence['code_agence'] ?? null;
+            $creditExist = Portefeuille::where("NumDossier", "=", $request->NumDossier)->where("CodeAgence", $codeAgence)->first();
+
             if ($creditExist->Accorde == 1) {
                 Portefeuille::where("NumDossier", "=", $request->NumDossier)->update([
                     "Octroye" => 1,
@@ -1323,7 +1374,7 @@ class SuiviCreditController extends Controller
                         "DateSaisie" => $dateSaisie,
                         "TypeTransaction" => "D",
                         "CodeMonnaie" => 2,
-                        "CodeAgence" => "20",
+                        "CodeAgence" => $dataCredit->CodeAgence,
                         "NumDossier" => $request->NumDossier,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $dataCredit->NumCompteCredit,
@@ -1367,7 +1418,7 @@ class SuiviCreditController extends Controller
                         "DateSaisie" =>  $dateSystem,
                         "TypeTransaction" => "C",
                         "CodeMonnaie" => 2,
-                        "CodeAgence" => "20",
+                        "CodeAgence" => $dataCredit->CodeAgence,
                         "NumDossier" => $request->NumDossier,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $dataCredit->NumCompteEpargne,
@@ -1420,7 +1471,7 @@ class SuiviCreditController extends Controller
                         "DateSaisie" => $dateSaisie,
                         "TypeTransaction" => "D",
                         "CodeMonnaie" => 1,
-                        "CodeAgence" => "20",
+                        "CodeAgence" => $dataCredit->CodeAgence,
                         "NumDossier" => $request->NumDossier,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $dataCredit->NumCompteCredit,
@@ -1443,7 +1494,7 @@ class SuiviCreditController extends Controller
                         "DateSaisie" => $dateSaisie,
                         "TypeTransaction" => "C",
                         "CodeMonnaie" => 1,
-                        "CodeAgence" => "20",
+                        "CodeAgence" => $dataCredit->CodeAgence,
                         "NumDossier" => $request->NumDossier,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $dataCredit->NumCompteEpargne,

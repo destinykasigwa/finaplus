@@ -1098,7 +1098,11 @@ const Releve = () => {
                                                                                 0,
                                                                         ) +
                                                                         Number(
-                                                                            getSoldeInfo?.soldeDispo ||
+                                                                            getSoldeInfo?.TotalCredit ||
+                                                                                0,
+                                                                        )-
+                                                                        Number(
+                                                                            getSoldeInfo?.TotalDebit ||
                                                                                 0,
                                                                         )
                                                                     ).toFixed(
@@ -1660,7 +1664,7 @@ const Releve = () => {
                                                                     valueStyle
                                                                 }
                                                             >
-                                                                {numberWithSpaces(
+                                                                {/* {numberWithSpaces(
                                                                     (
                                                                         Number(
                                                                             getSoldeReport ||
@@ -1668,6 +1672,24 @@ const Releve = () => {
                                                                         ) +
                                                                         Number(
                                                                             getSoldeInfo?.soldeDispo ||
+                                                                                0,
+                                                                        )
+                                                                    ).toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )} */}
+                                                                {numberWithSpaces(
+                                                                    (
+                                                                        Number(
+                                                                            getSoldeReport ||
+                                                                                0,
+                                                                        ) +
+                                                                        Number(
+                                                                            getSoldeInfo?.TotalCredit ||
+                                                                                0,
+                                                                        )-
+                                                                        Number(
+                                                                            getSoldeInfo?.TotalDebit ||
                                                                                 0,
                                                                         )
                                                                     ).toFixed(
@@ -1779,6 +1801,12 @@ const Releve = () => {
                                                             }
                                                         </h4>
                                                         <br /> <br />
+                                                        {getAdresse && (
+                                                            <>
+                                                                <br />
+                                                                <br />
+                                                            </>
+                                                        )}
                                                         <h6>{getAdresse}</h6>
                                                     </div>
                                                 </div>

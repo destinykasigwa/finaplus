@@ -10,6 +10,7 @@ class clotureExercice extends Model
     use HasFactory;
     protected $fillable = [
         "AnneeExercice",
+        "code_agence",
         "clotureState"
     ];
 }

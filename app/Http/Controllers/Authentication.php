@@ -458,6 +458,23 @@ class Authentication extends Controller
 
         // return response()->json([$request->all()]);
         if (auth()->attempt($request->only('name', 'password'))) {
+              // --- INITIALISATION DES SESSIONS AGENCE ---
+        $data=User::where("name",$request->name)->first();
+        $agences = $data->agences; // relation many-to-many
+        $agencesList = $agences->map(function($agence) {
+            return [
+                'id'           => $agence->id,
+                'code_agence'  => $agence->code_agence,
+                'nom_agence'   => $agence->nom_agence,
+            ];
+        })->toArray();
+
+        session(['user_agences' => $agencesList]);
+
+        // Si aucune agence active n'existe, prendre la première (ou unique)
+        if (!session()->has('current_agence') && count($agencesList) > 0) {
+            session(['current_agence' => $agencesList[0]]);
+        }
             return response()->json(["status" => 1]);
         } else {
             return response()->json(["status" => 0, "msg" => "Les identifiants ne correspondent pas"]);

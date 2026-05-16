@@ -2,6 +2,7 @@ import React from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import UpdateSMSBankingUser from "./Modals/UpdateSMSBankingUser";
+import "../styles/style.css";
 
 export default class SMSbanking extends React.Component {
     constructor(props) {
@@ -68,13 +69,16 @@ export default class SMSbanking extends React.Component {
     // Pagination methods
     goToPrevPage() {
         this.setState((prevState) => ({
-            currentPage: Math.max(prevState.currentPage - 1, 1)
+            currentPage: Math.max(prevState.currentPage - 1, 1),
         }));
     }
 
     goToNextPage() {
         this.setState((prevState) => ({
-            currentPage: Math.min(prevState.currentPage + 1, prevState.totalPages)
+            currentPage: Math.min(
+                prevState.currentPage + 1,
+                prevState.totalPages,
+            ),
         }));
     }
 
@@ -105,31 +109,45 @@ export default class SMSbanking extends React.Component {
         if (startPage > 1) {
             pageNumbers.push(
                 <li key={1} className="page-item">
-                    <button onClick={() => this.handlePageChange(1)} className="page-link">
+                    <button
+                        onClick={() => this.handlePageChange(1)}
+                        className="page-link"
+                    >
                         1
                     </button>
-                </li>
+                </li>,
             );
             if (startPage > 2) {
                 pageNumbers.push(
                     <li key="start-ellipsis" className="page-item disabled">
                         <span className="page-link">...</span>
-                    </li>
+                    </li>,
                 );
             }
         }
 
         for (let i = startPage; i <= endPage; i++) {
             pageNumbers.push(
-                <li key={i} className={`page-item ${i === currentPage ? "active" : ""}`}>
+                <li
+                    key={i}
+                    className={`page-item ${i === currentPage ? "active" : ""}`}
+                >
                     <button
                         onClick={() => this.handlePageChange(i)}
                         className="page-link"
-                        style={i === currentPage ? { backgroundColor: "#20c997", borderColor: "#20c997", color: "white" } : {}}
+                        style={
+                            i === currentPage
+                                ? {
+                                      backgroundColor: "#20c997",
+                                      borderColor: "#20c997",
+                                      color: "white",
+                                  }
+                                : {}
+                        }
                     >
                         {i}
                     </button>
-                </li>
+                </li>,
             );
         }
 
@@ -138,15 +156,18 @@ export default class SMSbanking extends React.Component {
                 pageNumbers.push(
                     <li key="end-ellipsis" className="page-item disabled">
                         <span className="page-link">...</span>
-                    </li>
+                    </li>,
                 );
             }
             pageNumbers.push(
                 <li key={totalPages} className="page-item">
-                    <button onClick={() => this.handlePageChange(totalPages)} className="page-link">
+                    <button
+                        onClick={() => this.handlePageChange(totalPages)}
+                        className="page-link"
+                    >
                         {totalPages}
                     </button>
-                </li>
+                </li>,
             );
         }
 
@@ -158,18 +179,18 @@ export default class SMSbanking extends React.Component {
         this.setState({ loading2: true });
         const res = await axios.post(
             "sms-banking/add-new-costomer/question",
-            this.state
+            this.state,
         );
         if (res.data.success == 1) {
             const question = confirm(
                 "Vous êtes sur le point d'ajouter sur SMS banking " +
                     res.data.NomMembre +
-                    " Voulez-vous continuer ?"
+                    " Voulez-vous continuer ?",
             );
             if (question == true) {
                 const res2 = await axios.post(
                     "sms-banking/add-new-costomer",
-                    this.state
+                    this.state,
                 );
                 Swal.fire({
                     title: "Succès",
@@ -240,7 +261,7 @@ export default class SMSbanking extends React.Component {
 
     DeleteUser = async (item) => {
         const question = confirm(
-            "Voulez-vous vraiment supprimé cet utilsateur sur le service SMS Banking ?"
+            "Voulez-vous vraiment supprimé cet utilsateur sur le service SMS Banking ?",
         );
         if (question == true) {
             const res = await axios.delete("sms-banking/delete/item/" + item);
@@ -301,11 +322,13 @@ export default class SMSbanking extends React.Component {
             const res = await axios.get("sms-banking/getlastest");
             if (res.data.success == 1) {
                 const data = res.data.data;
-                const totalPages = Math.ceil(data.length / this.state.itemsPerPage);
-                this.setState({ 
+                const totalPages = Math.ceil(
+                    data.length / this.state.itemsPerPage,
+                );
+                this.setState({
                     fetchData: data,
                     totalPages: totalPages,
-                    currentPage: 1
+                    currentPage: 1,
                 });
             }
         } catch (error) {
@@ -327,12 +350,18 @@ export default class SMSbanking extends React.Component {
 
     // Get current page data
     getCurrentPageData() {
-        const { fetchData, currentPage, itemsPerPage, searchData, fetchSeachedData } = this.state;
-        
+        const {
+            fetchData,
+            currentPage,
+            itemsPerPage,
+            searchData,
+            fetchSeachedData,
+        } = this.state;
+
         if (searchData && fetchSeachedData) {
             return [fetchSeachedData];
         }
-        
+
         const indexOfLastItem = currentPage * itemsPerPage;
         const indexOfFirstItem = indexOfLastItem - itemsPerPage;
         return fetchData.slice(indexOfFirstItem, indexOfLastItem);
@@ -346,45 +375,144 @@ export default class SMSbanking extends React.Component {
             border: "0px",
             height: "200px",
         };
-        
-        const currentData = this.getCurrentPageData();
-        const { currentPage, totalPages, itemsPerPage, searchData } = this.state;
-        const startItem = searchData ? 1 : (currentPage - 1) * itemsPerPage + 1;
-        const endItem = searchData ? 1 : Math.min(currentPage * itemsPerPage, this.state.fetchData.length);
 
+        const currentData = this.getCurrentPageData();
+        const { currentPage, totalPages, itemsPerPage, searchData } =
+            this.state;
+        const startItem = searchData ? 1 : (currentPage - 1) * itemsPerPage + 1;
+        const endItem = searchData
+            ? 1
+            : Math.min(currentPage * itemsPerPage, this.state.fetchData.length);
+
+        const modernStyles = {
+            card: {
+                background: "white",
+                borderRadius: "24px",
+                boxShadow:
+                    "0 20px 35px -12px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.02)",
+                border: "1px solid rgba(203, 213, 225, 0.4)",
+                transition: "box-shadow 0.2s ease",
+            },
+            table: {
+                width: "100%",
+                borderCollapse: "separate",
+                borderSpacing: "0 16px",
+                margin: "-8px 0",
+            },
+            label: {
+                color: "#1e293b",
+                fontWeight: "600",
+                fontSize: "0.85rem",
+                letterSpacing: "0.3px",
+                textTransform: "uppercase",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "4px",
+            },
+            input: {
+                width: "100%",
+                padding: "12px 16px",
+                fontSize: "0.95rem",
+                border: "1.5px solid #e2e8f0",
+                borderRadius: "14px",
+                backgroundColor: "#fafcff",
+                transition: "all 0.2s ease",
+                outline: "none",
+                fontFamily: "inherit",
+            },
+            select: {
+                width: "100%",
+                padding: "12px 16px",
+                fontSize: "0.95rem",
+                border: "1.5px solid #e2e8f0",
+                borderRadius: "14px",
+                backgroundColor: "#fafcff",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                outline: "none",
+                fontFamily: "inherit",
+            },
+            button: {
+                background: "linear-gradient(105deg, #10b981 0%, #059669 100%)",
+                border: "none",
+                padding: "12px 24px",
+                fontWeight: "600",
+                fontSize: "0.9rem",
+                letterSpacing: "0.5px",
+                borderRadius: "40px",
+                color: "white",
+                transition: "all 0.2s ease",
+                boxShadow: "0 4px 8px rgba(16,185,129,0.2)",
+                width: "auto",
+                minWidth: "160px",
+            },
+        };
         return (
             <React.Fragment>
                 {this.state.isloading ? (
                     <div className="row" id="rowspinner">
                         <div className="myspinner" style={myspinner}>
-                            <span className="spinner-border" role="status"></span>
-                            <span style={{ marginLeft: "-20px" }}>Chargement...</span>
+                            <span
+                                className="spinner-border"
+                                role="status"
+                            ></span>
+                            <span style={{ marginLeft: "-20px" }}>
+                                Chargement...
+                            </span>
                         </div>
                     </div>
                 ) : (
-                    <div className="container-fluid" style={{ marginTop: "10px", padding: "0 15px" }}>
+                    <div
+                        className="container-fluid"
+                        style={{ marginTop: "10px", padding: "0 15px" }}
+                    >
                         {/* En-tête moderne */}
                         <div className="row mb-4">
                             <div className="col-12">
                                 <div className="card border-0 shadow-sm rounded-3">
-                                    <div className="card-body p-3" style={{
-                                        background: "#138496",
-                                        borderRadius: "12px"
-                                    }}>
+                                    <div
+                                        className="card-body p-3"
+                                        style={{
+                                            background: "#138496",
+                                            borderRadius: "12px",
+                                        }}
+                                    >
                                         <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
                                             <div className="d-flex align-items-center">
                                                 <div className="me-3">
-                                                    <i className="fas fa-sms" style={{ fontSize: "28px", color: "white" }}></i>
+                                                    <i
+                                                        className="fas fa-sms"
+                                                        style={{
+                                                            fontSize: "28px",
+                                                            color: "white",
+                                                        }}
+                                                    ></i>
                                                 </div>
                                                 <div>
-                                                    <h5 className="text-white fw-bold mb-0">SMS Banking</h5>
-                                                    <small className="text-white-50">Gestion des notifications par SMS et Email</small>
+                                                    <h5 className="text-white fw-bold mb-0">
+                                                        SMS Banking
+                                                    </h5>
+                                                    <small className="text-white-50">
+                                                        Gestion des
+                                                        notifications par SMS et
+                                                        Email
+                                                    </small>
                                                 </div>
                                             </div>
-                                            <button onClick={this.actualiser} 
-                                                className="btn" 
-                                                style={{ background: "rgba(255,255,255,0.2)", color: "white", borderRadius: "8px", border: "none" }}>
-                                                <i className="fas fa-sync-alt me-2"></i>Actualiser
+                                            <button
+                                                onClick={this.actualiser}
+                                                className="btn"
+                                                style={{
+                                                    background:
+                                                        "rgba(255,255,255,0.2)",
+                                                    color: "white",
+                                                    borderRadius: "8px",
+                                                    border: "none",
+                                                }}
+                                            >
+                                                <i className="fas fa-sync-alt me-2"></i>
+                                                Actualiser
                                             </button>
                                         </div>
                                     </div>
@@ -397,69 +525,323 @@ export default class SMSbanking extends React.Component {
                                 <div className="card border-0 shadow-sm rounded-3">
                                     <div className="card-body p-4">
                                         {/* Formulaire d'ajout/modification */}
-                                        <div className="row g-3 mb-4">
-                                            <div className="col-md-8">
-                                                <div className="card border-0" style={{ background: "#e6f2f9", borderRadius: "12px" }}>
-                                                    <div className="card-body">
-                                                        <h6 className="fw-bold mb-3" style={{ color: "steelblue" }}>
-                                                            <i className="fas fa-edit me-2"></i>Informations du client
+                                        <div className="row g-4 mb-5">
+                                            <div className="col-md-8 col-lg-7">
+                                                <div
+                                                    className="card border-0"
+                                                    style={modernStyles.card}
+                                                >
+                                                    <div className="card-body p-4 p-xl-5">
+                                                        <h6
+                                                            className="fw-bold mb-4 d-flex align-items-center"
+                                                            style={{
+                                                                color: "#0f3b5c",
+                                                                fontSize:
+                                                                    "1.1rem",
+                                                            }}
+                                                        >
+                                                            <i
+                                                                className="fas fa-user-circle me-2"
+                                                                style={{
+                                                                    fontSize:
+                                                                        "1.3rem",
+                                                                    color: "#10b981",
+                                                                }}
+                                                            ></i>
+                                                            Informations du
+                                                            client
                                                         </h6>
+
                                                         <form>
-                                                            <table style={{ width: "100%" }}>
+                                                            <table
+                                                                style={
+                                                                    modernStyles.table
+                                                                }
+                                                            >
                                                                 <tbody>
                                                                     <tr>
-                                                                        <td style={{ padding: "6px", width: "35%" }}>
-                                                                            <label style={{ color: "steelblue", fontWeight: "500" }}>Numéro Compte</label>
-                                                                         </td>
-                                                                        <td style={{ padding: "6px" }}>
-                                                                            <input name="NumCompte" type="text" className="form-control" style={{ borderRadius: "8px" }}
-                                                                                value={this.state.NumCompte} disabled={this.state.disabled ? "disabled" : ""}
-                                                                                onChange={this.handleChange} />
-                                                                         </td>
+                                                                        <td
+                                                                            style={{
+                                                                                width: "33%",
+                                                                                verticalAlign:
+                                                                                    "top",
+                                                                                paddingRight:
+                                                                                    "16px",
+                                                                            }}
+                                                                        >
+                                                                            <label
+                                                                                style={
+                                                                                    modernStyles.label
+                                                                                }
+                                                                            >
+                                                                                <i
+                                                                                    className="fas fa-hashtag"
+                                                                                    style={{
+                                                                                        fontSize:
+                                                                                            "0.8rem",
+                                                                                        opacity: 0.7,
+                                                                                    }}
+                                                                                ></i>
+                                                                                Numéro
+                                                                                Compte
+                                                                            </label>
+                                                                        </td>
+                                                                        <td
+                                                                            style={{
+                                                                                verticalAlign:
+                                                                                    "top",
+                                                                            }}
+                                                                        >
+                                                                            <input
+                                                                                name="NumCompte"
+                                                                                type="text"
+                                                                                className="modern-input"
+                                                                                style={
+                                                                                    modernStyles.input
+                                                                                }
+                                                                                value={
+                                                                                    this
+                                                                                        .state
+                                                                                        .NumCompte
+                                                                                }
+                                                                                disabled={
+                                                                                    this
+                                                                                        .state
+                                                                                        .disabled
+                                                                                }
+                                                                                onChange={
+                                                                                    this
+                                                                                        .handleChange
+                                                                                }
+                                                                                placeholder="Ex: 12345678"
+                                                                            />
+                                                                        </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td style={{ padding: "6px" }}>
-                                                                            <label style={{ color: "steelblue", fontWeight: "500" }}>Civilité</label>
-                                                                         </td>
-                                                                        <td style={{ padding: "6px" }}>
-                                                                            <select name="Civilite" className="form-control" style={{ borderRadius: "8px" }}
-                                                                                value={this.state.Civilite} disabled={this.state.disabled ? "disabled" : ""}
-                                                                                onChange={this.handleChange}>
-                                                                                <option value="">Sélectionnez</option>
-                                                                                <option value="Monsieur">Monsieur</option>
-                                                                                <option value="Madame">Madame</option>
-                                                                                <option value="Mademoiselle">Mademoiselle</option>
+                                                                        <td
+                                                                            style={{
+                                                                                width: "33%",
+                                                                                verticalAlign:
+                                                                                    "top",
+                                                                                paddingRight:
+                                                                                    "16px",
+                                                                            }}
+                                                                        >
+                                                                            <label
+                                                                                style={
+                                                                                    modernStyles.label
+                                                                                }
+                                                                            >
+                                                                                <i
+                                                                                    className="fas fa-user-tag"
+                                                                                    style={{
+                                                                                        fontSize:
+                                                                                            "0.8rem",
+                                                                                        opacity: 0.7,
+                                                                                    }}
+                                                                                ></i>
+                                                                                Civilité
+                                                                            </label>
+                                                                        </td>
+                                                                        <td
+                                                                            style={{
+                                                                                verticalAlign:
+                                                                                    "top",
+                                                                            }}
+                                                                        >
+                                                                            <select
+                                                                                name="Civilite"
+                                                                                className="modern-select"
+                                                                                style={
+                                                                                    modernStyles.select
+                                                                                }
+                                                                                value={
+                                                                                    this
+                                                                                        .state
+                                                                                        .Civilite
+                                                                                }
+                                                                                disabled={
+                                                                                    this
+                                                                                        .state
+                                                                                        .disabled
+                                                                                }
+                                                                                onChange={
+                                                                                    this
+                                                                                        .handleChange
+                                                                                }
+                                                                            >
+                                                                                <option value="">
+                                                                                    Sélectionnez
+                                                                                </option>
+                                                                                <option value="Monsieur">
+                                                                                    Monsieur
+                                                                                </option>
+                                                                                <option value="Madame">
+                                                                                    Madame
+                                                                                </option>
+                                                                                <option value="Mademoiselle">
+                                                                                    Mademoiselle
+                                                                                </option>
                                                                             </select>
-                                                                         </td>
+                                                                        </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td style={{ padding: "6px" }}>
-                                                                            <label style={{ color: "steelblue", fontWeight: "500" }}>Email</label>
-                                                                         </td>
-                                                                        <td style={{ padding: "6px" }}>
-                                                                            <input name="Email" type="email" className="form-control" style={{ borderRadius: "8px" }}
-                                                                                value={this.state.Email} disabled={this.state.disabled ? "disabled" : ""}
-                                                                                onChange={this.handleChange} />
-                                                                         </td>
+                                                                        <td
+                                                                            style={{
+                                                                                width: "33%",
+                                                                                verticalAlign:
+                                                                                    "top",
+                                                                                paddingRight:
+                                                                                    "16px",
+                                                                            }}
+                                                                        >
+                                                                            <label
+                                                                                style={
+                                                                                    modernStyles.label
+                                                                                }
+                                                                            >
+                                                                                <i
+                                                                                    className="fas fa-envelope"
+                                                                                    style={{
+                                                                                        fontSize:
+                                                                                            "0.8rem",
+                                                                                        opacity: 0.7,
+                                                                                    }}
+                                                                                ></i>
+                                                                                Email
+                                                                            </label>
+                                                                        </td>
+                                                                        <td
+                                                                            style={{
+                                                                                verticalAlign:
+                                                                                    "top",
+                                                                            }}
+                                                                        >
+                                                                            <input
+                                                                                name="Email"
+                                                                                type="email"
+                                                                                className="modern-input"
+                                                                                style={
+                                                                                    modernStyles.input
+                                                                                }
+                                                                                value={
+                                                                                    this
+                                                                                        .state
+                                                                                        .Email
+                                                                                }
+                                                                                disabled={
+                                                                                    this
+                                                                                        .state
+                                                                                        .disabled
+                                                                                }
+                                                                                onChange={
+                                                                                    this
+                                                                                        .handleChange
+                                                                                }
+                                                                                placeholder="client@exemple.com"
+                                                                            />
+                                                                        </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td style={{ padding: "6px" }}>
-                                                                            <label style={{ color: "steelblue", fontWeight: "500" }}>Téléphone</label>
-                                                                         </td>
-                                                                        <td style={{ padding: "6px" }}>
-                                                                            <input name="Telephone" type="text" className="form-control" style={{ borderRadius: "8px" }}
-                                                                                value={this.state.Telephone} disabled={this.state.disabled ? "disabled" : ""}
-                                                                                onChange={this.handleChange} />
-                                                                         </td>
+                                                                        <td
+                                                                            style={{
+                                                                                width: "33%",
+                                                                                verticalAlign:
+                                                                                    "top",
+                                                                                paddingRight:
+                                                                                    "16px",
+                                                                            }}
+                                                                        >
+                                                                            <label
+                                                                                style={
+                                                                                    modernStyles.label
+                                                                                }
+                                                                            >
+                                                                                <i
+                                                                                    className="fas fa-phone-alt"
+                                                                                    style={{
+                                                                                        fontSize:
+                                                                                            "0.8rem",
+                                                                                        opacity: 0.7,
+                                                                                    }}
+                                                                                ></i>
+                                                                                Téléphone
+                                                                            </label>
+                                                                        </td>
+                                                                        <td
+                                                                            style={{
+                                                                                verticalAlign:
+                                                                                    "top",
+                                                                            }}
+                                                                        >
+                                                                            <input
+                                                                                name="Telephone"
+                                                                                type="tel"
+                                                                                className="modern-input"
+                                                                                style={
+                                                                                    modernStyles.input
+                                                                                }
+                                                                                value={
+                                                                                    this
+                                                                                        .state
+                                                                                        .Telephone
+                                                                                }
+                                                                                disabled={
+                                                                                    this
+                                                                                        .state
+                                                                                        .disabled
+                                                                                }
+                                                                                onChange={
+                                                                                    this
+                                                                                        .handleChange
+                                                                                }
+                                                                                placeholder="+243 xxxxxxxx"
+                                                                            />
+                                                                        </td>
                                                                     </tr>
                                                                     <tr>
-                                                                        <td colSpan="2" style={{ padding: "12px 6px 6px" }}>
-                                                                            <button onClick={this.saveBtn} className="btn w-100 py-2" 
-                                                                                style={{ background: "linear-gradient(135deg, #20c997, #198764)", color: "white", borderRadius: "8px" }}>
-                                                                                <i className={`${this.state.loading2 ? "spinner-border spinner-border-sm me-2" : "fas fa-check me-2"}`}></i>
+                                                                        <td
+                                                                            colSpan="2"
+                                                                            style={{
+                                                                                paddingTop:
+                                                                                    "8px",
+                                                                                textAlign:
+                                                                                    "center",
+                                                                            }}
+                                                                        >
+                                                                            <button
+                                                                                onClick={
+                                                                                    this
+                                                                                        .saveBtn
+                                                                                }
+                                                                                type="button"
+                                                                                className="btn gradient-btn"
+                                                                                style={
+                                                                                    modernStyles.button
+                                                                                }
+                                                                                onMouseEnter={(
+                                                                                    e,
+                                                                                ) => {
+                                                                                    e.currentTarget.style.transform =
+                                                                                        "translateY(-2px)";
+                                                                                    e.currentTarget.style.boxShadow =
+                                                                                        "0 10px 20px -5px rgba(16,185,129,0.4)";
+                                                                                }}
+                                                                                onMouseLeave={(
+                                                                                    e,
+                                                                                ) => {
+                                                                                    e.currentTarget.style.transform =
+                                                                                        "translateY(0)";
+                                                                                    e.currentTarget.style.boxShadow =
+                                                                                        "0 4px 8px rgba(16,185,129,0.2)";
+                                                                                }}
+                                                                            >
+                                                                                <i
+                                                                                    className={`${this.state.loading2 ? "spinner-border spinner-border-sm me-2" : "fas fa-check-circle me-2"}`}
+                                                                                ></i>
                                                                                 Valider
                                                                             </button>
-                                                                         </td>
+                                                                        </td>
                                                                     </tr>
                                                                 </tbody>
                                                             </table>
@@ -467,113 +849,336 @@ export default class SMSbanking extends React.Component {
                                                     </div>
                                                 </div>
                                             </div>
-
                                         </div>
 
-                                        
-                                            {/* Barre de recherche */}
-                                            <div className="col-md-4">
-                                                <div className="card border-0" style={{ background: "#e6f2f9", borderRadius: "12px" }}>
-                                                    <div className="card-body">
-                                                        <h6 className="fw-bold mb-3" style={{ color: "steelblue" }}>
-                                                            <i className="fas fa-search me-2"></i>Rechercher un client
-                                                        </h6>
-                                                        <div className="input-group">
-                                                            <input type="text" className="form-control" style={{ borderRadius: "8px 0 0 8px" }}
-                                                                ref={this.textInput} placeholder="Numéro compte..."
-                                                                name="searchedItem" value={this.state.searchedItem} onChange={this.handleChange} />
-                                                            <button className="btn" style={{ background: "#20c997", color: "white", borderRadius: "0 8px 8px 0" }}
-                                                                onClick={() => this.handleSeach(this.state.searchedItem)}>
-                                                                <i className={`${this.state.loading3 ? "spinner-border spinner-border-sm" : "fas fa-search"}`}></i>
-                                                            </button>
-                                                        </div>
+                                        {/* Barre de recherche */}
+                                        <div className="col-md-4">
+                                            <div
+                                                className="card border-0"
+                                                style={{
+                                                    background: "#e6f2f9",
+                                                    borderRadius: "12px",
+                                                }}
+                                            >
+                                                <div className="card-body">
+                                                    <h6
+                                                        className="fw-bold mb-3"
+                                                        style={{
+                                                            color: "steelblue",
+                                                        }}
+                                                    >
+                                                        <i className="fas fa-search me-2"></i>
+                                                        Rechercher un client
+                                                    </h6>
+                                                    <div className="input-group">
+                                                        <input
+                                                            type="text"
+                                                            className="modern-select"
+                                                            style={{
+                                                                borderRadius:
+                                                                    "8px 0 0 8px",
+                                                            }}
+                                                            ref={this.textInput}
+                                                            placeholder="Numéro compte..."
+                                                            name="searchedItem"
+                                                            value={
+                                                                this.state
+                                                                    .searchedItem
+                                                            }
+                                                            onChange={
+                                                                this
+                                                                    .handleChange
+                                                            }
+                                                        />
+                                                        <button
+                                                            className="btn"
+                                                            style={{
+                                                                background:
+                                                                    "#20c997",
+                                                                color: "white",
+                                                                borderRadius:
+                                                                    "0 8px 8px 0",
+                                                            }}
+                                                            onClick={() =>
+                                                                this.handleSeach(
+                                                                    this.state
+                                                                        .searchedItem,
+                                                                )
+                                                            }
+                                                        >
+                                                            <i
+                                                                className={`${this.state.loading3 ? "spinner-border spinner-border-sm" : "fas fa-search"}`}
+                                                            ></i>
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
 
                                         {/* Liste des clients */}
                                         <div className="card border-0 shadow-sm rounded-3">
                                             <div className="card-header bg-white border-0 pt-3">
                                                 <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                                    <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                                                        <i className="fas fa-users me-2"></i>Liste des clients SMS Banking
+                                                    <h6
+                                                        className="fw-bold"
+                                                        style={{
+                                                            color: "steelblue",
+                                                        }}
+                                                    >
+                                                        <i className="fas fa-users me-2"></i>
+                                                        Liste des clients SMS
+                                                        Banking
                                                     </h6>
-                                                    {!this.state.searchData && this.state.fetchData.length > 0 && (
-                                                        <div className="text-muted small">
-                                                            Affichage {startItem} à {endItem} sur {this.state.fetchData.length} clients
-                                                        </div>
-                                                    )}
+                                                    {!this.state.searchData &&
+                                                        this.state.fetchData
+                                                            .length > 0 && (
+                                                            <div className="text-muted small">
+                                                                Affichage{" "}
+                                                                {startItem} à{" "}
+                                                                {endItem} sur{" "}
+                                                                {
+                                                                    this.state
+                                                                        .fetchData
+                                                                        .length
+                                                                }{" "}
+                                                                clients
+                                                            </div>
+                                                        )}
                                                 </div>
                                             </div>
                                             <div className="card-body p-0">
                                                 <div className="table-responsive">
-                                                    {this.state.searchData == false ? (
-                                                        this.state.fetchData.length != 0 && (
-                                                            <table className="table table-hover mb-0" style={{ fontSize: "13px" }}>
-                                                                <thead style={{ backgroundColor: "#e6f2f9" }}>
-                                                                    <tr style={{ color: "steelblue" }}>
-                                                                        <th>Compte</th>
-                                                                        <th>Intitulé</th>
-                                                                        <th>Email</th>
-                                                                        <th>Téléphone</th>
-                                                                        <th>Compte Abrégé</th>
-                                                                        <th colSpan="2">Actions</th>
-                                                                        <th>Notifications</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    {currentData.map((res, index) => (
-                                                                        <tr key={index}>
-                                                                            <td className="fw-semibold">{res.NumCompte}</td>
-                                                                            <td>{res.NomCompte}</td>
-                                                                            <td>{res.Email || "-"}</td>
-                                                                            <td>{res.Telephone || "-"}</td>
-                                                                            <td>{res.NumAbrege}</td>
-                                                                            <td>
-                                                                                <div className="btn-group" role="group">
-                                                                                    <button onClick={() => this.getIndividualsUserSmsBankingDetails(res.id)} 
-                                                                                        className="btn btn-sm" data-toggle="modal" data-target="#modal-sms-banking"
-                                                                                        style={{ background: "#007BFF", color: "white", borderRadius: "6px 0 0 6px" }}>
-                                                                                        <i className="fas fa-edit"></i>
-                                                                                    </button>
-                                                                                    <button onClick={() => this.DeleteUser(res.id)} 
-                                                                                        className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "0 6px 6px 0" }}>
-                                                                                        <i className="fas fa-trash-alt"></i>
-                                                                                    </button>
-                                                                                </div>
-                                                                            </td>
-                                                                            <td>
-                                                                                <div className="btn-group" role="group">
-                                                                                    {res.ActivatedSMS == 1 ? (
-                                                                                        <button onClick={() => this.ActivateUserOnMSG(res.id)} 
-                                                                                            className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "6px",fontSize:"10px" }}>
-                                                                                            <i className="fas fa-sms me-1"></i>Désactiver SMS
-                                                                                        </button>
-                                                                                    ) : (
-                                                                                        <button onClick={() => this.ActivateUserOnMSG(res.id)} 
-                                                                                            className="btn btn-sm" style={{ background: "#28a745", color: "white", borderRadius: "6px",fontSize:"10px" }}>
-                                                                                            <i className="fas fa-sms me-1"></i>Activer SMS
-                                                                                        </button>
-                                                                                    )}
-                                                                                </div>
-                                                                            </td>
-                                                                            <td>
-                                                                                <div className="btn-group" role="group">
-                                                                                    {res.ActivatedEmail == 1 ? (
-                                                                                        <button onClick={() => this.ActivateUserOnEmail(res.id)} 
-                                                                                            className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "6px",fontSize:"10px" }}>
-                                                                                            <i className="fas fa-envelope me-1"></i>Désactiver Email
-                                                                                        </button>
-                                                                                    ) : (
-                                                                                        <button onClick={() => this.ActivateUserOnEmail(res.id)} 
-                                                                                            className="btn btn-sm" style={{ background: "#28a745", color: "white", borderRadius: "6px",fontSize:"10px" }}>
-                                                                                            <i className="fas fa-envelope me-1"></i>Activer Email
-                                                                                        </button>
-                                                                                    )}
-                                                                                </div>
-                                                                            </td>
-                                                                            <td>
-                                                                                {/* <div className="d-flex gap-2">
+                                                    {this.state.searchData ==
+                                                    false
+                                                        ? this.state.fetchData
+                                                              .length != 0 && (
+                                                              <table
+                                                                  className="table table-hover mb-0"
+                                                                  style={{
+                                                                      fontSize:
+                                                                          "13px",
+                                                                  }}
+                                                              >
+                                                                  <thead
+                                                                      style={{
+                                                                          backgroundColor:
+                                                                              "#e6f2f9",
+                                                                      }}
+                                                                  >
+                                                                      <tr
+                                                                          style={{
+                                                                              color: "steelblue",
+                                                                          }}
+                                                                      >
+                                                                          <th>
+                                                                              Compte
+                                                                          </th>
+                                                                          <th>
+                                                                              Intitulé
+                                                                          </th>
+                                                                          <th>
+                                                                              Email
+                                                                          </th>
+                                                                          <th>
+                                                                              Téléphone
+                                                                          </th>
+                                                                          <th>
+                                                                              Compte
+                                                                              Abrégé
+                                                                          </th>
+                                                                          <th colSpan="2">
+                                                                              Actions
+                                                                          </th>
+                                                                          <th>
+                                                                              Notifications
+                                                                          </th>
+                                                                      </tr>
+                                                                  </thead>
+                                                                  <tbody>
+                                                                      {currentData.map(
+                                                                          (
+                                                                              res,
+                                                                              index,
+                                                                          ) => (
+                                                                              <tr
+                                                                                  key={
+                                                                                      index
+                                                                                  }
+                                                                              >
+                                                                                  <td className="fw-semibold">
+                                                                                      {
+                                                                                          res.NumCompte
+                                                                                      }
+                                                                                  </td>
+                                                                                  <td>
+                                                                                      {
+                                                                                          res.NomCompte
+                                                                                      }
+                                                                                  </td>
+                                                                                  <td>
+                                                                                      {res.Email ||
+                                                                                          "-"}
+                                                                                  </td>
+                                                                                  <td>
+                                                                                      {res.Telephone ||
+                                                                                          "-"}
+                                                                                  </td>
+                                                                                  <td>
+                                                                                      {
+                                                                                          res.NumAbrege
+                                                                                      }
+                                                                                  </td>
+                                                                                  <td>
+                                                                                      <div
+                                                                                          className="btn-group"
+                                                                                          role="group"
+                                                                                      >
+                                                                                          <button
+                                                                                              onClick={() =>
+                                                                                                  this.getIndividualsUserSmsBankingDetails(
+                                                                                                      res.id,
+                                                                                                  )
+                                                                                              }
+                                                                                              className="btn btn-sm"
+                                                                                              data-toggle="modal"
+                                                                                              data-target="#modal-sms-banking"
+                                                                                              style={{
+                                                                                                  background:
+                                                                                                      "#007BFF",
+                                                                                                  color: "white",
+                                                                                                  borderRadius:
+                                                                                                      "6px 0 0 6px",
+                                                                                              }}
+                                                                                          >
+                                                                                              <i className="fas fa-edit"></i>
+                                                                                          </button>
+                                                                                          <button
+                                                                                              onClick={() =>
+                                                                                                  this.DeleteUser(
+                                                                                                      res.id,
+                                                                                                  )
+                                                                                              }
+                                                                                              className="btn btn-sm"
+                                                                                              style={{
+                                                                                                  background:
+                                                                                                      "#dc3545",
+                                                                                                  color: "white",
+                                                                                                  borderRadius:
+                                                                                                      "0 6px 6px 0",
+                                                                                              }}
+                                                                                          >
+                                                                                              <i className="fas fa-trash-alt"></i>
+                                                                                          </button>
+                                                                                      </div>
+                                                                                  </td>
+                                                                                  <td>
+                                                                                      <div
+                                                                                          className="btn-group"
+                                                                                          role="group"
+                                                                                      >
+                                                                                          {res.ActivatedSMS ==
+                                                                                          1 ? (
+                                                                                              <button
+                                                                                                  onClick={() =>
+                                                                                                      this.ActivateUserOnMSG(
+                                                                                                          res.id,
+                                                                                                      )
+                                                                                                  }
+                                                                                                  className="btn btn-sm"
+                                                                                                  style={{
+                                                                                                      background:
+                                                                                                          "#dc3545",
+                                                                                                      color: "white",
+                                                                                                      borderRadius:
+                                                                                                          "6px",
+                                                                                                      fontSize:
+                                                                                                          "10px",
+                                                                                                  }}
+                                                                                              >
+                                                                                                  <i className="fas fa-sms me-1"></i>
+                                                                                                  Désactiver
+                                                                                                  SMS
+                                                                                              </button>
+                                                                                          ) : (
+                                                                                              <button
+                                                                                                  onClick={() =>
+                                                                                                      this.ActivateUserOnMSG(
+                                                                                                          res.id,
+                                                                                                      )
+                                                                                                  }
+                                                                                                  className="btn btn-sm"
+                                                                                                  style={{
+                                                                                                      background:
+                                                                                                          "#28a745",
+                                                                                                      color: "white",
+                                                                                                      borderRadius:
+                                                                                                          "6px",
+                                                                                                      fontSize:
+                                                                                                          "10px",
+                                                                                                  }}
+                                                                                              >
+                                                                                                  <i className="fas fa-sms me-1"></i>
+                                                                                                  Activer
+                                                                                                  SMS
+                                                                                              </button>
+                                                                                          )}
+                                                                                      </div>
+                                                                                  </td>
+                                                                                  <td>
+                                                                                      <div
+                                                                                          className="btn-group"
+                                                                                          role="group"
+                                                                                      >
+                                                                                          {res.ActivatedEmail ==
+                                                                                          1 ? (
+                                                                                              <button
+                                                                                                  onClick={() =>
+                                                                                                      this.ActivateUserOnEmail(
+                                                                                                          res.id,
+                                                                                                      )
+                                                                                                  }
+                                                                                                  className="btn btn-sm"
+                                                                                                  style={{
+                                                                                                      background:
+                                                                                                          "#dc3545",
+                                                                                                      color: "white",
+                                                                                                      borderRadius:
+                                                                                                          "6px",
+                                                                                                      fontSize:
+                                                                                                          "10px",
+                                                                                                  }}
+                                                                                              >
+                                                                                                  <i className="fas fa-envelope me-1"></i>
+                                                                                                  Désactiver
+                                                                                                  Email
+                                                                                              </button>
+                                                                                          ) : (
+                                                                                              <button
+                                                                                                  onClick={() =>
+                                                                                                      this.ActivateUserOnEmail(
+                                                                                                          res.id,
+                                                                                                      )
+                                                                                                  }
+                                                                                                  className="btn btn-sm"
+                                                                                                  style={{
+                                                                                                      background:
+                                                                                                          "#28a745",
+                                                                                                      color: "white",
+                                                                                                      borderRadius:
+                                                                                                          "6px",
+                                                                                                      fontSize:
+                                                                                                          "10px",
+                                                                                                  }}
+                                                                                              >
+                                                                                                  <i className="fas fa-envelope me-1"></i>
+                                                                                                  Activer
+                                                                                                  Email
+                                                                                              </button>
+                                                                                          )}
+                                                                                      </div>
+                                                                                  </td>
+                                                                                  <td>
+                                                                                      {/* <div className="d-flex gap-2">
                                                                                     <div className="form-check form-switch">
                                                                                         <input className="form-check-input" type="checkbox" id={`SMS-${res.id}`}
                                                                                             disabled checked={res.Telephone != null && res.ActivatedSMS != 0} />
@@ -585,79 +1190,285 @@ export default class SMSbanking extends React.Component {
                                                                                         <label className="form-check-label" htmlFor={`Email-${res.id}`} style={{ fontSize: "12px" }}>Email</label>
                                                                                     </div>
                                                                                 </div> */}
-                                                                                <UpdateSMSBankingUser modalId={res.id} data={this.state.fetchUpdateData} nameMembre={res.NomCompte} />
-                                                                            </td>
-                                                                        </tr>
-                                                                    ))}
-                                                                </tbody>
-                                                            </table>
-                                                        )
-                                                    ) : (
-                                                        this.state.fetchSeachedData && (
-                                                            <table className="table table-hover mb-0" style={{ fontSize: "13px" }}>
-                                                                <thead style={{ backgroundColor: "#e6f2f9" }}>
-                                                                    <tr style={{ color: "steelblue" }}>
-                                                                        <th>Compte</th>
-                                                                        <th>Intitulé</th>
-                                                                        <th>Email</th>
-                                                                        <th>Téléphone</th>
-                                                                        <th>Compte Abrégé</th>
-                                                                        <th colSpan="2">Actions</th>
-                                                                        <th>Notifications</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    <tr>
-                                                                        <td className="fw-semibold">{this.state.fetchSeachedData.NumCompte}</td>
-                                                                        <td>{this.state.fetchSeachedData.NomCompte}</td>
-                                                                        <td>{this.state.fetchSeachedData.Email || "-"}</td>
-                                                                        <td>{this.state.fetchSeachedData.Telephone || "-"}</td>
-                                                                        <td>{this.state.fetchSeachedData.NumAbrege}</td>
-                                                                        <td>
-                                                                            <div className="btn-group" role="group">
-                                                                                <button onClick={() => this.getIndividualsUserSmsBankingDetails(this.state.fetchSeachedData.id)} 
-                                                                                    className="btn btn-sm" data-toggle="modal" data-target="#modal-sms-banking"
-                                                                                    style={{ background: "#007BFF", color: "white", borderRadius: "6px 0 0 6px" }}>
-                                                                                    <i className="fas fa-edit"></i>
-                                                                                </button>
-                                                                                <button onClick={() => this.DeleteUser(this.state.fetchSeachedData.id)} 
-                                                                                    className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "0 6px 6px 0" }}>
-                                                                                    <i className="fas fa-trash-alt"></i>
-                                                                                </button>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td>
-                                                                            <div className="btn-group" role="group">
-                                                                                {this.state.fetchSeachedData.ActivatedSMS == 1 ? (
-                                                                                    <button onClick={() => this.ActivateUserOnMSG(this.state.fetchSeachedData.id)} 
-                                                                                        className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "6px",fontSize:"10px" }}>
-                                                                                        <i className="fas fa-sms me-1"></i>Désactiver SMS
-                                                                                    </button>
-                                                                                ) : (
-                                                                                    <button onClick={() => this.ActivateUserOnMSG(this.state.fetchSeachedData.id)} 
-                                                                                        className="btn btn-sm" style={{ background: "#28a745", color: "white", borderRadius: "6px",fontSize:"10px" }}>
-                                                                                        <i className="fas fa-sms me-1"></i>Activer SMS
-                                                                                    </button>
-                                                                                )}
-                                                                            </div>
-                                                                        </td>
-                                                                        <td>
-                                                                            <div className="btn-group" role="group">
-                                                                                {this.state.fetchSeachedData.ActivatedEmail == 1 ? (
-                                                                                    <button onClick={() => this.ActivateUserOnEmail(this.state.fetchSeachedData.id)} 
-                                                                                        className="btn btn-sm" style={{ background: "#dc3545", color: "white", borderRadius: "6px",fontSize:"10px" }}>
-                                                                                        <i className="fas fa-envelope me-1"></i>Désactiver Email
-                                                                                    </button>
-                                                                                ) : (
-                                                                                    <button onClick={() => this.ActivateUserOnEmail(this.state.fetchSeachedData.id)} 
-                                                                                        className="btn btn-sm" style={{ background: "#28a745", color: "white", borderRadius: "6px",fontSize:"10px" }}>
-                                                                                        <i className="fas fa-envelope me-1"></i>Activer Email
-                                                                                    </button>
-                                                                                )}
-                                                                            </div>
-                                                                        </td>
-                                                                        <td>
-                                                                            {/* <div className="d-flex gap-2">
+                                                                                      <UpdateSMSBankingUser
+                                                                                          modalId={
+                                                                                              res.id
+                                                                                          }
+                                                                                          data={
+                                                                                              this
+                                                                                                  .state
+                                                                                                  .fetchUpdateData
+                                                                                          }
+                                                                                          nameMembre={
+                                                                                              res.NomCompte
+                                                                                          }
+                                                                                      />
+                                                                                  </td>
+                                                                              </tr>
+                                                                          ),
+                                                                      )}
+                                                                  </tbody>
+                                                              </table>
+                                                          )
+                                                        : this.state
+                                                              .fetchSeachedData && (
+                                                              <table
+                                                                  className="table table-hover mb-0"
+                                                                  style={{
+                                                                      fontSize:
+                                                                          "13px",
+                                                                  }}
+                                                              >
+                                                                  <thead
+                                                                      style={{
+                                                                          backgroundColor:
+                                                                              "#e6f2f9",
+                                                                      }}
+                                                                  >
+                                                                      <tr
+                                                                          style={{
+                                                                              color: "steelblue",
+                                                                          }}
+                                                                      >
+                                                                          <th>
+                                                                              Compte
+                                                                          </th>
+                                                                          <th>
+                                                                              Intitulé
+                                                                          </th>
+                                                                          <th>
+                                                                              Email
+                                                                          </th>
+                                                                          <th>
+                                                                              Téléphone
+                                                                          </th>
+                                                                          <th>
+                                                                              Compte
+                                                                              Abrégé
+                                                                          </th>
+                                                                          <th colSpan="2">
+                                                                              Actions
+                                                                          </th>
+                                                                          <th>
+                                                                              Notifications
+                                                                          </th>
+                                                                      </tr>
+                                                                  </thead>
+                                                                  <tbody>
+                                                                      <tr>
+                                                                          <td className="fw-semibold">
+                                                                              {
+                                                                                  this
+                                                                                      .state
+                                                                                      .fetchSeachedData
+                                                                                      .NumCompte
+                                                                              }
+                                                                          </td>
+                                                                          <td>
+                                                                              {
+                                                                                  this
+                                                                                      .state
+                                                                                      .fetchSeachedData
+                                                                                      .NomCompte
+                                                                              }
+                                                                          </td>
+                                                                          <td>
+                                                                              {this
+                                                                                  .state
+                                                                                  .fetchSeachedData
+                                                                                  .Email ||
+                                                                                  "-"}
+                                                                          </td>
+                                                                          <td>
+                                                                              {this
+                                                                                  .state
+                                                                                  .fetchSeachedData
+                                                                                  .Telephone ||
+                                                                                  "-"}
+                                                                          </td>
+                                                                          <td>
+                                                                              {
+                                                                                  this
+                                                                                      .state
+                                                                                      .fetchSeachedData
+                                                                                      .NumAbrege
+                                                                              }
+                                                                          </td>
+                                                                          <td>
+                                                                              <div
+                                                                                  className="btn-group"
+                                                                                  role="group"
+                                                                              >
+                                                                                  <button
+                                                                                      onClick={() =>
+                                                                                          this.getIndividualsUserSmsBankingDetails(
+                                                                                              this
+                                                                                                  .state
+                                                                                                  .fetchSeachedData
+                                                                                                  .id,
+                                                                                          )
+                                                                                      }
+                                                                                      className="btn btn-sm"
+                                                                                      data-toggle="modal"
+                                                                                      data-target="#modal-sms-banking"
+                                                                                      style={{
+                                                                                          background:
+                                                                                              "#007BFF",
+                                                                                          color: "white",
+                                                                                          borderRadius:
+                                                                                              "6px 0 0 6px",
+                                                                                      }}
+                                                                                  >
+                                                                                      <i className="fas fa-edit"></i>
+                                                                                  </button>
+                                                                                  <button
+                                                                                      onClick={() =>
+                                                                                          this.DeleteUser(
+                                                                                              this
+                                                                                                  .state
+                                                                                                  .fetchSeachedData
+                                                                                                  .id,
+                                                                                          )
+                                                                                      }
+                                                                                      className="btn btn-sm"
+                                                                                      style={{
+                                                                                          background:
+                                                                                              "#dc3545",
+                                                                                          color: "white",
+                                                                                          borderRadius:
+                                                                                              "0 6px 6px 0",
+                                                                                      }}
+                                                                                  >
+                                                                                      <i className="fas fa-trash-alt"></i>
+                                                                                  </button>
+                                                                              </div>
+                                                                          </td>
+                                                                          <td>
+                                                                              <div
+                                                                                  className="btn-group"
+                                                                                  role="group"
+                                                                              >
+                                                                                  {this
+                                                                                      .state
+                                                                                      .fetchSeachedData
+                                                                                      .ActivatedSMS ==
+                                                                                  1 ? (
+                                                                                      <button
+                                                                                          onClick={() =>
+                                                                                              this.ActivateUserOnMSG(
+                                                                                                  this
+                                                                                                      .state
+                                                                                                      .fetchSeachedData
+                                                                                                      .id,
+                                                                                              )
+                                                                                          }
+                                                                                          className="btn btn-sm"
+                                                                                          style={{
+                                                                                              background:
+                                                                                                  "#dc3545",
+                                                                                              color: "white",
+                                                                                              borderRadius:
+                                                                                                  "6px",
+                                                                                              fontSize:
+                                                                                                  "10px",
+                                                                                          }}
+                                                                                      >
+                                                                                          <i className="fas fa-sms me-1"></i>
+                                                                                          Désactiver
+                                                                                          SMS
+                                                                                      </button>
+                                                                                  ) : (
+                                                                                      <button
+                                                                                          onClick={() =>
+                                                                                              this.ActivateUserOnMSG(
+                                                                                                  this
+                                                                                                      .state
+                                                                                                      .fetchSeachedData
+                                                                                                      .id,
+                                                                                              )
+                                                                                          }
+                                                                                          className="btn btn-sm"
+                                                                                          style={{
+                                                                                              background:
+                                                                                                  "#28a745",
+                                                                                              color: "white",
+                                                                                              borderRadius:
+                                                                                                  "6px",
+                                                                                              fontSize:
+                                                                                                  "10px",
+                                                                                          }}
+                                                                                      >
+                                                                                          <i className="fas fa-sms me-1"></i>
+                                                                                          Activer
+                                                                                          SMS
+                                                                                      </button>
+                                                                                  )}
+                                                                              </div>
+                                                                          </td>
+                                                                          <td>
+                                                                              <div
+                                                                                  className="btn-group"
+                                                                                  role="group"
+                                                                              >
+                                                                                  {this
+                                                                                      .state
+                                                                                      .fetchSeachedData
+                                                                                      .ActivatedEmail ==
+                                                                                  1 ? (
+                                                                                      <button
+                                                                                          onClick={() =>
+                                                                                              this.ActivateUserOnEmail(
+                                                                                                  this
+                                                                                                      .state
+                                                                                                      .fetchSeachedData
+                                                                                                      .id,
+                                                                                              )
+                                                                                          }
+                                                                                          className="btn btn-sm"
+                                                                                          style={{
+                                                                                              background:
+                                                                                                  "#dc3545",
+                                                                                              color: "white",
+                                                                                              borderRadius:
+                                                                                                  "6px",
+                                                                                              fontSize:
+                                                                                                  "10px",
+                                                                                          }}
+                                                                                      >
+                                                                                          <i className="fas fa-envelope me-1"></i>
+                                                                                          Désactiver
+                                                                                          Email
+                                                                                      </button>
+                                                                                  ) : (
+                                                                                      <button
+                                                                                          onClick={() =>
+                                                                                              this.ActivateUserOnEmail(
+                                                                                                  this
+                                                                                                      .state
+                                                                                                      .fetchSeachedData
+                                                                                                      .id,
+                                                                                              )
+                                                                                          }
+                                                                                          className="btn btn-sm"
+                                                                                          style={{
+                                                                                              background:
+                                                                                                  "#28a745",
+                                                                                              color: "white",
+                                                                                              borderRadius:
+                                                                                                  "6px",
+                                                                                              fontSize:
+                                                                                                  "10px",
+                                                                                          }}
+                                                                                      >
+                                                                                          <i className="fas fa-envelope me-1"></i>
+                                                                                          Activer
+                                                                                          Email
+                                                                                      </button>
+                                                                                  )}
+                                                                              </div>
+                                                                          </td>
+                                                                          <td>
+                                                                              {/* <div className="d-flex gap-2">
                                                                                 <div className="form-check form-switch">
                                                                                     <input className="form-check-input" type="checkbox" id="SMS-search"
                                                                                         disabled checked={this.state.fetchSeachedData.Telephone && this.state.fetchSeachedData.ActivatedSMS == 1} />
@@ -669,51 +1480,102 @@ export default class SMSbanking extends React.Component {
                                                                                     <label className="form-check-label" htmlFor="Email-search" style={{ fontSize: "12px" }}>Email</label>
                                                                                 </div>
                                                                             </div> */}
-                                                                            <UpdateSMSBankingUser modalId={this.state.state} data={this.state.fetchUpdateData} nameMembre={this.state.fetchSeachedData.NomCompte} />
-                                                                        </td>
-                                                                    </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        )
-                                                    )}
+                                                                              <UpdateSMSBankingUser
+                                                                                  modalId={
+                                                                                      this
+                                                                                          .state
+                                                                                          .state
+                                                                                  }
+                                                                                  data={
+                                                                                      this
+                                                                                          .state
+                                                                                          .fetchUpdateData
+                                                                                  }
+                                                                                  nameMembre={
+                                                                                      this
+                                                                                          .state
+                                                                                          .fetchSeachedData
+                                                                                          .NomCompte
+                                                                                  }
+                                                                              />
+                                                                          </td>
+                                                                      </tr>
+                                                                  </tbody>
+                                                              </table>
+                                                          )}
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Pagination */}
-                                        {!this.state.searchData && this.state.fetchData.length > 0 && (
-                                            <div className="d-flex justify-content-between align-items-center mt-4 pt-2">
-                                                <div className="text-muted small">
-                                                    <i className="fas fa-info-circle me-1"></i>
-                                                    {this.state.fetchData.length} client(s) au total
+                                        {!this.state.searchData &&
+                                            this.state.fetchData.length > 0 && (
+                                                <div className="d-flex justify-content-between align-items-center mt-4 pt-2">
+                                                    <div className="text-muted small">
+                                                        <i className="fas fa-info-circle me-1"></i>
+                                                        {
+                                                            this.state.fetchData
+                                                                .length
+                                                        }{" "}
+                                                        client(s) au total
+                                                    </div>
+                                                    <nav aria-label="Pagination des clients">
+                                                        <ul className="pagination pagination-sm mb-0">
+                                                            <li
+                                                                className={`page-item ${this.state.currentPage === 1 ? "disabled" : ""}`}
+                                                            >
+                                                                <button
+                                                                    className="page-link"
+                                                                    onClick={
+                                                                        this
+                                                                            .goToPrevPage
+                                                                    }
+                                                                    disabled={
+                                                                        this
+                                                                            .state
+                                                                            .currentPage ===
+                                                                        1
+                                                                    }
+                                                                    style={{
+                                                                        borderRadius:
+                                                                            "8px 0 0 8px",
+                                                                    }}
+                                                                >
+                                                                    <i className="fas fa-chevron-left me-1"></i>
+                                                                    Précédent
+                                                                </button>
+                                                            </li>
+                                                            {this.renderPagination()}
+                                                            <li
+                                                                className={`page-item ${this.state.currentPage === this.state.totalPages ? "disabled" : ""}`}
+                                                            >
+                                                                <button
+                                                                    className="page-link"
+                                                                    onClick={
+                                                                        this
+                                                                            .goToNextPage
+                                                                    }
+                                                                    disabled={
+                                                                        this
+                                                                            .state
+                                                                            .currentPage ===
+                                                                        this
+                                                                            .state
+                                                                            .totalPages
+                                                                    }
+                                                                    style={{
+                                                                        borderRadius:
+                                                                            "0 8px 8px 0",
+                                                                    }}
+                                                                >
+                                                                    Suivant
+                                                                    <i className="fas fa-chevron-right ms-1"></i>
+                                                                </button>
+                                                            </li>
+                                                        </ul>
+                                                    </nav>
                                                 </div>
-                                                <nav aria-label="Pagination des clients">
-                                                    <ul className="pagination pagination-sm mb-0">
-                                                        <li className={`page-item ${this.state.currentPage === 1 ? "disabled" : ""}`}>
-                                                            <button 
-                                                                className="page-link" 
-                                                                onClick={this.goToPrevPage}
-                                                                disabled={this.state.currentPage === 1}
-                                                                style={{ borderRadius: "8px 0 0 8px" }}
-                                                            >
-                                                                <i className="fas fa-chevron-left me-1"></i>Précédent
-                                                            </button>
-                                                        </li>
-                                                        {this.renderPagination()}
-                                                        <li className={`page-item ${this.state.currentPage === this.state.totalPages ? "disabled" : ""}`}>
-                                                            <button 
-                                                                className="page-link" 
-                                                                onClick={this.goToNextPage}
-                                                                disabled={this.state.currentPage === this.state.totalPages}
-                                                                style={{ borderRadius: "0 8px 8px 0" }}
-                                                            >
-                                                                Suivant<i className="fas fa-chevron-right ms-1"></i>
-                                                            </button>
-                                                        </li>
-                                                    </ul>
-                                                </nav>
-                                            </div>
-                                        )}
+                                            )}
                                     </div>
                                 </div>
                             </div>

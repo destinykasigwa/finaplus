@@ -2637,34 +2637,204 @@ class TransactionsController extends Controller
 
     //GET DELESTAGE INFORMATION
 
-    public function getDelestageInfo()
-    {
-        $dataSystem = TauxEtDateSystem::latest()->first();
+    // public function getDelestageInfo()
+    // {
+    //     $dataSystem = TauxEtDateSystem::latest()->first();
 
-        $billetageUSD = BilletageUSD::select(
+    //     $billetageUSD = BilletageUSD::select(
+    //         DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollars"),
+    //         DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollars"),
+    //         DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollars"),
+    //         DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollars"),
+    //         DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollars"),
+    //         DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollars"),
+    //         DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD"),
+    //     )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dataSystem->DateSystem)
+    //         ->where("delested", "=", 0)
+    //         ->groupBy("NomUtilisateur")
+    //         ->get();
+
+    //     // $getCommissionUSD = BilletageUsd::select(
+    //     //     DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeCommissionUSD"),
+    //     // )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $date)
+    //     //     ->where("delested", "=", 0)
+    //     //     ->where("is_commision", "=", 1)
+    //     //     ->groupBy("NomUtilisateur")
+    //     //     ->first();
+
+
+    //     //RECUPERE LE BILLETAGE EN FRANC CONGOLAIS
+    //     $billetageCDF = BilletageCDF::select(
+    //         DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFranc"),
+    //         DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFranc"),
+    //         DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
+    //         DB::raw("SUM(milleFranc)-SUM(milleFrancSortie) as milleFranc"),
+    //         DB::raw("SUM(cinqCentFranc)-SUM(cinqCentFrancSortie) as cinqCentFranc"),
+    //         DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFranc"),
+    //         DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFranc"),
+    //         DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFanc"),
+    //         DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF"),
+    //     )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dataSystem->DateSystem)
+    //         ->where("delested", "=", 0)
+    //         ->groupBy("NomUtilisateur")
+    //         ->get();
+
+    //     //RECUPERE LA COMMISSION PRISE
+
+    //     // $getCommissionCDF = BilletageCdf::select(
+    //     //     DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeCommissionCDF"),
+    //     // )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $date)
+    //     //     ->where("delested", "=", 0)
+    //     //     ->where("is_commision", "=", 1)
+    //     //     ->groupBy("NomUtilisateur")
+    //     //     ->first();
+    //     return response()->json([
+    //         "status" => 1,
+    //         "billetageUSD" => $billetageUSD,
+    //         "billetageCDF" => $billetageCDF
+    //     ]);
+    // }
+
+
+    //     public function getDelestageInfo()
+    // {
+    //     $user = Auth::user();
+    //     $isSuperAdmin = ($user->role === 'SuperAdmin'); // adaptez selon votre champ (ex: $user->role == 'SuperAdmin')
+
+    //     $dataSystem = TauxEtDateSystem::latest()->first();
+
+    //     // Billetage USD
+    //     $billetageUSD = BilletageUSD::select(
+    //         DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollars"),
+    //         DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollars"),
+    //         DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollars"),
+    //         DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollars"),
+    //         DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollars"),
+    //         DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollars"),
+    //         DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD"),
+    //     )
+    //     ->where("DateTransaction", "=", $dataSystem->DateSystem)
+    //     ->where("delested", "=", 0);
+
+    //     // Si l'utilisateur n'est pas SuperAdmin, on filtre par son nom
+    //     if (!$isSuperAdmin) {
+    //         $billetageUSD->where("NomUtilisateur", "=", $user->name);
+    //     }
+
+    //     $billetageUSD = $billetageUSD->groupBy("NomUtilisateur")->get();
+
+    //     // Billetage CDF
+    //     $billetageCDF = BilletageCDF::select(
+    //         DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFranc"),
+    //         DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFranc"),
+    //         DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
+    //         DB::raw("SUM(milleFranc)-SUM(milleFrancSortie) as milleFranc"),
+    //         DB::raw("SUM(cinqCentFranc)-SUM(cinqCentFrancSortie) as cinqCentFranc"),
+    //         DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFranc"),
+    //         DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFranc"),
+    //         DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFanc"),
+    //         DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF"),
+    //     )
+    //     ->where("DateTransaction", "=", $dataSystem->DateSystem)
+    //     ->where("delested", "=", 0);
+
+    //     if (!$isSuperAdmin) {
+    //         $billetageCDF->where("NomUtilisateur", "=", $user->name);
+    //     }
+
+    //     $billetageCDF = $billetageCDF->groupBy("NomUtilisateur")->get();
+
+    //     return response()->json([
+    //         "status" => 1,
+    //         "billetageUSD" => $billetageUSD,
+    //         "billetageCDF" => $billetageCDF
+    //     ]);
+    // }
+
+    // public function getDelestageInfo(Request $request)
+    // {
+    //     $user = Auth::user();
+    //     $isSuperAdmin = ($user->role === 'SuperAdmin'); // adaptez selon votre champ
+
+    //     $dataSystem = TauxEtDateSystem::latest()->first();
+    //     $date = $request->input('date');
+    //     if (!$date) {
+    //         $dataSystem = TauxEtDateSystem::latest()->first();
+    //         $date = $dataSystem->DateSystem;
+    //     }
+    //     // Requête de base pour USD (sans filtre date)
+    //     $queryUSD = BilletageUSD::select(
+    //         'NomUtilisateur',
+    //         DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollars"),
+    //         DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollars"),
+    //         DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollars"),
+    //         DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollars"),
+    //         DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollars"),
+    //         DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollars"),
+    //         DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD"),
+    //     )
+    //     ->where("delested", "=", 0);
+
+    //     // Requête de base pour CDF
+    //     $queryCDF = BilletageCDF::select(
+    //         'NomUtilisateur',
+    //         DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFranc"),
+    //         DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFranc"),
+    //         DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
+    //         DB::raw("SUM(milleFranc)-SUM(milleFrancSortie) as milleFranc"),
+    //         DB::raw("SUM(cinqCentFranc)-SUM(cinqCentFrancSortie) as cinqCentFranc"),
+    //         DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFranc"),
+    //         DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFranc"),
+    //         DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFanc"),
+    //         DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF"),
+    //     )
+    //     ->where("delested", "=", 0);
+
+    //     if ($isSuperAdmin) {
+    //         // Admin : pas de filtre sur la date, ni sur le nom
+    //         // Il voit tous les billetages non délestés de tous les caissiers, toutes dates confondues
+    //     } else {
+    //         // Simple caissier : uniquement ses propres billetages du jour
+    //         $queryUSD->where("NomUtilisateur", "=", $user->name)
+    //                  ->where("DateTransaction", "=", $dataSystem->DateSystem);
+    //         $queryCDF->where("NomUtilisateur", "=", $user->name)
+    //                  ->where("DateTransaction", "=", $dataSystem->DateSystem);
+    //     }
+
+    //     $billetageUSD = $queryUSD->groupBy("NomUtilisateur")->get();
+    //     $billetageCDF = $queryCDF->groupBy("NomUtilisateur")->get();
+
+    //     return response()->json([
+    //         "status" => 1,
+    //         "billetageUSD" => $billetageUSD,
+    //         "billetageCDF" => $billetageCDF
+    //     ]);
+    // }
+
+    public function getDelestageInfo(Request $request)
+    {
+        $user = Auth::user();
+        $isSuperAdmin = ($user->role === 'SuperAdmin');
+
+        $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
+        $selectedDate = $request->input('date');
+
+        // Requête USD
+        $queryUSD = BilletageUSD::select(
+            'NomUtilisateur',
             DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollars"),
             DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollars"),
             DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollars"),
             DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollars"),
             DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollars"),
             DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollars"),
-            DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD"),
-        )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dataSystem->DateSystem)
-            ->where("delested", "=", 0)
-            ->groupBy("NomUtilisateur")
-            ->get();
+            DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD")
+        )
+            ->where("delested", 0);
 
-        // $getCommissionUSD = BilletageUsd::select(
-        //     DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeCommissionUSD"),
-        // )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $date)
-        //     ->where("delested", "=", 0)
-        //     ->where("is_commision", "=", 1)
-        //     ->groupBy("NomUtilisateur")
-        //     ->first();
-
-
-        //RECUPERE LE BILLETAGE EN FRANC CONGOLAIS
-        $billetageCDF = BilletageCDF::select(
+        // Requête CDF (identique, adapter les champs)
+        $queryCDF = BilletageCDF::select(
+            'NomUtilisateur',
             DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFranc"),
             DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFranc"),
             DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
@@ -2673,21 +2843,36 @@ class TransactionsController extends Controller
             DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFranc"),
             DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFranc"),
             DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFanc"),
-            DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF"),
-        )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dataSystem->DateSystem)
-            ->where("delested", "=", 0)
-            ->groupBy("NomUtilisateur")
-            ->get();
+            DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF")
+        )
+            ->where("delested", 0);
 
-        //RECUPERE LA COMMISSION PRISE
+        if ($isSuperAdmin) {
+            // Admin : ajouter DateTransaction au select et group by
+            $queryUSD->addSelect('DateTransaction')
+                ->groupBy('NomUtilisateur', 'DateTransaction');
+            $queryCDF->addSelect('DateTransaction')
+                ->groupBy('NomUtilisateur', 'DateTransaction');
 
-        // $getCommissionCDF = BilletageCdf::select(
-        //     DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeCommissionCDF"),
-        // )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $date)
-        //     ->where("delested", "=", 0)
-        //     ->where("is_commision", "=", 1)
-        //     ->groupBy("NomUtilisateur")
-        //     ->first();
+            if (!empty($selectedDate)) {
+                $queryUSD->where('DateTransaction', $selectedDate);
+                $queryCDF->where('DateTransaction', $selectedDate);
+            }
+        } else {
+            // Caissier normal : pas de DateTransaction dans select, groupe sur NomUtilisateur
+            $queryUSD->where('NomUtilisateur', $user->name)
+                ->where('DateTransaction', $dateSystem)
+                ->groupBy('NomUtilisateur');
+            $queryCDF->where('NomUtilisateur', $user->name)
+                ->where('DateTransaction', $dateSystem)
+                ->groupBy('NomUtilisateur');
+        }
+
+        $billetageUSD = $queryUSD->get();
+        $billetageCDF = $queryCDF->get();
+
+
+
         return response()->json([
             "status" => 1,
             "billetageUSD" => $billetageUSD,
@@ -2696,138 +2881,316 @@ class TransactionsController extends Controller
     }
 
     //VALIDATE DELESTAGE
+    // public function ValidateDelestage(Request $request)
+    // {
+    //     $currentAgence = session('current_agence');
+    //     $codeAgence = $currentAgence['code_agence'];
 
+    //      $user = Auth::user();
+    // $isSuperAdmin = ($user->role === 'SuperAdmin');
+    // $date = $request->input('date');
+    // if (!$date) {
+    //     $dataSystem = TauxEtDateSystem::latest()->first();
+    //     $date = $dataSystem->DateSystem;
+    // }
+
+    //     if (isset($request->devise)) {
+    //         if ($request->devise == "CDF") {
+    //             CompteurTransaction::create([
+    //                 'fakevalue' => "0000",
+    //             ]);
+    //             $numOperation = [];
+    //             $numOperation = CompteurTransaction::latest()->first();
+    //             $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+    //             $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
+    //             //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
+    //             $numCompteCaissierCDF = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "2")->where("CodeAgence", $codeAgence)->first();
+    //             $CompteCaissierCDF = $numCompteCaissierCDF->NumCompte;
+
+    //             //RECUPERE LE BILLETAGE EN FRANC CONGOLAIS
+    //             $billetageCDF = BilletageCdf::select(
+    //                 DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFranc"),
+    //                 DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFranc"),
+    //                 DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
+    //                 DB::raw("SUM(milleFranc)-SUM(milleFrancSortie) as milleFranc"),
+    //                 DB::raw("SUM(cinqCentFranc)-SUM(cinqCentFrancSortie) as cinqCentFranc"),
+    //                 DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFranc"),
+    //                 DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFranc"),
+    //                 DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFanc"),
+    //                 DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF"),
+    //             )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)
+    //                 ->where("delested", "=", 0)
+    //                 ->groupBy("NomUtilisateur")
+    //                 ->first();
+    //             if (!$billetageCDF) {
+    //                 return response()->json([
+    //                     "status" => 0,
+    //                     "msg" => "Le délestage est déjà effectué.",
+    //                 ]);
+    //             }
+    //             //RENSEINE LE DELESTAGE
+    //             BilletageCDF::where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)->update([
+    //                 "delested" => 1
+    //             ]);
+
+    //             Delestages::create([
+    //                 "Reference" => $NumTransaction,
+    //                 "code_agence" => $codeAgence,
+    //                 "NumCompteCaissier" => $CompteCaissierCDF,
+    //                 "vightMilleFranc" => $billetageCDF->vightMilleFranc,
+    //                 "dixMilleFranc" => $billetageCDF->dixMilleFranc,
+    //                 "cinqMilleFranc" => $billetageCDF->cinqMilleFranc,
+    //                 "milleFranc" => $billetageCDF->milleFranc,
+    //                 "cinqCentFranc" => $billetageCDF->cinqCentFranc,
+    //                 "deuxCentFranc" => $billetageCDF->deuxCentFranc,
+    //                 "centFranc" => $billetageCDF->centFranc,
+    //                 "cinquanteFanc" => $billetageCDF->cinquanteFanc,
+    //                 "montantCDF" => $billetageCDF->sommeMontantCDF,
+    //                 "NomUtilisateur" => Auth::user()->name,
+    //                 "NomDemandeur" => Auth::user()->name,
+    //                 "DateTransaction" => $dateSystem,
+    //                 "CodeMonnaie" => 2,
+    //             ]);
+    //             return response()->json([
+    //                 "status" => 1,
+    //                 "msg" => "Délestage effectuer avec succès",
+    //             ]);
+    //         } else if ($request->devise == "USD") {
+    //             CompteurTransaction::create([
+    //                 'fakevalue' => "0000",
+    //             ]);
+    //             $numOperation = [];
+    //             $numOperation = CompteurTransaction::latest()->first();
+    //             $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
+    //             $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
+    //             //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
+    //             //RECUPERE LE COMPTE DU CAISSIER CONCERNE USD
+    //             $numCompteCaissierUSD = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "1")->where("CodeAgence", $codeAgence)->first();
+    //             $CompteCaissierUSD = $numCompteCaissierUSD->NumCompte;
+
+    //             //RECUPERE LE BILLETAGE EN DOLLARS
+    //             $billetageUSD = BilletageUsd::select(
+    //                 DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollars"),
+    //                 DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollars"),
+    //                 DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollars"),
+    //                 DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollars"),
+    //                 DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollars"),
+    //                 DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollars"),
+    //                 DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD"),
+    //             )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)
+    //                 ->where("delested", "=", 0)
+    //                 ->groupBy("NomUtilisateur")
+    //                 ->first();
+    //             if (!$billetageUSD) {
+    //                 return response()->json([
+    //                     "status" => 0,
+    //                     "msg" => "Le délestage est déjà effectué.",
+    //                 ]);
+    //             }
+
+    //             //RENSEINE LE DELESTAGE
+    //             BilletageUSD::where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)->update([
+    //                 "delested" => 1
+    //             ]);
+
+    //             Delestages::create([
+    //                 "Reference" => $NumTransaction,
+    //                 "code_agence" => $codeAgence,
+    //                 "NumCompteCaissier" => $CompteCaissierUSD,
+    //                 "centDollars" => $billetageUSD->centDollars,
+    //                 "cinquanteDollars" => $billetageUSD->cinquanteDollars,
+    //                 "vightDollars" => $billetageUSD->vightDollars,
+    //                 "dixDollars" => $billetageUSD->dixDollars,
+    //                 "cinqDollars" => $billetageUSD->cinqDollars,
+    //                 "unDollars" => $billetageUSD->unDollars,
+    //                 "montantUSD" => $billetageUSD->sommeMontantUSD,
+    //                 "NomUtilisateur" => Auth::user()->name,
+    //                 "NomDemandeur" => Auth::user()->name,
+    //                 "DateTransaction" => $dateSystem,
+    //                 "CodeMonnaie" => 1,
+    //             ]);
+
+    //             return response()->json([
+    //                 "status" => 1,
+    //                 "msg" => "Délestage effectuer avec succès",
+    //             ]);
+    //         }
+    //     } else {
+    //         return response()->json([
+    //             "status" => 0,
+    //             "msg" => "Unknown error !",
+    //         ]);
+    //     }
+    // }
+
+
+    //VALIDATE DELESTAGE
     public function ValidateDelestage(Request $request)
     {
         $currentAgence = session('current_agence');
-        $codeAgence = $currentAgence['code_agence'];
-        if (isset($request->devise)) {
-            if ($request->devise == "CDF") {
-                CompteurTransaction::create([
-                    'fakevalue' => "0000",
-                ]);
-                $numOperation = [];
-                $numOperation = CompteurTransaction::latest()->first();
-                $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-                $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
-                //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
-                $numCompteCaissierCDF = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "2")->where("CodeAgence", $codeAgence)->first();
-                $CompteCaissierCDF = $numCompteCaissierCDF->NumCompte;
+        $codeAgence = $currentAgence['code_agence'] ?? null;
 
-                //RECUPERE LE BILLETAGE EN FRANC CONGOLAIS
-                $billetageCDF = BilletageCdf::select(
-                    DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFranc"),
-                    DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFranc"),
-                    DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
-                    DB::raw("SUM(milleFranc)-SUM(milleFrancSortie) as milleFranc"),
-                    DB::raw("SUM(cinqCentFranc)-SUM(cinqCentFrancSortie) as cinqCentFranc"),
-                    DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFranc"),
-                    DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFranc"),
-                    DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFanc"),
-                    DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF"),
-                )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)
-                    ->where("delested", "=", 0)
-                    ->groupBy("NomUtilisateur")
-                    ->first();
-                if (!$billetageCDF) {
-                    return response()->json([
-                        "status" => 0,
-                        "msg" => "Le délestage est déjà effectué.",
-                    ]);
-                }
-                //RENSEINE LE DELESTAGE
-                BilletageCDF::where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)->update([
-                    "delested" => 1
-                ]);
+        $user = Auth::user();
+        $isSuperAdmin = ($user->role === 'SuperAdmin');
 
-                Delestages::create([
-                    "Reference" => $NumTransaction,
-                    "code_agence" => $codeAgence,
-                    "NumCompteCaissier" => $CompteCaissierCDF,
-                    "vightMilleFranc" => $billetageCDF->vightMilleFranc,
-                    "dixMilleFranc" => $billetageCDF->dixMilleFranc,
-                    "cinqMilleFranc" => $billetageCDF->cinqMilleFranc,
-                    "milleFranc" => $billetageCDF->milleFranc,
-                    "cinqCentFranc" => $billetageCDF->cinqCentFranc,
-                    "deuxCentFranc" => $billetageCDF->deuxCentFranc,
-                    "centFranc" => $billetageCDF->centFranc,
-                    "cinquanteFanc" => $billetageCDF->cinquanteFanc,
-                    "montantCDF" => $billetageCDF->sommeMontantCDF,
-                    "NomUtilisateur" => Auth::user()->name,
-                    "NomDemandeur" => Auth::user()->name,
-                    "DateTransaction" => $dateSystem,
-                    "CodeMonnaie" => 2,
-                ]);
-                return response()->json([
-                    "status" => 1,
-                    "msg" => "Délestage effectuer avec succès",
-                ]);
-            } else if ($request->devise == "USD") {
-                CompteurTransaction::create([
-                    'fakevalue' => "0000",
-                ]);
-                $numOperation = [];
-                $numOperation = CompteurTransaction::latest()->first();
-                $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-                $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
-                //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
-                //RECUPERE LE COMPTE DU CAISSIER CONCERNE USD
-                $numCompteCaissierUSD = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "1")->where("CodeAgence", $codeAgence)->first();
-                $CompteCaissierUSD = $numCompteCaissierUSD->NumCompte;
-
-                //RECUPERE LE BILLETAGE EN DOLLARS
-                $billetageUSD = BilletageUsd::select(
-                    DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollars"),
-                    DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollars"),
-                    DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollars"),
-                    DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollars"),
-                    DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollars"),
-                    DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollars"),
-                    DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD"),
-                )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)
-                    ->where("delested", "=", 0)
-                    ->groupBy("NomUtilisateur")
-                    ->first();
-                if (!$billetageUSD) {
-                    return response()->json([
-                        "status" => 0,
-                        "msg" => "Le délestage est déjà effectué.",
-                    ]);
-                }
-
-                //RENSEINE LE DELESTAGE
-                BilletageUSD::where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)->update([
-                    "delested" => 1
-                ]);
-
-                Delestages::create([
-                    "Reference" => $NumTransaction,
-                    "code_agence" => $codeAgence,
-                    "NumCompteCaissier" => $CompteCaissierUSD,
-                    "centDollars" => $billetageUSD->centDollars,
-                    "cinquanteDollars" => $billetageUSD->cinquanteDollars,
-                    "vightDollars" => $billetageUSD->vightDollars,
-                    "dixDollars" => $billetageUSD->dixDollars,
-                    "cinqDollars" => $billetageUSD->cinqDollars,
-                    "unDollars" => $billetageUSD->unDollars,
-                    "montantUSD" => $billetageUSD->sommeMontantUSD,
-                    "NomUtilisateur" => Auth::user()->name,
-                    "NomDemandeur" => Auth::user()->name,
-                    "DateTransaction" => $dateSystem,
-                    "CodeMonnaie" => 1,
-                ]);
-
-                return response()->json([
-                    "status" => 1,
-                    "msg" => "Délestage effectuer avec succès",
-                ]);
+        // --- Détermination du caissier et de la date ---
+        if ($isSuperAdmin && $request->filled('caissier')) {
+            $caissierNom = $request->input('caissier');
+            // Récupération de l'ID du caissier pour les comptes
+            $caissier = \App\Models\User::where('name', $caissierNom)->first();
+            if (!$caissier) {
+                return response()->json(['status' => 0, 'msg' => 'Caissier introuvable']);
             }
+            $caissierId = $caissier->id;
+             $NomCaissier=$caissier->name;
         } else {
-            return response()->json([
-                "status" => 0,
-                "msg" => "Unknown error !",
-            ]);
+            $caissierNom = $user->name;
+            $caissierId = $user->id;
         }
+
+        if ($isSuperAdmin && $request->filled('date')) {
+            $transactionDate = $request->input('date');
+        } else {
+            $dateSystem = TauxEtDateSystem::latest()->first();
+            $transactionDate = $dateSystem->DateSystem ?? date('Y-m-d');
+        }
+
+        // Vérifier la devise
+        if (!$request->has('devise')) {
+            return response()->json(['status' => 0, 'msg' => 'Devise non spécifiée']);
+        }
+        $devise = $request->devise;
+
+        // --- Traitement pour CDF ---
+        if ($devise == "CDF") {
+            CompteurTransaction::create(['fakevalue' => "0000"]);
+            $numOperation = CompteurTransaction::latest()->first();
+            $NumTransaction = substr($caissierNom, 0, 2) . "00" . $numOperation->id;
+
+            // Récupérer le compte du caissier concerné (CDF)
+            $numCompteCaissierCDF = Comptes::where("caissierId", $caissierId)
+                ->where("CodeMonnaie", "2")
+                ->where("CodeAgence", $codeAgence)
+                ->first();
+            if (!$numCompteCaissierCDF) {
+                return response()->json(['status' => 0, 'msg' => 'Compte caissier CDF introuvable']);
+            }
+            $CompteCaissierCDF = $numCompteCaissierCDF->NumCompte;
+
+            // Récupérer le billetage CDF non délesté du caissier à cette date
+            $billetageCDF = BilletageCdf::select(
+                DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFranc"),
+                DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFranc"),
+                DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
+                DB::raw("SUM(milleFranc)-SUM(milleFrancSortie) as milleFranc"),
+                DB::raw("SUM(cinqCentFranc)-SUM(cinqCentFrancSortie) as cinqCentFranc"),
+                DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFranc"),
+                DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFranc"),
+                DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFanc"),
+                DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF"),
+            )
+                ->where("NomUtilisateur", $caissierNom)
+                ->where("DateTransaction", $transactionDate)
+                ->where("delested", 0)
+                ->groupBy("NomUtilisateur")
+                ->first();
+
+            if (!$billetageCDF) {
+                return response()->json(['status' => 0, 'msg' => 'Aucun billetage à délester ou déjà effectué pour cette date']);
+            }
+
+            // Marquer comme délesté
+            BilletageCdf::where("NomUtilisateur", $caissierNom)
+                ->where("DateTransaction", $transactionDate)
+                ->update(["delested" => 1]);
+
+            // Enregistrer dans l'historique des délestages
+            Delestages::create([
+                "Reference"           => $NumTransaction,
+                "code_agence"         => $codeAgence,
+                "NumCompteCaissier"   => $CompteCaissierCDF,
+                "vightMilleFranc"     => $billetageCDF->vightMilleFranc,
+                "dixMilleFranc"       => $billetageCDF->dixMilleFranc,
+                "cinqMilleFranc"      => $billetageCDF->cinqMilleFranc,
+                "milleFranc"          => $billetageCDF->milleFranc,
+                "cinqCentFranc"       => $billetageCDF->cinqCentFranc,
+                "deuxCentFranc"       => $billetageCDF->deuxCentFranc,
+                "centFranc"           => $billetageCDF->centFranc,
+                "cinquanteFanc"       => $billetageCDF->cinquanteFanc,
+                "montantCDF"          => $billetageCDF->sommeMontantCDF,
+                // "NomUtilisateur"      => $caissierNom,
+                "NomUtilisateur" => $NomCaissier ?? $caissierNom,
+                "NomDemandeur"        => $user->name,
+                "DateTransaction"     => $transactionDate,
+                "CodeMonnaie"         => 2,
+            ]);
+
+            return response()->json(['status' => 1, 'msg' => 'Délestage effectué avec succès']);
+
+            // --- Traitement pour USD ---
+        } elseif ($devise == "USD") {
+            CompteurTransaction::create(['fakevalue' => "0000"]);
+            $numOperation = CompteurTransaction::latest()->first();
+            $NumTransaction = substr($caissierNom, 0, 2) . "00" . $numOperation->id;
+
+            // Récupérer le compte du caissier concerné (USD)
+            $numCompteCaissierUSD = Comptes::where("caissierId", $caissierId)
+                ->where("CodeMonnaie", "1")
+                ->where("CodeAgence", $codeAgence)
+                ->first();
+            if (!$numCompteCaissierUSD) {
+                return response()->json(['status' => 0, 'msg' => 'Compte caissier USD introuvable']);
+            }
+            $CompteCaissierUSD = $numCompteCaissierUSD->NumCompte;
+
+            // Récupérer le billetage USD non délesté
+            $billetageUSD = BilletageUsd::select(
+                DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollars"),
+                DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollars"),
+                DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollars"),
+                DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollars"),
+                DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollars"),
+                DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollars"),
+                DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD"),
+            )
+                ->where("NomUtilisateur", $caissierNom)
+                ->where("DateTransaction", $transactionDate)
+                ->where("delested", 0)
+                ->groupBy("NomUtilisateur")
+                ->first();
+
+            if (!$billetageUSD) {
+                return response()->json(['status' => 0, 'msg' => 'Aucun billetage à délester ou déjà effectué pour cette date']);
+            }
+
+            // Marquer comme délesté
+            BilletageUsd::where("NomUtilisateur", $caissierNom)
+                ->where("DateTransaction", $transactionDate)
+                ->update(["delested" => 1]);
+
+            // Enregistrer dans l'historique
+            Delestages::create([
+                "Reference"           => $NumTransaction,
+                "code_agence"         => $codeAgence,
+                "NumCompteCaissier"   => $CompteCaissierUSD,
+                "centDollars"         => $billetageUSD->centDollars,
+                "cinquanteDollars"    => $billetageUSD->cinquanteDollars,
+                "vightDollars"        => $billetageUSD->vightDollars,
+                "dixDollars"          => $billetageUSD->dixDollars,
+                "cinqDollars"         => $billetageUSD->cinqDollars,
+                "unDollars"           => $billetageUSD->unDollars,
+                "montantUSD"          => $billetageUSD->sommeMontantUSD,
+                // "NomUtilisateur"      => $caissierNom,
+                "NomUtilisateur" => $NomCaissier ?? $caissierNom,
+                "NomDemandeur"        => $user->name,
+                "DateTransaction"     => $transactionDate,
+                "CodeMonnaie"         => 1,
+            ]);
+
+            return response()->json(['status' => 1, 'msg' => 'Délestage effectué avec succès']);
+        }
+
+        return response()->json(['status' => 0, 'msg' => 'Devise non reconnue']);
     }
 
 
@@ -3276,9 +3639,14 @@ class TransactionsController extends Controller
         $currentAgence = session('current_agence');
         $codeAgence = $currentAgence['code_agence'];
         $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
-        $data = Delestages::where("received", 0)->where("DateTransaction", $dateSystem)->where("code_agence", $codeAgence)->get();
-        $billetageUSD = Delestages::where("received", 0)->where("DateTransaction", $dateSystem)->where("montantUSD", ">", 0)->where("code_agence", $codeAgence)->first();
-        $billetageCDF = Delestages::where("received", 0)->where("DateTransaction", $dateSystem)->where("montantCDF", ">", 0)->where("code_agence", $codeAgence)->first();
+        // $data = Delestages::where("received", 0)->where("DateTransaction", $dateSystem)->where("code_agence", $codeAgence)->get();
+        // $billetageUSD = Delestages::where("received", 0)->where("DateTransaction", $dateSystem)->where("montantUSD", ">", 0)->where("code_agence", $codeAgence)->first();
+        // $billetageCDF = Delestages::where("received", 0)->where("DateTransaction", $dateSystem)->where("montantCDF", ">", 0)->where("code_agence", $codeAgence)->first();
+        // return response()->json(["status" => 1, "data" => $data, "billetageCDF" => $billetageCDF, "billetageUSD" => $billetageUSD]);
+
+        $data = Delestages::where("received", 0)->where("code_agence", $codeAgence)->get();
+        $billetageUSD = Delestages::where("received", 0)->where("montantUSD", ">", 0)->where("code_agence", $codeAgence)->first();
+        $billetageCDF = Delestages::where("received", 0)->where("montantCDF", ">", 0)->where("code_agence", $codeAgence)->first();
         return response()->json(["status" => 1, "data" => $data, "billetageCDF" => $billetageCDF, "billetageUSD" => $billetageUSD]);
     }
 
@@ -3299,20 +3667,20 @@ class TransactionsController extends Controller
             $compteVirementInterGuichetUSD = $agence->compte_virement_caisse_usd;
             $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
             //COMPTEUR DES OPERATIONS
-            $numOperation = [];
-            $numOperation = CompteurTransaction::latest()->first();
-            $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "D00" . $numOperation->id;
+            // $numOperation = [];
+            // $numOperation = CompteurTransaction::latest()->first();
+            // $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "D00" . $numOperation->id;
             //ECRITURE DE TRANSERT INTER GUICHET  DEBIT
             Transactions::create([
-                "NumTransaction" => $NumTransaction,
+                "NumTransaction" => $data->Reference,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
                 "TypeTransaction" => "D",
                 "CodeMonnaie" => 1,
                 "CodeAgence" => $codeAgence,
-                "NumDossier" => "DOS00" . $numOperation->id,
-                "NumDemande" => "V00" . $numOperation->id,
+                "NumDossier" => "DS" . $data->Reference,
+                "NumDemande" => "V0" . $data->Reference,
                 "NumCompte" => $compteVirementInterGuichetUSD,
                 "NumComptecp" => $compteVirementInterGuichetUSD,
                 "Debit" => $data->montantUSD,
@@ -3326,15 +3694,15 @@ class TransactionsController extends Controller
             //CREDITE LE COMPTE DE VIREMENT INTER GUICHET
 
             Transactions::create([
-                "NumTransaction" => $NumTransaction,
+                "NumTransaction" => $data->Reference,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
                 "TypeTransaction" => "C",
                 "CodeMonnaie" => 1,
                 "CodeAgence" => $codeAgence,
-                "NumDossier" => "DOS00" . $numOperation->id,
-                "NumDemande" => "V00" . $numOperation->id,
+                "NumDossier" => "DS" . $data->Reference,
+                "NumDemande" => "V0" . $data->Reference,
                 "NumCompte" => $compteVirementInterGuichetUSD,
                 "NumComptecp" => $compteVirementInterGuichetUSD,
                 "Credit" => $data->montantUSD,
@@ -3347,15 +3715,15 @@ class TransactionsController extends Controller
 
             //DEBITE LE COMPTE DE LA CAISSE PRINCIPALE
             Transactions::create([
-                "NumTransaction" => $NumTransaction,
+                "NumTransaction" => $data->Reference,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
                 "TypeTransaction" => "D",
                 "CodeMonnaie" => 1,
                 "CodeAgence" => $codeAgence,
-                "NumDossier" => "DOS00" . $numOperation->id,
-                "NumDemande" => "V00" . $numOperation->id,
+                "NumDossier" => "DS" . $data->Reference,
+                "NumDemande" => "V0" . $data->Reference,
                 "NumCompte" => $numCompteCaissePrUSD,
                 "NumComptecp" => $data->NumCompteCaissier,
                 "Debit" => $data->montantUSD,
@@ -3368,15 +3736,15 @@ class TransactionsController extends Controller
 
             //ON CREDITE LE COMPTE DU CAISSIER CONCERNE 
             Transactions::create([
-                "NumTransaction" => $NumTransaction,
+                "NumTransaction" => $data->Reference,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
                 "TypeTransaction" => "C",
                 "CodeMonnaie" => 1,
                 "CodeAgence" => $codeAgence,
-                "NumDossier" => "DOS00" . $numOperation->id,
-                "NumDemande" => "V00" . $numOperation->id,
+                "NumDossier" => "DS" . $data->Reference,
+                "NumDemande" => "V0" . $data->Reference,
                 "NumCompte" => $data->NumCompteCaissier,
                 "NumComptecp" => $numCompteCaissePrUSD,
                 "Credit" => $data->montantUSD,
@@ -3419,20 +3787,20 @@ class TransactionsController extends Controller
             $compteVirementInterGuichetCDF = $agence->compte_virement_caisse_cdf;
             $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
             //COMPTEUR DES OPERATIONS
-            $numOperation = [];
-            $numOperation = CompteurTransaction::latest()->first();
-            $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "D00" . $numOperation->id;
+            // $numOperation = [];
+            // $numOperation = CompteurTransaction::latest()->first();
+            // $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "D00" . $numOperation->id;
             //ECRITURE DE TRANSERT INTER GUICHET  DEBIT
             Transactions::create([
-                "NumTransaction" => $NumTransaction,
+                "NumTransaction" => $data->Reference,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
                 "TypeTransaction" => "D",
                 "CodeMonnaie" => 2,
                 "CodeAgence" => $codeAgence,
-                "NumDossier" => "DOS00" . $numOperation->id,
-                "NumDemande" => "V00" . $numOperation->id,
+                "NumDossier" => "DS" . $data->Reference,
+                "NumDemande" => "V0" . $data->Reference,
                 "NumCompte" => $compteVirementInterGuichetCDF,
                 "NumComptecp" => $compteVirementInterGuichetCDF,
                 "Debit" => $data->montantCDF,
@@ -3446,15 +3814,15 @@ class TransactionsController extends Controller
             //CREDITE LE COMPTE DE VIREMENT INTER GUICHET
 
             Transactions::create([
-                "NumTransaction" => $NumTransaction,
+                "NumTransaction" => $data->Reference,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
                 "TypeTransaction" => "C",
                 "CodeMonnaie" => 2,
                 "CodeAgence" => $codeAgence,
-                "NumDossier" => "DOS00" . $numOperation->id,
-                "NumDemande" => "V00" . $numOperation->id,
+                "NumDossier" => "DS" . $data->Reference,
+                "NumDemande" => "V0" . $data->Reference,
                 "NumCompte" => $compteVirementInterGuichetCDF,
                 "NumComptecp" => $compteVirementInterGuichetCDF,
                 "Credit" => $data->montantCDF,
@@ -3467,15 +3835,15 @@ class TransactionsController extends Controller
 
             //DEBITE LE COMPTE DE LA CAISSE PRINCIPALE
             Transactions::create([
-                "NumTransaction" => $NumTransaction,
+                "NumTransaction" => $data->Reference,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
                 "TypeTransaction" => "D",
                 "CodeMonnaie" => 2,
                 "CodeAgence" => $codeAgence,
-                "NumDossier" => "DOS00" . $numOperation->id,
-                "NumDemande" => "V00" . $numOperation->id,
+                "NumDossier" => "DS" . $data->Reference,
+                "NumDemande" => "V0" . $data->Reference,
                 "NumCompte" => $numCompteCaissePrCDF,
                 "NumComptecp" => $data->NumCompteCaissier,
                 "Debit" => $data->montantCDF,
@@ -3488,15 +3856,15 @@ class TransactionsController extends Controller
 
             //ON CREDITE LE COMPTE DU CAISSIER CONCERNE 
             Transactions::create([
-                "NumTransaction" => $NumTransaction,
+                "NumTransaction" => $data->Reference,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
                 "TypeTransaction" => "C",
                 "CodeMonnaie" => 2,
                 "CodeAgence" => $codeAgence,
-                "NumDossier" => "DOS00" . $numOperation->id,
-                "NumDemande" => "V00" . $numOperation->id,
+                "NumDossier" => "DS" . $data->Reference,
+                "NumDemande" => "V0" . $data->Reference,
                 "NumCompte" => $data->NumCompteCaissier,
                 "NumComptecp" => $numCompteCaissePrCDF,
                 "Credit" => $data->montantCDF,
@@ -3607,8 +3975,14 @@ class TransactionsController extends Controller
             }
 
             // Récupération sécurisée de l'adresse (évite l'erreur si aucun enregistrement)
-            $adhesion = AdhesionMembre::where("num_compte", $request->NumCompte)->first();
+            $adhesion = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->where("code_agence",$codeAgence)->first();
             $getAdresseMembre = $adhesion ? $adhesion->suiteAdresse : null;
+
+        //     $adhesion = AdhesionMembre::where(function($query) use ($request) {
+        //     $query->where('num_compte', $request->NumCompte)
+        //   ->orWhere('compte_abrege', $request->NumCompte)
+        //   ->orWhere('Num_Manuel', $request->NumCompte);
+        //   })->first();
 
             // Vérifier que le compte appartient bien à l'agence choisie (sauf si all)
             if ($codeAgence && $compte->CodeAgence != $codeAgence) {
@@ -3921,18 +4295,6 @@ class TransactionsController extends Controller
                     ->orWhere("Num_Manuel", $request->compte_a_debiter);   // ← ajout
             })->first();
             if ($checkData) {
-                // $data = Comptes::where(function ($query) use ($request) {
-
-                //     $query->where('NumCompte', $request->compte_a_debiter)
-
-                //         ->orWhere(function ($q) use ($request) {
-                //             $q->where('NumAdherant', $request->compte_a_debiter)
-                //                 ->where('RefGroupe', 330)
-                //                 ->where('CodeMonnaie', 2);
-                //         });
-                // })
-                //     ->orderByRaw("NumCompte = ? DESC", [$request->compte_a_debiter])
-                //     ->first();
                 $data = Comptes::where(function ($query) use ($request) {
                     $query->where('NumCompte', $request->compte_a_debiter)
                         ->orWhere(function ($q) use ($request) {
@@ -3948,7 +4310,6 @@ class TransactionsController extends Controller
                 })
                     ->orderByRaw("NumCompte = ? DESC", [$request->compte_a_debiter])
                     ->first();
-                // $data = Comptes::where("NumCompte", $request->compte_a_debiter)->orWhere("NumAdherant", $request->compte_a_debiter)->first();
                 //ON RECUPERE LE SOLDE DU COMPTE 
                 if ($data->CodeMonnaie == 2) {
                     $soldeCompte = Transactions::select(
@@ -3982,27 +4343,13 @@ class TransactionsController extends Controller
     {
         if (isset($request->compte_a_crediter)) {
             //RECUPERE LE COMPTE DANS LA DB
-            // $checkData = Comptes::where("NumCompte", $request->compte_a_crediter)->orWhere("NumAdherant", $request->compte_a_crediter)->first();
             $checkData = Comptes::where(function ($query) use ($request) {
                 $query->where("NumAdherant", $request->compte_a_crediter)
                     ->orWhere("NumCompte", $request->compte_a_crediter)
                     ->orWhere("Num_Manuel", $request->compte_a_crediter);   // ← ajout
             })->first();
             if ($checkData) {
-                // // Recherche d'abord par NumCompte
-
-                // $data = Comptes::where(function ($query) use ($request) {
-
-                //     $query->where('NumCompte', $request->compte_a_crediter)
-
-                //         ->orWhere(function ($q) use ($request) {
-                //             $q->where('NumAdherant', $request->compte_a_crediter)
-                //                 ->where('RefGroupe', 330)
-                //                 ->where('CodeMonnaie', 2);
-                //         });
-                // })
-                //     ->orderByRaw("NumCompte = ? DESC", [$request->compte_a_crediter])
-                //     ->first();
+              
                 $data = Comptes::where(function ($query) use ($request) {
                     $query->where('NumCompte', $request->compte_a_crediter)
                         ->orWhere(function ($q) use ($request) {
@@ -4047,262 +4394,6 @@ class TransactionsController extends Controller
     }
 
     //SAVE DEBIT
-    // public function saveDebit(Request $request)
-    // {
-
-    //     if (isset($request->compte_a_debiter) and isset($request->compte_a_crediter)) {
-
-    //         if ($request->devise == 2) {
-    //             $dataDebit = Comptes::where(function ($query) use ($request) {
-    //                 $query->where('NumCompte', $request->compte_a_debiter)
-    //                     ->where('CodeMonnaie', 2);
-    //             })->orWhere(function ($query) use ($request) {
-    //                 $query->where('NumAdherant', $request->compte_a_debiter)
-    //                     ->where('CodeMonnaie', 2);
-    //             })->orderByRaw("NumCompte = '{$request->compte_a_debiter}' DESC")
-    //                 ->first();
-
-    //             $dataCredit = Comptes::where(function ($query) use ($request) {
-    //                 $query->where('NumCompte', $request->compte_a_crediter)
-    //                     ->where('CodeMonnaie', 2);
-    //             })->orWhere(function ($query) use ($request) {
-    //                 $query->where('NumAdherant', $request->compte_a_crediter)
-    //                     ->where('CodeMonnaie', 2);
-    //             })->orderByRaw("NumCompte = '{$request->compte_a_crediter}' DESC")
-    //                 ->first();
-
-    //             if ($dataDebit->CodeMonnaie == 2 and $dataCredit->CodeMonnaie == 2) {
-    //                 //VERIFIE LE SOLDE 
-    //                 // $soldeCompteDebit = Transactions::select(
-    //                 //     DB::raw("SUM(Creditfc)-SUM(Debitfc) as soldeCompte"),
-    //                 // )->where("NumCompte", '=', $dataDebit->NumCompte)
-    //                 //     ->groupBy("NumCompte")
-    //                 //     ->first();
-
-    //                 // if ($soldeCompteDebit->soldeCompte >= $request->Montant and $dataDebit->RefGroupe == 330) {
-    //                 // if ($soldeCompteDebit->soldeCompte >= $request->Montant) {
-    //                 //DEBITE LE COMPTE 
-    //                 $dataSystem = TauxEtDateSystem::latest()->first();
-    //                 CompteurTransaction::create([
-    //                     'fakevalue' => "0000",
-    //                 ]);
-    //                 $numOperation = [];
-    //                 $numOperation = CompteurTransaction::latest()->first();
-    //                 $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-
-    //                 Transactions::create([
-    //                     "NumTransaction" => $NumTransaction,
-    //                     "DateTransaction" =>  $dataSystem->DateSystem,
-    //                     "DateSaisie" => $dataSystem->DateSystem,
-    //                     "TypeTransaction" => "D",
-    //                     "CodeMonnaie" => 2,
-    //                     "CodeAgence" => $dataDebit->CodeAgence,
-    //                     "NumDossier" => "DOS0" . $numOperation->id,
-    //                     "NumDemande" => "V0" . $numOperation->id,
-    //                     "NumCompte" => $dataDebit->NumCompte,
-    //                     "NumComptecp" =>  $dataCredit->NumCompte,
-    //                     "Operant" => Auth::user()->name,
-    //                     "Debit"  => $request->Montant,
-    //                     "Debitusd"  => $request->Montant / $dataSystem->TauxEnFc,
-    //                     "Debitfc" => $request->Montant,
-    //                     // "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
-    //                     "NomUtilisateur" => Auth::user()->name,
-    //                     "Libelle" => $request->Libelle,
-    //                     // "isVirement" => $request->isVirement ? 1 : 0
-    //                 ]);
-
-    //                 //ON CREDITE LE COMPTE 
-
-    //                 Transactions::create([
-    //                     "NumTransaction" => $NumTransaction,
-    //                     "DateTransaction" =>  $dataSystem->DateSystem,
-    //                     "DateSaisie" => $dataSystem->DateSystem,
-    //                     "TypeTransaction" => "C",
-    //                     "CodeMonnaie" => 2,
-    //                     "CodeAgence" => $dataCredit->CodeAgence,
-    //                     "NumDossier" => "DOS0" . $numOperation->id,
-    //                     "NumDemande" => "V0" . $numOperation->id,
-    //                     "NumCompte" => $dataCredit->NumCompte,
-    //                     "NumComptecp" =>  $dataDebit->NumCompte,
-    //                     "Operant" => Auth::user()->name,
-    //                     "Credit"  => $request->Montant,
-    //                     "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
-    //                     "Creditfc" => $request->Montant,
-    //                     // "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
-    //                     "NomUtilisateur" => Auth::user()->name,
-    //                     "Libelle" => $request->Libelle,
-    //                     // "isVirement" => $request->isVirement ? 1 : 0
-    //                 ]);
-    //                 // $this->CheckTransactionStatus(871);
-    //                 // $this->CheckTransactionStatus2(851);
-
-    //                 //CETTE LOGIQUE PERMET D'ENVOYER UN MESSAGE AU CLIENT LORSQUE LE COMPTE MOUVEMENTER SONT DES COMPTES EPARGNE
-    //                 $dataRefCompteClientDebit = Transactions::where("NumCompte", $request->compte_a_debiter)->orWhere("refCompteMembre", $request->compte_a_debiter)
-    //                     ->where("NumCompte", "like", "33%")->first();
-    //                 $dataRefCompteClientCredit = Transactions::where("NumCompte", $request->compte_a_crediter)->orWhere("refCompteMembre", $request->compte_a_crediter)
-    //                     ->where("NumCompte", "like", "33%")
-    //                     ->first();
-    //                 if ($dataRefCompteClientDebit) {
-    //                     if ($dataRefCompteClientDebit->CodeMonnaie == 1) {
-    //                         $devise = "USD"; //USD
-    //                         $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientDebit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientDebit->TypeTransaction, $request->Libelle);
-    //                     } else if ($dataRefCompteClientDebit->CodeMonnaie == 2) {
-    //                         $devise = "CDF"; //CDF
-    //                         $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientDebit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientDebit->TypeTransaction, $request->Libelle);
-    //                     }
-    //                 }
-    //                 if ($dataRefCompteClientCredit) {
-    //                     if ($dataRefCompteClientCredit->CodeMonnaie == 1) {
-    //                         $devise = "USD"; //USD
-    //                         $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientCredit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientCredit->TypeTransaction, $request->Libelle);
-    //                     } else if ($dataRefCompteClientCredit->CodeMonnaie == 2) {
-    //                         $devise = "CDF"; //CDF
-    //                         $this->sendNotification->sendNotificationComptabilite($dataRefCompteClientCredit->refCompteMembre, $devise, $request->Montant, $dataRefCompteClientCredit->TypeTransaction, $request->Libelle);
-    //                     }
-    //                 }
-
-    //                 return response()->json([
-    //                     "status" => 1,
-    //                     "msg" => "Opération bien enregistrée."
-    //                 ]);
-    //                 // } else {
-    //                 //     return response()->json([
-    //                 //         "status" => 0,
-    //                 //         "msg" => "Le solde du compte à débiter est inferieur au montant saisi."
-    //                 //     ]);
-    //                 // }
-    //             } else {
-    //                 return response()->json([
-    //                     "status" => 0,
-    //                     "msg" => "Les devises pour ces deux comptes sont differentes."
-    //                 ]);
-    //             }
-    //         } else if ($request->devise == 1) {
-    //             $dataDebit = Comptes::where(function ($query) use ($request) {
-    //                 $query->where('NumCompte', $request->compte_a_debiter)
-    //                     ->where('CodeMonnaie', 1);
-    //             })->orWhere(function ($query) use ($request) {
-    //                 $query->where('NumAdherant', $request->compte_a_debiter)
-    //                     ->where('CodeMonnaie', 1);
-    //             })->orderByRaw("NumCompte = '{$request->compte_a_debiter}' DESC")
-    //                 ->first();
-
-
-
-    //             // Recherche d'abord par NumCompte avec CodeMonnaie = 1
-    //             $dataDebit = Comptes::where('NumCompte', $request->compte_a_debiter)
-    //                 ->where('CodeMonnaie', 1)
-    //                 ->first();
-
-    //             // Si aucun résultat n'est trouvé, rechercher par NumAdherant avec CodeMonnaie = 1
-    //             if (!$dataDebit) {
-    //                 $dataDebit = Comptes::where('NumAdherant', $request->compte_a_debiter)
-    //                     ->where('CodeMonnaie', 1)
-    //                     ->first();
-    //             }
-
-
-    //             // Recherche d'abord par NumCompte avec CodeMonnaie = 1
-    //             $dataCredit = Comptes::where('NumCompte', $request->compte_a_crediter)
-    //                 ->where('CodeMonnaie', 1)
-    //                 ->first();
-
-    //             // Si aucun résultat n'est trouvé, rechercher par NumAdherant avec CodeMonnaie = 2
-    //             if (!$dataCredit) {
-    //                 $dataCredit = Comptes::where('NumAdherant', $request->compte_a_crediter)
-    //                     ->where('CodeMonnaie', 1)
-    //                     ->first();
-    //             }
-
-    //             if ($dataDebit->CodeMonnaie == 1 and $dataCredit->CodeMonnaie == 1) {
-    //                 // if($dataDebit)
-    //                 //VERIFIE LE SOLDE 
-    //                 $soldeCompteDebit = Transactions::select(
-    //                     DB::raw("SUM(Creditusd)-SUM(Debitusd) as soldeCompte"),
-    //                 )->where("NumCompte", '=', $dataDebit->NumCompte)
-    //                     ->groupBy("NumCompte")
-    //                     ->first();
-    //                 // if ($soldeCompteDebit->soldeCompte >= $request->Montant and $dataDebit->RefGroupe == 330) {
-    //                 // if ($soldeCompteDebit->soldeCompte >= $request->Montant) {
-    //                 //DEBITE LE COMPTE 
-    //                 $dataSystem = TauxEtDateSystem::latest()->first();
-    //                 CompteurTransaction::create([
-    //                     'fakevalue' => "0000",
-    //                 ]);
-    //                 $numOperation = [];
-    //                 $numOperation = CompteurTransaction::latest()->first();
-    //                 $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-
-    //                 Transactions::create([
-    //                     "NumTransaction" => $NumTransaction,
-    //                     "DateTransaction" =>  $dataSystem->DateSystem,
-    //                     "DateSaisie" => $dataSystem->DateSystem,
-    //                     "TypeTransaction" => "D",
-    //                     "CodeMonnaie" => 1,
-    //                     "CodeAgence" => $dataDebit->CodeAgence,
-    //                     "NumDossier" => "DOS0" . $numOperation->id,
-    //                     "NumDemande" => "V0" . $numOperation->id,
-    //                     "NumCompte" => $dataDebit->NumCompte,
-    //                     "NumComptecp" =>  $dataCredit->NumCompte,
-    //                     "Operant" => Auth::user()->name,
-    //                     "Debit"  => $request->Montant,
-    //                     "Debitusd"  => $request->Montant,
-    //                     "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
-    //                     "NomUtilisateur" => Auth::user()->name,
-    //                     "Libelle" => $request->Libelle,
-    //                     // "isVirement" => $request->isVirement ? 1 : 0
-    //                 ]);
-
-    //                 //ON CREDITE LE COMPTE 
-
-    //                 Transactions::create([
-    //                     "NumTransaction" => $NumTransaction,
-    //                     "DateTransaction" =>  $dataSystem->DateSystem,
-    //                     "DateSaisie" => $dataSystem->DateSystem,
-    //                     "TypeTransaction" => "C",
-    //                     "CodeMonnaie" => 1,
-    //                     "CodeAgence" => $dataCredit->CodeAgence,
-    //                     "NumDossier" => "DOS0" . $numOperation->id,
-    //                     "NumDemande" => "V0" . $numOperation->id,
-    //                     "NumCompte" => $dataCredit->NumCompte,
-    //                     "NumComptecp" =>  $dataDebit->NumCompte,
-    //                     "Operant" => Auth::user()->name,
-    //                     "Credit"  => $request->Montant,
-    //                     "Creditusd"  => $request->Montant,
-    //                     "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
-    //                     "NomUtilisateur" => Auth::user()->name,
-    //                     "Libelle" => $request->Libelle,
-    //                     // "isVirement" => $request->isVirement ? 1 : 0
-    //                 ]);
-
-    //                 // $this->CheckTransactionStatus(870);
-    //                 // $this->CheckTransactionStatus2(851);
-
-    //                 return response()->json([
-    //                     "status" => 1,
-    //                     "msg" => "Opération bien enregistrée."
-    //                 ]);
-    //                 // } else {
-    //                 //     return response()->json([
-    //                 //         "status" => 0,
-    //                 //         "msg" => "Le solde du compte à débiter est inferieur au montant saisi."
-    //                 //     ]);
-    //                 // }
-    //             } else {
-    //                 return response()->json([
-    //                     "status" => 0,
-    //                     "msg" => "Les devises pour ces deux comptes sont differentes."
-    //                 ]);
-    //             }
-    //         }
-    //     } else {
-    //         return response()->json([
-    //             "status" => 0,
-    //             "msg" => "Veuillez renseigner le compte à débiter et le compte à créditer."
-    //         ]);
-    //     }
-    // }
-
 
     public function saveDebit(Request $request)
     {
@@ -4918,14 +5009,14 @@ class TransactionsController extends Controller
     }
 
     //PERMET D'EXTOURNER UNE OPERATION 
-
     public function extourneOperation($reference)
     {
 
         if (strpos($reference, 'AT') === 0) {
             try {
                 $cloture = new ClotureJourneeCopy(new \Illuminate\Http\Request());
-                $result = $cloture->annulerRemboursementParReference($reference);
+                // Utilise la méthode qui détermine automatiquement le type (capital ou intérêt)
+                $result = $cloture->annulerRemboursementPartielParReference($reference);
                 if ($result) {
                     return response()->json(["status" => 1, "msg" => "Remboursement annulé avec succès."]);
                 } else {
@@ -5038,10 +5129,14 @@ class TransactionsController extends Controller
     }
 
     //OBTIENT LES OPERATION JOURNALIERES DU COMPTABLE
-    public function getDailyOperation()
+    public function getDailyOperation(Request $request)
     {
-
-        $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
+        $date = $request->input('date');
+        if (!$date) {
+            $dataSystem = TauxEtDateSystem::latest()->first();
+            $date = $dataSystem->DateSystem;
+        }
+        // $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
         //data = DB::select('SELECT * FROM transactions WHERE transactions.NomUtilisateur="' . Auth::user()->name . '" AND  transactions.DateTransaction="' . $date . '" GROUP BY transactions.NumTransaction LIMIT 20');
         $data = Transactions::where("transactions.NomUtilisateur", "=", Auth::user()->name)
             ->where("transactions.DateTransaction", "=", $date)

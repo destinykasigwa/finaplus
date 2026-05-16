@@ -51,6 +51,7 @@ import Cloture from "./Page/Cloture";
 import SMSbanking from "./Page/SMSBanking";
 import ResetPassWord from "./Page/ResetPassWord";
 import GrandLivre from "./Page/GrandLivre";
+import ImmoEnregistrement from "./Page/ImmoEnregistrement";
 
 if (document.getElementById("app")) {
     ReactDOM.createRoot(document.getElementById("app")).render(
@@ -302,6 +303,15 @@ if (document.getElementById("grandLivre")) {
     ReactDOM.createRoot(document.getElementById("grandLivre")).render(
         <BrowserRouter>
             <GrandLivre />
+        </BrowserRouter>
+    );
+}
+
+
+if (document.getElementById("enregsitrementImo")) {
+    ReactDOM.createRoot(document.getElementById("enregsitrementImo")).render(
+        <BrowserRouter>
+            <ImmoEnregistrement />
         </BrowserRouter>
     );
 }

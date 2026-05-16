@@ -297,14 +297,13 @@ const MontageCredit = () => {
             });
         }
     };
-  // 🔥 Fonction utilitaire pour nettoyer avant envoi
-const nettoyerMontant = (montantFormate) => {
-    return montantFormate.replace(/\s/g, ""); // "200 000" → "200000"
-};
-
+    // 🔥 Fonction utilitaire pour nettoyer avant envoi
+    const nettoyerMontant = (montantFormate) => {
+        return montantFormate.replace(/\s/g, ""); // "200 000" → "200000"
+    };
 
     const saveEcheancier = async (e) => {
-         const montantAccorde = nettoyerMontant(MontantAccorde); // ← Nettoie ici
+        const montantAccorde = nettoyerMontant(MontantAccorde); // ← Nettoie ici
         e.preventDefault();
         const res = await axios.post(
             "/eco/page/montage-credit/save-echeancier",
@@ -315,7 +314,7 @@ const nettoyerMontant = (montantFormate) => {
                 DateOctroi,
                 dateEcheance,
                 DateTombeEcheance,
-                MontantAccorde:montantAccorde,
+                MontantAccorde: montantAccorde,
                 garantie,
                 hypotheque_name,
                 reechelonne: ReechelonnerCheckboxValues.Reechelonner,
@@ -539,24 +538,23 @@ const nettoyerMontant = (montantFormate) => {
         return parts.join(".");
     }
 
-
     // Fonction de formatage
-const formatMontant = (valeur) => {
-    // Enlève tous les caractères non numériques
-    let nombre = valeur.toString().replace(/\D/g, "");
-    // Convertit en nombre puis formate avec espaces
-    return nombre.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-};
+    const formatMontant = (valeur) => {
+        // Enlève tous les caractères non numériques
+        let nombre = valeur.toString().replace(/\D/g, "");
+        // Convertit en nombre puis formate avec espaces
+        return nombre.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    };
 
-// Fonction pour gérer le changement
-const handleMontantChange = (e) => {
-    let valeur = e.target.value;
-    // Nettoie et formate
-    let nombreBrut = valeur.replace(/\s/g, "");
-    let nombreFormatte = formatMontant(nombreBrut);
-    setMontantAccorde(nombreFormatte);
-    setmontant_demande(nombreFormatte)
-};
+    // Fonction pour gérer le changement
+    const handleMontantChange = (e) => {
+        let valeur = e.target.value;
+        // Nettoie et formate
+        let nombreBrut = valeur.replace(/\s/g, "");
+        let nombreFormatte = formatMontant(nombreBrut);
+        setMontantAccorde(nombreFormatte);
+        setmontant_demande(nombreFormatte);
+    };
 
     return (
         <div
@@ -598,8 +596,7 @@ const handleMontantChange = (e) => {
                         <div
                             className="card-body p-3"
                             style={{
-                                background:
-                                    "#138496",
+                                background: "#138496",
                                 borderRadius: "12px",
                             }}
                         >
@@ -679,7 +676,7 @@ const handleMontantChange = (e) => {
                                         </label>
                                         <input
                                             type="text"
-                                            className="form-control form-control-sm"
+                                            className="form-control form-control-sm modern-input"
                                             style={{ borderRadius: "8px" }}
                                             name="Search_field"
                                             id="Search_field"
@@ -738,7 +735,7 @@ const handleMontantChange = (e) => {
                             <div className="d-flex flex-wrap gap-3 justify-content-around">
                                 <div className="form-check form-switch">
                                     <input
-                                        className="form-check-input"
+                                        className="form-check-input modern-input"
                                         type="checkbox"
                                         id="accordedSwitch"
                                         disabled
@@ -756,7 +753,7 @@ const handleMontantChange = (e) => {
                                 </div>
                                 <div className="form-check form-switch">
                                     <input
-                                        className="form-check-input"
+                                        className="form-check-input modern-input"
                                         type="checkbox"
                                         id="debourseSwitch"
                                         disabled
@@ -774,7 +771,7 @@ const handleMontantChange = (e) => {
                                 </div>
                                 <div className="form-check form-switch">
                                     <input
-                                        className="form-check-input"
+                                        className="form-check-input modern-input"
                                         type="checkbox"
                                         id="clotureSwitch"
                                         disabled
@@ -839,7 +836,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         style={{
                                                             background:
                                                                 "#20c997",
@@ -847,8 +844,7 @@ const handleMontantChange = (e) => {
                                                         }}
                                                         value={
                                                             getNumDossier &&
-                                                             
-                                                                getNumDossier
+                                                            getNumDossier
                                                         }
                                                         disabled
                                                     />
@@ -867,7 +863,7 @@ const handleMontantChange = (e) => {
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
                                                     <select
-                                                        className={`form-select form-select-sm ${error.type_credit ? "is-invalid" : ""}`}
+                                                        className={`form-select form-select-sm modern-select ${error.type_credit ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             settype_credit(
                                                                 e.target.value,
@@ -915,7 +911,7 @@ const handleMontantChange = (e) => {
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
                                                     <select
-                                                        className={`form-select form-select-sm ${error.recouvreur ? "is-invalid" : ""}`}
+                                                        className={`form-select form-select-sm modern-select ${error.recouvreur ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             setrecouvreur(
                                                                 e.target.value,
@@ -964,8 +960,10 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        style={{fontSize:"20px" }}
-                                                        className={`form-control form-control-sm ${error.montant_demande ? "is-invalid" : ""}`}
+                                                        style={{
+                                                            fontSize: "20px",
+                                                        }}
+                                                        className={`form-control form-control-sm modern-input ${error.montant_demande ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             setmontant_demande(
                                                                 e.target.value,
@@ -996,7 +994,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="date"
-                                                        className={`form-control form-control-sm ${error.date_demande ? "is-invalid" : ""}`}
+                                                        className={`form-control form-control-sm modern-input ${error.date_demande ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             setdate_demande(
                                                                 e.target.value,
@@ -1023,7 +1021,7 @@ const handleMontantChange = (e) => {
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
                                                     <select
-                                                        className={`form-select form-select-sm ${error.frequence_rembours ? "is-invalid" : ""}`}
+                                                        className={`form-select form-select-sm modern-select ${error.frequence_rembours ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             setfrequence_rembours(
                                                                 e.target.value,
@@ -1074,7 +1072,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className={`form-control form-control-sm ${error.nbr_echeance ? "is-invalid" : ""}`}
+                                                        className={`form-control form-control-sm modern-input ${error.nbr_echeance ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             setnbr_echeance(
                                                                 e.target.value,
@@ -1101,7 +1099,7 @@ const handleMontantChange = (e) => {
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
                                                     <select
-                                                        className={`form-select form-select-sm ${error.monnaie ? "is-invalid" : ""}`}
+                                                        className={`form-select form-select-sm modern-select ${error.monnaie ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             setmonnaie(
                                                                 e.target.value,
@@ -1139,7 +1137,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className={`form-control form-control-sm ${error.duree ? "is-invalid" : ""}`}
+                                                        className={`form-control form-control-sm modern-input ${error.duree ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             setduree(
                                                                 e.target.value,
@@ -1167,7 +1165,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className={`form-control form-control-sm ${error.interval ? "is-invalid" : ""}`}
+                                                        className={`form-control form-control-sm modern-input ${error.interval ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             setinterval(
                                                                 e.target.value,
@@ -1251,7 +1249,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm bg-light"
+                                                        className="form-control form-control-sm bg-light modern-input"
                                                         disabled
                                                         value={
                                                             fetchData.data &&
@@ -1275,7 +1273,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm bg-light"
+                                                        className="form-control form-control-sm bg-light modern-input"
                                                         disabled
                                                         value={
                                                             fetchData.data &&
@@ -1299,7 +1297,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm bg-light"
+                                                        className="form-control form-control-sm bg-light modern-input"
                                                         disabled
                                                         value={
                                                             fetchData.compteCredit &&
@@ -1322,7 +1320,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm bg-light"
+                                                        className="form-control form-control-sm bg-light modern-input"
                                                         disabled
                                                         value={
                                                             fetchData.epargneCaution &&
@@ -1344,7 +1342,7 @@ const handleMontantChange = (e) => {
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
                                                     <select
-                                                        className={`form-select form-select-sm ${error.objet_credit ? "is-invalid" : ""}`}
+                                                        className={`form-select form-select-sm modern-select ${error.objet_credit ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             setobjet_credit(
                                                                 e.target.value,
@@ -1392,7 +1390,7 @@ const handleMontantChange = (e) => {
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
                                                     <select
-                                                        className={`form-select form-select-sm ${error.gestionnaire ? "is-invalid" : ""}`}
+                                                        className={`form-select form-select-sm modern-select ${error.gestionnaire ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             setgestionnaire(
                                                                 e.target.value,
@@ -1441,7 +1439,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className={`form-control form-control-sm ${error.source_fond ? "is-invalid" : ""}`}
+                                                        className={`form-control form-control-sm modern-input ${error.source_fond ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             setsource_fond(
                                                                 e.target.value,
@@ -1469,7 +1467,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className={`form-control form-control-sm ${error.taux_interet ? "is-invalid" : ""}`}
+                                                        className={`form-control form-control-sm modern-input ${error.taux_interet ? "is-invalid" : ""}`}
                                                         onChange={(e) =>
                                                             settaux_interet(
                                                                 e.target.value,
@@ -1645,7 +1643,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         style={{
                                                             background:
                                                                 "#20c997",
@@ -1669,7 +1667,7 @@ const handleMontantChange = (e) => {
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
                                                     <select
-                                                        className="form-select form-select-sm"
+                                                        className="form-select form-select-sm modern-select"
                                                         onChange={(e) =>
                                                             settype_credit_up(
                                                                 e.target.value,
@@ -1719,7 +1717,7 @@ const handleMontantChange = (e) => {
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
                                                     <select
-                                                        className="form-select form-select-sm"
+                                                        className="form-select form-select-sm modern-select"
                                                         onChange={(e) =>
                                                             setrecouvreur_up(
                                                                 e.target.value,
@@ -1761,7 +1759,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         onChange={(e) =>
                                                             setmontant_demande_up(
                                                                 e.target.value,
@@ -1787,7 +1785,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         onChange={(e) =>
                                                             setdate_demande_up(
                                                                 e.target.value,
@@ -1810,7 +1808,7 @@ const handleMontantChange = (e) => {
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
                                                     <select
-                                                        className="form-select form-select-sm"
+                                                        className="form-select form-select-sm modern-select"
                                                         onChange={(e) =>
                                                             setfrequence_rembours_up(
                                                                 e.target.value,
@@ -1854,7 +1852,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         onChange={(e) =>
                                                             setnbr_echeance_up(
                                                                 e.target.value,
@@ -1878,7 +1876,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm bg-light"
+                                                        className="form-control form-control-sm bg-light modern-input"
                                                         value={monnaie_up}
                                                         disabled
                                                     />
@@ -1898,7 +1896,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         onChange={(e) =>
                                                             setduree_up(
                                                                 e.target.value,
@@ -1922,7 +1920,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         onChange={(e) =>
                                                             setinterval_up(
                                                                 e.target.value,
@@ -2002,7 +2000,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm bg-light"
+                                                        className="form-control form-control-sm bg-light modern-input"
                                                         value={NomCompte_up}
                                                         disabled
                                                     />
@@ -2022,7 +2020,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm bg-light"
+                                                        className="form-control form-control-sm bg-light modern-input"
                                                         value={
                                                             compte_epargne_up
                                                         }
@@ -2044,7 +2042,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm bg-light"
+                                                        className="form-control form-control-sm bg-light modern-input"
                                                         value={compte_credit_up}
                                                         disabled
                                                     />
@@ -2064,7 +2062,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm bg-light"
+                                                        className="form-control form-control-sm bg-light modern-input"
                                                         value={
                                                             epargne_caution_up
                                                         }
@@ -2085,7 +2083,7 @@ const handleMontantChange = (e) => {
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
                                                     <select
-                                                        className="form-select form-select-sm"
+                                                        className="form-select form-select-sm modern-select"
                                                         onChange={(e) =>
                                                             setobjet_credit_up(
                                                                 e.target.value,
@@ -2126,7 +2124,7 @@ const handleMontantChange = (e) => {
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
                                                     <select
-                                                        className="form-select form-select-sm"
+                                                        className="form-select form-select-sm modern-select"
                                                         onChange={(e) =>
                                                             setgestionnaire_up(
                                                                 e.target.value,
@@ -2168,7 +2166,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         onChange={(e) =>
                                                             setsource_fond_up(
                                                                 e.target.value,
@@ -2192,7 +2190,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         onChange={(e) =>
                                                             settaux_interet_up(
                                                                 e.target.value,
@@ -2216,7 +2214,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         onChange={(e) =>
                                                             settaux_retard_up(
                                                                 e.target.value,
@@ -2318,7 +2316,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         style={{
                                                             background:
                                                                 "#20c997",
@@ -2348,7 +2346,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         style={{
                                                             background:
                                                                 "#20c997",
@@ -2375,7 +2373,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         style={{
                                                             background:
                                                                 "#20c997",
@@ -2405,7 +2403,7 @@ const handleMontantChange = (e) => {
                                                 <td style={{ padding: "8px" }}>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-sm"
+                                                        className="form-control form-control-sm modern-input"
                                                         style={{
                                                             background:
                                                                 "#20c997",
@@ -2427,6 +2425,7 @@ const handleMontantChange = (e) => {
                                                 </td>
                                             </tr>
                                             <tr>
+                                                <td></td>
                                                 <td
                                                     colSpan="2"
                                                     style={{
@@ -2464,25 +2463,47 @@ const handleMontantChange = (e) => {
             <div className="row mt-4">
                 <div className="col-12">
                     <div className="card border-0 shadow-sm rounded-3">
-                       <ul className="nav nav-tabs tabs-credit" id="creditTabs" role="tablist">
-  <li className="nav-item">
-    <a className="nav-link active" id="echeancier-tab" data-toggle="pill" href="#echeancier" role="tab">
-      <i className="fas fa-calendar-alt me-2"></i>
-      Échéancier
-    </a>
-  </li>
-  <li className="nav-item">
-    <a className="nav-link" id="remboursement-tab" data-toggle="pill" href="#remboursement" role="tab">
-      <i className="fas fa-hand-holding-usd me-2"></i>
-      Remboursement Manuel
-    </a>
-  </li>
-  <li className="nav-item">
-    <a className="nav-link" id="action-tab" data-toggle="pill" href="#action" role="tab">
-      <i className="fas fa-cog me-2"></i>Action
-    </a>
-  </li>
-</ul>
+                        <ul
+                            className="nav nav-tabs tabs-credit"
+                            id="creditTabs"
+                            role="tablist"
+                        >
+                            <li className="nav-item">
+                                <a
+                                    className="nav-link active"
+                                    id="echeancier-tab"
+                                    data-toggle="pill"
+                                    href="#echeancier"
+                                    role="tab"
+                                >
+                                    <i className="fas fa-calendar-alt me-2"></i>
+                                    Échéancier
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a
+                                    className="nav-link"
+                                    id="remboursement-tab"
+                                    data-toggle="pill"
+                                    href="#remboursement"
+                                    role="tab"
+                                >
+                                    <i className="fas fa-hand-holding-usd me-2"></i>
+                                    Remboursement Manuel
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a
+                                    className="nav-link"
+                                    id="action-tab"
+                                    data-toggle="pill"
+                                    href="#action"
+                                    role="tab"
+                                >
+                                    <i className="fas fa-cog me-2"></i>Action
+                                </a>
+                            </li>
+                        </ul>
 
                         <div className="card-body">
                             <div className="tab-content">
@@ -2528,7 +2549,7 @@ const handleMontantChange = (e) => {
                                                                         }}
                                                                     >
                                                                         <select
-                                                                            className="form-select form-select-sm"
+                                                                            className="form-select form-select-sm modern-select"
                                                                             onChange={(
                                                                                 e,
                                                                             ) =>
@@ -2576,7 +2597,7 @@ const handleMontantChange = (e) => {
                                                                         }}
                                                                     >
                                                                         <select
-                                                                            className={`form-select form-select-sm ${error?.ModeCalcul ? "is-invalid" : ""}`}
+                                                                            className={`form-select form-select-sm modern-select ${error?.ModeCalcul ? "is-invalid" : ""}`}
                                                                             onChange={(
                                                                                 e,
                                                                             ) =>
@@ -2637,7 +2658,7 @@ const handleMontantChange = (e) => {
                                                                     >
                                                                         <input
                                                                             type="date"
-                                                                            className={`form-control form-control-sm ${error?.DateOctroi ? "is-invalid" : ""}`}
+                                                                            className={`form-control form-control-sm modern-input ${error?.DateOctroi ? "is-invalid" : ""}`}
                                                                             onChange={(
                                                                                 e,
                                                                             ) =>
@@ -2681,7 +2702,7 @@ const handleMontantChange = (e) => {
                                                                         }}
                                                                     >
                                                                         <select
-                                                                            className="form-select form-select-sm"
+                                                                            className="form-select form-select-sm modern-select"
                                                                             onChange={(
                                                                                 e,
                                                                             ) =>
@@ -2713,7 +2734,7 @@ const handleMontantChange = (e) => {
                                                                             "Hypothèque" && (
                                                                             <input
                                                                                 type="text"
-                                                                                className="form-control form-control-sm mt-2"
+                                                                                className="form-control form-control-sm mt-2 modern-input"
                                                                                 placeholder="Nom hypothèque"
                                                                                 onChange={(
                                                                                     e,
@@ -2771,7 +2792,7 @@ const handleMontantChange = (e) => {
                                                                     >
                                                                         <input
                                                                             type="date"
-                                                                            className={`form-control form-control-sm ${error?.DateTombeEcheance ? "is-invalid" : ""}`}
+                                                                            className={`form-control form-control-sm modern-input ${error?.DateTombeEcheance ? "is-invalid" : ""}`}
                                                                             onChange={(
                                                                                 e,
                                                                             ) =>
@@ -2817,7 +2838,7 @@ const handleMontantChange = (e) => {
                                                                     >
                                                                         <input
                                                                             type="date"
-                                                                            className={`form-control form-control-sm ${error?.dateEcheance ? "is-invalid" : ""}`}
+                                                                            className={`form-control form-control-sm modern-input ${error?.dateEcheance ? "is-invalid" : ""}`}
                                                                             onChange={(
                                                                                 e,
                                                                             ) =>
@@ -2863,18 +2884,27 @@ const handleMontantChange = (e) => {
                                                                                     "8px",
                                                                             }}
                                                                         >
-                                                                           <input
-    type="text"
-    className={`form-control form-control-sm ${error?.MontantAccorde ? "is-invalid" : ""}`}
-    style={{
-        background: error?.MontantAccorde ? "#dc3545" : "#20c997",
-        color: "white",
-        fontWeight: "bold",
-        fontSize: "20px"
-    }}
-    value={MontantAccorde}
-    onChange={handleMontantChange}
-/>
+                                                                            <input
+                                                                                type="text"
+                                                                                className={`form-control form-control-sm modern-input ${error?.MontantAccorde ? "is-invalid" : ""}`}
+                                                                                style={{
+                                                                                    background:
+                                                                                        error?.MontantAccorde
+                                                                                            ? "#dc3545"
+                                                                                            : "#20c997",
+                                                                                    color: "white",
+                                                                                    fontWeight:
+                                                                                        "bold",
+                                                                                    fontSize:
+                                                                                        "20px",
+                                                                                }}
+                                                                                value={
+                                                                                    MontantAccorde
+                                                                                }
+                                                                                onChange={
+                                                                                    handleMontantChange
+                                                                                }
+                                                                            />
                                                                             {error?.MontantAccorde && (
                                                                                 <small className="text-danger">
                                                                                     {
@@ -3079,7 +3109,7 @@ const handleMontantChange = (e) => {
                                                                         </label>
                                                                         <input
                                                                             type="text"
-                                                                            className="form-control form-control-sm"
+                                                                            className="form-control form-control-sm modern-input"
                                                                             onChange={(
                                                                                 e,
                                                                             ) =>
@@ -3308,8 +3338,7 @@ const handleMontantChange = (e) => {
             </div>
 
             <style>
-                {
-                    `
+                {`
                     /* Onglets crédit - version moderne */
 .tabs-credit {
   display: flex;
@@ -3385,8 +3414,7 @@ const handleMontantChange = (e) => {
   }
 }
                     
-                    `
-                }
+                    `}
             </style>
         </div>
     );

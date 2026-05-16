@@ -94,6 +94,7 @@ const Echeancier = () => {
             devise,
             agent_credit_name,
             agence_filter: agenceFilter,
+            date_echeance: selectedDate,
         };
         // AJOUT PAR - ajouter les paramètres spécifiques au PAR
         if (radioValue === "par") {
@@ -164,7 +165,7 @@ const Echeancier = () => {
         if (event.target.value !== "tableau_ammortiss")
             setfetchTableauAmortiss(null);
     };
-   
+
     const dateParser = (num) => {
         const options = {
             // weekday: "long",
@@ -256,64 +257,66 @@ const Echeancier = () => {
     };
 
     const exportToPDFEcheancier = async () => {
-    const content = document.getElementById("content-to-download-echeancier");
-    if (!content) {
-        console.error("Element not found!");
-        return;
-    }
-
-    // Paramètres (en mm pour le PDF)
-    const marginTop = 10;
-    const marginBottom = 10;
-    const marginLeft = 10;
-    const marginRight = 10;
-
-    // Capture du contenu avec html2canvas
-    const canvas = await html2canvas(content, { scale: 3 });
-    const imgData = canvas.toDataURL("image/png");
-
-    // Création du PDF au format A4
-    const pdf = new jsPDF("p", "mm", "a4");
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-
-    // Dimensions utiles du contenu dans le PDF (largeur et hauteur disponibles)
-    const contentWidthMM = pdfWidth - marginLeft - marginRight;
-    const contentHeightMM = (canvas.height * contentWidthMM) / canvas.width;
-
-    // Hauteur disponible par page (en mm)
-    const pageContentHeight = pdfHeight - marginTop - marginBottom;
-
-    // Nombre de pages nécessaires
-    const totalPages = Math.ceil(contentHeightMM / pageContentHeight);
-
-    // Ajout de chaque page
-    for (let page = 0; page < totalPages; page++) {
-        if (page !== 0) {
-            pdf.addPage();
+        const content = document.getElementById(
+            "content-to-download-echeancier",
+        );
+        if (!content) {
+            console.error("Element not found!");
+            return;
         }
 
-        // Décalage vertical de l'image (en mm) pour la page courante
-        const yOffsetMM = page * pageContentHeight;
+        // Paramètres (en mm pour le PDF)
+        const marginTop = 10;
+        const marginBottom = 10;
+        const marginLeft = 10;
+        const marginRight = 10;
 
-        // Ajout de l'image (elle est plus haute que la page, on la décale vers le haut)
-        // L'image occupe toute la largeur utile et toute sa hauteur réelle.
-        // Le paramètre 'y' est négatif pour montrer la portion correspondant au décalage.
-        pdf.addImage(
-            imgData,
-            "PNG",
-            marginLeft,
-            marginTop - yOffsetMM,
-            contentWidthMM,
-            contentHeightMM
-        );
-    }
+        // Capture du contenu avec html2canvas
+        const canvas = await html2canvas(content, { scale: 3 });
+        const imgData = canvas.toDataURL("image/png");
 
-    // Affichage ou sauvegarde
-    pdf.autoPrint();
-    window.open(pdf.output("bloburl"), "_blank");
-    // pdf.save("echeancier.pdf");
-};
+        // Création du PDF au format A4
+        const pdf = new jsPDF("p", "mm", "a4");
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        // Dimensions utiles du contenu dans le PDF (largeur et hauteur disponibles)
+        const contentWidthMM = pdfWidth - marginLeft - marginRight;
+        const contentHeightMM = (canvas.height * contentWidthMM) / canvas.width;
+
+        // Hauteur disponible par page (en mm)
+        const pageContentHeight = pdfHeight - marginTop - marginBottom;
+
+        // Nombre de pages nécessaires
+        const totalPages = Math.ceil(contentHeightMM / pageContentHeight);
+
+        // Ajout de chaque page
+        for (let page = 0; page < totalPages; page++) {
+            if (page !== 0) {
+                pdf.addPage();
+            }
+
+            // Décalage vertical de l'image (en mm) pour la page courante
+            const yOffsetMM = page * pageContentHeight;
+
+            // Ajout de l'image (elle est plus haute que la page, on la décale vers le haut)
+            // L'image occupe toute la largeur utile et toute sa hauteur réelle.
+            // Le paramètre 'y' est négatif pour montrer la portion correspondant au décalage.
+            pdf.addImage(
+                imgData,
+                "PNG",
+                marginLeft,
+                marginTop - yOffsetMM,
+                contentWidthMM,
+                contentHeightMM,
+            );
+        }
+
+        // Affichage ou sauvegarde
+        pdf.autoPrint();
+        window.open(pdf.output("bloburl"), "_blank");
+        // pdf.save("echeancier.pdf");
+    };
 
     const exportToPDFBalanceAgee = () => {
         const content = document.getElementById(
@@ -487,773 +490,639 @@ const Echeancier = () => {
 
     const groupedData = groupByTranches(fetchBalanceAgee);
 
+    const safeParseInt = (value) => {
+        const parsed = parseInt(value);
+        return isNaN(parsed) ? 0 : parsed;
+    };
+
     return (
-        <div
-            className="container-fluid"
-            style={{ marginTop: "10px", padding: "0 15px" }}
-        >
-            {/* En-tête moderne */}
-            <div className="row mb-4">
-                <div className="col-12">
-                    <div className="card border-0 shadow-sm rounded-3">
-                        <div
-                            className="card-body p-3"
-                            style={{
-                                background: "#138496",
-                                borderRadius: "12px",
-                            }}
-                        >
-                            <div className="d-flex align-items-center">
-                                <div className="me-3">
-                                    <i
-                                        className="fas fa-chart-line"
-                                        style={{
-                                            fontSize: "28px",
-                                            color: "white",
-                                        }}
-                                    ></i>
-                                </div>
-                                <div>
-                                    <h5 className="text-white fw-bold mb-0">
-                                        Rapports de Crédit
-                                    </h5>
-                                    <small className="text-white-50">
-                                        Échéancier, Tableau d'amortissement et
-                                        Balance âgée
-                                    </small>
+        <>
+            <div
+                className="container-fluid"
+                style={{ marginTop: "10px", padding: "0 15px" }}
+            >
+                {/* En-tête moderne */}
+                <div className="row mb-4">
+                    <div className="col-12">
+                        <div className="card border-0 shadow-sm rounded-3">
+                            <div
+                                className="card-body p-3"
+                                style={{
+                                    background: "#138496",
+                                    borderRadius: "12px",
+                                }}
+                            >
+                                <div className="d-flex align-items-center">
+                                    <div className="me-3">
+                                        <i
+                                            className="fas fa-chart-line"
+                                            style={{
+                                                fontSize: "28px",
+                                                color: "white",
+                                            }}
+                                        ></i>
+                                    </div>
+                                    <div>
+                                        <h5 className="text-white fw-bold mb-0">
+                                            Rapports de Crédit
+                                        </h5>
+                                        <small className="text-white-50">
+                                            Échéancier, Tableau d'amortissement
+                                            et Balance âgée
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Section Formulaire de recherche */}
-            {/* Section Formulaire de recherche - version stylée pleine largeur */}
-<div className="row g-4 mb-5">
-    <div className="col-12">
-        <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
-
-            <div className="card-body p-4">
-                {/* Ligne 1 : Tous les filtres principaux sur une ligne */}
-                <div className="row g-3 align-items-end mb-4">
-                    {/* N° dossier - largeur réduite */}
-                    <div className="col-md-2">
-                        <label className="form-label fw-semibold small text-secondary">
-                            <i className="fas fa-folder-open me-1"></i> N° dossier
-                        </label>
-                        <input
-                            type="text"
-                            className="form-control rounded-3"
-                            placeholder="Ex: D2025-001"
-                            value={searched_num_dossier}
-                            onChange={(e) => setsearched_num_dossier(e.target.value)}
-                        />
-                    </div>
-
-                    {/* Type rapport */}
-                    <div className="col-md-5">
-                        <label className="form-label fw-semibold small text-secondary mb-2">
-                            <i className="fas fa-chart-line me-1"></i> Type rapport
-                        </label>
-                        <div className="d-flex flex-wrap gap-2">
-                            {[
-                                { id: "echeancier_", value: "echeancier", icon: "fa-calendar-alt", label: "Échéancier" },
-                                { id: "tableau_ammortiss", value: "tableau_ammortiss", icon: "fa-table", label: "Tableau amort." },
-                                { id: "balance_agee", value: "balance_agee", icon: "fa-balance-scale", label: "Balance âgée" },
-                                { id: "par_report", value: "par", icon: "fa-chart-pie", label: "PAR" }
-                            ].map(opt => (
-                                <div className="form-check" key={opt.id}>
-                                    <input
-                                        type="radio"
-                                        className="form-check-input"
-                                        id={opt.id}
-                                        name="reportType"
-                                        value={opt.value}
-                                        checked={radioValue === opt.value}
-                                        onChange={handleRadioChange}
-                                    />
-                                    <label className="form-check-label small" htmlFor={opt.id}>
-                                        <i className={`fas ${opt.icon} me-1 text-primary`}></i>
-                                        {opt.label}
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Agence */}
-                    <div className="col-md-3">
-                        <label className="form-label fw-semibold small text-secondary">
-                            <i className="fas fa-building me-1"></i> Agence
-                        </label>
-                        <select
-                            className="form-select rounded-3"
-                            value={agenceFilter}
-                            onChange={(e) => setAgenceFilter(e.target.value)}
-                            disabled={userAgences.length <= 1}
-                        >
-                            <option value="current">
-                                Courante ({currentAgence?.nom_agence || "?"})
-                            </option>
-                            {userAgences.length > 1 && (
-                                <>
-                                    <option value="all">📊 Toutes les Agences</option>
-                                    {userAgences.map((agence) => (
-                                        <option key={agence.id} value={agence.id}>
-                                            🏢 {agence.code_agence} - {agence.nom_agence}
-                                        </option>
-                                    ))}
-                                </>
-                            )}
-                        </select>
-                    </div>
-
-                    {/* Bouton Afficher */}
-                    <div className="col-md-2">
-                        <label className="form-label fw-semibold small text-secondary invisible">
-                            Action
-                        </label>
-                        <button
-                            className="btn gradient-btn w-100 py-2 text-white d-flex align-items-center justify-content-center gap-2"
-                            onClick={getSeachedData}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <span className="spinner-border spinner-border-sm"></span>
-                            ) : (
-                                <i className="fas fa-desktop"></i>
-                            )}
-                            <span>Afficher</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* ========== FILTRES CONDITIONNELS ========== */}
-
-                {/* Balance âgée */}
-                {radioValue === "balance_agee" && (
-                    <div className="row g-3 mb-4 pb-2 border-top pt-3">
-                        <div className="col-md-3">
-                            <label className="form-label fw-semibold small text-secondary">
-                                <i className="far fa-calendar-alt me-1"></i> Date
-                            </label>
-                            <input
-                                type="date"
-                                className="form-control rounded-3"
-                                value={selectedDate}
-                                onChange={(e) => {
-                                    setSelectedDate(e.target.value);
-                                    setdate_balance_agee(e.target.value);
-                                }}
-                            />
-                        </div>
-                        <div className="col-md-3">
-                            <label className="form-label fw-semibold small text-secondary">
-                                <i className="fas fa-money-bill-wave me-1"></i> Devise
-                            </label>
-                            <select
-                                className="form-select rounded-3"
-                                value={devise}
-                                onChange={(e) => setdevise(e.target.value)}
-                            >
-                                <option value="">Toutes</option>
-                                <option value="CDF">CDF</option>
-                                <option value="USD">USD</option>
-                            </select>
-                        </div>
-                        <div className="col-md-3">
-                            <label className="form-label fw-semibold small text-secondary">
-                                <i className="fas fa-user-tie me-1"></i> Agent crédit
-                            </label>
-                            <select
-                                className="form-select rounded-3"
-                                value={agent_credit_name}
-                                onChange={(e) => setagent_credit_name(e.target.value)}
-                            >
-                                <option value="">Tous</option>
-                                {fetchAgentCredit?.map((res, idx) => (
-                                    <option key={idx} value={res.name}>{res.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="col-md-3 d-flex align-items-end">
-                            {/* Bouton déjà présent, on le laisse vide pour éviter doublon */}
-                        </div>
-                    </div>
-                )}
-
-                {/* PAR */}
-                {radioValue === "par" && (
-                    <div className="row g-3 mb-4 pb-2 border-top pt-3">
-                        <div className="col-md-3">
-                            <label className="form-label fw-semibold small text-secondary">
-                                <i className="far fa-calendar-check me-1"></i> Date référence
-                            </label>
-                            <input
-                                type="date"
-                                className="form-control rounded-3"
-                                value={datePar}
-                                onChange={(e) => setDatePar(e.target.value)}
-                            />
-                        </div>
-                        <div className="col-md-3">
-                            <label className="form-label fw-semibold small text-secondary">
-                                <i className="fas fa-coins me-1"></i> Devise
-                            </label>
-                            <select
-                                className="form-select rounded-3"
-                                value={devise}
-                                onChange={(e) => setdevise(e.target.value)}
-                            >
-                                <option value="">Toutes</option>
-                                <option value="CDF">CDF</option>
-                                <option value="USD">USD</option>
-                            </select>
-                        </div>
-                        <div className="col-md-3">
-                            <label className="form-label fw-semibold small text-secondary">
-                                <i className="fas fa-users me-1"></i> Gestionnaire
-                            </label>
-                            <select
-                                className="form-select rounded-3"
-                                value={agent_credit_name}
-                                onChange={(e) => setagent_credit_name(e.target.value)}
-                            >
-                                <option value="">Tous</option>
-                                {fetchAgentCredit?.map((res, idx) => (
-                                    <option key={idx} value={res.name}>{res.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="col-md-3 d-flex align-items-end"></div>
-                    </div>
-                )}
-
-                {/* Cas Échéancier / Amortissement : pas de filtres supplémentaires */}
-            </div>
-        </div>
-    </div>
-</div>
-
-            {/* Séparateur décoratif */}
-            <div className="position-relative my-4">
-                <hr className="border-2" style={{ borderColor: "#e9ecef" }} />
-                <span className="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">
-                    <i className="fas fa-chart-bar me-1"></i> Résultats
-                </span>
-            </div>
-
-            {/* ÉCHÉANCIER */}
-            {fetchEcheancier &&
-                radioValue == "echeancier" &&
-                fetchEcheancier.length != 0 && (
-                    <div className="card border-0 shadow-sm rounded-3 mb-4">
-                        <div className="card-body p-4">
-                            <div id="content-to-download-echeancier">
-                                <div id="main-table-echeancier">
-                                    {/* En-tête du rapport */}
-                                    <div className="text-center mb-4">
-                                        <EnteteRapport />
+                {/* Section Formulaire de recherche */}
+                {/* Section Formulaire de recherche - version stylée pleine largeur */}
+                <div className="row g-4 mb-5">
+                    <div className="col-12">
+                        <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+                            <div className="card-body p-4">
+                                {/* ========== LIGNE PRINCIPALE ========== */}
+                                <div className="row g-3 align-items-end mb-4">
+                                    {/* N° dossier */}
+                                    <div className="col-md-3 col-lg-2">
+                                        <label className="form-label fw-semibold small text-secondary mb-1">
+                                            <i className="fas fa-folder-open me-1" />{" "}
+                                            N° dossier
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="form-control modern-input"
+                                            placeholder="Ex: D2025-001"
+                                            value={searched_num_dossier}
+                                            onChange={(e) =>
+                                                setsearched_num_dossier(
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
                                     </div>
 
-                                    {/* Titre */}
-                                    <div className="text-center mb-4">
-                                        <h4
+                                    {/* Type rapport (version toggle cards) */}
+                                    <div className="col-md-5 col-lg-4">
+                                        <label className="form-label fw-semibold small text-secondary mb-1">
+                                            <i className="fas fa-chart-line me-1" />{" "}
+                                            Type rapport
+                                        </label>
+                                        <div className="d-flex flex-wrap gap-2">
+                                            {[
+                                                {
+                                                    value: "echeancier",
+                                                    label: "Échéancier",
+                                                    icon: "fa-calendar-alt",
+                                                },
+                                                {
+                                                    value: "tableau_ammortiss",
+                                                    label: "Tableau amort.",
+                                                    icon: "fa-table",
+                                                },
+                                                {
+                                                    value: "balance_agee",
+                                                    label: "Balance âgée",
+                                                    icon: "fa-balance-scale",
+                                                },
+                                                {
+                                                    value: "par",
+                                                    label: "PAR",
+                                                    icon: "fa-chart-pie",
+                                                },
+                                            ].map((opt) => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        handleRadioChange({
+                                                            target: {
+                                                                value: opt.value,
+                                                            },
+                                                        })
+                                                    }
+                                                    className={`btn btn-sm rounded-pill px-3 ${
+                                                        radioValue === opt.value
+                                                            ? "btn-primary shadow-sm"
+                                                            : "btn-outline-secondary bg-light"
+                                                    }`}
+                                                >
+                                                    <i
+                                                        className={`fas ${opt.icon} me-1`}
+                                                    />
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Agence */}
+                                    <div className="col-md-4 col-lg-2">
+                                        <label className="form-label fw-semibold small text-secondary mb-1">
+                                            <i className="fas fa-building me-1" />{" "}
+                                            Agence
+                                        </label>
+                                        <select
+                                            className="form-select form-select-lg rounded-3 modern-select"
+                                            value={agenceFilter}
+                                            onChange={(e) =>
+                                                setAgenceFilter(e.target.value)
+                                            }
+                                            disabled={userAgences.length <= 1}
+                                        >
+                                            <option value="current">
+                                                🏢 Courante (
+                                                {currentAgence?.nom_agence ||
+                                                    "?"}
+                                                )
+                                            </option>
+                                            {userAgences.length > 1 && (
+                                                <>
+                                                    <option value="all">
+                                                        📊 Toutes les Agences
+                                                    </option>
+                                                    {userAgences.map(
+                                                        (agence) => (
+                                                            <option
+                                                                key={agence.id}
+                                                                value={
+                                                                    agence.id
+                                                                }
+                                                            >
+                                                                🏢{" "}
+                                                                {
+                                                                    agence.code_agence
+                                                                }{" "}
+                                                                -{" "}
+                                                                {
+                                                                    agence.nom_agence
+                                                                }
+                                                            </option>
+                                                        ),
+                                                    )}
+                                                </>
+                                            )}
+                                        </select>
+                                    </div>
+
+                                    {/* Date */}
+                                    <div className="col-md-5 col-lg-2">
+                                        <label className="form-label fw-semibold small text-secondary mb-1">
+                                            <i className="far fa-calendar-alt me-1" />{" "}
+                                            Date référence
+                                        </label>
+                                        <input
+                                            type="date"
+                                            className="form-control modern-input"
+                                            value={selectedDate}
+                                            onChange={(e) => {
+                                                setSelectedDate(e.target.value);
+                                                setdate_balance_agee(
+                                                    e.target.value,
+                                                );
+                                            }}
+                                        />
+                                    </div>
+
+                                    {/* Bouton Afficher */}
+                                    <div className="col-md-4 col-lg-2">
+                                        <label className="form-label fw-semibold small text-secondary invisible mb-1">
+                                            Action
+                                        </label>
+                                        <button
+                                            className="btn btn-primary btn-lg w-100 rounded-3 d-flex align-items-center justify-content-center gap-2"
+                                            onClick={getSeachedData}
+                                            disabled={loading}
                                             style={{
-                                                background: "#1a2632",
-                                                padding: "10px",
-                                                color: "#fff",
-                                                borderRadius: "8px",
-                                                display: "inline-block",
+                                                background:
+                                                    "linear-gradient(135deg, #0d6efd, #0a58ca)",
                                             }}
                                         >
-                                            <i className="fas fa-calendar-check me-2"></i>
-                                            ECHEANCIER DE REMBOURSEMENT N°{" "}
-                                            {searched_num_dossier}
-                                        </h4>
+                                            {loading ? (
+                                                <span className="spinner-border spinner-border-sm" />
+                                            ) : (
+                                                <i className="fas fa-desktop" />
+                                            )}
+                                            <span>Afficher</span>
+                                        </button>
                                     </div>
+                                </div>
 
-                                    {/* Informations du crédit */}
-                                    <div className="row g-3 mb-4">
-                                        <div className="col-md-6">
-                                            <div
-                                                className="card border-0"
-                                                style={{
-                                                    background: "#e6f2f9",
-                                                    borderRadius: "12px",
-                                                }}
-                                            >
-                                                <div className="card-body">
-                                                    <table
-                                                        style={{
-                                                            width: "100%",
-                                                        }}
-                                                    >
-                                                        <tbody>
-                                                            <tr>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                        color: "steelblue",
-                                                                    }}
-                                                                >
-                                                                    Intitulé :
-                                                                </td>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                    }}
-                                                                >
-                                                                    {
-                                                                        fetchEcheancier[0]
-                                                                            ?.NomCompte
-                                                                    }
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                        color: "steelblue",
-                                                                    }}
-                                                                >
-                                                                    C. épargne :
-                                                                </td>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                    }}
-                                                                >
-                                                                    {
-                                                                        fetchEcheancier[0]
-                                                                            ?.NumCompteEpargne
-                                                                    }
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                        color: "steelblue",
-                                                                    }}
-                                                                >
-                                                                    Type crédit
-                                                                    :
-                                                                </td>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                    }}
-                                                                >
-                                                                    {
-                                                                        fetchEcheancier[0]
-                                                                            ?.RefProduitCredit
-                                                                    }
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                        color: "steelblue",
-                                                                    }}
-                                                                >
-                                                                    Durée :
-                                                                </td>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                    }}
-                                                                >
-                                                                    {
-                                                                        fetchEcheancier[0]
-                                                                            ?.Duree
-                                                                    }
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                        color: "steelblue",
-                                                                    }}
-                                                                >
-                                                                    Montant :
-                                                                </td>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                        color: "#20c997",
-                                                                    }}
-                                                                >
-                                                                    {numberFormat(
-                                                                        fetchEcheancier[0]
-                                                                            ?.MontantAccorde,
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                        color: "steelblue",
-                                                                    }}
-                                                                >
-                                                                    N° Dossier :
-                                                                </td>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                    }}
-                                                                >
-                                                                    {
-                                                                        searched_num_dossier
-                                                                    }
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
+                                {/* ========== FILTRES CONDITIONNELS (animés) ========== */}
+
+                                {/* Balance âgée */}
+                                {radioValue === "balance_agee" && (
+                                    <div className="row g-3 mt-3 pt-3 border-top fade-in">
+                                        <div className="col-md-4 col-lg-3">
+                                            <label className="form-label fw-semibold small text-secondary">
+                                                <i className="far fa-calendar-alt me-1" />{" "}
+                                                Date
+                                            </label>
+                                            <input
+                                                type="date"
+                                                className="form-control rounded-3 modern-input"
+                                                value={selectedDate}
+                                                onChange={(e) =>
+                                                    setSelectedDate(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
                                         </div>
-                                        <div className="col-md-6">
-                                            <div
-                                                className="card border-0"
+                                        <div className="col-md-4 col-lg-3">
+                                            <label className="form-label fw-semibold small text-secondary">
+                                                <i className="fas fa-money-bill-wave me-1" />{" "}
+                                                Devise
+                                            </label>
+                                            <select
+                                                className="form-select rounded-3 modern-select"
+                                                value={devise}
+                                                onChange={(e) =>
+                                                    setdevise(e.target.value)
+                                                }
+                                            >
+                                                <option value="">Toutes</option>
+                                                <option value="CDF">CDF</option>
+                                                <option value="USD">USD</option>
+                                            </select>
+                                        </div>
+                                        <div className="col-md-4 col-lg-3">
+                                            <label className="form-label fw-semibold small text-secondary">
+                                                <i className="fas fa-user-tie me-1" />{" "}
+                                                Agent crédit
+                                            </label>
+                                            <select
+                                                className="form-select rounded-3 modern-select"
+                                                value={agent_credit_name}
+                                                onChange={(e) =>
+                                                    setagent_credit_name(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            >
+                                                <option value="">Tous</option>
+                                                {fetchAgentCredit?.map(
+                                                    (res, idx) => (
+                                                        <option
+                                                            key={idx}
+                                                            value={res.name}
+                                                        >
+                                                            {res.name}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* PAR */}
+                                {radioValue === "par" && (
+                                    <div className="row g-3 mt-3 pt-3 border-top fade-in">
+                                        <div className="col-md-4 col-lg-3">
+                                            <label className="form-label fw-semibold small text-secondary">
+                                                <i className="far fa-calendar-check me-1" />{" "}
+                                                Date référence
+                                            </label>
+                                            <input
+                                                type="date"
+                                                className="form-control rounded-3 modern-input"
+                                                value={datePar}
+                                                onChange={(e) =>
+                                                    setDatePar(e.target.value)
+                                                }
+                                            />
+                                        </div>
+                                        <div className="col-md-4 col-lg-3">
+                                            <label className="form-label fw-semibold small text-secondary">
+                                                <i className="fas fa-coins me-1" />{" "}
+                                                Devise
+                                            </label>
+                                            <select
+                                                className="form-select rounded-3 modern-select"
+                                                value={devise}
+                                                onChange={(e) =>
+                                                    setdevise(e.target.value)
+                                                }
+                                            >
+                                                <option value="">Toutes</option>
+                                                <option value="CDF">CDF</option>
+                                                <option value="USD">USD</option>
+                                            </select>
+                                        </div>
+                                        <div className="col-md-4 col-lg-3">
+                                            <label className="form-label fw-semibold small text-secondary">
+                                                <i className="fas fa-users me-1" />{" "}
+                                                Gestionnaire
+                                            </label>
+                                            <select
+                                                className="form-select rounded-3 modern-select"
+                                                value={agent_credit_name}
+                                                onChange={(e) =>
+                                                    setagent_credit_name(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            >
+                                                <option value="">Tous</option>
+                                                {fetchAgentCredit?.map(
+                                                    (res, idx) => (
+                                                        <option
+                                                            key={idx}
+                                                            value={res.name}
+                                                        >
+                                                            {res.name}
+                                                        </option>
+                                                    ),
+                                                )}
+                                            </select>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Séparateur décoratif */}
+                <div className="position-relative my-4">
+                    <hr
+                        className="border-2"
+                        style={{ borderColor: "#e9ecef" }}
+                    />
+                    <span className="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">
+                        <i className="fas fa-chart-bar me-1"></i> Résultats
+                    </span>
+                </div>
+
+                {/* ÉCHÉANCIER */}
+                {fetchEcheancier &&
+                    radioValue == "echeancier" &&
+                    fetchEcheancier.length != 0 && (
+                        <div className="card border-0 shadow-sm rounded-3 mb-4">
+                            <div className="card-body p-4">
+                                <div id="content-to-download-echeancier">
+                                    <div id="main-table-echeancier">
+                                        {/* En-tête du rapport */}
+                                        <div className="text-center mb-4">
+                                            <EnteteRapport />
+                                        </div>
+
+                                        {/* Titre */}
+                                        <div className="text-center mb-4">
+                                            <h4
                                                 style={{
-                                                    background: "#e6f2f9",
-                                                    borderRadius: "12px",
+                                                    background: "#1a2632",
+                                                    padding: "10px",
+                                                    color: "#fff",
+                                                    borderRadius: "8px",
+                                                    display: "inline-block",
                                                 }}
                                             >
-                                                <div className="card-body">
-                                                    <table
-                                                        style={{
-                                                            width: "100%",
-                                                        }}
-                                                    >
-                                                        <tbody>
-                                                            <tr>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                        color: "steelblue",
-                                                                    }}
-                                                                >
-                                                                    Date octroi
-                                                                    :
-                                                                </td>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                    }}
-                                                                >
-                                                                    {dateParser(
-                                                                        fetchEcheancier[0]
-                                                                            ?.DateOctroi,
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                        color: "steelblue",
-                                                                    }}
-                                                                >
-                                                                    C. crédit :
-                                                                </td>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                    }}
-                                                                >
-                                                                    {
-                                                                        fetchEcheancier[0]
-                                                                            ?.NumCompteCredit
-                                                                    }
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                        color: "steelblue",
-                                                                    }}
-                                                                >
-                                                                    Total
-                                                                    intérêt :
-                                                                </td>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                    }}
-                                                                >
-                                                                    {numberFormat(
-                                                                        parseInt(
-                                                                            fetchSommeInteret?.sommeInteret,
-                                                                        ),
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                        color: "steelblue",
-                                                                    }}
-                                                                >
-                                                                    Total
-                                                                    Capital :
-                                                                </td>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                    }}
-                                                                >
-                                                                    {numberFormat(
-                                                                        fetchEcheancier[0]
-                                                                            ?.MontantAccorde,
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                        color: "steelblue",
-                                                                    }}
-                                                                >
-                                                                    Total à
-                                                                    payer :
-                                                                </td>
-                                                                <td
-                                                                    style={{
-                                                                        padding:
-                                                                            "6px",
-                                                                        background:
-                                                                            "#20c997",
-                                                                        color: "white",
-                                                                        borderRadius:
-                                                                            "6px",
-                                                                        fontWeight:
-                                                                            "bold",
-                                                                    }}
-                                                                >
-                                                                    {numberFormat(
-                                                                        parseFloat(
-                                                                            fetchEcheancier[0]
-                                                                                ?.MontantAccorde,
-                                                                        ) +
-                                                                            parseFloat(
-                                                                                fetchSommeInteret?.sommeInteret,
+                                                <i className="fas fa-calendar-check me-2"></i>
+                                                ECHEANCIER DE REMBOURSEMENT N°{" "}
+                                                {searched_num_dossier}
+                                            </h4>
+                                        </div>
+
+                                        {/* Informations du crédit */}
+                                        <div className="row g-2 mb-3">
+  {/* Première carte */}
+  <div className="col-md-6">
+    <div className="card border-0 bg-light rounded-3 h-100">
+      <div className="card-body p-2">
+        <table className="table table-sm table-borderless mb-0 small">
+          <tbody>
+            <tr>
+              <td className="fw-bold text-secondary" style={{ width: "35%" }}>Intitulé :</td>
+              <td className="text-dark">{fetchEcheancier[0]?.NomCompte}</td>
+            </tr>
+            <tr>
+              <td className="fw-bold text-secondary">C. épargne :</td>
+              <td className="text-dark">{fetchEcheancier[0]?.NumCompteEpargne}</td>
+            </tr>
+            <tr>
+              <td className="fw-bold text-secondary">Type crédit :</td>
+              <td className="text-dark">{fetchEcheancier[0]?.RefProduitCredit}</td>
+            </tr>
+            <tr>
+              <td className="fw-bold text-secondary">Durée :</td>
+              <td className="text-dark">{fetchEcheancier[0]?.Duree}</td>
+            </tr>
+            <tr>
+              <td className="fw-bold text-secondary">Montant :</td>
+              <td className="fw-bold text-success">{numberFormat(fetchEcheancier[0]?.MontantAccorde)}</td>
+            </tr>
+            <tr>
+              <td className="fw-bold text-secondary">N° Dossier :</td>
+              <td className="text-dark">{searched_num_dossier}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {/* Deuxième carte */}
+  <div className="col-md-6">
+    <div className="card border-0 bg-light rounded-3 h-100">
+      <div className="card-body p-2">
+        <table className="table table-sm table-borderless mb-0 small">
+          <tbody>
+            <tr>
+              <td className="fw-bold text-secondary" style={{ width: "35%" }}>Date octroi :</td>
+              <td className="text-dark">{dateParser(fetchEcheancier[0]?.DateOctroi)}</td>
+            </tr>
+            <tr>
+              <td className="fw-bold text-secondary">C. crédit :</td>
+              <td className="text-dark">{fetchEcheancier[0]?.NumCompteCredit}</td>
+            </tr>
+            <tr>
+              <td className="fw-bold text-secondary">Total intérêt :</td>
+              <td className="text-dark">{numberFormat(parseInt(fetchSommeInteret?.sommeInteret))}</td>
+            </tr>
+            <tr>
+              <td className="fw-bold text-secondary">Total Capital :</td>
+              <td className="text-dark">{numberFormat(fetchEcheancier[0]?.MontantAccorde)}</td>
+            </tr>
+            <tr>
+              <td className="fw-bold text-secondary">Total à payer :</td>
+              <td className="fw-bold text-white bg-success rounded px-2 py-0" style={{ fontSize: "0.85rem" }}>
+                {numberFormat(parseFloat(fetchEcheancier[0]?.MontantAccorde) + parseFloat(fetchSommeInteret?.sommeInteret))}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+                                        {/* Tableau Échéancier */}
+                                        <div className="table-responsive">
+                                            <table
+                                                className="table table-bordered table-striped"
+                                                style={{ fontSize: "13px" }}
+                                            >
+                                                <thead
+                                                    style={{
+                                                        backgroundColor:
+                                                            "#1a2632",
+                                                        color: "white",
+                                                    }}
+                                                >
+                                                    <tr>
+                                                        <th>N°</th>
+                                                        <th>Date D'échéance</th>
+                                                        <th>Capital</th>
+                                                        <th>Intérêt</th>
+                                                        <th>C. Ammorti</th>
+                                                        <th>Tot à payer</th>
+                                                        <th>C. restant dû</th>
+                                                        <th>Epargne</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {(() => {
+                                                        let compteur = 0;
+                                                        return fetchEcheancier.map(
+                                                            (res, index) => (
+                                                                <tr key={index}>
+                                                                    <td className="fw-bold">
+                                                                        {
+                                                                            compteur++
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {dateParser(
+                                                                            res.DateTranch,
+                                                                        )}
+                                                                    </td>
+                                                                    <td>
+                                                                        {numberFormat(
+                                                                            parseInt(
+                                                                                res.Capital,
                                                                             ),
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
+                                                                        )}
+                                                                    </td>
+                                                                    <td>
+                                                                        {numberFormat(
+                                                                            parseInt(
+                                                                                res.Interet,
+                                                                            ),
+                                                                        )}
+                                                                    </td>
+                                                                    <td>
+                                                                        {numberFormat(
+                                                                            parseInt(
+                                                                                res.CapAmmorti,
+                                                                            ),
+                                                                        )}
+                                                                    </td>
+                                                                    <td className="fw-bold text-success">
+                                                                        {numberFormat(
+                                                                            parseInt(
+                                                                                res.TotalAp,
+                                                                            ),
+                                                                        )}
+                                                                    </td>
+                                                                    <td>
+                                                                        {numberFormat(
+                                                                            parseInt(
+                                                                                res.Cumul,
+                                                                            ),
+                                                                        )}
+                                                                    </td>
+                                                                    <td>
+                                                                        {numberFormat(
+                                                                            parseInt(
+                                                                                res.Epargne,
+                                                                            ),
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            ),
+                                                        );
+                                                    })()}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {/* Signatures */}
+                                        <div className="row mt-5 pt-4">
+                                            <div className="col-md-6">
+                                                <div
+                                                    style={{
+                                                        borderTop:
+                                                            "2px solid #000",
+                                                        width: "200px",
+                                                        paddingTop: "5px",
+                                                    }}
+                                                >
+                                                    <small>
+                                                        Signature client
+                                                    </small>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Tableau Échéancier */}
-                                    <div className="table-responsive">
-                                        <table
-                                            className="table table-bordered table-striped"
-                                            style={{ fontSize: "13px" }}
-                                        >
-                                            <thead
-                                                style={{
-                                                    backgroundColor: "#1a2632",
-                                                    color: "white",
-                                                }}
-                                            >
-                                                <tr>
-                                                    <th>N°</th>
-                                                    <th>Date D'échéance</th>
-                                                    <th>Capital</th>
-                                                    <th>Intérêt</th>
-                                                    <th>C. Ammorti</th>
-                                                    <th>Tot à payer</th>
-                                                    <th>C. restant dû</th>
-                                                    <th>Epargne</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {(() => {
-                                                    let compteur = 0;
-                                                    return fetchEcheancier.map(
-                                                        (res, index) => (
-                                                            <tr key={index}>
-                                                                <td className="fw-bold">
-                                                                    {compteur++}
-                                                                </td>
-                                                                <td>
-                                                                    {dateParser(
-                                                                        res.DateTranch,
-                                                                    )}
-                                                                </td>
-                                                                <td>
-                                                                    {numberFormat(
-                                                                        parseInt(
-                                                                            res.Capital,
-                                                                        ),
-                                                                    )}
-                                                                </td>
-                                                                <td>
-                                                                    {numberFormat(
-                                                                        parseInt(
-                                                                            res.Interet,
-                                                                        ),
-                                                                    )}
-                                                                </td>
-                                                                <td>
-                                                                    {numberFormat(
-                                                                        parseInt(
-                                                                            res.CapAmmorti,
-                                                                        ),
-                                                                    )}
-                                                                </td>
-                                                                <td className="fw-bold text-success">
-                                                                    {numberFormat(
-                                                                        parseInt(
-                                                                            res.TotalAp,
-                                                                        ),
-                                                                    )}
-                                                                </td>
-                                                                <td>
-                                                                    {numberFormat(
-                                                                        parseInt(
-                                                                            res.Cumul,
-                                                                        ),
-                                                                    )}
-                                                                </td>
-                                                                <td>
-                                                                    {numberFormat(
-                                                                        parseInt(
-                                                                            res.Epargne,
-                                                                        ),
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                        ),
-                                                    );
-                                                })()}
-                                            </tbody>
-                                        </table>
-                                    </div>
-
-                                    {/* Signatures */}
-                                    <div className="row mt-5 pt-4">
-                                        <div className="col-md-6">
-                                            <div
-                                                style={{
-                                                    borderTop: "2px solid #000",
-                                                    width: "200px",
-                                                    paddingTop: "5px",
-                                                }}
-                                            >
-                                                <small>Signature client</small>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-6 text-end">
-                                            <div
-                                                style={{
-                                                    borderTop: "2px solid #000",
-                                                    width: "200px",
-                                                    marginLeft: "auto",
-                                                    paddingTop: "5px",
-                                                }}
-                                            >
-                                                <small>
-                                                    Signature agent de crédit
-                                                </small>
+                                            <div className="col-md-6 text-end">
+                                                <div
+                                                    style={{
+                                                        borderTop:
+                                                            "2px solid #000",
+                                                        width: "200px",
+                                                        marginLeft: "auto",
+                                                        paddingTop: "5px",
+                                                    }}
+                                                >
+                                                    <small>
+                                                        Signature agent de
+                                                        crédit
+                                                    </small>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Boutons d'export */}
-                            <div className="d-flex justify-content-end gap-2 mt-4">
-                                <button
-                                    onClick={() =>
-                                        exportTableData("main-table-echeancier")
-                                    }
-                                    className="btn"
-                                    style={{
-                                        background: "#28a745",
-                                        color: "white",
-                                        borderRadius: "8px",
-                                    }}
-                                >
-                                    <i className="fas fa-file-excel me-2"></i>
-                                    Exporter en Excel
-                                </button>
-                                <button
-                                    onClick={exportToPDFEcheancier}
-                                    className="btn"
-                                    style={{
-                                        background: "#dc3545",
-                                        color: "white",
-                                        borderRadius: "8px",
-                                    }}
-                                >
-                                    <i className="fas fa-file-pdf me-2"></i>
-                                    Exporter en PDF
-                                </button>
+                                {/* Boutons d'export */}
+                                <div className="d-flex justify-content-end gap-2 mt-4">
+                                    <button
+                                        onClick={() =>
+                                            exportTableData(
+                                                "main-table-echeancier",
+                                            )
+                                        }
+                                        className="btn"
+                                        style={{
+                                            background: "#28a745",
+                                            color: "white",
+                                            borderRadius: "8px",
+                                        }}
+                                    >
+                                        <i className="fas fa-file-excel me-2"></i>
+                                        Exporter en Excel
+                                    </button>
+                                    <button
+                                        onClick={exportToPDFEcheancier}
+                                        className="btn"
+                                        style={{
+                                            background: "#dc3545",
+                                            color: "white",
+                                            borderRadius: "8px",
+                                        }}
+                                    >
+                                        <i className="fas fa-file-pdf me-2"></i>
+                                        Exporter en PDF
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-            {/* TABLEAU D'AMORTISSEMENT */}
+                {/* TABLEAU D'AMORTISSEMENT */}
+                {/* TABLEAU D'AMORTISSEMENT */}
             {fetchTableauAmortiss &&
                 radioValue == "tableau_ammortiss" &&
                 fetchTableauAmortiss.length != 0 && (
@@ -1414,7 +1283,7 @@ const Echeancier = () => {
                                                             <td>
                                                                 {dateParser(
                                                                     fetchTableauAmortiss[0]
-                                                                        ?.DateTombeEcheance,
+                                                                        ?.DateEcheance,
                                                                 )}
                                                             </td>
                                                         </tr>
@@ -1625,198 +1494,69 @@ const Echeancier = () => {
                                                 <th>Épargne</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            {(() => {
-                                                let compteur = 1;
-                                                return fetchTableauAmortiss.map(
-                                                    (res, index) => (
-                                                        <tr key={index}>
-                                                            <td>
-                                                                {compteur++}
-                                                            </td>
-                                                            <td>
-                                                                {dateParser(
-                                                                    res.DateTranch,
-                                                                )}
-                                                            </td>
-                                                            <td>
-                                                                {numberFormat(
-                                                                    parseInt(
-                                                                        res.CapAmmorti,
-                                                                    ),
-                                                                )}
-                                                            </td>
-                                                            <td>
-                                                                {numberFormat(
-                                                                    parseInt(
-                                                                        res.Interet,
-                                                                    ),
-                                                                )}
-                                                            </td>
-                                                            <td>
-                                                                {numberFormat(
-                                                                    parseInt(
-                                                                        res.Epargne,
-                                                                    ),
-                                                                )}
-                                                            </td>
-                                                            <td>
-                                                                {numberFormat(
-                                                                    parseInt(
-                                                                        res.Penalite,
-                                                                    ),
-                                                                )}
-                                                            </td>
-                                                            <td
-                                                                className={
-                                                                    parseInt(
-                                                                        res.CapitalPaye,
-                                                                    ) > 0
-                                                                        ? "bg-success text-white"
-                                                                        : ""
-                                                                }
-                                                            >
-                                                                {numberFormat(
-                                                                    parseInt(
-                                                                        res.CapitalPaye,
-                                                                    ),
-                                                                )}
-                                                            </td>
-                                                            <td
-                                                                className={
-                                                                    parseInt(
-                                                                        res.InteretPaye,
-                                                                    ) > 0
-                                                                        ? "bg-success text-white"
-                                                                        : ""
-                                                                }
-                                                            >
-                                                                {numberFormat(
-                                                                    parseInt(
-                                                                        res.InteretPaye,
-                                                                    ),
-                                                                )}
-                                                            </td>
-                                                            <td
-                                                                className={
-                                                                    parseInt(
-                                                                        res.EpargnePaye,
-                                                                    ) > 0
-                                                                        ? "bg-success text-white"
-                                                                        : ""
-                                                                }
-                                                            >
-                                                                {numberFormat(
-                                                                    parseInt(
-                                                                        res.EpargnePaye,
-                                                                    ),
-                                                                )}
-                                                            </td>
-                                                            <td
-                                                                className={
-                                                                    parseInt(
-                                                                        res.CapAmmorti,
-                                                                    ) -
-                                                                        parseInt(
-                                                                            res.CapitalPaye,
-                                                                        ) >
-                                                                    0
-                                                                        ? "bg-danger text-white"
-                                                                        : ""
-                                                                }
-                                                            >
-                                                                {numberFormat(
-                                                                    Math.max(
-                                                                        0,
-                                                                        parseInt(
-                                                                            res.CapAmmorti,
-                                                                        ) -
-                                                                            parseInt(
-                                                                                res.CapitalPaye,
-                                                                            ),
-                                                                    ),
-                                                                )}
-                                                            </td>
-                                                            <td
-                                                                className={
-                                                                    parseInt(
-                                                                        res.Interet,
-                                                                    ) -
-                                                                        parseInt(
-                                                                            res.InteretPaye,
-                                                                        ) >
-                                                                    0
-                                                                        ? "bg-danger text-white"
-                                                                        : ""
-                                                                }
-                                                            >
-                                                                {numberFormat(
-                                                                    Math.max(
-                                                                        0,
-                                                                        parseInt(
-                                                                            res.Interet,
-                                                                        ) -
-                                                                            parseInt(
-                                                                                res.InteretPaye,
-                                                                            ),
-                                                                    ),
-                                                                )}
-                                                            </td>
-                                                            <td
-                                                                className={
-                                                                    parseInt(
-                                                                        res.Epargne,
-                                                                    ) -
-                                                                        parseInt(
-                                                                            res.EpargnePaye,
-                                                                        ) >
-                                                                    0
-                                                                        ? "bg-danger text-white"
-                                                                        : ""
-                                                                }
-                                                            >
-                                                                {numberFormat(
-                                                                    Math.max(
-                                                                        0,
-                                                                        parseInt(
-                                                                            res.Epargne,
-                                                                        ) -
-                                                                            parseInt(
-                                                                                res.EpargnePaye,
-                                                                            ),
-                                                                    ),
-                                                                )}
-                                                            </td>
-                                                            <td className="bg-warning">
-                                                                {numberFormat(
-                                                                    Math.max(
-                                                                        0,
-                                                                        parseInt(
-                                                                            res.CapAmmorti,
-                                                                        ) -
-                                                                            parseInt(
-                                                                                res.CapitalPaye,
-                                                                            ) +
-                                                                            parseInt(
-                                                                                res.Interet,
-                                                                            ) -
-                                                                            parseInt(
-                                                                                res.InteretPaye,
-                                                                            ) +
-                                                                            parseInt(
-                                                                                res.Epargne,
-                                                                            ) -
-                                                                            parseInt(
-                                                                                res.EpargnePaye,
-                                                                            ),
-                                                                    ),
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                    ),
-                                                );
-                                            })()}
-                                        </tbody>
+          <tbody>
+  {(() => {
+    let compteur = 1;
+    // Récupérer la date de référence depuis le state (ex: selectedDate)
+    const dateReference = selectedDate; // ou la variable qui contient la date du filtre
+    return fetchTableauAmortiss.map((res, index) => {
+      // Vérifier si la tranche est échue (DateTranch <= dateReference)
+      const isEchue = dateReference && new Date(res.DateTranch) <= new Date(dateReference);
+      // Calcul des montants restants (utiles même si non échue, mais on ne les affiche pas)
+      const capitalRestant = Math.max(0, parseInt(res.CapAmmorti) - safeParseInt(res.CapitalPaye));
+      const interetRestant = Math.max(0, parseInt(res.Interet) - safeParseInt(res.InteretPaye));
+      const epargneRestant = Math.max(0, parseInt(res.Epargne) - safeParseInt(res.EpargnePaye));
+      const totalRetard = capitalRestant + interetRestant + epargneRestant;
+      return (
+        <tr key={index}>
+          <td>{compteur++}</td>
+          <td>{dateParser(res.DateTranch)}</td>
+          {/* ÉCHÉANCIER PRÉVISIONNEL */}
+          <td>{numberFormat(parseInt(res.CapAmmorti))}</td>
+          <td>{numberFormat(parseInt(res.Interet))}</td>
+          <td>{numberFormat(parseInt(res.Epargne))}</td>
+          <td>{numberFormat(parseInt(res.Penalite))}</td>
+          {/* REMBOURS. EFFECTIFS */}
+          <td className={safeParseInt(res.CapitalPaye) > 0 ? "bg-success text-white" : ""}>
+            {numberFormat(safeParseInt(res.CapitalPaye))}
+          </td>
+          <td className={safeParseInt(res.InteretPaye) > 0 ? "bg-success text-white" : ""}>
+            {numberFormat(safeParseInt(res.InteretPaye))}
+          </td>
+          <td className={safeParseInt(res.EpargnePaye) > 0 ? "bg-success text-white" : ""}>
+            {numberFormat(safeParseInt(res.EpargnePaye))}
+          </td>
+          {/* REMBOURS. EN RETARD - affiché uniquement si échu */}
+          {isEchue ? (
+            <>
+              <td className={capitalRestant > 0 ? "bg-danger text-white" : ""}>
+                {numberFormat(capitalRestant)}
+              </td>
+              <td className={interetRestant > 0 ? "bg-danger text-white" : ""}>
+                {numberFormat(interetRestant)}
+              </td>
+              <td className={epargneRestant > 0 ? "bg-danger text-white" : ""}>
+                {numberFormat(epargneRestant)}
+              </td>
+            </>
+          ) : (
+            <>
+              <td></td> <td></td> <td></td>
+            </>
+          )}
+          {/* TOT. EN RETARD - affiché uniquement si échu, avec fond jaune si >0 */}
+          {isEchue ? (
+            <td className={totalRetard > 0 ? "bg-warning" : ""}>
+              {numberFormat(totalRetard)}
+            </td>
+          ) : (
+            <td></td>
+          )}
+        </tr>
+      );
+    });
+  })()}
+</tbody>
                                     </table>
                                 </div>
                             </div>
@@ -1856,80 +1596,93 @@ const Echeancier = () => {
                     </div>
                 )}
 
-            {/* BALANCE AGÉE */}
-            {fetchBalanceAgee &&
-                fetchBalanceAgee.length != 0 &&
-                radioValue == "balance_agee" && (
-                    <div className="card border-0 shadow-sm rounded-3 mb-4">
-                        <div className="card-body p-4">
-                            <div id="content-to-download-balance_agee">
-                                {/* En-tête */}
-                                <div className="text-center mb-4">
-                                    <EnteteRapport />
-                                </div>
+                {/* BALANCE AGÉE */}
+                {fetchBalanceAgee &&
+                    fetchBalanceAgee.length != 0 &&
+                    radioValue == "balance_agee" && (
+                        <div className="card border-0 shadow-sm rounded-3 mb-4">
+                            <div className="card-body p-4">
+                                <div id="content-to-download-balance_agee">
+                                    {/* En-tête */}
+                                    <div className="text-center mb-4">
+                                        <EnteteRapport />
+                                    </div>
 
-                                {/* Titre */}
-                                <div className="text-center mb-4">
-                                    <h4
-                                        style={{
-                                            background: "#1a2632",
-                                            padding: "10px",
-                                            color: "#fff",
-                                            borderRadius: "8px",
-                                            display: "inline-block",
-                                        }}
-                                    >
-                                        <i className="fas fa-balance-scale me-2"></i>
-                                        BALANCE AGÉE EN {devise} -{" "}
-                                        {dateParser(new Date())}
-                                    </h4>
-                                </div>
-
-                                {/* Tableau Balance âgée */}
-                                <div className="table-responsive">
-                                    <table
-                                        className="table table-bordered"
-                                        style={{ fontSize: "12px" }}
-                                    >
-                                        <thead
+                                    {/* Titre */}
+                                    <div className="text-center mb-4">
+                                        <h4
                                             style={{
-                                                backgroundColor: "#1a2632",
-                                                color: "white",
+                                                background: "#1a2632",
+                                                padding: "10px",
+                                                color: "#fff",
+                                                borderRadius: "8px",
+                                                display: "inline-block",
                                             }}
                                         >
-                                            <tr>
-                                                <th rowSpan="2">N°</th>
-                                                <th rowSpan="2">NumDossier</th>
-                                                <th rowSpan="2">Num</th>
-                                                <th rowSpan="2">NomCompte</th>
-                                                <th rowSpan="2">Durée</th>
-                                                <th rowSpan="2">DateOctroi</th>
-                                                <th rowSpan="2">Échéance</th>
-                                                <th rowSpan="2">Accordé</th>
-                                                <th colSpan="2">Remboursé</th>
-                                                <th colSpan="2">Restant dû</th>
-                                                <th colSpan="5">
-                                                    En retard En Jours
-                                                </th>
-                                                <th rowSpan="2">
-                                                    Jour de Retard
-                                                </th>
-                                            </tr>
-                                            <tr>
-                                                <th>Capital</th>
-                                                <th>Intérêt</th>
-                                                <th>Capital</th>
-                                                <th>Intérêt</th>
-                                                <th>1 à 30</th>
-                                                <th>31 à 60</th>
-                                                <th>61 à 90</th>
-                                                <th>91 à 180</th>
-                                                <th>Plus de 180</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {Object.entries(groupedData).map(
-                                                ([tranche, items]) => (
+                                            <i className="fas fa-balance-scale me-2"></i>
+                                            BALANCE AGÉE EN {devise} -{" "}
+                                            {dateParser(new Date())}
+                                        </h4>
+                                    </div>
+
+                                    {/* Tableau Balance âgée */}
+                                    <div className="table-responsive">
+                                        <table
+                                            className="table table-bordered"
+                                            style={{ fontSize: "12px" }}
+                                        >
+                                            <thead
+                                                style={{
+                                                    backgroundColor: "#1a2632",
+                                                    color: "white",
+                                                }}
+                                            >
+                                                <tr>
+                                                    <th rowSpan="2">N°</th>
+                                                    <th rowSpan="2">
+                                                        NumDossier
+                                                    </th>
+                                                    <th rowSpan="2">Num</th>
+                                                    <th rowSpan="2">
+                                                        NomCompte
+                                                    </th>
+                                                    <th rowSpan="2">Durée</th>
+                                                    <th rowSpan="2">
+                                                        DateOctroi
+                                                    </th>
+                                                    <th rowSpan="2">
+                                                        Échéance
+                                                    </th>
+                                                    <th rowSpan="2">Accordé</th>
+                                                    <th colSpan="2">
+                                                        Remboursé
+                                                    </th>
+                                                    <th colSpan="2">
+                                                        Restant dû
+                                                    </th>
+                                                    <th colSpan="5">
+                                                        En retard En Jours
+                                                    </th>
+                                                    <th rowSpan="2">
+                                                        Jour de Retard
+                                                    </th>
+                                                </tr>
+                                                <tr>
+                                                    <th>Capital</th>
+                                                    <th>Intérêt</th>
+                                                    <th>Capital</th>
+                                                    <th>Intérêt</th>
+                                                    <th>1 à 30</th>
+                                                    <th>31 à 60</th>
+                                                    <th>61 à 90</th>
+                                                    <th>91 à 180</th>
+                                                    <th>Plus de 180</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {Object.entries(
+                                                    groupedData,
+                                                ).map(([tranche, items]) => (
                                                     <React.Fragment
                                                         key={tranche}
                                                     >
@@ -2053,158 +1806,159 @@ const Echeancier = () => {
                                                             </>
                                                         )}
                                                     </React.Fragment>
-                                                ),
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {/* Encours global */}
+                                    <div className="row mt-4">
+                                        <div className="col-md-6">
+                                            {devise == "CDF" && (
+                                                <div className="alert alert-success">
+                                                    <strong>
+                                                        Encours global de crédit
+                                                        CDF :
+                                                    </strong>{" "}
+                                                    {numberWithSpaces(
+                                                        fetchSoldeEncourCDF &&
+                                                            fetchSoldeEncourCDF.toFixed(
+                                                                2,
+                                                            ),
+                                                    )}
+                                                </div>
                                             )}
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                {/* Encours global */}
-                                <div className="row mt-4">
-                                    <div className="col-md-6">
-                                        {devise == "CDF" && (
-                                            <div className="alert alert-success">
-                                                <strong>
-                                                    Encours global de crédit CDF
-                                                    :
-                                                </strong>{" "}
-                                                {numberWithSpaces(
-                                                    fetchSoldeEncourCDF &&
-                                                        fetchSoldeEncourCDF.toFixed(
-                                                            2,
-                                                        ),
-                                                )}
-                                            </div>
-                                        )}
-                                        {devise == "USD" && (
-                                            <div className="alert alert-success">
-                                                <strong>
-                                                    Encours global de crédit USD
-                                                    :
-                                                </strong>{" "}
-                                                {numberWithSpaces(
-                                                    fetchSoldeEncourUSD &&
-                                                        fetchSoldeEncourUSD.toFixed(
-                                                            2,
-                                                        ),
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Taux déliquence */}
-                                {devise === "CDF" && (
-                                    <div
-                                        className="row mt-3 p-3"
-                                        style={{
-                                            background: "#e6f2f9",
-                                            borderRadius: "12px",
-                                        }}
-                                    >
-                                        <div className="col-md-12">
-                                            <h5>
-                                                Taux déliquence (PAR) ={" "}
-                                                <span className="fw-bold">
+                                            {devise == "USD" && (
+                                                <div className="alert alert-success">
+                                                    <strong>
+                                                        Encours global de crédit
+                                                        USD :
+                                                    </strong>{" "}
                                                     {numberWithSpaces(
-                                                        fetchTotCapRetardCDF &&
-                                                            fetchTotCapRetardCDF.toFixed(
+                                                        fetchSoldeEncourUSD &&
+                                                            fetchSoldeEncourUSD.toFixed(
                                                                 2,
                                                             ),
-                                                    )}{" "}
-                                                    %
-                                                </span>
-                                            </h5>
-                                            <hr />
-                                            <small className="text-muted">
-                                                Restant dû de crédit avec au
-                                                moins un remboursement en retard
-                                                / (Crédit sain + Restant dû de
-                                                crédit avec retard) × 100 (≤5%)
-                                            </small>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                )}
-                                {devise == "USD" && (
-                                    <div
-                                        className="row mt-3 p-3"
+
+                                    {/* Taux déliquence */}
+                                    {devise === "CDF" && (
+                                        <div
+                                            className="row mt-3 p-3"
+                                            style={{
+                                                background: "#e6f2f9",
+                                                borderRadius: "12px",
+                                            }}
+                                        >
+                                            <div className="col-md-12">
+                                                <h5>
+                                                    Taux déliquence (PAR) ={" "}
+                                                    <span className="fw-bold">
+                                                        {numberWithSpaces(
+                                                            fetchTotCapRetardCDF &&
+                                                                fetchTotCapRetardCDF.toFixed(
+                                                                    2,
+                                                                ),
+                                                        )}{" "}
+                                                        %
+                                                    </span>
+                                                </h5>
+                                                <hr />
+                                                <small className="text-muted">
+                                                    Restant dû de crédit avec au
+                                                    moins un remboursement en
+                                                    retard / (Crédit sain +
+                                                    Restant dû de crédit avec
+                                                    retard) × 100 (≤5%)
+                                                </small>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {devise == "USD" && (
+                                        <div
+                                            className="row mt-3 p-3"
+                                            style={{
+                                                background: "#e6f2f9",
+                                                borderRadius: "12px",
+                                            }}
+                                        >
+                                            <div className="col-md-12">
+                                                <h5>
+                                                    Taux déliquence (PAR) ={" "}
+                                                    <span className="fw-bold">
+                                                        {numberWithSpaces(
+                                                            fetchTotCapRetardUSD &&
+                                                                fetchTotCapRetardUSD.toFixed(
+                                                                    2,
+                                                                ),
+                                                        )}{" "}
+                                                        %
+                                                    </span>
+                                                </h5>
+                                                <hr />
+                                                <small className="text-muted">
+                                                    Restant dû de crédit avec au
+                                                    moins un remboursement en
+                                                    retard / (Crédit sain +
+                                                    Restant dû de crédit avec
+                                                    retard) × 100 (≤5%)
+                                                </small>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Boutons d'export */}
+                                <div className="d-flex justify-content-end gap-2 mt-4">
+                                    <button
+                                        onClick={() =>
+                                            exportTableData(
+                                                "content-to-download-balance_agee",
+                                            )
+                                        }
+                                        className="btn"
                                         style={{
-                                            background: "#e6f2f9",
-                                            borderRadius: "12px",
+                                            background: "#28a745",
+                                            color: "white",
+                                            borderRadius: "8px",
                                         }}
                                     >
-                                        <div className="col-md-12">
-                                            <h5>
-                                                Taux déliquence (PAR) ={" "}
-                                                <span className="fw-bold">
-                                                    {numberWithSpaces(
-                                                        fetchTotCapRetardUSD &&
-                                                            fetchTotCapRetardUSD.toFixed(
-                                                                2,
-                                                            ),
-                                                    )}{" "}
-                                                    %
-                                                </span>
-                                            </h5>
-                                            <hr />
-                                            <small className="text-muted">
-                                                Restant dû de crédit avec au
-                                                moins un remboursement en retard
-                                                / (Crédit sain + Restant dû de
-                                                crédit avec retard) × 100 (≤5%)
-                                            </small>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Boutons d'export */}
-                            <div className="d-flex justify-content-end gap-2 mt-4">
-                                <button
-                                    onClick={() =>
-                                        exportTableData(
-                                            "content-to-download-balance_agee",
-                                        )
-                                    }
-                                    className="btn"
-                                    style={{
-                                        background: "#28a745",
-                                        color: "white",
-                                        borderRadius: "8px",
-                                    }}
-                                >
-                                    <i className="fas fa-file-excel me-2"></i>
-                                    Exporter en Excel
-                                </button>
-                                <button
-                                    onClick={exportToPDFBalanceAgee}
-                                    className="btn"
-                                    style={{
-                                        background: "#dc3545",
-                                        color: "white",
-                                        borderRadius: "8px",
-                                    }}
-                                >
-                                    <i className="fas fa-file-pdf me-2"></i>
-                                    Exporter en PDF
-                                </button>
+                                        <i className="fas fa-file-excel me-2"></i>
+                                        Exporter en Excel
+                                    </button>
+                                    <button
+                                        onClick={exportToPDFBalanceAgee}
+                                        className="btn"
+                                        style={{
+                                            background: "#dc3545",
+                                            color: "white",
+                                            borderRadius: "8px",
+                                        }}
+                                    >
+                                        <i className="fas fa-file-pdf me-2"></i>
+                                        Exporter en PDF
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-            {/* AJOUT PAR - Affichage du rapport PAR */}
-            {/* RAPPORT PAR - STYLE PDF */}
-            {fetchParData &&
-                radioValue === "par" &&
-                fetchParData.length !== 0 && (
-                    <div className="card border-0 shadow-sm rounded-3 mb-4">
-                        <div className="card-body p-4">
-                            <div id="content-to-download-par">
-                                {/* En-tête de l'institution (identique au PDF) */}
-                                <div className="text-center mb-3">
-                                    <EnteteRapport />
-                                    {/* <div
+                {/* AJOUT PAR - Affichage du rapport PAR */}
+                {/* RAPPORT PAR - STYLE PDF */}
+                {fetchParData &&
+                    radioValue === "par" &&
+                    fetchParData.length !== 0 && (
+                        <div className="card border-0 shadow-sm rounded-3 mb-4">
+                            <div className="card-body p-4">
+                                <div id="content-to-download-par">
+                                    {/* En-tête de l'institution (identique au PDF) */}
+                                    <div className="text-center mb-3">
+                                        <EnteteRapport />
+                                        {/* <div
                                         className="mt-2"
                                         style={{
                                             fontSize: "12px",
@@ -2220,417 +1974,444 @@ const Echeancier = () => {
                                         Tél : +243970237272 E-mail :
                                         coopecakibayetu@gmail.com
                                     </div> */}
-                                </div>
+                                    </div>
 
-                                {/* Titre principal */}
-                                <div className="text-center mb-4">
-                                    <h5
-                                        style={{
-                                            fontWeight: "bold",
-                                            textTransform: "uppercase",
-                                        }}
-                                    >
-                                        ENCOURS SYNTHESE PAR GESTIONNAIRE EN{" "}
-                                        {devise || "TOUTES DEVISES"}
-                                        <br />
-                                        AGENCE DE GOMA AU {dateParser(datePar)}
-                                    </h5>
-                                </div>
-
-                                {/* Tableau compact (padding réduit) */}
-                                <div className="table-responsive">
-                                    <table
-                                        className="table table-bordered table-sm"
-                                        style={{
-                                            fontSize: "12px",
-                                            whiteSpace: "nowrap",
-                                        }}
-                                        id="par-table"
-                                    >
-                                        <thead
+                                    {/* Titre principal */}
+                                    <div className="text-center mb-4">
+                                        <h5
                                             style={{
-                                                backgroundColor: "#e6f2f9",
-                                                color: "#1a2632",
+                                                fontWeight: "bold",
+                                                textTransform: "uppercase",
                                             }}
                                         >
-                                            <tr>
-                                                <th>GESTIONNAIRE</th>
-                                                <th className="text-end">
-                                                    Nbr
-                                                </th>
-                                                <th className="text-end">
-                                                    Accordé
-                                                </th>
-                                                <th className="text-end">
-                                                    Encours
-                                                </th>
-                                                <th className="text-end">
-                                                    Sain
-                                                </th>
-                                                <th className="text-end">
-                                                    1-30
-                                                </th>
-                                                <th className="text-end">
-                                                    31-60
-                                                </th>
-                                                <th className="text-end">
-                                                    61-90
-                                                </th>
-                                                <th className="text-end">
-                                                    91-180
-                                                </th>
-                                                <th className="text-end">
-                                                    +180
-                                                </th>
-                                                <th className="text-end">
-                                                    PAR≥1
-                                                </th>
-                                                <th className="text-end">
-                                                    PAR{">"}30
-                                                </th>
-                                                <th className="text-end">
-                                                    PAR{">"}60
-                                                </th>
-                                                <th className="text-end">
-                                                    PAR{">"}90
-                                                </th>
-                                                <th className="text-end">
-                                                    % PAR interne
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {fetchParData.map((item, idx) => (
-                                                <tr key={idx}>
-                                                    <td className="fw-bold">
-                                                        {item.Gestionnaire}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {item.NbrCredits}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {numberWithSpaces(
-                                                            item.TotalAccorde?.toFixed(
-                                                                2,
-                                                            ),
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end fw-bold">
-                                                        {numberWithSpaces(
-                                                            item.EncoursTotal?.toFixed(
-                                                                2,
-                                                            ),
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {numberWithSpaces(
-                                                            item.EncoursSain?.toFixed(
-                                                                2,
-                                                            ),
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            item.PAR_1_30
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            item.PAR_31_60
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            item.PAR_61_90
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            item.PAR_91_180
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            item.PAR_PLUS_180
-                                                            
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end fw-bold text-danger">
-                                                        {formatPAR(
-                                                            item.PAR_SUP_1
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            item.PAR_SUP_30
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            item.PAR_SUP_60
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            item.PAR_SUP_90
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end fw-bold">
-                                                        {item.TAUX_PAR_INTERNE?.toFixed(
-                                                            2,
-                                                        )}{" "}
-                                                        %
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                            {/* TOTAL GÉNÉRAL */}
-                                            {totalParData && (
-                                                <tr
-                                                    style={{
-                                                        backgroundColor:
-                                                            "#f2f2f2",
-                                                        fontWeight: "bold",
-                                                    }}
-                                                >
-                                                    <td>TOTAL GENERAL</td>
-                                                    <td className="text-end">
-                                                        {
-                                                            totalParData.NbrCredits
-                                                        }
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {numberWithSpaces(
-                                                            totalParData.TotalAccorde?.toFixed(
-                                                                2,
-                                                            ),
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {numberWithSpaces(
-                                                            totalParData.EncoursTotal?.toFixed(
-                                                                2,
-                                                            ),
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {numberWithSpaces(
-                                                            totalParData.EncoursSain?.toFixed(
-                                                                2,
-                                                            ),
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            totalParData.PAR_1_30
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            totalParData.PAR_31_60
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            totalParData.PAR_61_90
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            totalParData.PAR_91_180
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            totalParData.PAR_PLUS_180
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end fw-bold text-danger">
-                                                        {formatPAR(
-                                                            totalParData.PAR_SUP_1
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            totalParData.PAR_SUP_30
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            totalParData.PAR_SUP_60
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {formatPAR(
-                                                            totalParData.PAR_SUP_90
-                                                        )}
-                                                    </td>
-                                                    <td className="text-end fw-bold">
-                                                        {totalParData.TAUX_PAR_INTERNE?.toFixed(
-                                                            2,
-                                                        )}{" "}
-                                                        %
-                                                    </td>
-                                                </tr>
-                                            )}
+                                            ENCOURS SYNTHESE PAR GESTIONNAIRE EN{" "}
+                                            {devise || "TOUTES DEVISES"}
+                                            <br />
+                                            AGENCE DE GOMA AU{" "}
+                                            {dateParser(datePar)}
+                                        </h5>
+                                    </div>
 
-                                            {/* LIGNE DES POURCENTAGES GLOBAUX (Sain, retards, PAR cumulés) */}
-                                            {globalPercentages && (
-                                                <tr
-                                                    style={{
-                                                        backgroundColor:
-                                                            "#e9ecef",
-                                                        fontStyle: "italic",
-                                                    }}
-                                                >
-                                                    <td className="fw-bold">
-                                                        % / Encours global
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {" "}
-                                                    </td>{" "}
-                                                    {/* vide pour Nbr */}
-                                                    <td className="text-end">
-                                                        {" "}
-                                                    </td>{" "}
-                                                    {/* vide pour Accordé */}
-                                                    <td className="text-end">
-                                                        {" "}
-                                                    </td>{" "}
-                                                    {/* vide pour Encours */}
-                                                    <td className="text-end fw-bold text-success">
-                                                        {globalPercentages.Sain}{" "}
-                                                        %
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {
-                                                            globalPercentages[
-                                                                "1_30"
-                                                            ]
-                                                        }{" "}
-                                                        %
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {
-                                                            globalPercentages[
-                                                                "31_60"
-                                                            ]
-                                                        }{" "}
-                                                        %
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {
-                                                            globalPercentages[
-                                                                "61_90"
-                                                            ]
-                                                        }{" "}
-                                                        %
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {
-                                                            globalPercentages[
-                                                                "91_180"
-                                                            ]
-                                                        }{" "}
-                                                        %
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {
-                                                            globalPercentages.Plus180
-                                                        }{" "}
-                                                        %
-                                                    </td>
-                                                    <td className="text-end fw-bold text-danger">
-                                                        {
-                                                            globalPercentages.PAR_SUP_1
-                                                        }{" "}
-                                                        %
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {
-                                                            globalPercentages.PAR_SUP_30
-                                                        }{" "}
-                                                        %
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {
-                                                            globalPercentages.PAR_SUP_60
-                                                        }{" "}
-                                                        %
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {
-                                                            globalPercentages.PAR_SUP_90
-                                                        }{" "}
-                                                        %
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {" "}
-                                                    </td>
-                                                </tr>
-                                            )}
-                                            {/* Ligne de pourcentage global (comme dans le PDF) */}
-                                            <tr
+                                    {/* Tableau compact (padding réduit) */}
+                                    <div className="table-responsive">
+                                        <table
+                                            className="table table-bordered table-sm"
+                                            style={{
+                                                fontSize: "12px",
+                                                whiteSpace: "nowrap",
+                                            }}
+                                            id="par-table"
+                                        >
+                                            <thead
                                                 style={{
-                                                    backgroundColor: "#ffeeba",
+                                                    backgroundColor: "#e6f2f9",
+                                                    color: "#1a2632",
                                                 }}
                                             >
-                                                <td
-                                                    colSpan="14"
-                                                    className="text-end fw-bold"
+                                                <tr>
+                                                    <th>GESTIONNAIRE</th>
+                                                    <th className="text-end">
+                                                        Nbr
+                                                    </th>
+                                                    <th className="text-end">
+                                                        Accordé
+                                                    </th>
+                                                    <th className="text-end">
+                                                        Encours
+                                                    </th>
+                                                    <th className="text-end">
+                                                        Sain
+                                                    </th>
+                                                    <th className="text-end">
+                                                        1-30
+                                                    </th>
+                                                    <th className="text-end">
+                                                        31-60
+                                                    </th>
+                                                    <th className="text-end">
+                                                        61-90
+                                                    </th>
+                                                    <th className="text-end">
+                                                        91-180
+                                                    </th>
+                                                    <th className="text-end">
+                                                        +180
+                                                    </th>
+                                                    <th className="text-end">
+                                                        PAR≥1
+                                                    </th>
+                                                    <th className="text-end">
+                                                        PAR{">"}30
+                                                    </th>
+                                                    <th className="text-end">
+                                                        PAR{">"}60
+                                                    </th>
+                                                    <th className="text-end">
+                                                        PAR{">"}90
+                                                    </th>
+                                                    <th className="text-end">
+                                                        % PAR interne
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {fetchParData.map(
+                                                    (item, idx) => (
+                                                        <tr key={idx}>
+                                                            <td className="fw-bold">
+                                                                {
+                                                                    item.Gestionnaire
+                                                                }
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {
+                                                                    item.NbrCredits
+                                                                }
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {numberWithSpaces(
+                                                                    item.TotalAccorde?.toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end fw-bold">
+                                                                {numberWithSpaces(
+                                                                    item.EncoursTotal?.toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {numberWithSpaces(
+                                                                    item.EncoursSain?.toFixed(
+                                                                        2,
+                                                                    ),
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {formatPAR(
+                                                                    item.PAR_1_30,
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {formatPAR(
+                                                                    item.PAR_31_60,
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {formatPAR(
+                                                                    item.PAR_61_90,
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {formatPAR(
+                                                                    item.PAR_91_180,
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {formatPAR(
+                                                                    item.PAR_PLUS_180,
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end fw-bold text-danger">
+                                                                {formatPAR(
+                                                                    item.PAR_SUP_1,
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {formatPAR(
+                                                                    item.PAR_SUP_30,
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {formatPAR(
+                                                                    item.PAR_SUP_60,
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {formatPAR(
+                                                                    item.PAR_SUP_90,
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end fw-bold">
+                                                                {item.TAUX_PAR_INTERNE?.toFixed(
+                                                                    2,
+                                                                )}{" "}
+                                                                %
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )}
+                                                {/* TOTAL GÉNÉRAL */}
+                                                {totalParData && (
+                                                    <tr
+                                                        style={{
+                                                            backgroundColor:
+                                                                "#f2f2f2",
+                                                            fontWeight: "bold",
+                                                        }}
+                                                    >
+                                                        <td>TOTAL GENERAL</td>
+                                                        <td className="text-end">
+                                                            {
+                                                                totalParData.NbrCredits
+                                                            }
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {numberWithSpaces(
+                                                                totalParData.TotalAccorde?.toFixed(
+                                                                    2,
+                                                                ),
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {numberWithSpaces(
+                                                                totalParData.EncoursTotal?.toFixed(
+                                                                    2,
+                                                                ),
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {numberWithSpaces(
+                                                                totalParData.EncoursSain?.toFixed(
+                                                                    2,
+                                                                ),
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {formatPAR(
+                                                                totalParData.PAR_1_30,
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {formatPAR(
+                                                                totalParData.PAR_31_60,
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {formatPAR(
+                                                                totalParData.PAR_61_90,
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {formatPAR(
+                                                                totalParData.PAR_91_180,
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {formatPAR(
+                                                                totalParData.PAR_PLUS_180,
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end fw-bold text-danger">
+                                                            {formatPAR(
+                                                                totalParData.PAR_SUP_1,
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {formatPAR(
+                                                                totalParData.PAR_SUP_30,
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {formatPAR(
+                                                                totalParData.PAR_SUP_60,
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {formatPAR(
+                                                                totalParData.PAR_SUP_90,
+                                                            )}
+                                                        </td>
+                                                        <td className="text-end fw-bold">
+                                                            {totalParData.TAUX_PAR_INTERNE?.toFixed(
+                                                                2,
+                                                            )}{" "}
+                                                            %
+                                                        </td>
+                                                    </tr>
+                                                )}
+
+                                                {/* LIGNE DES POURCENTAGES GLOBAUX (Sain, retards, PAR cumulés) */}
+                                                {globalPercentages && (
+                                                    <tr
+                                                        style={{
+                                                            backgroundColor:
+                                                                "#e9ecef",
+                                                            fontStyle: "italic",
+                                                        }}
+                                                    >
+                                                        <td className="fw-bold">
+                                                            % / Encours global
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {" "}
+                                                        </td>{" "}
+                                                        {/* vide pour Nbr */}
+                                                        <td className="text-end">
+                                                            {" "}
+                                                        </td>{" "}
+                                                        {/* vide pour Accordé */}
+                                                        <td className="text-end">
+                                                            {" "}
+                                                        </td>{" "}
+                                                        {/* vide pour Encours */}
+                                                        <td className="text-end fw-bold text-success">
+                                                            {
+                                                                globalPercentages.Sain
+                                                            }{" "}
+                                                            %
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {
+                                                                globalPercentages[
+                                                                    "1_30"
+                                                                ]
+                                                            }{" "}
+                                                            %
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {
+                                                                globalPercentages[
+                                                                    "31_60"
+                                                                ]
+                                                            }{" "}
+                                                            %
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {
+                                                                globalPercentages[
+                                                                    "61_90"
+                                                                ]
+                                                            }{" "}
+                                                            %
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {
+                                                                globalPercentages[
+                                                                    "91_180"
+                                                                ]
+                                                            }{" "}
+                                                            %
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {
+                                                                globalPercentages.Plus180
+                                                            }{" "}
+                                                            %
+                                                        </td>
+                                                        <td className="text-end fw-bold text-danger">
+                                                            {
+                                                                globalPercentages.PAR_SUP_1
+                                                            }{" "}
+                                                            %
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {
+                                                                globalPercentages.PAR_SUP_30
+                                                            }{" "}
+                                                            %
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {
+                                                                globalPercentages.PAR_SUP_60
+                                                            }{" "}
+                                                            %
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {
+                                                                globalPercentages.PAR_SUP_90
+                                                            }{" "}
+                                                            %
+                                                        </td>
+                                                        <td className="text-end">
+                                                            {" "}
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                {/* Ligne de pourcentage global (comme dans le PDF) */}
+                                                <tr
+                                                    style={{
+                                                        backgroundColor:
+                                                            "#ffeeba",
+                                                    }}
                                                 >
-                                                    MOYENNE GLOBALE DU PAR :
-                                                </td>
-                                                <td className="text-end fw-bold text-danger">
-                                                    {parGlobalPercent} %
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                                    <td
+                                                        colSpan="14"
+                                                        className="text-end fw-bold"
+                                                    >
+                                                        MOYENNE GLOBALE DU PAR :
+                                                    </td>
+                                                    <td className="text-end fw-bold text-danger">
+                                                        {parGlobalPercent} %
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* Boutons d'export */}
+                                <div className="d-flex justify-content-end gap-2 mt-4">
+                                    <button
+                                        onClick={() =>
+                                            exportTableData("par-table")
+                                        }
+                                        className="btn btn-success btn-sm"
+                                    >
+                                        <i className="fas fa-file-excel me-2"></i>
+                                        Excel
+                                    </button>
+                                    <button
+                                        onClick={exportToPDFPar}
+                                        className="btn btn-danger btn-sm"
+                                    >
+                                        <i className="fas fa-file-pdf me-2"></i>
+                                        PDF
+                                    </button>
                                 </div>
                             </div>
-
-                            {/* Boutons d'export */}
-                            <div className="d-flex justify-content-end gap-2 mt-4">
-                                <button
-                                    onClick={() => exportTableData("par-table")}
-                                    className="btn btn-success btn-sm"
-                                >
-                                    <i className="fas fa-file-excel me-2"></i>
-                                    Excel
-                                </button>
-                                <button
-                                    onClick={exportToPDFPar}
-                                    className="btn btn-danger btn-sm"
-                                >
-                                    <i className="fas fa-file-pdf me-2"></i>PDF
-                                </button>
-                            </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-            {/* Message aucun résultat (adapté) */}
-            {radioValue &&
-                !fetchEcheancier &&
-                !fetchTableauAmortiss &&
-                !fetchBalanceAgee &&
-                !fetchParData && (
-                    <div className="text-center py-5">
-                        <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
-                        <p className="text-muted">Aucune donnée à afficher.</p>
-                    </div>
-                )}
-            <div style={{ height: "30px" }}></div>
+                {/* Message aucun résultat (adapté) */}
+                {radioValue &&
+                    !fetchEcheancier &&
+                    !fetchTableauAmortiss &&
+                    !fetchBalanceAgee &&
+                    !fetchParData && (
+                        <div className="text-center py-5">
+                            <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
+                            <p className="text-muted">
+                                Aucune donnée à afficher.
+                            </p>
+                        </div>
+                    )}
+                <div style={{ height: "30px" }}></div>
 
-            {/* Message si aucun résultat
+                {/* Message si aucun résultat
     {radioValue && !fetchEcheancier && !fetchTableauAmortiss && !fetchBalanceAgee && (
         <div className="text-center py-5">
             <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
             <p className="text-muted">Aucune donnée à afficher. Veuillez sélectionner un type de rapport et un numéro de dossier.</p>
         </div>
     )} */}
-            <div style={{ height: "30px" }}></div>
-        </div>
+                <div style={{ height: "30px" }}></div>
+            </div>
+            <style>
+                {`
+             .fade-in {
+             animation: fadeIn 0.3s ease-in-out;
+               }
+             @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+           to   { opacity: 1; transform: translateY(0); }
+               }
+             
+             `}
+            </style>
+        </>
     );
 };
 

@@ -591,7 +591,7 @@ body {
 .modern-input {
     border-radius: 12px;
     border: 1px solid #e2e8f0;
-    padding: 10px 14px;
+    padding: 4px 6px;
     font-size: 0.9rem;
     transition: all 0.2s ease;
 }
@@ -602,7 +602,7 @@ body {
 .modern-select {
     border-radius: 12px;
     border: 1px solid #e2e8f0;
-    padding: 10px 14px;
+    padding: 5px 8px;
     font-size: 0.9rem;
     background-color: white;
     transition: all 0.2s ease;
@@ -633,4 +633,33 @@ body {
 .gradient-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(32, 201, 151, 0.3);
+}
+
+
+
+
+.btn-primary-modern {
+  background: linear-gradient(105deg, #3b82f6, #2563eb);
+  border: none;
+  padding: 12px 28px;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.btn-primary-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary-modern:active {
+  transform: translateY(1px);
 }

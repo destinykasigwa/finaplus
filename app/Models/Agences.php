@@ -9,8 +9,9 @@ class Agences extends Model
 {
     use HasFactory;
     protected $fillable = [
-         "codeAgence",
-         "NomAgence",
+         'code_agence',           // ⚠️ snake_case, pas codeAgence
+         'nom_agence',            // ⚠️ snake_case
+         'prefixe_agence',
          "compte_liaison_cdf",
          "compte_liaison_usd",
          "last_ref_compte",
@@ -19,7 +20,9 @@ class Agences extends Model
          "compte_virement_caisse_cdf",
           "compte_virement_caisse_usd",
          "compte_caisse_usd",
-         "compte_caisse_cdf"
+         "compte_caisse_cdf",
+         "repport_a_nouveau_cdf",
+         "repport_a_nouveau_usd"
 
     ];
 

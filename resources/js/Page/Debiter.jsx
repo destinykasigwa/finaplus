@@ -32,109 +32,110 @@ const Debiter = () => {
             [name]: checked,
         }));
     };
-   const saveOperation = async (e) => {
-    e.preventDefault();
-    setloading(true);
-    setchargement(true);
+    const saveOperation = async (e) => {
+        e.preventDefault();
+        setloading(true);
+        setchargement(true);
 
-    let confirmation;
-    console.log(checkboxValues.isVirement);
-    
-    if (checkboxValues.isVirement === true) {
-        confirmation = await Swal.fire({
-            title: "Êtes-vous sûr?",
-            text: "Il semble que l'opération que vous voulez enregistrer est une operation de virement voulez vous continuer ?",
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonText: "Oui",
-            cancelButtonText: "Non",
-        });
-    } else {
-        confirmation = await Swal.fire({
-            title: "Êtes-vous sûr?",
-            text: "Vous êtes sur le point de valider cette opération voulez vous continuer ?",
-            icon: "question",
-            showCancelButton: true,
-            confirmButtonText: "Oui",
-            cancelButtonText: "Non",
-        });
-    }
+        let confirmation;
+        console.log(checkboxValues.isVirement);
 
-    // Si l'utilisateur confirme
-    if (confirmation.isConfirmed) {
-        
-        // 🔥 ========== AJOUTEZ CE CONTRÔLE ICI ==========
-        // Vérifie que les deux comptes ont la même devise
-        if (FetchDataDebit && FetchDataCredit && 
-            FetchDataDebit.CodeMonnaie !== FetchDataCredit.CodeMonnaie) {
-            setchargement(false);
-            setloading(false);
-            Swal.fire({
-                title: "Erreur de devise",
-                text: `Les deux comptes doivent avoir la même devise. 
-                       Compte à débiter: ${FetchDataDebit.NumCompte} | 
-                       Compte à créditer: ${FetchDataCredit.NumCompte}`,
-                icon: "error",
-                confirmButtonText: "Okay",
+        if (checkboxValues.isVirement === true) {
+            confirmation = await Swal.fire({
+                title: "Êtes-vous sûr?",
+                text: "Il semble que l'opération que vous voulez enregistrer est une operation de virement voulez vous continuer ?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Oui",
+                cancelButtonText: "Non",
             });
-            return; // Arrête l'exécution
+        } else {
+            confirmation = await Swal.fire({
+                title: "Êtes-vous sûr?",
+                text: "Vous êtes sur le point de valider cette opération voulez vous continuer ?",
+                icon: "question",
+                showCancelButton: true,
+                confirmButtonText: "Oui",
+                cancelButtonText: "Non",
+            });
         }
-        // ========== FIN DU CONTRÔLE ==========
-        
-        try {
-            const res = await axios.post(
-                "/eco/page/transaction/debiter/save",
-                {
-                    compte_a_debiter: compte_a_debiter,
-                    compte_a_crediter: compte_a_crediter,
-                    Montant,
-                    devise: FetchDataDebit.CodeMonnaie,
-                    Libelle: Libelle,
-                    isVirement: checkboxValues.isVirement,
-                },
-            );
 
-            if (res.data.status === 1) {
+        // Si l'utilisateur confirme
+        if (confirmation.isConfirmed) {
+            // 🔥 ========== Vérifie que les deux comptes ont la même devise ==========
+            if (
+                FetchDataDebit &&
+                FetchDataCredit &&
+                FetchDataDebit.CodeMonnaie !== FetchDataCredit.CodeMonnaie
+            ) {
                 setchargement(false);
                 setloading(false);
                 Swal.fire({
-                    title: "Succès",
-                    text: res.data.msg,
-                    icon: "success",
-                    timer: 8000,
+                    title: "Erreur de devise",
+                    text: `Les deux comptes doivent avoir la même devise. 
+                       Compte à débiter: ${FetchDataDebit.NumCompte} | 
+                       Compte à créditer: ${FetchDataCredit.NumCompte}`,
+                    icon: "error",
                     confirmButtonText: "Okay",
                 });
-                setMontant("");
-                setLibelle("");
-                getDayOperation();
-            } else if (res.data.status === 0) {
+                return; // Arrête l'exécution
+            }
+            // ========== FIN DU CONTRÔLE ==========
+
+            try {
+                const res = await axios.post(
+                    "/eco/page/transaction/debiter/save",
+                    {
+                        compte_a_debiter: compte_a_debiter,
+                        compte_a_crediter: compte_a_crediter,
+                        Montant,
+                        devise: FetchDataDebit.CodeMonnaie,
+                        Libelle: Libelle,
+                        isVirement: checkboxValues.isVirement,
+                    },
+                );
+
+                if (res.data.status === 1) {
+                    setchargement(false);
+                    setloading(false);
+                    Swal.fire({
+                        title: "Succès",
+                        text: res.data.msg,
+                        icon: "success",
+                        timer: 8000,
+                        confirmButtonText: "Okay",
+                    });
+                    setMontant("");
+                    setLibelle("");
+                    getDayOperation();
+                } else if (res.data.status === 0) {
+                    setchargement(false);
+                    setloading(false);
+                    Swal.fire({
+                        title: "Erreur",
+                        text: res.data.msg,
+                        icon: "error",
+                        timer: 8000,
+                        confirmButtonText: "Okay",
+                    });
+                } else {
+                    setError(res.data.validate_error);
+                }
+            } catch (error) {
                 setchargement(false);
                 setloading(false);
                 Swal.fire({
                     title: "Erreur",
-                    text: res.data.msg,
+                    text: "Une erreur s'est produite lors de l'enregistrement de l'opération.",
                     icon: "error",
-                    timer: 8000,
                     confirmButtonText: "Okay",
                 });
-            } else {
-                setError(res.data.validate_error);
             }
-        } catch (error) {
-            setchargement(false);
+        } else {
             setloading(false);
-            Swal.fire({
-                title: "Erreur",
-                text: "Une erreur s'est produite lors de l'enregistrement de l'opération.",
-                icon: "error",
-                confirmButtonText: "Okay",
-            });
+            setchargement(false);
         }
-    } else {
-        setloading(false);
-        setchargement(false);
-    }
-};
+    };
 
     const getSeachedDataDebit = async (e) => {
         e.preventDefault();
@@ -532,7 +533,7 @@ const Debiter = () => {
                 </div>
 
                 <div className="col-md-3">
-                    <div className="card border-0 shadow-sm rounded-3 h-100">
+                    <div className="card border-0 shadow-sm rounded-3">
                         <div className="card-header bg-white border-0 pt-3">
                             <h6
                                 className="fw-bold"
@@ -543,14 +544,14 @@ const Debiter = () => {
                             </h6>
                         </div>
                         <div className="card-body">
-                            <div className="d-flex flex-column gap-2">
+                            <div className="input-group">
                                 <input
                                     type="text"
                                     className="form-control"
                                     placeholder="Nom du titulaire..."
                                     style={{
-                                        borderRadius: "8px",
-                                        width: "100%",
+                                        borderRadius: "0px",
+                                        // width: "100%",
                                     }}
                                     onChange={(e) =>
                                         setsearched_account_by_name(
@@ -558,17 +559,17 @@ const Debiter = () => {
                                         )
                                     }
                                 />
+
                                 <button
-                                    className="btn w-100"
+                                    className="btn"
                                     style={{
                                         background: "#20c997",
                                         color: "white",
-                                        borderRadius: "8px",
+                                        borderRadius: "0px",
                                     }}
                                     onClick={getSeachedDataByName}
                                 >
                                     <i className="fas fa-search me-1"></i>
-                                    Rechercher
                                 </button>
                             </div>
                         </div>
@@ -576,6 +577,7 @@ const Debiter = () => {
                 </div>
             </div>
 
+            {/* Informations des comptes - Version Élégante */}
             {/* Informations des comptes - Version Élégante */}
             <div className="row g-4 mb-4">
                 {/* Compte à débiter */}
@@ -603,26 +605,28 @@ const Debiter = () => {
                                     "0 1rem 3rem rgba(0,0,0,.175)";
                             }}
                         >
-                            {/* Bandeau décoratif supérieur */}
                             <div
                                 style={{
-                                    height: "6px",
+                                    height: "4px",
                                     background:
                                         "linear-gradient(90deg, #dc3545, #ff6b6b, #dc3545)",
                                     backgroundSize: "200% 100%",
                                     animation: "gradientMove 3s ease infinite",
                                 }}
                             />
-
-                            <div className="card-body p-4">
-                                {/* En-tête avec icône et titre */}
-                                <div className="d-flex align-items-center justify-content-between mb-4">
+                            <div className="card-body p-3">
+                                {" "}
+                                {/* modifié p-4 → p-3 */}
+                                {/* En-tête */}
+                                <div className="d-flex align-items-center justify-content-between mb-3">
+                                    {" "}
+                                    {/* mb-4 → mb-3 */}
                                     <div className="d-flex align-items-center gap-3">
                                         <div
                                             style={{
-                                                width: "50px",
-                                                height: "50px",
-                                                borderRadius: "15px",
+                                                width: "40px",
+                                                height: "40px",
+                                                borderRadius: "12px",
                                                 background:
                                                     "linear-gradient(135deg, #dc3545, #ff6b6b)",
                                                 display: "flex",
@@ -633,18 +637,28 @@ const Debiter = () => {
                                             }}
                                         >
                                             <i
-                                                className="fas fa-arrow-down fa-lg"
-                                                style={{ color: "white" }}
+                                                className="fas fa-arrow-down"
+                                                style={{
+                                                    color: "white",
+                                                    fontSize: "1.2rem",
+                                                }}
                                             ></i>
                                         </div>
                                         <div>
-                                            <h5
+                                            <h6
                                                 className="fw-bold mb-0"
-                                                style={{ color: "#dc3545" }}
+                                                style={{
+                                                    color: "#dc3545",
+                                                    fontSize: "0.95rem",
+                                                }}
                                             >
                                                 Compte à débiter
-                                            </h5>
-                                            <small className="text-muted">
+                                            </h6>{" "}
+                                            {/* h5 → h6 */}
+                                            <small
+                                                className="text-muted"
+                                                style={{ fontSize: "0.7rem" }}
+                                            >
                                                 Détails du compte source
                                             </small>
                                         </div>
@@ -677,61 +691,80 @@ const Debiter = () => {
                                                         Copier le numéro
                                                     </a>
                                                 </li>
-                                                {/* <li>
-                                                    <a 
-                                                        className="dropdown-item" 
-                                                        href={`/eco/pages/releve`} 
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer"
-                                                    >
-                                                        <i className="fas fa-file-alt me-2"></i>Voir le relevé
-                                                    </a>
-                                                </li> */}
                                             </ul>
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Informations du compte - Design moderne */}
-                                <div className="row g-3">
+                                {/* Infos */}
+                                <div className="row g-2">
+                                    {" "}
+                                    {/* g-3 → g-2 */}
                                     <div className="col-12">
                                         <div
-                                            className="p-3 rounded-3"
+                                            className="p-2 rounded-3"
                                             style={{
                                                 background: "#f8f9fa",
                                                 borderLeft: "3px solid #dc3545",
                                             }}
                                         >
-                                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                                <span className="text-muted small text-uppercase">
+                                            {" "}
+                                            {/* p-3 → p-2 */}
+                                            <div className="d-flex justify-content-between align-items-center mb-1">
+                                                {" "}
+                                                {/* mb-2 → mb-1 */}
+                                                <span
+                                                    className="text-muted small text-uppercase"
+                                                    style={{
+                                                        fontSize: "0.65rem",
+                                                    }}
+                                                >
                                                     Nom du titulaire
                                                 </span>
-                                                <i className="fas fa-user text-danger opacity-50"></i>
+                                                <i
+                                                    className="fas fa-user text-danger opacity-50"
+                                                    style={{
+                                                        fontSize: "0.8rem",
+                                                    }}
+                                                ></i>
                                             </div>
-                                            <h6 className="fw-bold mb-0">
+                                            <h6
+                                                className="fw-bold mb-0"
+                                                style={{ fontSize: "0.85rem" }}
+                                            >
                                                 {FetchDataDebit.NomCompte}
                                             </h6>
                                         </div>
                                     </div>
-
                                     <div className="col-12">
                                         <div
-                                            className="p-3 rounded-3"
+                                            className="p-2 rounded-3"
                                             style={{
                                                 background: "#f8f9fa",
                                                 borderLeft: "3px solid #17a2b8",
                                             }}
                                         >
-                                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                                <span className="text-muted small text-uppercase">
+                                            <div className="d-flex justify-content-between align-items-center mb-1">
+                                                <span
+                                                    className="text-muted small text-uppercase"
+                                                    style={{
+                                                        fontSize: "0.65rem",
+                                                    }}
+                                                >
                                                     Numéro de compte
                                                 </span>
-                                                <i className="fas fa-hashtag text-info opacity-50"></i>
+                                                <i
+                                                    className="fas fa-hashtag text-info opacity-50"
+                                                    style={{
+                                                        fontSize: "0.8rem",
+                                                    }}
+                                                ></i>
                                             </div>
                                             <div className="d-flex justify-content-between align-items-center">
                                                 <code
                                                     className="fw-bold"
-                                                    style={{ fontSize: "14px" }}
+                                                    style={{
+                                                        fontSize: "0.75rem",
+                                                    }}
                                                 >
                                                     {FetchDataDebit.NumCompte}
                                                 </code>
@@ -742,18 +775,20 @@ const Debiter = () => {
                                                             FetchDataDebit.NumCompte,
                                                         )
                                                     }
-                                                    style={{ color: "#17a2b8" }}
+                                                    style={{
+                                                        color: "#17a2b8",
+                                                        fontSize: "0.75rem",
+                                                    }}
                                                 >
                                                     <i className="fas fa-copy"></i>
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
-
                                     {FetchSoldeDebit && (
                                         <div className="col-12">
                                             <div
-                                                className="p-3 rounded-3"
+                                                className="p-2 rounded-3"
                                                 style={{
                                                     background:
                                                         "linear-gradient(135deg, #dc3545, #ff6b6b)",
@@ -761,21 +796,42 @@ const Debiter = () => {
                                                         "0 4px 15px rgba(220, 53, 69, 0.2)",
                                                 }}
                                             >
-                                                <div className="d-flex justify-content-between align-items-center mb-2">
-                                                    <span className="text-white-50 small text-uppercase">
+                                                <div className="d-flex justify-content-between align-items-center mb-1">
+                                                    <span
+                                                        className="text-white-50 small text-uppercase"
+                                                        style={{
+                                                            fontSize: "0.65rem",
+                                                        }}
+                                                    >
                                                         Solde actuel
                                                     </span>
-                                                    <i className="fas fa-chart-line text-white-50"></i>
+                                                    <i
+                                                        className="fas fa-chart-line text-white-50"
+                                                        style={{
+                                                            fontSize: "0.75rem",
+                                                        }}
+                                                    ></i>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-end">
-                                                    <h3 className="fw-bold text-white mb-0">
+                                                    <h5
+                                                        className="fw-bold text-white mb-0"
+                                                        style={{
+                                                            fontSize: "1rem",
+                                                        }}
+                                                    >
                                                         {numberWithSpaces(
                                                             FetchSoldeDebit.soldeCompte?.toFixed(
                                                                 2,
                                                             ),
                                                         )}
-                                                    </h3>
-                                                    <span className="badge bg-white text-danger px-3 py-2 rounded-pill">
+                                                    </h5>{" "}
+                                                    {/* h3 → h5 */}
+                                                    <span
+                                                        className="badge bg-white text-danger px-2 py-1 rounded-pill"
+                                                        style={{
+                                                            fontSize: "0.65rem",
+                                                        }}
+                                                    >
                                                         {FetchDataDebit.CodeMonnaie ==
                                                         1
                                                             ? "USD"
@@ -791,7 +847,7 @@ const Debiter = () => {
                     </div>
                 )}
 
-                {/* Compte à créditer */}
+                {/* Compte à créditer - mêmes modifications */}
                 {FetchDataCredit && (
                     <div className="col-md-6">
                         <div
@@ -816,26 +872,23 @@ const Debiter = () => {
                                     "0 1rem 3rem rgba(0,0,0,.175)";
                             }}
                         >
-                            {/* Bandeau décoratif supérieur */}
                             <div
                                 style={{
-                                    height: "6px",
+                                    height: "4px",
                                     background:
                                         "linear-gradient(90deg, #28a745, #34ce57, #28a745)",
                                     backgroundSize: "200% 100%",
                                     animation: "gradientMove 3s ease infinite",
                                 }}
                             />
-
-                            <div className="card-body p-4">
-                                {/* En-tête avec icône et titre */}
-                                <div className="d-flex align-items-center justify-content-between mb-4">
+                            <div className="card-body p-3">
+                                <div className="d-flex align-items-center justify-content-between mb-3">
                                     <div className="d-flex align-items-center gap-3">
                                         <div
                                             style={{
-                                                width: "50px",
-                                                height: "50px",
-                                                borderRadius: "15px",
+                                                width: "40px",
+                                                height: "40px",
+                                                borderRadius: "12px",
                                                 background:
                                                     "linear-gradient(135deg, #28a745, #34ce57)",
                                                 display: "flex",
@@ -846,18 +899,27 @@ const Debiter = () => {
                                             }}
                                         >
                                             <i
-                                                className="fas fa-arrow-up fa-lg"
-                                                style={{ color: "white" }}
+                                                className="fas fa-arrow-up"
+                                                style={{
+                                                    color: "white",
+                                                    fontSize: "1.2rem",
+                                                }}
                                             ></i>
                                         </div>
                                         <div>
-                                            <h5
+                                            <h6
                                                 className="fw-bold mb-0"
-                                                style={{ color: "#28a745" }}
+                                                style={{
+                                                    color: "#28a745",
+                                                    fontSize: "0.95rem",
+                                                }}
                                             >
                                                 Compte à créditer
-                                            </h5>
-                                            <small className="text-muted">
+                                            </h6>
+                                            <small
+                                                className="text-muted"
+                                                style={{ fontSize: "0.7rem" }}
+                                            >
                                                 Détails du compte destination
                                             </small>
                                         </div>
@@ -890,54 +952,73 @@ const Debiter = () => {
                                                         Copier le numéro
                                                     </a>
                                                 </li>
-                                                {/* <li><a className="dropdown-item" href="#" onClick={() => window.open(`/releve/${FetchDataCredit.NumCompte}`, '_blank')}>
-                                        <i className="fas fa-file-alt me-2"></i>Voir le relevé
-                                    </a></li> */}
                                             </ul>
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Informations du compte - Design moderne */}
-                                <div className="row g-3">
+                                <div className="row g-2">
                                     <div className="col-12">
                                         <div
-                                            className="p-3 rounded-3"
+                                            className="p-2 rounded-3"
                                             style={{
                                                 background: "#f8f9fa",
                                                 borderLeft: "3px solid #28a745",
                                             }}
                                         >
-                                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                                <span className="text-muted small text-uppercase">
+                                            <div className="d-flex justify-content-between align-items-center mb-1">
+                                                <span
+                                                    className="text-muted small text-uppercase"
+                                                    style={{
+                                                        fontSize: "0.65rem",
+                                                    }}
+                                                >
                                                     Nom du titulaire
                                                 </span>
-                                                <i className="fas fa-user text-success opacity-50"></i>
+                                                <i
+                                                    className="fas fa-user text-success opacity-50"
+                                                    style={{
+                                                        fontSize: "0.8rem",
+                                                    }}
+                                                ></i>
                                             </div>
-                                            <h6 className="fw-bold mb-0">
+                                            <h6
+                                                className="fw-bold mb-0"
+                                                style={{ fontSize: "0.85rem" }}
+                                            >
                                                 {FetchDataCredit.NomCompte}
                                             </h6>
                                         </div>
                                     </div>
-
                                     <div className="col-12">
                                         <div
-                                            className="p-3 rounded-3"
+                                            className="p-2 rounded-3"
                                             style={{
                                                 background: "#f8f9fa",
                                                 borderLeft: "3px solid #17a2b8",
                                             }}
                                         >
-                                            <div className="d-flex justify-content-between align-items-center mb-2">
-                                                <span className="text-muted small text-uppercase">
+                                            <div className="d-flex justify-content-between align-items-center mb-1">
+                                                <span
+                                                    className="text-muted small text-uppercase"
+                                                    style={{
+                                                        fontSize: "0.65rem",
+                                                    }}
+                                                >
                                                     Numéro de compte
                                                 </span>
-                                                <i className="fas fa-hashtag text-info opacity-50"></i>
+                                                <i
+                                                    className="fas fa-hashtag text-info opacity-50"
+                                                    style={{
+                                                        fontSize: "0.8rem",
+                                                    }}
+                                                ></i>
                                             </div>
                                             <div className="d-flex justify-content-between align-items-center">
                                                 <code
                                                     className="fw-bold"
-                                                    style={{ fontSize: "14px" }}
+                                                    style={{
+                                                        fontSize: "0.75rem",
+                                                    }}
                                                 >
                                                     {FetchDataCredit.NumCompte}
                                                 </code>
@@ -948,18 +1029,20 @@ const Debiter = () => {
                                                             FetchDataCredit.NumCompte,
                                                         )
                                                     }
-                                                    style={{ color: "#17a2b8" }}
+                                                    style={{
+                                                        color: "#17a2b8",
+                                                        fontSize: "0.75rem",
+                                                    }}
                                                 >
                                                     <i className="fas fa-copy"></i>
                                                 </button>
                                             </div>
                                         </div>
                                     </div>
-
                                     {FetchSoldeCredit && (
                                         <div className="col-12">
                                             <div
-                                                className="p-3 rounded-3"
+                                                className="p-2 rounded-3"
                                                 style={{
                                                     background:
                                                         "linear-gradient(135deg, #28a745, #34ce57)",
@@ -967,21 +1050,41 @@ const Debiter = () => {
                                                         "0 4px 15px rgba(40, 167, 69, 0.2)",
                                                 }}
                                             >
-                                                <div className="d-flex justify-content-between align-items-center mb-2">
-                                                    <span className="text-white-50 small text-uppercase">
+                                                <div className="d-flex justify-content-between align-items-center mb-1">
+                                                    <span
+                                                        className="text-white-50 small text-uppercase"
+                                                        style={{
+                                                            fontSize: "0.65rem",
+                                                        }}
+                                                    >
                                                         Solde actuel
                                                     </span>
-                                                    <i className="fas fa-chart-line text-white-50"></i>
+                                                    <i
+                                                        className="fas fa-chart-line text-white-50"
+                                                        style={{
+                                                            fontSize: "0.75rem",
+                                                        }}
+                                                    ></i>
                                                 </div>
                                                 <div className="d-flex justify-content-between align-items-end">
-                                                    <h3 className="fw-bold text-white mb-0">
+                                                    <h5
+                                                        className="fw-bold text-white mb-0"
+                                                        style={{
+                                                            fontSize: "1rem",
+                                                        }}
+                                                    >
                                                         {numberWithSpaces(
                                                             FetchSoldeCredit.soldeCompte?.toFixed(
                                                                 2,
                                                             ),
                                                         )}
-                                                    </h3>
-                                                    <span className="badge bg-white text-success px-3 py-2 rounded-pill">
+                                                    </h5>
+                                                    <span
+                                                        className="badge bg-white text-success px-2 py-1 rounded-pill"
+                                                        style={{
+                                                            fontSize: "0.65rem",
+                                                        }}
+                                                    >
                                                         {FetchDataCredit.CodeMonnaie ==
                                                         1
                                                             ? "USD"
@@ -1028,106 +1131,6 @@ const Debiter = () => {
                     animation: fadeInUp 0.5s ease-out;
                 }
             `}</style>
-
-            {/* Version simplifiée si vous voulez garder la section type d'opération */}
-            {/* {FetchDataDebit && (
-    <div className="row mt-3">
-        <div className="col-12">
-            <div className="card border-0 shadow-sm rounded-4">
-                <div className="card-body p-4">
-                    <div className="d-flex align-items-start gap-3">
-                        <div className="flex-shrink-0">
-                            <div className="rounded-3 p-2" style={{ background: "#e6f2f9" }}>
-                                <i className="fas fa-exchange-alt fa-lg" style={{ color: "#20c997" }}></i>
-                            </div>
-                        </div>
-                        <div className="flex-grow-1">
-                            <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                                <div>
-                                    <h6 className="fw-bold mb-1" style={{ color: "steelblue" }}>
-                                        <i className="fas fa-info-circle me-2"></i>
-                                        Configuration de l'opération
-                                    </h6>
-                                    <small className="text-muted">
-                                        {checkboxValues.isVirement 
-                                            ? "Mode virement activé - Les deux comptes seront débités/crédités simultanément"
-                                            : "Mode standard - Opération de débit ou crédit simple"}
-                                    </small>
-                                </div>
-                                <div className="form-check form-switch">
-                                    <input
-                                        type="checkbox"
-                                        className="form-check-input"
-                                        id="isVirement"
-                                        name="isVirement"
-                                        style={{ width: "45px", height: "22px", cursor: "pointer" }}
-                                        checked={checkboxValues.isVirement}
-                                        onChange={handleCheckboxChange}
-                                    />
-                                    <label className="form-check-label ms-2 fw-semibold" style={{ color: "steelblue" }}>
-                                        <i className="fas fa-exchange-alt me-1"></i>
-                                        Virement
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-)} */}
-
-            {/* Liste des comptes trouvés par nom */}
-            {/* {fetchDataByName && fetchDataByName.length > 0 && (
-        <div className="row mb-4">
-            <div className="col-12">
-                <div className="card border-0 shadow-sm rounded-3">
-                    <div className="card-header bg-white border-0 pt-3">
-                        <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                            <i className="fas fa-list me-2"></i>Comptes trouvés ({fetchDataByName.length})
-                        </h6>
-                    </div>
-                    <div className="card-body p-0">
-                        <div className="table-responsive" style={{ maxHeight: "250px", overflowY: "auto" }}>
-                            <table className="table table-hover mb-0">
-                                <thead style={{ backgroundColor: "#e6f2f9", position: "sticky", top: 0 }}>
-                                    <tr style={{ color: "steelblue" }}>
-                                        <th>Numéro Compte</th>
-                                        <th>Intitulé</th>
-                                        <th>Devise</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {fetchDataByName.map((res, index) => (
-                                        <tr key={index}>
-                                            <td className="fw-semibold">{res.NumCompte}</td>
-                                            <td>{res.NomCompte}</td>
-                                            <td>
-                                                <span className={`badge ${res.CodeMonnaie == 1 ? 'bg-info' : 'bg-success'}`}>
-                                                    {res.CodeMonnaie == 1 ? "USD" : "CDF"}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <button
-                                                    onClick={() => handleCopy(res.NumCompte)}
-                                                    className="btn btn-sm"
-                                                    style={{ background: "#20c997", color: "white", borderRadius: "6px" }}
-                                                >
-                                                    <i className="fas fa-copy me-1"></i>Copier
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    )} */}
 
             {/* Liste des comptes trouvés par nom */}
 
@@ -1504,7 +1507,9 @@ const Debiter = () => {
                                             textTransform: "uppercase",
                                         }}
                                         onChange={(e) =>
-                                            setLibelle(e.target.value.toUpperCase())
+                                            setLibelle(
+                                                e.target.value.toUpperCase(),
+                                            )
                                         }
                                         value={Libelle}
                                         placeholder="Description de l'opération"

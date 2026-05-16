@@ -236,43 +236,129 @@ const Balance = () => {
 
     // Export Excel
     const exportToExcel = () => {
-        const wsData = balanceData.map((item) => {
-            const base = {
-                "Report Débit": item.report_debit,
-                "Report Crédit": item.report_credit,
-                "Mvt Débit": item.mvt_debit,
-                "Mvt Crédit": item.mvt_credit,
-                "Total Débit": item.total_debit,
-                "Total Crédit": item.total_credit,
-                "Solde Débiteur": item.solde_debiteur,
-                "Solde Créditeur": item.solde_crediteur,
-            };
-            if (typeBalance === "detail") {
-                return { Compte: item.compte, Libellé: item.libelle, ...base };
-            } else {
-                return { "Compte (sous-groupe)": item.compte, ...base };
+    // 1. Vérifier qu'il y a des données
+    if (!balanceData || balanceData.length === 0) {
+        Swal.fire("Information", "Aucune donnée à exporter", "info");
+        return;
+    }
+
+    // 2. Construire les lignes
+    const wsData = balanceData.map((item) => {
+        const base = {
+            "Report Débit": item.report_debit,
+            "Report Crédit": item.report_credit,
+            "Mvt Débit": item.mvt_debit,
+            "Mvt Crédit": item.mvt_credit,
+            "Total Débit": item.total_debit,
+            "Total Crédit": item.total_credit,
+            "Solde Débiteur": item.solde_debiteur,
+            "Solde Créditeur": item.solde_crediteur,
+        };
+        if (typeBalance === "detail") {
+            return { Compte: item.compte, Libellé: item.libelle, ...base };
+        } else {
+            return { "Compte (sous-groupe)": item.compte, ...base };
+        }
+    });
+
+    // 3. Créer la feuille
+    const ws = XLSX.utils.json_to_sheet(wsData);
+
+    // 4. (Optionnel) Ajuster les largeurs de colonnes – sans planter si vide
+    if (wsData.length > 0) {
+        const colWidths = Object.keys(wsData[0]).map((key) => {
+            const maxLen = Math.max(
+                key.length,
+                ...wsData.map((row) => (row[key]?.toString().length || 0))
+            );
+            return { wch: Math.min(maxLen + 2, 30) };
+        });
+        ws["!cols"] = colWidths;
+    }
+
+    // 5. Sauvegarder le fichier
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Balance");
+    XLSX.writeFile(wb, `balance_${date_debut}_${date_fin}.xlsx`);
+};
+
+    // const exportToPDF = () => {
+    //     const element = document.getElementById("balance-content");
+    //     if (!element) return;
+    //     html2canvas(element, { scale: 2 }).then((canvas) => {
+    //         const pdf = new jsPDF("p", "mm", "a4");
+    //         const imgData = canvas.toDataURL("image/png");
+    //         const imgProps = pdf.getImageProperties(imgData);
+    //         const pdfWidth = pdf.internal.pageSize.getWidth();
+    //         const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    //         pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+    //         pdf.save(`balance_${date_debut}_${date_fin}.pdf`);
+    //     });
+    // };
+
+
+    const exportToPDF = async () => {
+    const element = document.getElementById("balance-content");
+    if (!element) return;
+
+    try {
+        // 1. Capturer tout l'élément
+        const canvas = await html2canvas(element, { scale: 2 });
+        const imgData = canvas.toDataURL("image/png");
+
+        // 2. Initialiser le PDF
+        const pdf = new jsPDF("p", "mm", "a4");
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        // 3. Dimensions de l'image en mm et en pixels
+        const imgWidthMm = pdfWidth;           // pleine largeur
+        const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+        const scaleMmPerPx = imgHeightMm / canvas.height; // mm par pixel
+
+        // 4. Hauteur d'une page en pixels (dans l'image source)
+        const pageHeightPx = pdfHeight / scaleMmPerPx;
+
+        let remainingHeightPx = canvas.height;
+        let yOffsetPx = 0;           // position verticale dans l'image source
+        let firstPage = true;
+
+        while (remainingHeightPx > 0) {
+            // Hauteur du morceau à extraire (ne pas dépasser l'image)
+            const sliceHeightPx = Math.min(pageHeightPx, remainingHeightPx);
+
+            // Créer un canvas temporaire pour la portion
+            const tmpCanvas = document.createElement("canvas");
+            tmpCanvas.width = canvas.width;
+            tmpCanvas.height = sliceHeightPx;
+            const ctx = tmpCanvas.getContext("2d");
+
+            // Copier la région correspondante depuis l'image originale
+            ctx.drawImage(
+                canvas,
+                0, yOffsetPx, canvas.width, sliceHeightPx,
+                0, 0, canvas.width, sliceHeightPx
+            );
+
+            const sliceData = tmpCanvas.toDataURL("image/png");
+
+            if (!firstPage) {
+                pdf.addPage();
             }
-        });
-        const ws = XLSX.utils.json_to_sheet(wsData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Balance");
-        XLSX.writeFile(wb, `balance_${date_debut}_${date_fin}.xlsx`);
-    };
+            pdf.addImage(sliceData, "PNG", 0, 0, imgWidthMm, (sliceHeightPx * imgWidthMm) / canvas.width);
 
-    const exportToPDF = () => {
-        const element = document.getElementById("balance-content");
-        if (!element) return;
-        html2canvas(element, { scale: 2 }).then((canvas) => {
-            const pdf = new jsPDF("p", "mm", "a4");
-            const imgData = canvas.toDataURL("image/png");
-            const imgProps = pdf.getImageProperties(imgData);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`balance_${date_debut}_${date_fin}.pdf`);
-        });
-    };
+            // Mise à jour pour la page suivante
+            yOffsetPx += sliceHeightPx;
+            remainingHeightPx -= sliceHeightPx;
+            firstPage = false;
+        }
 
+        pdf.save(`balance_${date_debut}_${date_fin}.pdf`);
+    } catch (error) {
+        console.error("Erreur export PDF :", error);
+        Swal.fire("Erreur", "L'export PDF a échoué", "error");
+    }
+};
 
         const getAgenceNom = () => {
     if (agenceFilter === 'current') {
@@ -487,7 +573,8 @@ const Balance = () => {
 
             {/* Résultats */}
             {balanceData.length > 0 && (
-                <div id="balance-content">
+                <>
+                  <div id="balance-content">
                     <div className="balance-report-card">
                         <div className="balance-report-header text-center">
                             <EnteteRapport />
@@ -827,7 +914,11 @@ const Balance = () => {
                             />
                         )}
                     </div>
-                    <div className="balance-export-buttons">
+                   
+                </div>
+                  <div>
+
+                 <div className="balance-export-buttons">
                         <button className="btn-excel" onClick={exportToExcel}>
                             <i className="fas fa-file-excel"></i> Excel
                         </button>
@@ -835,8 +926,12 @@ const Balance = () => {
                             <i className="fas fa-file-pdf"></i> PDF
                         </button>
                     </div>
-                </div>
+            </div>
+                </>
+              
             )}
+
+          
 
             {balanceData.length === 0 && !loading && (
                 <div className="balance-empty">

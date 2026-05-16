@@ -19,9 +19,9 @@ const Bilan = () => {
     const [fetchPassif, setFetchPassif] = useState([]);
     const [currentPageActif, setCurrentPageActif] = useState(1);
     const [currentPagePassif, setCurrentPagePassif] = useState(1);
-    const [totalActif, setTotalActif] = useState(0);
-    const [totalPassif, setTotalPassif] = useState(0);
-    const [agenceFilter, setAgenceFilter] = useState('current'); // 'current', 'all', ou un id d'agence
+    // const [totalActif, setTotalActif] = useState(0);
+    // const [totalPassif, setTotalPassif] = useState(0);
+    const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
 
     useEffect(() => {
         const today = new Date();
@@ -41,8 +41,7 @@ const Bilan = () => {
         setdate_debut_balance(`${year2}-${month2}-${day2}`);
     }, []);
 
-
-     // Fonction utilitaire
+    // Fonction utilitaire
     const getPremierJourAnnee = (annee = null) => {
         const anneeUtilisee = annee || new Date().getFullYear();
         return `${anneeUtilisee}-01-01`;
@@ -73,7 +72,7 @@ const Bilan = () => {
                     date_debut_balance,
                     date_fin_balance,
                     devise,
-                    agence_filter: agenceFilter,  // <- ajout
+                    agence_filter: agenceFilter, // <- ajout
                 },
             );
 
@@ -104,18 +103,18 @@ const Bilan = () => {
                 setFetchPassif(passifData);
 
                 const totalActifCalc = actifData.reduce(
-                    (sum, item) => sum + Math.abs(item.soldeFin || 0),
+                    (sum, item) => sum + item.soldeFin || 0,
                     0,
                 );
                 const totalPassifCalc = passifData.reduce(
-                    (sum, item) => sum + Math.abs(item.soldeFin || 0),
+                    (sum, item) => sum + item.soldeFin || 0,
                     0,
                 );
-                setTotalActif(totalActifCalc);
-                setTotalPassif(totalPassifCalc);
+                // setTotalActif(totalActifCalc);
+                // setTotalPassif(totalPassifCalc);
 
                 // Vérification de l'égalité fondamentale
-                const difference = Math.abs(totalActifCalc - totalPassifCalc);
+                const difference = totalActifCalc - totalPassifCalc;
                 if (difference > 0.01) {
                     console.warn(
                         `⚠️ Différence de ${difference} entre ACTIF et PASSIF`,
@@ -280,340 +279,219 @@ const Bilan = () => {
         return Object.values(map);
     };
 
-    // const TableBilan = ({ title, data }) => {
-    //     // Mode consolidé : regroupement par RefCadre (2 chiffres)
-    //     if (radioValue2 === "porte_groupee") {
-    //         const groupedByCadre = {};
-    //         data.forEach((item) => {
-    //             const cadre = item.RefCadre;
-    //             if (!groupedByCadre[cadre]) {
-    //                 groupedByCadre[cadre] = {
-    //                     RefCadre: cadre,
-    //                     NomCompte: item.NomCompte,
-    //                     totalN: 0,
-    //                     totalN1: 0,
-    //                     items: [],
-    //                 };
-    //             }
-    //             groupedByCadre[cadre].totalN += Math.abs(item.soldeFin || 0);
-    //             groupedByCadre[cadre].totalN1 += Math.abs(item.soldeN1 || 0);
-    //             groupedByCadre[cadre].items.push(item);
-    //         });
-
-    //         return (
-    //             <div className="mb-4">
-    //                 <h5
-    //                     style={{
-    //                         background: "#f1f1f1",
-    //                         padding: "8px",
-    //                         border: "1px solid #ccc",
-    //                         fontWeight: "bold",
-    //                     }}
-    //                 >
-    //                     {title}
-    //                 </h5>
-    //                 <table
-    //                     className="table table-bordered table-sm"
-    //                     style={{ fontSize: "13px" }}
-    //                 >
-    //                     <thead style={{ background: "#dee2e6" }}>
-    //                         <tr>
-    //                             <th style={{ width: "20%" }}>Classe</th>
-    //                             <th>Libellé</th>
-    //                             <th className="text-end">Net (N)</th>
-    //                             <th className="text-end">Net (N-1)</th>
-    //                         </tr>
-    //                     </thead>
-    //                     <tbody>
-    //                         {Object.values(groupedByCadre).map((group, idx) => {
-    //                             // Gestion spéciale pour la classe 39 (créances brutes + provision)
-    //                             if (group.RefCadre === "39") {
-    //                                 const solde39Brut =
-    //                                     group.items[0]?.solde39_brut || 0;
-    //                                 const solde38 =
-    //                                     group.items[0]?.solde38 || 0;
-    //                                 return (
-    //                                     <React.Fragment key={idx}>
-    //                                         <tr
-    //                                             style={{
-    //                                                 background: "#f8f9fa",
-    //                                                 fontWeight: "bold",
-    //                                             }}
-    //                                         >
-    //                                             <td colSpan="2">
-    //                                                 Créances brutes (39)
-    //                                             </td>
-    //                                             <td className="text-end">
-    //                                                 {numberWithSpaces(
-    //                                                     solde39Brut,
-    //                                                 )}
-    //                                             </td>
-    //                                             <td className="text-end">-</td>
-    //                                         </tr>
-    //                                         <tr
-    //                                             style={{
-    //                                                 background: "#f8f9fa",
-    //                                                 fontWeight: "bold",
-    //                                             }}
-    //                                         >
-    //                                             <td colSpan="2">
-    //                                                 Provision (38)
-    //                                             </td>
-    //                                             <td className="text-end">
-    //                                                 -{" "}
-    //                                                 {numberWithSpaces(solde38)}
-    //                                             </td>
-    //                                             <td className="text-end">-</td>
-    //                                         </tr>
-    //                                         <tr
-    //                                             style={{
-    //                                                 background: "#e9ecef",
-    //                                                 fontWeight: "bold",
-    //                                             }}
-    //                                         >
-    //                                             <td>{group.RefCadre}</td>
-    //                                             <td>{group.NomCompte}</td>
-    //                                             <td className="text-end">
-    //                                                 {numberWithSpaces(
-    //                                                     group.totalN,
-    //                                                 )}
-    //                                             </td>
-    //                                             <td className="text-end">
-    //                                                 {numberWithSpaces(
-    //                                                     group.totalN1,
-    //                                                 )}
-    //                                             </td>
-    //                                         </tr>
-    //                                     </React.Fragment>
-    //                                 );
-    //                             }
-    //                             return (
-    //                                 <tr
-    //                                     key={idx}
-    //                                     style={{
-    //                                         background: "#f8f9fa",
-    //                                         fontWeight: "bold",
-    //                                     }}
-    //                                 >
-    //                                     <td>{group.RefCadre}</td>
-    //                                     <td>{group.NomCompte}</td>
-    //                                     <td className="text-end">
-    //                                         {numberWithSpaces(group.totalN)}
-    //                                     </td>
-    //                                     <td className="text-end">
-    //                                         {numberWithSpaces(group.totalN1)}
-    //                                     </td>
-    //                                 </tr>
-    //                             );
-    //                         })}
-    //                     </tbody>
-    //                 </table>
-    //             </div>
-    //         );
-    //     }
-
-    //     // Mode semi-détaillé : hiérarchie RefCadre → RefSousGroupe → comptes
-    //     // On structure d'abord les données
-    //     const structure = {};
-
-    //     data.forEach((item) => {
-    //         const cadre = item.RefCadre;
-    //         const sousGroupe =
-    //             item.RefSousGroupe || item.NumCompte?.substring(0, 4) || "0000"; // fallback
-    //         const compte = item.NumCompte;
-
-    //         if (!structure[cadre]) {
-    //             structure[cadre] = {
-    //                 nomCadre: item.NomCompte?.split(" - ")[0] || "",
-    //                 sousGroupes: {},
-    //             };
-    //         }
-    //         if (!structure[cadre].sousGroupes[sousGroupe]) {
-    //             structure[cadre].sousGroupes[sousGroupe] = {
-    //                 nomSousGroupe: `Sous-groupe ${sousGroupe}`,
-    //                 totalN: 0,
-    //                 totalN1: 0,
-    //                 comptes: [],
-    //             };
-    //         }
-    //         structure[cadre].sousGroupes[sousGroupe].totalN += Math.abs(
-    //             item.soldeFin || 0,
-    //         );
-    //         structure[cadre].sousGroupes[sousGroupe].totalN1 += Math.abs(
-    //             item.soldeN1 || 0,
-    //         );
-    //         structure[cadre].sousGroupes[sousGroupe].comptes.push(item);
-    //     });
-
-    //     // Tri des cadres et sous-groupes
-    //     const sortedCadres = Object.keys(structure).sort();
-
-    //     return (
-    //         <div className="mb-4">
-    //             <h5
-    //                 style={{
-    //                     background: "#f1f1f1",
-    //                     padding: "8px",
-    //                     border: "1px solid #ccc",
-    //                     fontWeight: "bold",
-    //                 }}
-    //             >
-    //                 {title}
-    //             </h5>
-    //             <table
-    //                 className="table table-bordered table-sm"
-    //                 style={{ fontSize: "13px" }}
-    //             >
-    //                 <thead style={{ background: "#dee2e6" }}>
-    //                     <tr>
-    //                         <th style={{ width: "20%" }}>Compte</th>
-    //                         <th>Libellé</th>
-    //                         <th className="text-end">Net (N)</th>
-    //                         <th className="text-end">Net (N-1)</th>
-    //                     </tr>
-    //                 </thead>
-    //                 <tbody>
-    //                     {sortedCadres.map((cadre) => {
-    //                         const cadreData = structure[cadre];
-    //                         const sousGroupesSorted = Object.keys(
-    //                             cadreData.sousGroupes,
-    //                         ).sort();
-
-    //                         return (
-    //                             <React.Fragment key={cadre}>
-    //                                 {/* Ligne de la classe principale */}
-    //                                 <tr
-    //                                     style={{
-    //                                         background: "#d1d5db",
-    //                                         fontWeight: "bold",
-    //                                     }}
-    //                                 >
-    //                                     <td
-    //                                         colSpan="4"
-    //                                         style={{ fontSize: "1.05rem" }}
-    //                                     >
-    //                                         {cadre} - {cadreData.nomCadre}
-    //                                     </td>
-    //                                 </tr>
-
-    //                                 {sousGroupesSorted.map((sg) => {
-    //                                     const sgData =
-    //                                         cadreData.sousGroupes[sg];
-    //                                     // Ligne du sous-groupe (total)
-    //                                     return (
-    //                                         <React.Fragment key={sg}>
-    //                                             <tr
-    //                                                 style={{
-    //                                                     background: "#f3f4f6",
-    //                                                     fontWeight: "bold",
-    //                                                 }}
-    //                                             >
-    //                                                 <td
-    //                                                     style={{
-    //                                                         paddingLeft: "20px",
-    //                                                     }}
-    //                                                 >
-    //                                                     {sg}
-    //                                                 </td>
-    //                                                 <td
-    //                                                     style={{
-    //                                                         paddingLeft: "20px",
-    //                                                     }}
-    //                                                 >
-    //                                                     {sgData.nomSousGroupe}
-    //                                                 </td>
-    //                                                 <td className="text-end">
-    //                                                     {numberWithSpaces(
-    //                                                         sgData.totalN,
-    //                                                     )}
-    //                                                 </td>
-    //                                                 <td className="text-end">
-    //                                                     {numberWithSpaces(
-    //                                                         sgData.totalN1,
-    //                                                     )}
-    //                                                 </td>
-    //                                             </tr>
-    //                                             {/* Détail des comptes de ce sous-groupe */}
-    //                                             {sgData.comptes.map(
-    //                                                 (compte, idx) => (
-    //                                                     <tr key={idx}>
-    //                                                         <td
-    //                                                             style={{
-    //                                                                 paddingLeft:
-    //                                                                     "40px",
-    //                                                             }}
-    //                                                         >
-    //                                                             {
-    //                                                                 compte.NumCompte
-    //                                                             }
-    //                                                         </td>
-    //                                                         <td
-    //                                                             style={{
-    //                                                                 paddingLeft:
-    //                                                                     "40px",
-    //                                                             }}
-    //                                                         >
-    //                                                             {
-    //                                                                 compte.NomCompte
-    //                                                             }
-    //                                                         </td>
-    //                                                         <td className="text-end">
-    //                                                             {numberWithSpaces(
-    //                                                                 Math.abs(
-    //                                                                     compte.soldeFin ||
-    //                                                                         0,
-    //                                                                 ),
-    //                                                             )}
-    //                                                         </td>
-    //                                                         <td className="text-end">
-    //                                                             {numberWithSpaces(
-    //                                                                 Math.abs(
-    //                                                                     compte.soldeN1 ||
-    //                                                                         0,
-    //                                                                 ),
-    //                                                             )}
-    //                                                         </td>
-    //                                                     </tr>
-    //                                                 ),
-    //                                             )}
-    //                                         </React.Fragment>
-    //                                     );
-    //                                 })}
-    //                             </React.Fragment>
-    //                         );
-    //                     })}
-    //                 </tbody>
-    //             </table>
-    //         </div>
-    //     );
-    // };
     const TableBilan = ({ title, data }) => {
-    // Calcul des totaux
-    const totalN = data.reduce((sum, item) => sum + Math.abs(item.soldeFin || 0), 0);
-    const totalN1 = data.reduce((sum, item) => sum + Math.abs(item.soldeN1 || 0), 0);
+        // Calcul des totaux
+        const totalN = data.reduce(
+            (sum, item) => sum + (item.soldeFin || 0),
+            0,
+        ); // plus de abs
+        const totalN1 = data.reduce(
+            (sum, item) => sum + (item.soldeN1 || 0),
+            0,
+        );
+        // const totalN = data.reduce((sum, item) => sum + Math.abs(item.soldeFin || 0), 0);
+        // const totalN1 = data.reduce((sum, item) => sum + Math.abs(item.soldeN1 || 0), 0);
 
-    // Mode consolidé : regroupement par RefCadre (2 chiffres)
-    if (radioValue2 === "porte_groupee") {
-        const groupedByCadre = {};
+        // Mode consolidé : regroupement par RefCadre (2 chiffres)
+        if (radioValue2 === "porte_groupee") {
+            const groupedByCadre = {};
+            data.forEach((item) => {
+                const cadre = item.RefCadre;
+                if (!groupedByCadre[cadre]) {
+                    groupedByCadre[cadre] = {
+                        RefCadre: cadre,
+                        NomCompte: item.NomCompte,
+                        totalN: 0,
+                        totalN1: 0,
+                        items: [],
+                    };
+                }
+                groupedByCadre[cadre].totalN += Math.abs(item.soldeFin || 0);
+                groupedByCadre[cadre].totalN1 += Math.abs(item.soldeN1 || 0);
+                groupedByCadre[cadre].items.push(item);
+            });
+
+            return (
+                <div className="mb-4">
+                    <h5
+                        style={{
+                            background: "#f1f1f1",
+                            padding: "8px",
+                            border: "1px solid #ccc",
+                            fontWeight: "bold",
+                        }}
+                    >
+                        {title}
+                    </h5>
+                    <table
+                        className="table table-bordered table-sm"
+                        style={{ fontSize: "13px" }}
+                    >
+                        <thead style={{ background: "#dee2e6" }}>
+                            <tr>
+                                <th style={{ width: "20%" }}>Classe</th>
+                                <th>Libellé</th>
+                                <th className="text-end">Net (N)</th>
+                                <th className="text-end">Net (N-1)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {Object.values(groupedByCadre).map((group, idx) => {
+                                // Gestion spéciale pour la classe 39 (créances brutes + provision)
+                                if (group.RefCadre === "39") {
+                                    const solde39Brut =
+                                        group.items[0]?.solde39_brut || 0;
+                                    const solde38 =
+                                        group.items[0]?.solde38 || 0;
+                                    return (
+                                        <React.Fragment key={idx}>
+                                            <tr
+                                                style={{
+                                                    background: "#f8f9fa",
+                                                    fontWeight: "bold",
+                                                }}
+                                            >
+                                                <td colSpan="2">
+                                                    Créances brutes (39)
+                                                </td>
+                                                <td className="text-end">
+                                                    {numberWithSpaces(
+                                                        solde39Brut,
+                                                    )}
+                                                </td>
+                                                <td className="text-end">-</td>
+                                            </tr>
+                                            <tr
+                                                style={{
+                                                    background: "#f8f9fa",
+                                                    fontWeight: "bold",
+                                                }}
+                                            >
+                                                <td colSpan="2">
+                                                    Provision (38)
+                                                </td>
+                                                <td className="text-end">
+                                                    -{" "}
+                                                    {numberWithSpaces(solde38)}
+                                                </td>
+                                                <td className="text-end">-</td>
+                                            </tr>
+                                            <tr
+                                                style={{
+                                                    background: "#e9ecef",
+                                                    fontWeight: "bold",
+                                                }}
+                                            >
+                                                <td>{group.RefCadre}</td>
+                                                <td>{group.NomCompte}</td>
+                                                <td className="text-end">
+                                                    {numberWithSpaces(
+                                                        group.totalN,
+                                                    )}
+                                                </td>
+                                                <td className="text-end">
+                                                    {numberWithSpaces(
+                                                        group.totalN1,
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        </React.Fragment>
+                                    );
+                                }
+                                return (
+                                    <tr
+                                        key={idx}
+                                        style={{
+                                            background: "#f8f9fa",
+                                            fontWeight: "bold",
+                                        }}
+                                    >
+                                        <td>{group.RefCadre}</td>
+                                        <td>{group.NomCompte}</td>
+                                        <td className="text-end">
+                                            {numberWithSpaces(group.totalN)}
+                                        </td>
+                                        <td className="text-end">
+                                            {numberWithSpaces(group.totalN1)}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                            {/* LIGNE DE TOTAL AJOUTÉE */}
+                            <tr
+                                style={{
+                                    background: "#2c3e50",
+                                    fontWeight: "bold",
+                                    borderTop: "2px solid #000",
+                                    color: "white",
+                                }}
+                            >
+                                <td
+                                    colSpan="2"
+                                    style={{
+                                        textAlign: "right",
+                                        fontSize: "14px",
+                                    }}
+                                >
+                                    TOTAL {title.toUpperCase()} :
+                                </td>
+                                <td
+                                    className="text-end"
+                                    style={{
+                                        fontSize: "14px",
+                                        fontWeight: "bold",
+                                    }}
+                                >
+                                    {numberWithSpaces(totalN)}
+                                </td>
+                                <td
+                                    className="text-end"
+                                    style={{
+                                        fontSize: "14px",
+                                        fontWeight: "bold",
+                                    }}
+                                >
+                                    {numberWithSpaces(totalN1)}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            );
+        }
+
+        // Mode semi-détaillé : hiérarchie RefCadre → RefSousGroupe → comptes
+        const structure = {};
+
         data.forEach((item) => {
             const cadre = item.RefCadre;
-            if (!groupedByCadre[cadre]) {
-                groupedByCadre[cadre] = {
-                    RefCadre: cadre,
-                    NomCompte: item.NomCompte,
-                    totalN: 0,
-                    totalN1: 0,
-                    items: [],
+            const sousGroupe =
+                item.RefSousGroupe || item.NumCompte?.substring(0, 4) || "0000";
+
+            if (!structure[cadre]) {
+                structure[cadre] = {
+                    nomCadre: item.NomCompte?.split(" - ")[0] || "",
+                    sousGroupes: {},
                 };
             }
-            groupedByCadre[cadre].totalN += Math.abs(item.soldeFin || 0);
-            groupedByCadre[cadre].totalN1 += Math.abs(item.soldeN1 || 0);
-            groupedByCadre[cadre].items.push(item);
+            if (!structure[cadre].sousGroupes[sousGroupe]) {
+                structure[cadre].sousGroupes[sousGroupe] = {
+                    nomSousGroupe: `Sous-groupe ${sousGroupe}`,
+                    totalN: 0,
+                    totalN1: 0,
+                    comptes: [],
+                };
+            }
+            structure[cadre].sousGroupes[sousGroupe].totalN += Math.abs(
+                item.soldeFin || 0,
+            );
+            structure[cadre].sousGroupes[sousGroupe].totalN1 += Math.abs(
+                item.soldeN1 || 0,
+            );
+            structure[cadre].sousGroupes[sousGroupe].comptes.push(item);
         });
 
-
-
-  
+        const sortedCadres = Object.keys(structure).sort();
 
         return (
             <div className="mb-4">
@@ -633,99 +511,140 @@ const Bilan = () => {
                 >
                     <thead style={{ background: "#dee2e6" }}>
                         <tr>
-                            <th style={{ width: "20%" }}>Classe</th>
+                            <th style={{ width: "20%" }}>Compte</th>
                             <th>Libellé</th>
                             <th className="text-end">Net (N)</th>
                             <th className="text-end">Net (N-1)</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {Object.values(groupedByCadre).map((group, idx) => {
-                            // Gestion spéciale pour la classe 39 (créances brutes + provision)
-                            if (group.RefCadre === "39") {
-                                const solde39Brut = group.items[0]?.solde39_brut || 0;
-                                const solde38 = group.items[0]?.solde38 || 0;
-                                return (
-                                    <React.Fragment key={idx}>
-                                        <tr
-                                            style={{
-                                                background: "#f8f9fa",
-                                                fontWeight: "bold",
-                                            }}
-                                        >
-                                            <td colSpan="2">
-                                                Créances brutes (39)
-                                            </td>
-                                            <td className="text-end">
-                                                {numberWithSpaces(solde39Brut)}
-                                            </td>
-                                            <td className="text-end">-</td>
-                                        </tr>
-                                        <tr
-                                            style={{
-                                                background: "#f8f9fa",
-                                                fontWeight: "bold",
-                                            }}
-                                        >
-                                            <td colSpan="2">
-                                                Provision (38)
-                                            </td>
-                                            <td className="text-end">
-                                                - {numberWithSpaces(solde38)}
-                                            </td>
-                                            <td className="text-end">-</td>
-                                        </tr>
-                                        <tr
-                                            style={{
-                                                background: "#e9ecef",
-                                                fontWeight: "bold",
-                                            }}
-                                        >
-                                            <td>{group.RefCadre}</td>
-                                            <td>{group.NomCompte}</td>
-                                            <td className="text-end">
-                                                {numberWithSpaces(group.totalN)}
-                                            </td>
-                                            <td className="text-end">
-                                                {numberWithSpaces(group.totalN1)}
-                                            </td>
-                                        </tr>
-                                    </React.Fragment>
-                                );
-                            }
+                        {sortedCadres.map((cadre) => {
+                            const cadreData = structure[cadre];
+                            const sousGroupesSorted = Object.keys(
+                                cadreData.sousGroupes,
+                            ).sort();
+
                             return (
-                                <tr
-                                    key={idx}
-                                    style={{
-                                        background: "#f8f9fa",
-                                        fontWeight: "bold",
-                                    }}
-                                >
-                                    <td>{group.RefCadre}</td>
-                                    <td>{group.NomCompte}</td>
-                                    <td className="text-end">
-                                        {numberWithSpaces(group.totalN)}
-                                    </td>
-                                    <td className="text-end">
-                                        {numberWithSpaces(group.totalN1)}
-                                    </td>
-                                </tr>
+                                <React.Fragment key={cadre}>
+                                    <tr
+                                        style={{
+                                            background: "#d1d5db",
+                                            fontWeight: "bold",
+                                        }}
+                                    >
+                                        <td
+                                            colSpan="4"
+                                            style={{ fontSize: "1.05rem" }}
+                                        >
+                                            {cadre} - {cadreData.nomCadre}
+                                        </td>
+                                    </tr>
+
+                                    {sousGroupesSorted.map((sg) => {
+                                        const sgData =
+                                            cadreData.sousGroupes[sg];
+                                        return (
+                                            <React.Fragment key={sg}>
+                                                <tr
+                                                    style={{
+                                                        background: "#f3f4f6",
+                                                        fontWeight: "bold",
+                                                    }}
+                                                >
+                                                    <td
+                                                        style={{
+                                                            paddingLeft: "20px",
+                                                        }}
+                                                    >
+                                                        {sg}
+                                                    </td>
+                                                    <td
+                                                        style={{
+                                                            paddingLeft: "20px",
+                                                        }}
+                                                    >
+                                                        {sgData.nomSousGroupe}
+                                                    </td>
+                                                    <td className="text-end">
+                                                        {numberWithSpaces(
+                                                            sgData.totalN,
+                                                        )}
+                                                    </td>
+                                                    <td className="text-end">
+                                                        {numberWithSpaces(
+                                                            sgData.totalN1,
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                                {sgData.comptes.map(
+                                                    (compte, idx) => (
+                                                        <tr key={idx}>
+                                                            <td
+                                                                style={{
+                                                                    paddingLeft:
+                                                                        "40px",
+                                                                }}
+                                                            >
+                                                                {
+                                                                    compte.NumCompte
+                                                                }
+                                                            </td>
+                                                            <td
+                                                                style={{
+                                                                    paddingLeft:
+                                                                        "40px",
+                                                                }}
+                                                            >
+                                                                {
+                                                                    compte.NomCompte
+                                                                }
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {numberWithSpaces(
+                                                                    compte.soldeFin ||
+                                                                        0,
+                                                                )}
+                                                            </td>
+                                                            <td className="text-end">
+                                                                {numberWithSpaces(
+                                                                    compte.soldeN1 ||
+                                                                        0,
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )}
+                                            </React.Fragment>
+                                        );
+                                    })}
+                                </React.Fragment>
                             );
                         })}
                         {/* LIGNE DE TOTAL AJOUTÉE */}
-                        <tr style={{ 
-                            background: "#2c3e50", 
-                            fontWeight: "bold", 
-                            borderTop: "2px solid #000",
-                            color: "white"
-                        }}>
-                            <td colSpan="2" style={{ textAlign: "right", fontSize: "14px" }}>
+                        <tr
+                            style={{
+                                background: "#2c3e50",
+                                fontWeight: "bold",
+                                borderTop: "2px solid #000",
+                                color: "white",
+                            }}
+                        >
+                            <td
+                                colSpan="2"
+                                style={{ textAlign: "right", fontSize: "14px" }}
+                            >
                                 TOTAL {title.toUpperCase()} :
                             </td>
-                            <td className="text-end" style={{ fontSize: "14px", fontWeight: "bold" }}>
+                            <td
+                                className="text-end"
+                                style={{ fontSize: "14px", fontWeight: "bold" }}
+                            >
                                 {numberWithSpaces(totalN)}
                             </td>
-                            <td className="text-end" style={{ fontSize: "14px", fontWeight: "bold" }}>
+                            <td
+                                className="text-end"
+                                style={{ fontSize: "14px", fontWeight: "bold" }}
+                            >
                                 {numberWithSpaces(totalN1)}
                             </td>
                         </tr>
@@ -733,160 +652,21 @@ const Bilan = () => {
                 </table>
             </div>
         );
-    }
+    };
 
-    // Mode semi-détaillé : hiérarchie RefCadre → RefSousGroupe → comptes
-    const structure = {};
-
-    data.forEach((item) => {
-        const cadre = item.RefCadre;
-        const sousGroupe = item.RefSousGroupe || item.NumCompte?.substring(0, 4) || "0000";
-        
-        if (!structure[cadre]) {
-            structure[cadre] = {
-                nomCadre: item.NomCompte?.split(" - ")[0] || "",
-                sousGroupes: {},
-            };
+    const getAgenceNom = () => {
+        if (agenceFilter === "current") {
+            return "AGENCE DE " + currentAgence?.nom_agence || "Non définie";
         }
-        if (!structure[cadre].sousGroupes[sousGroupe]) {
-            structure[cadre].sousGroupes[sousGroupe] = {
-                nomSousGroupe: `Sous-groupe ${sousGroupe}`,
-                totalN: 0,
-                totalN1: 0,
-                comptes: [],
-            };
+        if (agenceFilter === "all") {
+            return "TOUTES AGENCES";
         }
-        structure[cadre].sousGroupes[sousGroupe].totalN += Math.abs(item.soldeFin || 0);
-        structure[cadre].sousGroupes[sousGroupe].totalN1 += Math.abs(item.soldeN1 || 0);
-        structure[cadre].sousGroupes[sousGroupe].comptes.push(item);
-    });
+        // agenceFilter est un id
+        const agence = userAgences.find((a) => a.id == agenceFilter);
+        // return agence ? `${agence.code_agence} - ${agence.nom_agence}` : "Non définie";
+        return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
+    };
 
-    const sortedCadres = Object.keys(structure).sort();
-
-    return (
-        <div className="mb-4">
-            <h5
-                style={{
-                    background: "#f1f1f1",
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                    fontWeight: "bold",
-                }}
-            >
-                {title}
-            </h5>
-            <table
-                className="table table-bordered table-sm"
-                style={{ fontSize: "13px" }}
-            >
-                <thead style={{ background: "#dee2e6" }}>
-                    <tr>
-                        <th style={{ width: "20%" }}>Compte</th>
-                        <th>Libellé</th>
-                        <th className="text-end">Net (N)</th>
-                        <th className="text-end">Net (N-1)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {sortedCadres.map((cadre) => {
-                        const cadreData = structure[cadre];
-                        const sousGroupesSorted = Object.keys(cadreData.sousGroupes).sort();
-
-                        return (
-                            <React.Fragment key={cadre}>
-                                <tr
-                                    style={{
-                                        background: "#d1d5db",
-                                        fontWeight: "bold",
-                                    }}
-                                >
-                                    <td colSpan="4" style={{ fontSize: "1.05rem" }}>
-                                        {cadre} - {cadreData.nomCadre}
-                                    </td>
-                                </tr>
-
-                                {sousGroupesSorted.map((sg) => {
-                                    const sgData = cadreData.sousGroupes[sg];
-                                    return (
-                                        <React.Fragment key={sg}>
-                                            <tr
-                                                style={{
-                                                    background: "#f3f4f6",
-                                                    fontWeight: "bold",
-                                                }}
-                                            >
-                                                <td style={{ paddingLeft: "20px" }}>
-                                                    {sg}
-                                                </td>
-                                                <td style={{ paddingLeft: "20px" }}>
-                                                    {sgData.nomSousGroupe}
-                                                </td>
-                                                <td className="text-end">
-                                                    {numberWithSpaces(sgData.totalN)}
-                                                </td>
-                                                <td className="text-end">
-                                                    {numberWithSpaces(sgData.totalN1)}
-                                                </td>
-                                            </tr>
-                                            {sgData.comptes.map((compte, idx) => (
-                                                <tr key={idx}>
-                                                    <td style={{ paddingLeft: "40px" }}>
-                                                        {compte.NumCompte}
-                                                    </td>
-                                                    <td style={{ paddingLeft: "40px" }}>
-                                                        {compte.NomCompte}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {numberWithSpaces(Math.abs(compte.soldeFin || 0))}
-                                                    </td>
-                                                    <td className="text-end">
-                                                        {numberWithSpaces(Math.abs(compte.soldeN1 || 0))}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </React.Fragment>
-                                    );
-                                })}
-                            </React.Fragment>
-                        );
-                    })}
-                    {/* LIGNE DE TOTAL AJOUTÉE */}
-                    <tr style={{ 
-                        background: "#2c3e50", 
-                        fontWeight: "bold", 
-                        borderTop: "2px solid #000",
-                        color: "white"
-                    }}>
-                        <td colSpan="2" style={{ textAlign: "right", fontSize: "14px" }}>
-                            TOTAL {title.toUpperCase()} :
-                        </td>
-                        <td className="text-end" style={{ fontSize: "14px", fontWeight: "bold" }}>
-                            {numberWithSpaces(totalN)}
-                        </td>
-                        <td className="text-end" style={{ fontSize: "14px", fontWeight: "bold" }}>
-                            {numberWithSpaces(totalN1)}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    );
-};
-
-
-      const getAgenceNom = () => {
-    if (agenceFilter === 'current') {
-        return "AGENCE DE " +currentAgence?.nom_agence || "Non définie";
-    }
-    if (agenceFilter === 'all') {
-        return "TOUTES AGENCES";
-    }
-    // agenceFilter est un id
-    const agence = userAgences.find(a => a.id == agenceFilter);
-    // return agence ? `${agence.code_agence} - ${agence.nom_agence}` : "Non définie";
-    return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
-};
-    
     return (
         <>
             <div
@@ -957,163 +737,214 @@ const Bilan = () => {
 
                 {/* Filtres */}
 
-             {/* Filtres */}
-<div className="row g-4 mb-5">
-    {/* Période */}
-    <div className="col-md-3">
-        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-            <div className="card-header bg-transparent border-0 pt-3 pb-0">
-                <h6 className="section-title">
-                    <i className="fas fa-calendar-alt me-2" style={{ color: "#6366f1" }}></i>
-                    Période
-                </h6>
-            </div>
-            <div className="card-body pt-2">
-                <div className="mb-3">
-                    <label className="label-modern">Date début</label>
-                    <input
-                        type="date"
-                        className="form-control modern-input"
-                        value={date_debut_balance}
-                        onChange={(e) => setdate_debut_balance(e.target.value)}
-                    />
-                </div>
-                <div>
-                    <label className="label-modern">Date fin</label>
-                    <input
-                        type="date"
-                        className="form-control modern-input"
-                        value={date_fin_balance}
-                        onChange={(e) => setdate_fin_balance(e.target.value)}
-                    />
-                </div>
-            </div>
-        </div>
-    </div>
+                {/* Filtres */}
+                <div className="row g-4 mb-5">
+                    {/* Période */}
+                    <div className="col-md-3">
+                        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                                <h6 className="section-title">
+                                    <i
+                                        className="fas fa-calendar-alt me-2"
+                                        style={{ color: "#6366f1" }}
+                                    ></i>
+                                    Période
+                                </h6>
+                            </div>
+                            <div className="card-body pt-2">
+                                <div className="mb-3">
+                                    <label className="label-modern">
+                                        Date début
+                                    </label>
+                                    <input
+                                        type="date"
+                                        className="form-control modern-input"
+                                        value={date_debut_balance}
+                                        onChange={(e) =>
+                                            setdate_debut_balance(
+                                                e.target.value,
+                                            )
+                                        }
+                                    />
+                                </div>
+                                <div>
+                                    <label className="label-modern">
+                                        Date fin
+                                    </label>
+                                    <input
+                                        type="date"
+                                        className="form-control modern-input"
+                                        value={date_fin_balance}
+                                        onChange={(e) =>
+                                            setdate_fin_balance(e.target.value)
+                                        }
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-    {/* Consolidation */}
-    <div className="col-md-3">
-        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-            <div className="card-header bg-transparent border-0 pt-3 pb-0">
-                <h6 className="section-title">
-                    <i className="fas fa-exchange-alt me-2" style={{ color: "#6366f1" }}></i>
-                    Consolidation
-                </h6>
-            </div>
-            <div className="card-body pt-2">
-                <div className="d-flex align-items-center flex-wrap gap-2">
-                    <input
-                        type="radio"
-                        className="modern-radio"
-                        id="type_balance"
-                        value="type_balance"
-                        checked={radioValue === "type_balance"}
-                        onChange={handleRadioChange}
-                    />
-                    <label htmlFor="type_balance" className="text-secondary fw-medium me-1" style={{ fontSize: "0.85rem" }}>
-                        Bilan uniquement en
-                    </label>
-                    <select
-                        className="modern-select"
-                        onChange={(e) => setdevise(e.target.value)}
-                        value={devise}
-                    >
-                        <option value="CDF">CDF</option>
-                        <option value="USD">USD</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    </div>
+                    {/* Consolidation */}
+                    <div className="col-md-3">
+                        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                                <h6 className="section-title">
+                                    <i
+                                        className="fas fa-exchange-alt me-2"
+                                        style={{ color: "#6366f1" }}
+                                    ></i>
+                                    Consolidation
+                                </h6>
+                            </div>
+                            <div className="card-body pt-2">
+                                <div className="d-flex align-items-center flex-wrap gap-2">
+                                    <input
+                                        type="radio"
+                                        className="modern-radio"
+                                        id="type_balance"
+                                        value="type_balance"
+                                        checked={radioValue === "type_balance"}
+                                        onChange={handleRadioChange}
+                                    />
+                                    <label
+                                        htmlFor="type_balance"
+                                        className="text-secondary fw-medium me-1"
+                                        style={{ fontSize: "0.85rem" }}
+                                    >
+                                        Bilan uniquement en
+                                    </label>
+                                    <select
+                                        className="modern-select"
+                                        onChange={(e) =>
+                                            setdevise(e.target.value)
+                                        }
+                                        value={devise}
+                                    >
+                                        <option value="CDF">CDF</option>
+                                        <option value="USD">USD</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-    {/* Type bilan */}
-    <div className="col-md-3">
-        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-            <div className="card-header bg-transparent border-0 pt-3 pb-0">
-                <h6 className="section-title">
-                    <i className="fas fa-chart-pie me-2" style={{ color: "#6366f1" }}></i>
-                    Type bilan
-                </h6>
-            </div>
-            <div className="card-body pt-2">
-                <div className="form-check mb-2">
-                    <input
-                        type="radio"
-                        className="form-check-input modern-radio"
-                        id="porte_detaillee"
-                        value="porte_detaillee"
-                        checked={radioValue2 === "porte_detaillee"}
-                        onChange={handleRadioChange2}
-                    />
-                    <label className="form-check-label text-secondary" htmlFor="porte_detaillee">
-                        Bilan semi‑détaillé
-                    </label>
-                </div>
-                <div className="form-check">
-                    <input
-                        type="radio"
-                        className="form-check-input modern-radio"
-                        id="porte_groupee"
-                        value="porte_groupee"
-                        checked={radioValue2 === "porte_groupee"}
-                        onChange={handleRadioChange2}
-                    />
-                    <label className="form-check-label text-secondary" htmlFor="porte_groupee">
-                        Bilan consolidé
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
+                    {/* Type bilan */}
+                    <div className="col-md-3">
+                        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                                <h6 className="section-title">
+                                    <i
+                                        className="fas fa-chart-pie me-2"
+                                        style={{ color: "#6366f1" }}
+                                    ></i>
+                                    Type bilan
+                                </h6>
+                            </div>
+                            <div className="card-body pt-2">
+                                <div className="form-check mb-2">
+                                    <input
+                                        type="radio"
+                                        className="form-check-input modern-radio"
+                                        id="porte_detaillee"
+                                        value="porte_detaillee"
+                                        checked={
+                                            radioValue2 === "porte_detaillee"
+                                        }
+                                        onChange={handleRadioChange2}
+                                    />
+                                    <label
+                                        className="form-check-label text-secondary"
+                                        htmlFor="porte_detaillee"
+                                    >
+                                        Bilan semi‑détaillé
+                                    </label>
+                                </div>
+                                <div className="form-check">
+                                    <input
+                                        type="radio"
+                                        className="form-check-input modern-radio"
+                                        id="porte_groupee"
+                                        value="porte_groupee"
+                                        checked={
+                                            radioValue2 === "porte_groupee"
+                                        }
+                                        onChange={handleRadioChange2}
+                                    />
+                                    <label
+                                        className="form-check-label text-secondary"
+                                        htmlFor="porte_groupee"
+                                    >
+                                        Bilan consolidé
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-   <div className="col-md-3">
-    <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-        <div className="card-header bg-transparent border-0 pt-3 pb-0">
-            <h6 className="section-title">
-                <i className="fas fa-building me-2" style={{ color: "#6366f1" }}></i>
-                Agence
-            </h6>
-        </div>
-        <div className="card-body pt-2">
-            <select
-                className="modern-select w-100"
-                value={agenceFilter}
-                onChange={(e) => setAgenceFilter(e.target.value)}
-                disabled={userAgences.length <= 1}   // Désactivé pour mono‑agence
-            >
-                <option value="current">
-                    Agence courante ({currentAgence?.nom_agence || 'Non définie'})
-                </option>
-                {userAgences.length > 1 && (
-                    <>
-                        <option value="all">Toutes mes agences</option>
-                        {userAgences.map(agence => (
-                            <option key={agence.id} value={agence.id}>
-                                {agence.code_agence} - {agence.nom_agence}
-                            </option>
-                        ))}
-                    </>
-                )}
-            </select>
-        </div>
-        <div className="card-body d-flex align-items-center justify-content-center p-3 border-top">
-            <button
-                onClick={AfficherBilan}
-                className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
-            >
-                {loading ? (
-                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                ) : (
-                    <i className="fas fa-chart-line"></i>
-                )}
-                <span>Afficher le bilan</span>
-            </button>
-        </div>
-    </div>
-</div>
-
-  
-</div>
+                    <div className="col-md-3">
+                        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                                <h6 className="section-title">
+                                    <i
+                                        className="fas fa-building me-2"
+                                        style={{ color: "#6366f1" }}
+                                    ></i>
+                                    Agence
+                                </h6>
+                            </div>
+                            <div className="card-body pt-2">
+                                <select
+                                    className="modern-select w-100"
+                                    value={agenceFilter}
+                                    onChange={(e) =>
+                                        setAgenceFilter(e.target.value)
+                                    }
+                                    disabled={userAgences.length <= 1} // Désactivé pour mono‑agence
+                                >
+                                    <option value="current">
+                                        Agence courante (
+                                        {currentAgence?.nom_agence ||
+                                            "Non définie"}
+                                        )
+                                    </option>
+                                    {userAgences.length > 1 && (
+                                        <>
+                                            <option value="all">
+                                                Toutes mes agences
+                                            </option>
+                                            {userAgences.map((agence) => (
+                                                <option
+                                                    key={agence.id}
+                                                    value={agence.id}
+                                                >
+                                                    {agence.code_agence} -{" "}
+                                                    {agence.nom_agence}
+                                                </option>
+                                            ))}
+                                        </>
+                                    )}
+                                </select>
+                            </div>
+                            <div className="card-body d-flex align-items-center justify-content-center p-3 border-top">
+                                <button
+                                    onClick={AfficherBilan}
+                                    className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
+                                >
+                                    {loading ? (
+                                        <span
+                                            className="spinner-border spinner-border-sm"
+                                            role="status"
+                                            aria-hidden="true"
+                                        ></span>
+                                    ) : (
+                                        <i className="fas fa-chart-line"></i>
+                                    )}
+                                    <span>Afficher le bilan</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Affichage du bilan */}
                 {(fetchActif.length > 0 || fetchPassif.length > 0) && (
@@ -1131,7 +962,8 @@ const Bilan = () => {
                             </div> */}
                                 <div className="text-center mb-3">
                                     <h6 className="fw-bold">
-                                        BILAN SYNTHÈSE EN {devise} {getAgenceNom()}
+                                        BILAN SYNTHÈSE EN {devise}{" "}
+                                        {getAgenceNom()}
                                     </h6>
                                     <p className="mb-0">
                                         Au {dateParser(date_fin_balance)}
@@ -1157,7 +989,7 @@ const Bilan = () => {
                                 </div>
 
                                 {/* Égalité fondamentale du bilan */}
-                                <div className="row mt-3">
+                                {/* <div className="row mt-3">
                                     <div className="col-12">
                                         <div
                                             className="card border-0 shadow-sm rounded-3"
@@ -1217,7 +1049,42 @@ const Bilan = () => {
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </div> */}
+                                {/* Égalité fondamentale calculée directement depuis les données */}
+{(() => {
+    const totalActifReel = fetchActif.reduce((acc, item) => acc + (item.soldeFin || 0), 0);
+    const totalPassifReel = fetchPassif.reduce((acc, item) => acc + (item.soldeFin || 0), 0);
+    const difference = totalActifReel - totalPassifReel;
+    const isEquilibrated = Math.abs(difference) < 0.01;
+
+    return (
+        <div className="row mt-3">
+            <div className="col-12">
+                <div className="card border-0 shadow-sm rounded-3" style={{
+                    background: isEquilibrated ? "rgba(40,167,69,0.1)" : "rgba(220,53,69,0.1)"
+                }}>
+                    <div className="card-body text-center">
+                        <h5 className="fw-bold mb-0">
+                            ÉGALITÉ FONDAMENTALE DU BILAN :
+                            <span className={`ms-2 ${isEquilibrated ? "text-success" : "text-danger"}`}>
+                                ACTIF = PASSIF
+                            </span>
+                        </h5>
+                        <small className="text-muted">
+                            Total Actif: {numberWithSpaces(totalActifReel)} {devise} |
+                            Total Passif: {numberWithSpaces(totalPassifReel)} {devise}
+                            {!isEquilibrated && (
+                                <span className="text-warning ms-2">
+                                    (Différence: {numberWithSpaces(difference)})
+                                </span>
+                            )}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+})()}
                             </div>
                         </div>
                     </div>

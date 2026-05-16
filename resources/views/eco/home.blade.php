@@ -266,7 +266,6 @@
                                         </div>
                                     </a>
                                 </div>
-
                                 <!-- Adhésion -->
                                 <div class="col-12 col-sm-6 col-md-4 col-lg-3">
                                     <a class="text-decoration-none" href="{{ route('eco.pages.adhesion-membre') }}">
@@ -288,6 +287,8 @@
                                         </div>
                                     </a>
                                 </div>
+
+                                
                             </div>
                         </div>
                     </div>

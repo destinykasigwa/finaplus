@@ -93,5 +93,6 @@ class Transactions extends Model
         "extourner",
         "isVirement",
         "is_system",
+        "RefEcheance"
     ];
 }

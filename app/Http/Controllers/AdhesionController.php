@@ -32,32 +32,51 @@ class AdhesionController extends Controller
      * Génère un préfixe unique pour une agence (2 lettres)
      * Exemples : GOMA → GM, KATINDO → KT, SIEGE → SG
      */
+    // private function getPrefixeAgence($codeAgence)
+    // {
+    //     // Vous pouvez utiliser un mapping direct selon le code_agence ou le nom_agence
+    //     $prefixes = [
+    //         'GOMA'    => 'GM',
+    //         'KATINDO' => 'KT',
+    //         'SIEGE'   => 'SG',
+    //         // Ajoutez ici tous les codes/noms d'agence avec leur préfixe
+    //     ];
+
+    //     // Récupérer l'agence depuis la base de données pour obtenir son nom
+    //     $agence = Agences::where('code_agence', $codeAgence)->first();
+    //     if (!$agence) {
+    //         // Par défaut, on prend les deux premières lettres du code en majuscule
+    //         return strtoupper(substr($codeAgence, 0, 2));
+    //     }
+
+    //     $nom = strtoupper($agence->nom_agence);
+    //     // Vérifier dans le tableau mapping
+    //     if (isset($prefixes[$nom])) {
+    //         return $prefixes[$nom];
+    //     }
+
+    //     // Sinon, prendre les deux premières lettres du nom (ex: BUKAVU → BU)
+    //     return substr($nom, 0, 2);
+    // }
+
     private function getPrefixeAgence($codeAgence)
-    {
-        // Vous pouvez utiliser un mapping direct selon le code_agence ou le nom_agence
-        $prefixes = [
-            'GOMA'    => 'GM',
-            'KATINDO' => 'KT',
-            'SIEGE'   => 'SG',
-            // Ajoutez ici tous les codes/noms d'agence avec leur préfixe
-        ];
-
-        // Récupérer l'agence depuis la base de données pour obtenir son nom
-        $agence = Agences::where('code_agence', $codeAgence)->first();
-        if (!$agence) {
-            // Par défaut, on prend les deux premières lettres du code en majuscule
-            return strtoupper(substr($codeAgence, 0, 2));
-        }
-
-        $nom = strtoupper($agence->nom_agence);
-        // Vérifier dans le tableau mapping
-        if (isset($prefixes[$nom])) {
-            return $prefixes[$nom];
-        }
-
-        // Sinon, prendre les deux premières lettres du nom (ex: BUKAVU → BU)
-        return substr($nom, 0, 2);
+{
+    $agence = Agences::where('code_agence', $codeAgence)->first();
+    
+    if (!$agence) {
+        // Fallback : deux premières lettres du code agence
+        return strtoupper(substr($codeAgence, 0, 2));
     }
+    
+    // Utiliser le préfixe stocké en base
+    if (!empty($agence->prefixe_agence)) {
+        return $agence->prefixe_agence;
+    }
+    
+    // Fallback si le champ est vide : deux premières lettres du nom
+    $nom = strtoupper($agence->nom_agence);
+    return substr($nom, 0, 2);
+}
     // public function RegisterNewMember(Request $request)
     // {
     //     $validator = validator::make($request->all(), [
@@ -837,7 +856,7 @@ class AdhesionController extends Controller
             'RefTypeCompte' => "3",
             'RefCadre'      => "33",
             'RefGroupe'     => "330",
-            'RefSousGroupe' => "3301",
+            'RefSousGroupe' => "3300",
             'CodeMonnaie'   => 2,
             'NumeTelephone' => $data->telephone,
             'DateNaissance' => $data->date_naissance,

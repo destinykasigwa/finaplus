@@ -207,7 +207,7 @@ const EntreeT = () => {
                     {devise == "USD" ? (
                         fetchInfo && (
                             <div className="table-responsive">
-                                <table className="table table-bordered">
+                                <table className="table table-bordered table-sm">
                                     <thead style={{ backgroundColor: "#e6f2f9" }}>
                                         <tr style={{ color: "steelblue" }}>
                                             <th>Coupure</th>
@@ -246,7 +246,7 @@ const EntreeT = () => {
                     ) : (
                         fetchInfo2 && (
                             <div className="table-responsive">
-                                <table className="table table-bordered">
+                                <table className="table table-bordered table-sm">
                                     <thead style={{ backgroundColor: "#e6f2f9" }}>
                                         <tr style={{ color: "steelblue" }}>
                                             <th>Coupure</th>
@@ -309,7 +309,7 @@ const EntreeT = () => {
                                         </h5>
                                     </div>
                                     <div className="table-responsive mb-4">
-                                        <table className="table table-hover">
+                                        <table className="table table-hover table-sm">
                                             <thead style={{ backgroundColor: "#e6f2f9" }}>
                                                 <tr style={{ color: "steelblue" }}>
                                                     <th>#</th>
@@ -373,7 +373,7 @@ const EntreeT = () => {
                                         </h5>
                                     </div>
                                     <div className="table-responsive">
-                                        <table className="table table-hover">
+                                        <table className="table table-hover table-sm">
                                             <thead style={{ backgroundColor: "#e6f2f9" }}>
                                                 <tr style={{ color: "steelblue" }}>
                                                     <th>#</th>
