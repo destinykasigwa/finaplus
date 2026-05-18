@@ -30,6 +30,7 @@ const [filteredImmo, setFilteredImmo] = useState([]);
         compte_comptable_immo: "",
         compte_comptable_amortissement: "",
         code_agence: "",
+        
     });
 
     useEffect(() => {
@@ -53,6 +54,8 @@ const [filteredImmo, setFilteredImmo] = useState([]);
             (immo.type_immo && immo.type_immo.nom_type && immo.type_immo.nom_type.toLowerCase().includes(lowerSearch)) ||
             immo.code_agence.toLowerCase().includes(lowerSearch) ||
             immo.methode_amortissement.toLowerCase().includes(lowerSearch)
+            || (immo.service_affectation && immo.service_affectation.toLowerCase().includes(lowerSearch))
+            
         );
         setFilteredImmo(filtered);
     }
@@ -143,6 +146,7 @@ const fetchComptesAmortissements = async () => {
                 compte_comptable_immo: immo.compte_comptable_immo,
                 compte_comptable_amortissement: immo.compte_comptable_amortissement,
                 code_agence: immo.code_agence,
+                service_affectation: immo.service_affectation || "",
             });
         } else {
             setEditingId(null);
@@ -159,6 +163,7 @@ const fetchComptesAmortissements = async () => {
                 compte_comptable_immo: "",
                 compte_comptable_amortissement: "",
                 code_agence: currentAgence?.code_agence || "",
+                service_affectation:""
             });
         }
         setModalOpen(true);
@@ -214,11 +219,12 @@ const fetchComptesAmortissements = async () => {
         { name: "Code", selector: row => row.code_immo, sortable: true },
         { name: "Nom", selector: row => row.nom_immo, sortable: true },
         { name: "Date acquisition", selector: row => row.date_acquisition, sortable: true },
-        { name: "Valeur (CDF)", selector: row => row.valeur_acquisition.toLocaleString(), sortable: true },
+        { name: "Valeur ", selector: row => row.valeur_acquisition.toLocaleString(), sortable: true },
         { name: "Durée (ans)", selector: row => row.duree_amortissement_ans },
         { name: "Méthode", selector: row => row.methode_amortissement },
-        { name: "VNC (CDF)", selector: row => row.valeur_nette_comptable?.toLocaleString() || "-" },
+        { name: "VNC ", selector: row => row.valeur_nette_comptable?.toLocaleString() || "-" },
         { name: "Agence", selector: row => row.code_agence },
+        { name: "Service/Affectation", selector: row => row.service_affectation || "-", sortable: true },
         {
             name: "Actions",
             cell: row => (
@@ -308,10 +314,10 @@ const fetchComptesAmortissements = async () => {
                             <div className="modal-body">
                                 <form onSubmit={handleSubmit}>
                                     <div className="row g-3">
-                                        <div className="col-md-6">
+                                        {/* <div className="col-md-6">
                                             <label className="label-modern">Code immobilisation</label>
-                                            <input type="text" className="form-control modern-input" name="code_immo" value={formData.code_immo} onChange={handleChange} required />
-                                        </div>
+                                            <input type="hidden" className="form-control modern-input" name="code_immo" value={formData.code_immo} onChange={handleChange} readOnly disabled  />
+                                        </div> */}
                                         <div className="col-md-6">
                                             <label className="label-modern">Nom / Désignation</label>
                                             <input type="text" className="form-control modern-input" name="nom_immo" value={formData.nom_immo} onChange={handleChange} required />
@@ -321,7 +327,7 @@ const fetchComptesAmortissements = async () => {
                                             <input type="date" className="form-control modern-input" name="date_acquisition" value={formData.date_acquisition} onChange={handleChange} required />
                                         </div>
                                         <div className="col-md-4">
-                                            <label className="label-modern">Valeur acquisition (CDF)</label>
+                                            <label className="label-modern">Valeur acquisition</label>
                                             <input type="number" step="0.01" className="form-control modern-input" name="valeur_acquisition" value={formData.valeur_acquisition} onChange={handleChange} required />
                                         </div>
                                         <div className="col-md-4">
@@ -354,8 +360,31 @@ const fetchComptesAmortissements = async () => {
                                             <input type="number" step="0.01" className="form-control modern-input" name="taux_amortissement" value={formData.taux_amortissement} onChange={handleChange} required />
                                         </div>
                                         <div className="col-md-4">
-                                            <label className="label-modern">Valeur résiduelle (CDF)</label>
+                                            <label className="label-modern">Valeur résiduelle </label>
                                             <input type="number" step="0.01" className="form-control modern-input" name="valeur_residuelle" value={formData.valeur_residuelle} onChange={handleChange} />
+                                        </div>
+                                        <div className="col-md-4">
+                                           
+    <label className="label-modern">Service / Affectation</label>
+    <select
+        className="modern-select w-100"
+        name="service_affectation"
+        value={formData.service_affectation}
+        onChange={handleChange}
+    >
+        <option value="">Sélectionner un service</option>
+        <option value="Direction">Direction</option>
+        <option value="Comptabilité">Comptabilité</option>
+        <option value="Ventes">Ventes</option>
+        <option value="Magasin">Magasin</option>
+        <option value="Informatique">Informatique</option>
+        <option value="Ressources Humaines">Ressources Humaines</option>
+        <option value="Logistique">Logistique</option>
+        <option value="Production">Production</option>
+        <option value="Marketing">Marketing</option>
+        <option value="Recherche & Développement">Recherche & Développement</option>
+    </select>
+
                                         </div>
                                         <div className="col-md-6">
                                             <label className="label-modern">Compte immobilisation</label>

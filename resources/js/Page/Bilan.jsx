@@ -289,26 +289,49 @@ const Bilan = () => {
             (sum, item) => sum + (item.soldeN1 || 0),
             0,
         );
-        // const totalN = data.reduce((sum, item) => sum + Math.abs(item.soldeFin || 0), 0);
-        // const totalN1 = data.reduce((sum, item) => sum + Math.abs(item.soldeN1 || 0), 0);
+        // const totalN = data.reduce(
+        //     (sum, item) => sum + Math.abs(item.soldeFin || 0),
+        //     0,
+        // );
+        // const totalN1 = data.reduce(
+        //     (sum, item) => sum + Math.abs(item.soldeN1 || 0),
+        //     0,
+        // );
 
         // Mode consolidé : regroupement par RefCadre (2 chiffres)
+        // Mode consolidé : regroupement par RefSousGroupe
         if (radioValue2 === "porte_groupee") {
-            const groupedByCadre = {};
+            const groupedBySousGroupe = {};
+
             data.forEach((item) => {
-                const cadre = item.RefCadre;
-                if (!groupedByCadre[cadre]) {
-                    groupedByCadre[cadre] = {
-                        RefCadre: cadre,
+                const sousGroupe =
+                    item.RefSousGroupe ||
+                    String(item.NumCompte).substring(0, 4) ||
+                    item.RefCadre;
+
+                if (!groupedBySousGroupe[sousGroupe]) {
+                    groupedBySousGroupe[sousGroupe] = {
+                        RefSousGroupe: sousGroupe,
+                        RefCadre: item.RefCadre,
                         NomCompte: item.NomCompte,
                         totalN: 0,
                         totalN1: 0,
                         items: [],
                     };
                 }
-                groupedByCadre[cadre].totalN += Math.abs(item.soldeFin || 0);
-                groupedByCadre[cadre].totalN1 += Math.abs(item.soldeN1 || 0);
-                groupedByCadre[cadre].items.push(item);
+
+                // groupedBySousGroupe[sousGroupe].totalN += Math.abs(
+                //     item.soldeFin || 0
+                // );
+
+                // groupedBySousGroupe[sousGroupe].totalN1 += Math.abs(
+                //     item.soldeN1 || 0
+                // );
+                groupedBySousGroupe[sousGroupe].totalN += item.soldeFin || 0;
+
+                groupedBySousGroupe[sousGroupe].totalN1 += item.soldeN1 || 0;
+
+                groupedBySousGroupe[sousGroupe].items.push(item);
             });
 
             return (
@@ -323,101 +346,130 @@ const Bilan = () => {
                     >
                         {title}
                     </h5>
+
                     <table
                         className="table table-bordered table-sm"
                         style={{ fontSize: "13px" }}
                     >
                         <thead style={{ background: "#dee2e6" }}>
                             <tr>
-                                <th style={{ width: "20%" }}>Classe</th>
+                                <th style={{ width: "20%" }}>Sous-groupe</th>
                                 <th>Libellé</th>
                                 <th className="text-end">Net (N)</th>
                                 <th className="text-end">Net (N-1)</th>
                             </tr>
                         </thead>
+
                         <tbody>
-                            {Object.values(groupedByCadre).map((group, idx) => {
-                                // Gestion spéciale pour la classe 39 (créances brutes + provision)
-                                if (group.RefCadre === "39") {
-                                    const solde39Brut =
-                                        group.items[0]?.solde39_brut || 0;
-                                    const solde38 =
-                                        group.items[0]?.solde38 || 0;
+                            {Object.values(groupedBySousGroupe).map(
+                                (group, idx) => {
+                                    // Cas spécial classe 39
+                                    if (group.RefCadre === "39") {
+                                        const solde39Brut =
+                                            group.items[0]?.solde39_brut || 0;
+
+                                        const solde38 =
+                                            group.items[0]?.solde38 || 0;
+
+                                        return (
+                                            <React.Fragment key={idx}>
+                                                <tr
+                                                    style={{
+                                                        background: "#f8f9fa",
+                                                        fontWeight: "bold",
+                                                    }}
+                                                >
+                                                    <td colSpan="2">
+                                                        Créances brutes (39)
+                                                    </td>
+
+                                                    <td className="text-end">
+                                                        {numberWithSpaces(
+                                                            solde39Brut,
+                                                        )}
+                                                    </td>
+
+                                                    <td className="text-end">
+                                                        -
+                                                    </td>
+                                                </tr>
+
+                                                <tr
+                                                    style={{
+                                                        background: "#f8f9fa",
+                                                        fontWeight: "bold",
+                                                    }}
+                                                >
+                                                    <td colSpan="2">
+                                                        Provision (38)
+                                                    </td>
+
+                                                    <td className="text-end">
+                                                        -{" "}
+                                                        {numberWithSpaces(
+                                                            solde38,
+                                                        )}
+                                                    </td>
+
+                                                    <td className="text-end">
+                                                        -
+                                                    </td>
+                                                </tr>
+
+                                                <tr
+                                                    style={{
+                                                        background: "#e9ecef",
+                                                        fontWeight: "bold",
+                                                    }}
+                                                >
+                                                    <td>
+                                                        {group.RefSousGroupe}
+                                                    </td>
+
+                                                    <td>{group.NomCompte}</td>
+
+                                                    <td className="text-end">
+                                                        {numberWithSpaces(
+                                                            group.totalN,
+                                                        )}
+                                                    </td>
+
+                                                    <td className="text-end">
+                                                        {numberWithSpaces(
+                                                            group.totalN1,
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            </React.Fragment>
+                                        );
+                                    }
+
                                     return (
-                                        <React.Fragment key={idx}>
-                                            <tr
-                                                style={{
-                                                    background: "#f8f9fa",
-                                                    fontWeight: "bold",
-                                                }}
-                                            >
-                                                <td colSpan="2">
-                                                    Créances brutes (39)
-                                                </td>
-                                                <td className="text-end">
-                                                    {numberWithSpaces(
-                                                        solde39Brut,
-                                                    )}
-                                                </td>
-                                                <td className="text-end">-</td>
-                                            </tr>
-                                            <tr
-                                                style={{
-                                                    background: "#f8f9fa",
-                                                    fontWeight: "bold",
-                                                }}
-                                            >
-                                                <td colSpan="2">
-                                                    Provision (38)
-                                                </td>
-                                                <td className="text-end">
-                                                    -{" "}
-                                                    {numberWithSpaces(solde38)}
-                                                </td>
-                                                <td className="text-end">-</td>
-                                            </tr>
-                                            <tr
-                                                style={{
-                                                    background: "#e9ecef",
-                                                    fontWeight: "bold",
-                                                }}
-                                            >
-                                                <td>{group.RefCadre}</td>
-                                                <td>{group.NomCompte}</td>
-                                                <td className="text-end">
-                                                    {numberWithSpaces(
-                                                        group.totalN,
-                                                    )}
-                                                </td>
-                                                <td className="text-end">
-                                                    {numberWithSpaces(
-                                                        group.totalN1,
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        </React.Fragment>
+                                        <tr
+                                            key={idx}
+                                            style={{
+                                                background: "#f8f9fa",
+                                                fontWeight: "bold",
+                                            }}
+                                        >
+                                            <td>{group.RefSousGroupe}</td>
+
+                                            <td>{group.NomCompte}</td>
+
+                                            <td className="text-end">
+                                                {numberWithSpaces(group.totalN)}
+                                            </td>
+
+                                            <td className="text-end">
+                                                {numberWithSpaces(
+                                                    group.totalN1,
+                                                )}
+                                            </td>
+                                        </tr>
                                     );
-                                }
-                                return (
-                                    <tr
-                                        key={idx}
-                                        style={{
-                                            background: "#f8f9fa",
-                                            fontWeight: "bold",
-                                        }}
-                                    >
-                                        <td>{group.RefCadre}</td>
-                                        <td>{group.NomCompte}</td>
-                                        <td className="text-end">
-                                            {numberWithSpaces(group.totalN)}
-                                        </td>
-                                        <td className="text-end">
-                                            {numberWithSpaces(group.totalN1)}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                            {/* LIGNE DE TOTAL AJOUTÉE */}
+                                },
+                            )}
+
                             <tr
                                 style={{
                                     background: "#2c3e50",
@@ -435,6 +487,7 @@ const Bilan = () => {
                                 >
                                     TOTAL {title.toUpperCase()} :
                                 </td>
+
                                 <td
                                     className="text-end"
                                     style={{
@@ -444,6 +497,7 @@ const Bilan = () => {
                                 >
                                     {numberWithSpaces(totalN)}
                                 </td>
+
                                 <td
                                     className="text-end"
                                     style={{
@@ -460,34 +514,57 @@ const Bilan = () => {
             );
         }
 
-        // Mode semi-détaillé : hiérarchie RefCadre → RefSousGroupe → comptes
+        // Mode semi-détaillé : Classe → Sous-groupe → Comptes
         const structure = {};
 
         data.forEach((item) => {
             const cadre = item.RefCadre;
-            const sousGroupe =
-                item.RefSousGroupe || item.NumCompte?.substring(0, 4) || "0000";
 
+            const sousGroupe =
+                item.RefSousGroupe ||
+                String(item.NumCompte).substring(0, 4) ||
+                "0000";
+
+            // Création du cadre
             if (!structure[cadre]) {
                 structure[cadre] = {
-                    nomCadre: item.NomCompte?.split(" - ")[0] || "",
+                    // nomCadre: item.NomCadre || item.NomCompte || "",
+                    nomCadre: item.NomCadre || "",
                     sousGroupes: {},
                 };
             }
+
+            // Création du sous-groupe
             if (!structure[cadre].sousGroupes[sousGroupe]) {
                 structure[cadre].sousGroupes[sousGroupe] = {
-                    nomSousGroupe: `Sous-groupe ${sousGroupe}`,
+                    codeSousGroupe: sousGroupe,
+
+                    nomSousGroupe:
+                        item.NomSousGroupe ||
+                        item.NomCompte ||
+                        `Sous-groupe ${sousGroupe}`,
+
                     totalN: 0,
                     totalN1: 0,
                     comptes: [],
                 };
             }
-            structure[cadre].sousGroupes[sousGroupe].totalN += Math.abs(
-                item.soldeFin || 0,
-            );
-            structure[cadre].sousGroupes[sousGroupe].totalN1 += Math.abs(
-                item.soldeN1 || 0,
-            );
+
+            // Totaux sous-groupe
+            // structure[cadre].sousGroupes[sousGroupe].totalN += Math.abs(
+            //     item.soldeFin || 0
+            // );
+
+            // structure[cadre].sousGroupes[sousGroupe].totalN1 += Math.abs(
+            //     item.soldeN1 || 0
+            // );
+            structure[cadre].sousGroupes[sousGroupe].totalN +=
+                item.soldeFin || 0;
+
+            structure[cadre].sousGroupes[sousGroupe].totalN1 +=
+                item.soldeN1 || 0;
+
+            // Comptes
             structure[cadre].sousGroupes[sousGroupe].comptes.push(item);
         });
 
@@ -505,6 +582,7 @@ const Bilan = () => {
                 >
                     {title}
                 </h5>
+
                 <table
                     className="table table-bordered table-sm"
                     style={{ fontSize: "13px" }}
@@ -517,15 +595,18 @@ const Bilan = () => {
                             <th className="text-end">Net (N-1)</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         {sortedCadres.map((cadre) => {
                             const cadreData = structure[cadre];
+
                             const sousGroupesSorted = Object.keys(
                                 cadreData.sousGroupes,
                             ).sort();
 
                             return (
                                 <React.Fragment key={cadre}>
+                                    {/* CADRE */}
                                     <tr
                                         style={{
                                             background: "#d1d5db",
@@ -534,15 +615,19 @@ const Bilan = () => {
                                     >
                                         <td
                                             colSpan="4"
-                                            style={{ fontSize: "1.05rem" }}
+                                            style={{
+                                                fontSize: "1.05rem",
+                                            }}
                                         >
                                             {cadre} - {cadreData.nomCadre}
                                         </td>
                                     </tr>
 
+                                    {/* SOUS-GROUPES */}
                                     {sousGroupesSorted.map((sg) => {
                                         const sgData =
                                             cadreData.sousGroupes[sg];
+
                                         return (
                                             <React.Fragment key={sg}>
                                                 <tr
@@ -556,8 +641,9 @@ const Bilan = () => {
                                                             paddingLeft: "20px",
                                                         }}
                                                     >
-                                                        {sg}
+                                                        {sgData.codeSousGroupe}
                                                     </td>
+
                                                     <td
                                                         style={{
                                                             paddingLeft: "20px",
@@ -565,19 +651,36 @@ const Bilan = () => {
                                                     >
                                                         {sgData.nomSousGroupe}
                                                     </td>
+
                                                     <td className="text-end">
                                                         {numberWithSpaces(
                                                             sgData.totalN,
                                                         )}
                                                     </td>
+
                                                     <td className="text-end">
                                                         {numberWithSpaces(
                                                             sgData.totalN1,
                                                         )}
                                                     </td>
                                                 </tr>
-                                                {sgData.comptes.map(
-                                                    (compte, idx) => (
+
+                                                {/* COMPTES */}
+                                                {sgData.comptes
+                                                    .filter((compte) => {
+                                                        // Éviter d'afficher le compte parent
+                                                        // déjà utilisé comme sous-groupe
+
+                                                        return (
+                                                            String(
+                                                                compte.NumCompte,
+                                                            ) !==
+                                                            String(
+                                                                sgData.codeSousGroupe,
+                                                            )
+                                                        );
+                                                    })
+                                                    .map((compte, idx) => (
                                                         <tr key={idx}>
                                                             <td
                                                                 style={{
@@ -589,6 +692,7 @@ const Bilan = () => {
                                                                     compte.NumCompte
                                                                 }
                                                             </td>
+
                                                             <td
                                                                 style={{
                                                                     paddingLeft:
@@ -599,12 +703,14 @@ const Bilan = () => {
                                                                     compte.NomCompte
                                                                 }
                                                             </td>
+
                                                             <td className="text-end">
                                                                 {numberWithSpaces(
                                                                     compte.soldeFin ||
                                                                         0,
                                                                 )}
                                                             </td>
+
                                                             <td className="text-end">
                                                                 {numberWithSpaces(
                                                                     compte.soldeN1 ||
@@ -612,15 +718,15 @@ const Bilan = () => {
                                                                 )}
                                                             </td>
                                                         </tr>
-                                                    ),
-                                                )}
+                                                    ))}
                                             </React.Fragment>
                                         );
                                     })}
                                 </React.Fragment>
                             );
                         })}
-                        {/* LIGNE DE TOTAL AJOUTÉE */}
+
+                        {/* TOTAL */}
                         <tr
                             style={{
                                 background: "#2c3e50",
@@ -631,19 +737,30 @@ const Bilan = () => {
                         >
                             <td
                                 colSpan="2"
-                                style={{ textAlign: "right", fontSize: "14px" }}
+                                style={{
+                                    textAlign: "right",
+                                    fontSize: "14px",
+                                }}
                             >
                                 TOTAL {title.toUpperCase()} :
                             </td>
+
                             <td
                                 className="text-end"
-                                style={{ fontSize: "14px", fontWeight: "bold" }}
+                                style={{
+                                    fontSize: "14px",
+                                    fontWeight: "bold",
+                                }}
                             >
                                 {numberWithSpaces(totalN)}
                             </td>
+
                             <td
                                 className="text-end"
-                                style={{ fontSize: "14px", fontWeight: "bold" }}
+                                style={{
+                                    fontSize: "14px",
+                                    fontWeight: "bold",
+                                }}
                             >
                                 {numberWithSpaces(totalN1)}
                             </td>
@@ -988,103 +1105,72 @@ const Bilan = () => {
                                     </div>
                                 </div>
 
-                                {/* Égalité fondamentale du bilan */}
-                                {/* <div className="row mt-3">
-                                    <div className="col-12">
-                                        <div
-                                            className="card border-0 shadow-sm rounded-3"
-                                            style={{
-                                                background:
-                                                    Math.abs(
-                                                        totalActif -
-                                                            totalPassif,
-                                                    ) < 0.01
-                                                        ? "rgba(40,167,69,0.1)"
-                                                        : "rgba(220,53,69,0.1)",
-                                            }}
-                                        >
-                                            <div className="card-body text-center">
-                                                <h5 className="fw-bold mb-0">
-                                                    ÉGALITÉ FONDAMENTALE DU
-                                                    BILAN :
-                                                    <span
-                                                        className={
-                                                            Math.abs(
-                                                                totalActif -
-                                                                    totalPassif,
-                                                            ) < 0.01
-                                                                ? "text-success ms-2"
-                                                                : "text-danger ms-2"
-                                                        }
-                                                    >
-                                                        ACTIF = PASSIF
-                                                    </span>
-                                                </h5>
-                                                <small className="text-muted">
-                                                    Total Actif:{" "}
-                                                    {numberWithSpaces(
-                                                        totalActif,
-                                                    )}{" "}
-                                                    {devise} | Total Passif:{" "}
-                                                    {numberWithSpaces(
-                                                        totalPassif,
-                                                    )}{" "}
-                                                    {devise}
-                                                    {Math.abs(
-                                                        totalActif -
-                                                            totalPassif,
-                                                    ) > 0.01 && (
-                                                        <span className="text-warning ms-2">
-                                                            (Différence:{" "}
+                                {/* Égalité fondamentale calculée directement depuis les données */}
+                                {(() => {
+                                    const totalActifReel = fetchActif.reduce(
+                                        (acc, item) =>
+                                            acc + (item.soldeFin || 0),
+                                        0,
+                                    );
+                                    const totalPassifReel = fetchPassif.reduce(
+                                        (acc, item) =>
+                                            acc + (item.soldeFin || 0),
+                                        0,
+                                    );
+                                    const difference =
+                                        totalActifReel - totalPassifReel;
+                                    const isEquilibrated =
+                                        Math.abs(difference) < 0.01;
+
+                                    return (
+                                        <div className="row mt-3">
+                                            <div className="col-12">
+                                                <div
+                                                    className="card border-0 shadow-sm rounded-3"
+                                                    style={{
+                                                        background:
+                                                            isEquilibrated
+                                                                ? "rgba(40,167,69,0.1)"
+                                                                : "rgba(220,53,69,0.1)",
+                                                    }}
+                                                >
+                                                    <div className="card-body text-center">
+                                                        <h5 className="fw-bold mb-0">
+                                                            ÉGALITÉ FONDAMENTALE
+                                                            DU BILAN :
+                                                            <span
+                                                                className={`ms-2 ${isEquilibrated ? "text-success" : "text-danger"}`}
+                                                            >
+                                                                ACTIF = PASSIF
+                                                            </span>
+                                                        </h5>
+                                                        <small className="text-muted">
+                                                            Total Actif:{" "}
                                                             {numberWithSpaces(
-                                                                Math.abs(
-                                                                    totalActif -
-                                                                        totalPassif,
-                                                                ),
+                                                                totalActifReel,
+                                                            )}{" "}
+                                                            {devise} | Total
+                                                            Passif:{" "}
+                                                            {numberWithSpaces(
+                                                                totalPassifReel,
+                                                            )}{" "}
+                                                            {devise}
+                                                            {!isEquilibrated && (
+                                                                <span className="text-warning ms-2">
+                                                                    (Différence:{" "}
+                                                                    {numberWithSpaces(
+                                                                        difference,
+                                                                    )}
+                                                                    )
+                                                                </span>
                                                             )}
-                                                            )
-                                                        </span>
-                                                    )}
-                                                </small>
+                                                        </small>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div> */}
-                                {/* Égalité fondamentale calculée directement depuis les données */}
-{(() => {
-    const totalActifReel = fetchActif.reduce((acc, item) => acc + (item.soldeFin || 0), 0);
-    const totalPassifReel = fetchPassif.reduce((acc, item) => acc + (item.soldeFin || 0), 0);
-    const difference = totalActifReel - totalPassifReel;
-    const isEquilibrated = Math.abs(difference) < 0.01;
-
-    return (
-        <div className="row mt-3">
-            <div className="col-12">
-                <div className="card border-0 shadow-sm rounded-3" style={{
-                    background: isEquilibrated ? "rgba(40,167,69,0.1)" : "rgba(220,53,69,0.1)"
-                }}>
-                    <div className="card-body text-center">
-                        <h5 className="fw-bold mb-0">
-                            ÉGALITÉ FONDAMENTALE DU BILAN :
-                            <span className={`ms-2 ${isEquilibrated ? "text-success" : "text-danger"}`}>
-                                ACTIF = PASSIF
-                            </span>
-                        </h5>
-                        <small className="text-muted">
-                            Total Actif: {numberWithSpaces(totalActifReel)} {devise} |
-                            Total Passif: {numberWithSpaces(totalPassifReel)} {devise}
-                            {!isEquilibrated && (
-                                <span className="text-warning ms-2">
-                                    (Différence: {numberWithSpaces(difference)})
-                                </span>
-                            )}
-                        </small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-})()}
+                                    );
+                                })()}
                             </div>
                         </div>
                     </div>

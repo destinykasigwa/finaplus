@@ -788,7 +788,7 @@ class SuiviCreditController extends Controller
             $dateOctroie = $DateOctroi;
             $dates = array($DateTombeEcheance);
             $NbrTranche = $data->NbrTranche + 1;
-            for ($i = 1; $i < $NbrTranche; $i++) {
+            for ($i = 2; $i < $NbrTranche; $i++) {
                 $NewDate = date('Y-m-d', strtotime("+" . $i . "month", strtotime("$dateOctroie")));
                 $dates[] = $NewDate;
             }

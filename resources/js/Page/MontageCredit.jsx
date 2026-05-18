@@ -1890,7 +1890,7 @@ const MontageCredit = () => {
                                                             fontWeight: "500",
                                                         }}
                                                     >
-                                                        Durée (mois)
+                                                        Durée (jrs)
                                                     </label>
                                                 </td>
                                                 <td style={{ padding: "8px" }}>
@@ -2886,13 +2886,13 @@ const MontageCredit = () => {
                                                                         >
                                                                             <input
                                                                                 type="text"
-                                                                                className={`form-control form-control-sm modern-input ${error?.MontantAccorde ? "is-invalid" : ""}`}
+                                                                                className={`form-control modern-input ${error?.MontantAccorde ? "is-invalid" : ""}`}
                                                                                 style={{
                                                                                     background:
                                                                                         error?.MontantAccorde
                                                                                             ? "#dc3545"
                                                                                             : "#20c997",
-                                                                                    color: "white",
+                                                                                    color: "black",
                                                                                     fontWeight:
                                                                                         "bold",
                                                                                     fontSize:

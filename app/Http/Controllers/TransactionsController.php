@@ -5204,4 +5204,9 @@ class TransactionsController extends Controller
 
         return response()->json(["status" => 1, "data" => $data, "type_recu" => $type_recu]);
     }
+
+
+
+
+
 }

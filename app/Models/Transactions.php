@@ -95,4 +95,6 @@ class Transactions extends Model
         "is_system",
         "RefEcheance"
     ];
+
+    protected $primaryKey = 'RefTransaction';
 }

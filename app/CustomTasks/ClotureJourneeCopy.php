@@ -2482,8 +2482,7 @@ class ClotureJourneeCopy
                 "refCompteMembre" => $refCompteMembre,
                 "RefEcheance" => $RefEcheance
             ]);
-
-            $NumTransaction = $this->generateTransactionNumber();
+            // $NumTransaction = $this->generateTransactionNumber();
 
 
             //CREDITE LE COMPTE CREDIT COMPTABLE (MISE A PAUSE)

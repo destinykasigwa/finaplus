@@ -22,7 +22,9 @@ class Agences extends Model
          "compte_caisse_usd",
          "compte_caisse_cdf",
          "repport_a_nouveau_cdf",
-         "repport_a_nouveau_usd"
+         "repport_a_nouveau_usd",
+         "compte_charge_amortissement_cdf",
+         "compte_charge_amortissement_usd"
 
     ];
 

@@ -1007,64 +1007,69 @@ const Comptes = () => {
         });
     };
 
-    // const exportTableData = (tableId) => {
-    //     const s2ab = (s) => {
-    //         const buf = new ArrayBuffer(s.length);
-    //         const view = new Uint8Array(buf);
-    //         for (let i = 0; i !== s.length; ++i)
-    //             view[i] = s.charCodeAt(i) & 0xff;
-    //         return buf;
-    //     };
 
-    //     const table = document.getElementById(tableId);
-    //     const wb = XLSX.utils.table_to_book(table);
-    //     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "binary" });
-    //     const fileName = `table_${tableId}.xlsx`;
-    //     saveAs(
-    //         new Blob([s2ab(wbout)], { type: "application/octet-stream" }),
-    //         fileName
-    //     );
-    // };
-    // const exportToPDF = () => {
-    //     const content = document.getElementById("content-to-download-balance");
+    //PERMET DE LANCER LES ECRITURES D'AMMORTISEMENT AUTOMATIQUE
 
-    //     if (!content) {
-    //         console.error("Element not found!");
-    //         return;
-    //     }
+     const AmmortissementAutomatiqueBtn = async (e) => {
+        e.preventDefault();
+        setchargement(true);
+        Swal.fire({
+            title: "Confirmation !",
+            text: "Etes vous sûr de vouloir lancer les écritures d'artissement des immos ?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Oui Clotûrer!",
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                Swal.fire(
+                    "Confirmation!",
+                    "les écritutes sont generées en arrière-plan, veuillez patienter.",
+                    "success",
+                ).then(async function () {
+                    try {
+                        const res = await axios.post(
+                            "/eco/immo/amortissement",
+                        );
+                        if (res.data.status === 1) {
+                            setchargement(false);
+                            Swal.fire({
+                                title: "Succès",
+                                text: res.data.msg,
+                                icon: "success",
+                                timer: 8000,
+                                confirmButtonText: "Okay",
+                            });
+                        } else {
+                            Swal.fire({
+                                title: "Erreur",
+                                text: res.data.msg,
+                                icon: "error",
+                                timer: 8000,
+                                confirmButtonText: "Okay",
+                            });
+                        }
+                    } catch (error) {
+                        setchargement(false);
+                        Swal.fire({
+                            title: "Erreur",
+                            text: "Une erreur est survenue pendant la clotûre annuelle.",
+                            icon: "error",
+                            timer: 8000,
+                            confirmButtonText: "Okay",
+                        });
+                        console.error(error);
+                    } finally {
+                        setchargement(false);
+                    }
+                });
+            } else {
+                setchargement(false);
+            }
+        });
+    };
 
-    //     html2canvas(content, { scale: 3 }).then((canvas) => {
-    //         const paddingTop = 50;
-    //         const paddingRight = 50;
-    //         const paddingBottom = 50;
-    //         const paddingLeft = 50;
-
-    //         const canvasWidth = canvas.width + paddingLeft + paddingRight;
-    //         const canvasHeight = canvas.height + paddingTop + paddingBottom;
-
-    //         const newCanvas = document.createElement("canvas");
-    //         newCanvas.width = canvasWidth;
-    //         newCanvas.height = canvasHeight;
-    //         const ctx = newCanvas.getContext("2d");
-
-    //         if (ctx) {
-    //             ctx.fillStyle = "#ffffff"; // Background color
-    //             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    //             ctx.drawImage(canvas, paddingLeft, paddingTop);
-    //         }
-
-    //         const pdf = new jsPDF("p", "mm", "a4");
-    //         const imgData = newCanvas.toDataURL("image/png");
-    //         const imgProps = pdf.getImageProperties(imgData);
-    //         const pdfWidth = pdf.internal.pageSize.getWidth();
-    //         const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-    //         pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    //         pdf.autoPrint();
-    //         window.open(pdf.output("bloburl"), "_blank");
-    //         // pdf.save("releve-de-compte.pdf");
-    //     });
-    // };
 
     const downloadReport = (type) => {
         setchargement(true);
@@ -6125,8 +6130,9 @@ const Comptes = () => {
                                                     procéder à la clôture
                                                 </div>
                                             </div>
-
-                                            <button
+                                            <div className="row">
+                                              <div className="col-md-12">
+                                               <button
                                                 onClick={clotureAnuelle}
                                                 className="btn btn-danger px-5 py-2 fw-bold"
                                                 style={{
@@ -6150,6 +6156,35 @@ const Comptes = () => {
                                                 <i className="fas fa-lock me-2"></i>
                                                 Clôturer l'exercice
                                             </button>
+                                              </div>
+                                              <div className="col-md-12 mt-5">
+                                                 <button
+                                                onClick={AmmortissementAutomatiqueBtn}
+                                                className="btn btn-danger px-5 py-2 fw-bold"
+                                                style={{
+                                                    borderRadius: "10px",
+                                                    transition: "all 0.3s ease",
+                                                    fontSize: "16px",
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.transform =
+                                                        "translateY(-2px)";
+                                                    e.currentTarget.style.boxShadow =
+                                                        "0 6px 16px rgba(220, 53, 69, 0.3)";
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.transform =
+                                                        "translateY(0)";
+                                                    e.currentTarget.style.boxShadow =
+                                                        "none";
+                                                }}
+                                            >
+                                                 <i className="fas fa-charging-station me-2"></i>
+                                                Lancer les écritures d'ammortissement
+                                            </button>
+                                              </div>
+                                            </div>
+                                           
 
                                             <hr className="my-4" />
 
@@ -6185,7 +6220,8 @@ const Comptes = () => {
                                                         Les états financiers
                                                         sont vérifiés
                                                     </li>
-                                                </ul>
+                                                </ul> 
+                                                
                                             </div>
                                         </div>
                                     </div>

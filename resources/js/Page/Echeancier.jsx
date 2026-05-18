@@ -949,8 +949,8 @@ const Echeancier = () => {
             </tr>
             <tr>
               <td className="fw-bold text-secondary">Total à payer :</td>
-              <td className="fw-bold text-white bg-success rounded px-2 py-0" style={{ fontSize: "0.85rem" }}>
-                {numberFormat(parseFloat(fetchEcheancier[0]?.MontantAccorde) + parseFloat(fetchSommeInteret?.sommeInteret))}
+              <td className="fw-bold text-white" style={{ fontSize: "0.95rem" }}>
+                <span className="bg-success p-1 rounded px-2 py-0">{numberFormat(parseFloat(fetchEcheancier[0]?.MontantAccorde) + parseFloat(fetchSommeInteret?.sommeInteret))}</span> 
               </td>
             </tr>
           </tbody>

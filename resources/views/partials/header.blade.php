@@ -562,30 +562,27 @@
                         </a>
                     </li>
 
-                    <li class="nav-item">
-                        <a href="{{ route('eco.pages.sms-banking') }}" class="nav-link">
-                            <i class="fas fa-sms me-1"></i> SMS Banking
+                  
+
+                    <li class="nav-item dropdown">
+
+                        <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-money-bill-wave me-1"></i> Immo
                         </a>
+                        <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
+
+                            <a class="dropdown-item" href="{{ route('eco.pages.enregistrement-imo') }}">
+                                <i class="fas fa-plus-circle me-2"></i> Ajouter
+                            </a>
+
+                            <a class="dropdown-item" href="{{ route('eco.pages.rapport-immo') }}">
+                                <i class="fas fa-chart-line me-2"></i>Tableau d'ammortissement
+                            </a>
+
+                        </div>
                     </li>
 
-                     <li class="nav-item dropdown">
-
-                            <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-money-bill-wave me-1"></i> Immo
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
-
-                                <a class="dropdown-item" href="{{ route('eco.pages.enregistrement-imo') }}">
-                                    <i class="fas fa-charging-station me-2"></i>Ajouter
-                                </a>
-
-                                <a class="dropdown-item" href="">
-                                    <i class="fas fa-door-open me-2"></i>Tableau d'ammortissement
-                                </a>
-
-                            </div>
-                        </li>
 
                     {{-- <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="rapportDropdown"
@@ -669,6 +666,40 @@
                             <a class="dropdown-item" href="{{ route('eco.pages.repertoire') }}">
                                 <i class="fas fa-address-book me-2"></i>Répertoire C
                             </a>
+                        </div>
+                    </li>
+
+                    
+                    <li class="nav-item dropdown">
+
+                        <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+
+                            <i class="fas fa-ellipsis-h me-1"></i> PLUS
+
+                        </a>
+
+                        <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
+
+                            <a class="dropdown-item" href="{{ route('eco.pages.paiment-batch') }}">
+
+                                <i class="fas fa-plus-circle me-2"></i>
+                                Ajouter un paiement
+
+                            </a>
+
+                            <a class="dropdown-item" href="">
+
+                                <i class="fas fa-chart-line me-2"></i>
+                                Rapport paiement
+
+                            </a>
+                          
+                        <a class="dropdown-item" href="{{ route('eco.pages.sms-banking') }}" >
+                            <i class="fas fa-sms me-1"></i> SMS Banking
+                        </a>
+                    
+
                         </div>
                     </li>
                 </ul>

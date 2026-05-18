@@ -1376,6 +1376,39 @@ class ReportsController extends Controller
     }
 
 
+
+    private function getNomCadre($refCadre)
+    {
+        return match ($refCadre) {
+            '10' => 'CAPITAUX PROPRES',
+            '12' => 'REPORT A NOUVEAU',
+            '13' => 'RESULTAT NET',
+            '15' => 'SUBVENTIONS D’EQUIPEMENT',
+
+            '20' => 'IMMOBILISATIONS INCORPORELLES',
+            '21' => 'TERRAINS ET BATIMENTS',
+            '22' => 'AUTRES IMMOBILISATIONS CORPORELLES',
+            '23' => 'IMMOBILISATIONS EN COURS',
+            '24' => 'IMMOBILISATIONS FINANCIERES',
+
+            '30' => 'STOCKS',
+            '31' => 'MARCHANDISES',
+            '32' => 'CREDITS A COURT TERME',
+            '33' => 'EPARGNE A VUE',
+
+            '38' => 'PROVISIONS',
+            '39' => 'CREANCES DOUTEUSES',
+
+            '45' => 'LIAISON INTER-AGENCE',
+            '47' => 'COMPTES DE REGULARISATION',
+
+            '56' => 'BANQUES',
+            '57' => 'CAISSE',
+
+            default => 'AUTRES',
+        };
+    }
+
     //GET BILAN REPORTS 
 
     public function getBilanCompte(Request $request)
@@ -1408,6 +1441,8 @@ class ReportsController extends Controller
         $creditCol = $devise === 'USD' ? 'Creditusd' : 'Creditfc';
         $monnaieValue = $devise === 'USD' ? 1 : 2;
 
+
+
         // Provision 38
         $provision38 = DB::table('transactions as t')
             ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
@@ -1432,24 +1467,66 @@ class ReportsController extends Controller
             )
             ->groupBy('c.compte_parent');
 
-        // ==================== ACTIF ====================
+        // ==================== ACTIF (hors immobilisations brutes et amortissements) ====================
+        // On exclut les comptes dont les 2 premiers chiffres sont 20,21,22,23,24,28 (immobilisations brutes et amortissements)
+        // $excludePrefixes = ['20', '21', '22', '23', '24', '28'];
+        $correspondance = [
+            '2200'  => '2822',   // Immeubles d'exploitation
+            '2230' => '28230',  // Matériel roulant
+            '2231' => '28231',  // Matériel informatique
+            '2232' => '28232',  // Matériel de bureau
+            '2233' => '28233',  // Autres matériels
+            '2234' => '28234',  // Mobilier de bureau
+            '2235' => '28235',  // Autres mobiliers
+        ];
         $actifData = DB::table('comptes as c')
             ->leftJoinSub($subQuery, 's', 'c.NumCompte', '=', 's.compte_parent')
             ->select(
                 'c.NumCompte',
-                DB::raw("MAX(c.NomCompte) as NomCompte"), // agrégation pour éviter doublon
+                DB::raw("MAX(c.NomCompte) as NomCompte"),
                 'c.RefCadre',
                 'c.RefGroupe',
                 'c.RefSousGroupe',
                 'c.RefTypeCompte',
                 'c.nature_compte',
                 DB::raw("MAX(COALESCE(s.soldeDebut, 0)) as soldeDebut"),
-                DB::raw("MAX(COALESCE(s.soldeFin, 0)) as soldeFin")
+                DB::raw("MAX(COALESCE(s.soldeFin, 0)) as soldeFin"),
+                DB::raw("
+                    CASE c.RefCadre
+                        WHEN '10' THEN 'CAPITAUX PROPRES'
+                        WHEN '12' THEN 'REPORT A NOUVEAU'
+                        WHEN '13' THEN 'RESULTAT NET'
+                        WHEN '15' THEN 'SUBVENTIONS D’EQUIPEMENT'
+
+                        WHEN '20' THEN 'IMMOBILISATIONS INCORPORELLES'
+                        WHEN '21' THEN 'TERRAINS ET BATIMENTS'
+                        WHEN '22' THEN 'AUTRES IMMOBILISATIONS CORPORELLES'
+                        WHEN '23' THEN 'IMMOBILISATIONS EN COURS'
+                        WHEN '24' THEN 'IMMOBILISATIONS FINANCIERES'
+
+                        WHEN '30' THEN 'STOCKS'
+                        WHEN '31' THEN 'MARCHANDISES'
+                        WHEN '32' THEN 'CREDITS A COURT TERME'
+                        WHEN '33' THEN 'EPARGNE A VUE'
+
+                        WHEN '38' THEN 'PROVISIONS'
+                        WHEN '39' THEN 'CREANCES DOUTEUSES'
+
+                        WHEN '45' THEN 'LIAISON INTER-AGENCE'
+                        WHEN '47' THEN 'COMPTES DE REGULARISATION'
+
+                        WHEN '56' THEN 'BANQUES'
+                        WHEN '57' THEN 'CAISSE'
+
+                        ELSE 'AUTRES'
+                    END as NomCadre
+                "),
             )
             ->where('c.niveau', 4)
             ->where('c.est_classe', 1)
             ->where('c.nature_compte', 'ACTIF')
             ->where('c.RefCadre', '!=', '45')
+            ->whereNotIn('c.NumCompte', array_keys($correspondance))  // 🔥 exclut les comptes bruts
             ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
             ->groupBy('c.NumCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe', 'c.RefTypeCompte', 'c.nature_compte')
             ->orderBy('c.RefCadre')
@@ -1457,7 +1534,48 @@ class ReportsController extends Controller
             ->orderBy('c.RefSousGroupe')
             ->get();
 
-        // Total 39 brut
+        // ==================== GESTION DES IMMOBILISATIONS NETTES ====================
+
+        $immobilisationsNettes = collect();
+
+        foreach ($correspondance as $brutNum => $amortNum) {
+            // Solde du compte d'immobilisation brute (niveau 4)
+            $brut = DB::table('comptes as c')
+                ->leftJoinSub($subQuery, 's', 'c.NumCompte', '=', 's.compte_parent')
+                ->where('c.NumCompte', $brutNum)
+                ->where('c.niveau', 4)
+                ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+                ->value(DB::raw("COALESCE(s.soldeFin, 0)"));
+
+            // Solde du compte d'amortissement cumulé (niveau 5)
+            $amort = DB::table('comptes as c')
+                ->leftJoinSub($subQuery, 's', 'c.NumCompte', '=', 's.compte_parent')
+                ->where('c.NumCompte', $amortNum)
+                ->where('c.niveau', 5)
+                ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+                ->value(DB::raw("COALESCE(s.soldeFin, 0)"));
+
+            // Valeur nette = brut - amort (car amort est négatif dans la sous-requête)
+            $net = $brut - $amort;   // on force la valeur absolue
+            $nom = Comptes::where('NumCompte', $brutNum)->value('NomCompte') ?? $brutNum;
+           
+                $immobilisationsNettes->push((object)[
+                    'NumCompte' => (string) $brutNum,
+                    'NomCompte' => $nom,
+                    'NomCadre' => $this->getNomCadre(substr($brutNum, 0, 2)),
+                    'RefCadre' => substr($brutNum, 0, 2),
+                    'soldeDebut' => 0,
+                    'soldeFin' => $net,   // toujours positif
+                    'nature_compte' => 'ACTIF',
+                ]);
+            
+        }
+
+        // Ajouter les immobilisations nettes à l'actif
+        $actifData = $actifData->merge($immobilisationsNettes)->sortBy('NumCompte')->values();
+
+
+        // ==================== COMPTE 39 ====================
         $total39 = DB::table('transactions as t')
             ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
             ->where('c.RefCadre', '39')
@@ -1465,9 +1583,11 @@ class ReportsController extends Controller
             ->where('t.CodeMonnaie', $monnaieValue)
             ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
             ->value(DB::raw("COALESCE(SUM(t.$debitCol - t.$creditCol), 0)"));
-
+       $provision38_brut=$provision38->total38;
+       $solde39_brut=$total39;
         $provision = abs($provision38->total38 ?? 0);
         $solde39_net = $total39 - $provision;
+        
 
         // Supprimer les anciennes lignes 39 (venues de la requête) et ajouter la ligne consolidée
         $actifData = collect($actifData)->reject(fn($item) => $item->RefCadre == '39')->values();
@@ -1476,17 +1596,16 @@ class ReportsController extends Controller
             'NumCompte'      => '39',
             'NomCompte'      => 'Créances douteuses ou litigieuses (NET)',
             'RefCadre'       => '39',
+            'NomCadre'       => $this->getNomCadre('39'),
             'RefGroupe'      => null,
             'RefSousGroupe'  => null,
             'RefTypeCompte'  => '3',
             'nature_compte'  => 'ACTIF',
             'soldeDebut'     => 0,
-            'soldeFin'       => $solde39_net,          // net = brut - provision
-            // ⬇️ Ajout des deux champs attendus par le front
-            'solde39_brut'   => $total39,              // brut des comptes 39
-            'solde38'        => $provision,            // provision (38) en valeur positive
+            'soldeFin'       => $solde39_net,
+            'solde38'=>$provision38_brut,
+            'solde39_brut'=>$solde39_brut,
         ];
-
         $actifData->push($ligne39);
         $actifData = $actifData->sortBy('NumCompte')->values();
 
@@ -1501,14 +1620,46 @@ class ReportsController extends Controller
                 'c.RefSousGroupe',
                 'c.RefTypeCompte',
                 'c.nature_compte',
-                DB::raw("MAX(COALESCE(-s.soldeDebut, 0)) as soldeDebut"),   // ← signe inversé
-                DB::raw("MAX(COALESCE(-s.soldeFin, 0)) as soldeFin")         // ← signe inversé
+                DB::raw("MAX(COALESCE(-s.soldeDebut, 0)) as soldeDebut"),
+                DB::raw("MAX(COALESCE(-s.soldeFin, 0)) as soldeFin"),
+                DB::raw("
+                        CASE c.RefCadre
+                            WHEN '10' THEN 'CAPITAUX PROPRES'
+                            WHEN '12' THEN 'REPORT A NOUVEAU'
+                            WHEN '13' THEN 'RESULTAT NET'
+                            WHEN '15' THEN 'SUBVENTIONS D’EQUIPEMENT'
+
+                            WHEN '20' THEN 'IMMOBILISATIONS INCORPORELLES'
+                            WHEN '21' THEN 'TERRAINS ET BATIMENTS'
+                            WHEN '22' THEN 'AUTRES IMMOBILISATIONS CORPORELLES'
+                            WHEN '23' THEN 'IMMOBILISATIONS EN COURS'
+                            WHEN '24' THEN 'IMMOBILISATIONS FINANCIERES'
+
+                            WHEN '30' THEN 'STOCKS'
+                            WHEN '31' THEN 'MARCHANDISES'
+                            WHEN '32' THEN 'CREDITS A COURT TERME'
+                            WHEN '33' THEN 'EPARGNE A VUE'
+
+                            WHEN '38' THEN 'PROVISIONS'
+                            WHEN '39' THEN 'CREANCES DOUTEUSES'
+
+                            WHEN '45' THEN 'LIAISON INTER-AGENCE'
+                            WHEN '47' THEN 'COMPTES DE REGULARISATION'
+
+                            WHEN '56' THEN 'BANQUES'
+                            WHEN '57' THEN 'CAISSE'
+
+                            ELSE 'AUTRES'
+                        END as NomCadre
+                    "),
+
             )
             ->where('c.niveau', 4)
             ->where('c.est_classe', 1)
             ->where('c.nature_compte', 'PASSIF')
             ->where('c.RefCadre', '!=', '38')
             ->where('c.RefCadre', '!=', '45')
+            ->whereNotIn(DB::raw("SUBSTRING(c.NumCompte, 1, 2)"), ['28']) // exclut les comptes 28
             ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
             ->groupBy('c.NumCompte', 'c.RefCadre', 'c.RefGroupe', 'c.RefSousGroupe', 'c.RefTypeCompte', 'c.nature_compte')
             ->orderBy('c.RefCadre')
@@ -1516,7 +1667,7 @@ class ReportsController extends Controller
             ->orderBy('c.RefSousGroupe')
             ->get();
 
-        // Résultat (Produit - Charge)
+        // Résultat net
         $resultat = DB::table('transactions as t')
             ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
             ->where('t.CodeMonnaie', $monnaieValue)
@@ -1535,25 +1686,20 @@ class ReportsController extends Controller
             $passifData->push((object)[
                 'NumCompte'     => $estBenefice ? '131' : '139',
                 'NomCompte'     => $estBenefice ? 'RESULTAT NET : BENEFICE' : 'RESULTAT NET : PERTE',
+                'NomCadre'       => $this->getNomCadre('13'),
                 'RefCadre'      => '13',
                 'nature_compte' => 'PASSIF',
                 'soldeFin'      => $soldeResultat,
             ]);
         }
 
-
-
-
-        $totalActif = $actifData->sum('soldeFin');
-        $totalPassif = $passifData->sum('soldeFin');
-
-        // Calcul direct du solde des comptes de liaison (RefCadre = 45) selon la convention passif (crédit - débit)
+        // Compte de liaison 45
         $liaisonQuery = DB::table('transactions as t')
             ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
             ->where('c.RefCadre', '45')
-            ->where('c.niveau', 5) // ne prendre que les comptes individuels de liaison (niveau 5)
+            ->where('c.niveau', 5)
             ->where('t.CodeMonnaie', $monnaieValue)
-            ->where('t.DateTransaction', '<=', $date2) // solde à la date de fin
+            ->where('t.DateTransaction', '<=', $date2)
             ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
             ->selectRaw("COALESCE(SUM(t.$creditCol - t.$debitCol), 0) as solde")
             ->first();
@@ -1564,6 +1710,7 @@ class ReportsController extends Controller
             $ligneLiaison = (object)[
                 'NumCompte' => '45',
                 'NomCompte' => 'COMPTE DE LIAISON INTER-AGENCE',
+                'NomCadre'       => $this->getNomCadre('45'),
                 'RefCadre' => '45',
                 'RefGroupe' => null,
                 'RefSousGroupe' => null,
@@ -1580,6 +1727,10 @@ class ReportsController extends Controller
             }
         }
 
+        // Totaux
+        $totalActif = $actifData->sum('soldeFin');
+        $totalPassif = $passifData->sum('soldeFin');
+
         return response()->json([
             "status" => 1,
             "actif" => $actifData,
@@ -1593,175 +1744,6 @@ class ReportsController extends Controller
         ]);
     }
 
-
-    //GRAND LIVRE 
-    // public function getGrandLivre(Request $request)
-    // {
-    //     $date_debut = $request->date_debut;
-    //     $date_fin   = $request->date_fin;
-    //     $devise     = $request->devise;
-    //     $compte_debut = $request->compte_debut;
-    //     $compte_fin   = $request->compte_fin;
-
-    //     $debitCol = $devise === 'USD' ? 'Debitusd' : 'Debitfc';
-    //     $creditCol = $devise === 'USD' ? 'Creditusd' : 'Creditfc';
-    //     $codeMonnaie = $devise === 'USD' ? 1 : 2;
-
-    //     // Détermination du champ de filtre
-    //     if (strlen($compte_debut) == 2 && strlen($compte_fin) == 2) {
-    //         $champRef = 'c.RefCadre';
-    //     } elseif (strlen($compte_debut) == 3 && strlen($compte_fin) == 3) {
-    //         $champRef = 'c.RefGroupe';
-    //     } elseif (strlen($compte_debut) == 13 && strlen($compte_fin) == 13) {
-    //         $champRef = 'c.NumCompte';
-    //     } else {
-    //         $champRef = 'c.RefTypeCompte';
-    //     }
-
-    //     // Récupération des comptes de niveau 5
-    //     $comptes = DB::table('comptes as c')
-    //         ->whereBetween($champRef, [$compte_debut, $compte_fin])
-    //         ->where('c.niveau', 5)
-    //         ->where('c.est_classe', 0)
-    //         ->where('c.CodeMonnaie', $codeMonnaie)
-    //         ->orderBy('c.NumCompte')
-    //         ->get();
-
-    //     if ($comptes->isEmpty()) {
-    //         return response()->json(['status' => 0, 'msg' => 'Aucun compte trouvé']);
-    //     }
-
-    //     // Soldes initiaux (avant date_debut)
-    //     $soldesInitiaux = DB::table('transactions as t')
-    //         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
-    //         ->whereBetween($champRef, [$compte_debut, $compte_fin])
-    //         ->where('c.niveau', 5)
-    //         ->where('c.est_classe', 0)
-    //         ->where('c.CodeMonnaie', $codeMonnaie)
-    //         ->where('t.CodeMonnaie', $codeMonnaie)
-    //         ->where('t.DateTransaction', '<', $date_debut)
-    //         ->select(
-    //             'c.NumCompte',
-    //             DB::raw("
-    //             COALESCE(SUM(
-    //                 CASE 
-    //                     WHEN LEFT(c.NumCompte,1) IN ('1','2','3') THEN t.$debitCol - t.$creditCol
-    //                     ELSE t.$creditCol - t.$debitCol
-    //                 END
-    //             ), 0) as soldeInitial
-    //         ")
-    //         )
-    //         ->groupBy('c.NumCompte')
-    //         ->get()
-    //         ->keyBy('NumCompte');
-
-    //     // Transactions dans la période (non groupées, pour garder le détail)
-    //     $transactions = DB::table('transactions as t')
-    //         ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
-    //         ->whereBetween($champRef, [$compte_debut, $compte_fin])
-    //         ->where('c.niveau', 5)
-    //         ->where('c.est_classe', 0)
-    //         ->where('c.CodeMonnaie', $codeMonnaie)
-    //         ->whereBetween('t.DateTransaction', [$date_debut, $date_fin])
-    //         ->where('t.CodeMonnaie', $codeMonnaie)
-    //         ->select(
-    //             't.DateTransaction',
-    //             't.NumTransaction',
-    //             't.Libelle',
-    //             'c.NumCompte',
-    //             'c.NomCompte',
-    //             DB::raw("t.$debitCol as debit"),
-    //             DB::raw("t.$creditCol as credit")
-    //         )
-    //         ->orderBy('c.NumCompte')
-    //         ->orderBy('t.DateTransaction')
-    //         ->orderBy('t.NumTransaction')
-    //         ->get()
-    //         ->groupBy('NumCompte');
-
-    //     $result = [];
-
-    //     foreach ($comptes as $compte) {
-    //         $num = $compte->NumCompte;
-    //         $nom = $compte->NomCompte;
-
-    //         // Solde initial signé (positif pour actif débiteur, négatif pour passif créditeur)
-    //         $soldeCourant = $soldesInitiaux[$num]->soldeInitial ?? 0;
-
-    //         // Ligne d'en-tête du compte
-    //         $result[] = [
-    //             'type' => 'compte',
-    //             'NumCompte' => $num,
-    //             'NomCompte' => $nom
-    //         ];
-
-    //         // Ligne solde initial (affichée en valeur absolue, mais on garde le signe pour le cumul)
-    //         $result[] = [
-    //             'type' => 'solde_initial',
-    //             'libelle' => "Solde reporté au $date_debut",
-    //             'debit' => 0,
-    //             'credit' => 0,
-    //             'solde' => $soldeCourant,   // valeur signée
-    //             'solde_abs' => abs($soldeCourant)
-    //         ];
-
-    //         $totalDebit = 0;
-    //         $totalCredit = 0;
-
-    //         if (isset($transactions[$num])) {
-    //             foreach ($transactions[$num] as $t) {
-    //                 // Mise à jour du solde selon la nature du compte
-    //                 if (in_array($num[0], ['1', '2', '3'])) { // compte actif
-    //                     $soldeCourant += ($t->debit - $t->credit);
-    //                 } else { // compte passif / produit / charge
-    //                     $soldeCourant += ($t->credit - $t->debit);
-    //                 }
-
-    //                 $totalDebit += $t->debit;
-    //                 $totalCredit += $t->credit;
-
-    //                 $result[] = [
-    //                     'type' => 'mouvement',
-    //                     'date' => $t->DateTransaction,
-    //                     'numPiece' => $t->NumTransaction,
-    //                     'libelle' => $t->Libelle,
-    //                     'debit' => $t->debit,
-    //                     'credit' => $t->credit,
-    //                     'solde' => $soldeCourant,   // solde signé
-    //                     'solde_abs' => abs($soldeCourant)
-    //                 ];
-    //             }
-    //         }
-
-    //         // Ligne TOTAL
-    //         $result[] = [
-    //             'type' => 'total',
-    //             'libelle' => 'TOTAL',
-    //             'debit' => $totalDebit,
-    //             'credit' => $totalCredit,
-    //             'solde' => $soldeCourant,
-    //             'solde_abs' => abs($soldeCourant)
-    //         ];
-    //     }
-
-
-    //     //     $result[] = [
-    //     //     'type' => 'mouvement',
-    //     //     'date' => $t->DateTransaction,
-    //     //     'numPiece' => $t->NumTransaction,
-    //     //     'libelle' => $t->Libelle,
-    //     //     'debit' => $t->debit,
-    //     //     'credit' => $t->credit,
-    //     //     'solde_precedent' => $soldeCourant - (($num[0] <= 3) ? ($t->debit - $t->credit) : ($t->credit - $t->debit)),
-    //     //     'solde' => $soldeCourant,
-    //     //     'solde_abs' => abs($soldeCourant)
-    //     // ];
-
-    //     return response()->json([
-    //         'status' => 1,
-    //         'data' => $result
-    //     ]);
-    // }
 
     public function getGrandLivre(Request $request)
     {

@@ -12,6 +12,7 @@ use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SendSMSController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\AdhesionController;
+use App\Http\Controllers\BatchPaiementController;
 use App\Http\Controllers\ClotureJourneeController;
 use App\Http\Controllers\PDFExportController;
 use App\Http\Controllers\RemboursementManuel;
@@ -23,6 +24,7 @@ use App\Http\Controllers\ImmobilisationController;
 use App\Http\Controllers\TransactionsController;
 use App\Http\Middleware\Authenticate;
 use App\Models\AdhesionMembre;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -663,6 +665,35 @@ Route::delete('/eco/immo/supprimer/{id}', [ImmobilisationController::class, 'sup
 Route::get('/eco/comptes/immobilisations', [ImmobilisationController::class, 'getComptesImmobilisations']);
 Route::get('/eco/comptes/amortissements', [ImmobilisationController::class, 'getComptesAmortissements']);
 Route::post('/eco/immo/amortissement', [ImmobilisationController::class, 'calculerAmortissementMensuel']);
+Route::get('/eco/pages/rapport-immo', [ImmobilisationController::class, 'getRapportImmoHomage'])->name('eco.pages.rapport-immo');
+// Route::post('', [ImmobilisationController::class, 'rapportImmobilisations']);
+
+Route::get('/eco/immo/categories', [ImmobilisationController::class, 'getCategories']);
+Route::get('/eco/immo/services', [ImmobilisationController::class, 'getServices']);
+Route::post('/eco/immo/rapport', [ImmobilisationController::class, 'getRapportImmobilisations']);
+
+
+
+//PAIMENT Batch
+Route::get('/eco/pages/paiment-batch', [BatchPaiementController::class, 'getPaimentBatch'])->name('eco.pages.paiment-batch');
+ Route::get('/eco/batch/comptes-disponibles', [BatchPaiementController::class, 'comptesDisponibles']);
+
+
+Route::middleware(['auth'])->prefix('eco/batch')->group(function () {
+    Route::post('/upload', [BatchPaiementController::class, 'upload']);
+    Route::get('/previsualisation/{id}', [BatchPaiementController::class, 'previsualisation']);
+    Route::post('/soumettre/{id}', [BatchPaiementController::class, 'soumettreValidation']);
+    Route::post('/valider/{id}', [BatchPaiementController::class, 'validerBatch']);
+    Route::post('/executer/{id}', [BatchPaiementController::class, 'executerBatch']);
+    Route::get('/historique', [BatchPaiementController::class, 'historique']);
+    Route::get('/detail/{id}', [BatchPaiementController::class, 'detail']);
+    Route::post('/preview', [BatchPaiementController::class, 'preview']);
+
+});
+//Route::get('/eco/pages/generate-amort-comptes', [ImmobilisationController::class, 'genererComptesAmortissement']);
+ //Route::get('/eco/pages/test-amortissement', [ImmobilisationController::class, 'calculerAmortissementMensuel']);
+
+
 
 });
 

@@ -52,6 +52,8 @@ import SMSbanking from "./Page/SMSBanking";
 import ResetPassWord from "./Page/ResetPassWord";
 import GrandLivre from "./Page/GrandLivre";
 import ImmoEnregistrement from "./Page/ImmoEnregistrement";
+import RapportImmobilisations from "./Page/RapportImmobilisations";
+import BatchPaiement from "./Page/BatchPaiement";
 
 if (document.getElementById("app")) {
     ReactDOM.createRoot(document.getElementById("app")).render(
@@ -315,3 +317,21 @@ if (document.getElementById("enregsitrementImo")) {
         </BrowserRouter>
     );
 }
+
+if (document.getElementById("rapportImmo")) {
+    ReactDOM.createRoot(document.getElementById("rapportImmo")).render(
+        <BrowserRouter>
+            <RapportImmobilisations />
+        </BrowserRouter>
+    );
+}
+
+if (document.getElementById("paimentBatch")) {
+    ReactDOM.createRoot(document.getElementById("paimentBatch")).render(
+        <BrowserRouter>
+            <BatchPaiement />
+        </BrowserRouter>
+    );
+}
+
+

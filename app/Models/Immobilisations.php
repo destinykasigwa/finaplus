@@ -24,6 +24,7 @@ class Immobilisations extends Model
         'amortissement_cumule',
         'valeur_nette_comptable',
         'code_agence',
+        'service_affectation',
     ];
 
     // Relation avec le type d'immobilisation

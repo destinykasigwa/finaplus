@@ -32,4 +32,6 @@ class Comptes extends Model
         'est_classe',
         'compte_parent'
     ];
+
+    protected $primaryKey = 'RefCompte';
 }
