@@ -54,6 +54,7 @@ import GrandLivre from "./Page/GrandLivre";
 import ImmoEnregistrement from "./Page/ImmoEnregistrement";
 import RapportImmobilisations from "./Page/RapportImmobilisations";
 import BatchPaiement from "./Page/BatchPaiement";
+import GestionBatchs from "./Page/GestionBatchs";
 
 if (document.getElementById("app")) {
     ReactDOM.createRoot(document.getElementById("app")).render(
@@ -333,5 +334,16 @@ if (document.getElementById("paimentBatch")) {
         </BrowserRouter>
     );
 }
+
+
+if (document.getElementById("gestion-batch")) {
+    ReactDOM.createRoot(document.getElementById("gestion-batch")).render(
+        <BrowserRouter>
+            <GestionBatchs />
+        </BrowserRouter>
+    );
+}
+
+
 
 

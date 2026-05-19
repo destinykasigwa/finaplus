@@ -692,7 +692,12 @@ Route::middleware(['auth'])->prefix('eco/batch')->group(function () {
 });
 //Route::get('/eco/pages/generate-amort-comptes', [ImmobilisationController::class, 'genererComptesAmortissement']);
  //Route::get('/eco/pages/test-amortissement', [ImmobilisationController::class, 'calculerAmortissementMensuel']);
+ Route::get('/batch/gestion', [BatchPaiementController::class, 'GestionBatchHomePage'])->name('eco.pages.gestion-batch');
+   // Historique des batches (avec filtre par statut)
+ Route::get('/eco/batch/historique', [BatchPaiementController::class, 'historiqueAdmin']);
 
+    // Détail d’un batch (pour prévisualisation)
+ Route::get('/eco/batch/detail/{id}', [BatchPaiementController::class, 'detailAdmin']);
 
 
 });

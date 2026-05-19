@@ -8,6 +8,7 @@ use App\Models\Comptes;
 use App\Models\Transactions;
 use App\Models\TauxEtDateSystem;
 use App\Models\CompteurTransaction;
+use App\Services\SendNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -37,6 +38,9 @@ class ExecuterBatchPaiement implements ShouldQueue
             return;
         }
 
+        // Récupération du service de notification
+        $sendNotification = app(SendNotification::class);
+
         DB::beginTransaction();
         try {
             $comptePrincipal = $batch->compte;
@@ -65,6 +69,19 @@ class ExecuterBatchPaiement implements ShouldQueue
                 $ligne->transaction_id = $numTransaction;
                 $ligne->statut = 'succes';
                 $ligne->save();
+                // 🔔 Envoyer une notification SMS au bénéficiaire
+                try {
+                    $sendNotification->sendNotification(
+                        $beneficiaire->NumAdherant,          // numéro abrégé du membre
+                        $devise == 1 ? 'USD' : 'CDF',       // devise
+                        $ligne->montant,                     // montant
+                        'C',                                 // type Crédit
+                        'SYSTEM BATCH'                       // nom du déposant (ou 'Paiement batch')
+                    );
+                } catch (\Exception $e) {
+                    Log::warning("Erreur envoi notification pour {$beneficiaire->NumAdherant}: " . $e->getMessage());
+                }
+
                 $succes++;
             }
 

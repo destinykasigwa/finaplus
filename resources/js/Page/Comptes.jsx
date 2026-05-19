@@ -5993,10 +5993,11 @@ const Comptes = () => {
                                                                     }
                                                                 />
                                                                 <label
-                                                                    className="form-check-label ms-2"
+                                                                    className="form-check-label ms-2 m-3"
                                                                     htmlFor="commissionSwitch"
                                                                     style={{
                                                                         color: "steelblue",
+                                                                      
                                                                     }}
                                                                 >
                                                                     {showCommissionPanel

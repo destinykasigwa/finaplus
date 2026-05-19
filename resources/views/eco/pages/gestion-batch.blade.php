@@ -8,7 +8,7 @@
 <div class="content-wrapper">
     <section class="content">
         <div class="container-fluid">
-            <div class="row" id="paimentBatch">
+            <div class="row" id="gestion-batch">
 
             </div>
         </div>

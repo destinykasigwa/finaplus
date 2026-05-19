@@ -688,10 +688,10 @@
 
                             </a>
 
-                            <a class="dropdown-item" href="">
+                            <a class="dropdown-item" href="{{ route('eco.pages.gestion-batch') }}">
 
                                 <i class="fas fa-chart-line me-2"></i>
-                                Rapport paiement
+                                Gestion batch
 
                             </a>
                           

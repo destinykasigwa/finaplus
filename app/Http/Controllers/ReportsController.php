@@ -1398,7 +1398,7 @@ class ReportsController extends Controller
 
             '38' => 'PROVISIONS',
             '39' => 'CREANCES DOUTEUSES',
-
+            '42' => 'PESONNEL',
             '45' => 'LIAISON INTER-AGENCE',
             '47' => 'COMPTES DE REGULARISATION',
 
@@ -1511,6 +1511,8 @@ class ReportsController extends Controller
 
                         WHEN '38' THEN 'PROVISIONS'
                         WHEN '39' THEN 'CREANCES DOUTEUSES'
+
+                        WHEN '42' THEN 'PERSONNEL'
 
                         WHEN '45' THEN 'LIAISON INTER-AGENCE'
                         WHEN '47' THEN 'COMPTES DE REGULARISATION'
@@ -1642,6 +1644,8 @@ class ReportsController extends Controller
 
                             WHEN '38' THEN 'PROVISIONS'
                             WHEN '39' THEN 'CREANCES DOUTEUSES'
+                            
+                             WHEN '42' THEN 'PERSONNEL'
 
                             WHEN '45' THEN 'LIAISON INTER-AGENCE'
                             WHEN '47' THEN 'COMPTES DE REGULARISATION'

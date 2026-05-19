@@ -34,6 +34,13 @@ class BatchPaiementController extends Controller
         return view("eco.pages.paiement-batch");
     }
 
+
+public function GestionBatchHomePage()
+    {
+        return view("eco.pages.gestion-batch");
+    }
+    
+
     // ==================== MÉTHODES UTILITAIRES ====================
 
     /**
@@ -157,14 +164,16 @@ class BatchPaiementController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'fichier' => 'required|file|mimes:xlsx,csv',
-            'compte_id' => 'required|exists:comptes,RefCompte',
+            // 'compte_id' => 'required|exists:comptes,RefCompte',
+            'compte_num' => 'required|exists:comptes,NumCompte'
         ]);
 
         if ($validator->fails()) {
             return response()->json(['status' => 0, 'errors' => $validator->errors()]);
         }
 
-        $comptePrincipal = Comptes::where('RefCompte', $request->compte_id)->first();
+        // $comptePrincipal = Comptes::where('RefCompte', $request->compte_id)->first();
+        $comptePrincipal = Comptes::where('NumCompte', $request->compte_num)->first();
         if (!$comptePrincipal) {
             return response()->json(['status' => 0, 'msg' => 'Compte principal introuvable']);
         }
@@ -385,6 +394,11 @@ class BatchPaiementController extends Controller
             return response()->json(['status' => 0, 'msg' => 'Le batch doit être validé avant exécution']);
         }
 
+         $user = auth()->user();
+        if ($user->admin !== 1) {
+        return response()->json(['status' => 0, 'msg' => 'Seul un administrateur peut exécuter un batch']);
+         }
+
         // Lancer le job en queue
         ExecuterBatchPaiement::dispatch($batch->id, auth()->id());
         // $batch->statut = 'en_cours';
@@ -399,6 +413,8 @@ class BatchPaiementController extends Controller
      */
     public function historique()
     {
+
+    
         $batchs = BatchPaiement::with(['createur', 'validateur', 'executeur'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -422,7 +438,7 @@ class BatchPaiementController extends Controller
         $agenceIds = $user->agences()->pluck('code_agence')->toArray();
         $comptes = Comptes::whereIn('CodeAgence', $agenceIds)
             ->where('est_classe', 0)  // comptes individuels
-            ->whereIn('RefTypeCompte', ['5']) // ex: caisse (5) ou immobilisations (2)
+            ->whereIn('RefCadre', ['42']) // ex: caisse (5) ou immobilisations (2)
             ->where('niveau', 5)
             ->orderBy('NumCompte')
             ->get(['RefCompte', 'NumCompte', 'NomCompte', 'CodeMonnaie']);
@@ -437,18 +453,21 @@ class BatchPaiementController extends Controller
 
     public function preview(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'fichier' => 'required|file|mimes:xlsx,csv',
-            'compte_id' => 'required|exists:comptes,RefCompte',
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['status' => 0, 'errors' => $validator->errors()]);
-        }
+         $validator = Validator::make($request->all(), [
+        'fichier' => 'required|file|mimes:xlsx,csv',
+        'compte_num' => 'required|exists:comptes,NumCompte',
+    ]);
+    if ($validator->fails()) {
+        return response()->json(['status' => 0, 'errors' => $validator->errors()]);
+    }
 
-        $comptePrincipal = Comptes::where('RefCompte', $request->compte_id)->first();
-        $devise = $this->determinerDeviseParCompte($comptePrincipal->NumCompte);
-        $file = $request->file('fichier');
-        $import = new BatchPaiementImport();
+    $comptePrincipal = Comptes::where('NumCompte', $request->compte_num)->first();
+    if (!$comptePrincipal) {
+        return response()->json(['status' => 0, 'msg' => 'Compte principal introuvable']);
+    }
+    $devise = $this->determinerDeviseParCompte($comptePrincipal->NumCompte);
+    $file = $request->file('fichier');
+    $import = new BatchPaiementImport();
         $rows = Excel::toArray($import, $file)[0];
 
         $lignes = [];
@@ -508,4 +527,43 @@ class BatchPaiementController extends Controller
             ]
         ]);
     }
+
+
+
+    public function historiqueAdmin(Request $request)
+{
+       $query = BatchPaiement::with(['createur', 'validateur', 'executeur', 'compte'])
+        ->orderBy('created_at', 'desc');
+
+    if (auth()->user()->admin!== 1) {
+        $query->where('cree_par', auth()->id());
+    }
+
+    if ($request->filled('statut')) {
+        $query->where('statut', $request->statut);
+    }
+
+    // $batches = $query->get(); // ← retourne une collection, pas une pagination
+     $batches = $query->paginate(100); // 20 par page
+    return response()->json(['status' => 1, 'data' => $batches]);
+}
+
+public function detailAdmin($id)
+{
+    $batch = BatchPaiement::with(['lignes', 'compte', 'createur', 'validateur', 'executeur'])
+        ->find($id);
+
+    if (!$batch) {
+        return response()->json(['status' => 0, 'msg' => 'Batch introuvable']);
+    }
+
+    // Sécurité : seul l'admin ou le créateur peut voir le batch
+    if (auth()->user()->admin !== 1 && $batch->cree_par !== auth()->id()) {
+        return response()->json(['status' => 0, 'msg' => 'Accès non autorisé']);
+    }
+
+    return response()->json(['status' => 1, 'data' => $batch]);
+}
+
+  
 }

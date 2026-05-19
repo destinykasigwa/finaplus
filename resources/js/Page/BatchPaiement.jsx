@@ -12,6 +12,11 @@ const BatchPaiement = () => {
     const [batchId, setBatchId] = useState(null);
     const [batch, setBatch] = useState(null);
     const [loadingBatch, setLoadingBatch] = useState(false);
+    const [compteNum, setCompteNum] = useState("");
+     const currentUser = window.currentUser;
+     const isAdmin = currentUser?.role === 'admin';
+
+    
 
     // Charger les comptes disponibles
     useEffect(() => {
@@ -73,7 +78,7 @@ useEffect(() => {
             );
             return;
         }
-        if (!compteId) {
+        if (!compteNum) {
             Swal.fire(
                 "Erreur",
                 "Veuillez sélectionner un compte à débiter",
@@ -83,7 +88,8 @@ useEffect(() => {
         }
         const formData = new FormData();
         formData.append("fichier", file);
-        formData.append("compte_id", compteId);
+        // formData.append("compte_id", compteId);
+        formData.append("compte_num", compteNum);
         setLoading(true);
         try {
             const res = await axios.post("/eco/batch/upload", formData);
@@ -204,7 +210,8 @@ useEffect(() => {
         }
         const formData = new FormData();
         formData.append("fichier", file);
-        formData.append("compte_id", compteId);
+        // formData.append("compte_id", compteId);
+        formData.append("compte_num", compteNum);
         setPreviewLoading(true);
         try {
             const res = await axios.post("/eco/batch/preview", formData);
@@ -227,7 +234,7 @@ useEffect(() => {
             <div className="row mb-4">
                 <div className="col-12">
                     <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
-                        <div className="card-header bg-gradient-teal text-white border-0 py-3">
+                        <div className="card-header text-white border-0 py-3" style={{ background: "#138496", }}>
                             <div className="d-flex align-items-center gap-3">
                                 <div className="bg-white bg-opacity-25 rounded-3 p-2">
                                     <i className="fas fa-layer-group fa-2x"></i>
@@ -275,14 +282,14 @@ useEffect(() => {
                             <label className="label-modern">
                                 Compte à débiter
                             </label>
-                            <input
+                            {/* <input
                                 list="comptes-list"
                                 className="form-control modern-input"
                                 value={compteId}
                                 onChange={(e) => setCompteId(e.target.value)}
                                 placeholder="Sélectionner ou saisir un RefCompte"
-                            />
-                            <datalist id="comptes-list">
+                            /> */}
+                            {/* <datalist id="comptes-list">
                                 {comptesDisponibles.map((compte) => (
                                     <option
                                         key={compte.RefCompte}
@@ -296,7 +303,21 @@ useEffect(() => {
                                         )
                                     </option>
                                 ))}
-                            </datalist>
+                            </datalist> */}
+                            <input
+    list="comptes-list"
+    className="form-control modern-input"
+    value={compteNum}
+    onChange={(e) => setCompteNum(e.target.value)}
+    placeholder="Sélectionner ou saisir un numéro de compte"
+/>
+                            <datalist id="comptes-list">
+    {comptesDisponibles.map((compte) => (
+        <option key={compte.RefCompte} value={compte.NumCompte}>
+            {compte.NumCompte} - {compte.NomCompte} (Solde: {compte.solde} {compte.CodeMonnaie == 1 ? "USD" : "CDF"})
+        </option>
+    ))}
+</datalist>
                         </div>
                         <div className="col-md-2">
                             <button
@@ -312,7 +333,7 @@ useEffect(() => {
                                 Uploader
                             </button>
                         </div>
-                        <div className="col-md-2">
+                        {/* <div className="col-md-2">
                             <button
                                 className="btn btn-outline-secondary w-100"
                                 onClick={handlePreview}
@@ -325,7 +346,7 @@ useEffect(() => {
                                 )}
                                 Prévisualiser
                             </button>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>
@@ -427,6 +448,7 @@ useEffect(() => {
                                                 <th>Compte</th>
                                                 <th>Téléphone</th>
                                                 <th>Montant</th>
+                                                <th>Libellé</th>
                                                 <th>Statut</th>
                                                 <th>Erreur</th>
                                             </tr>
@@ -454,6 +476,11 @@ useEffect(() => {
                                                     <td className="text-end">
                                                         {ligne.montant.toLocaleString()}
                                                     </td>
+
+                                                     <td>
+                                                        {ligne.reference}
+                                                    </td>
+
                                                     <td>
                                                         {ligne.statut ===
                                                         "en_attente"
@@ -471,7 +498,7 @@ useEffect(() => {
                                 </div>
 
                                 {/* Boutons d'action */}
-                                <div className="d-flex gap-2 mt-4">
+                                {/* <div className="d-flex gap-2 mt-4">
                                     {batch.statut === "brouillon" && (
                                         <button
                                             onClick={() =>
@@ -530,7 +557,59 @@ useEffect(() => {
                                             Traitement en cours...
                                         </button>
                                     )}
-                                </div>
+                                </div> */}
+
+
+                                {/* Boutons d'action */}
+<div className="d-flex gap-2 mt-4">
+    {batch.statut === "brouillon" && (
+        <button
+            onClick={() => soumettreValidation(batch.id)}
+            className="btn btn-primary"
+        >
+            <i className="fas fa-paper-plane me-2"></i>
+            Soumettre à validation
+        </button>
+    )}
+    {batch.statut === "en_attente" && window.currentUser?.role === 'admin' && (
+        <>
+            <button
+                onClick={() => validerBatch(batch.id)}
+                className="btn btn-success"
+            >
+                <i className="fas fa-check-circle me-2"></i>
+                Valider
+            </button>
+            <button
+                onClick={() => rejeterBatch(batch.id)}
+                className="btn btn-danger"
+            >
+                <i className="fas fa-times-circle me-2"></i>
+                Rejeter
+            </button>
+        </>
+    )}
+    {batch.statut === "valide" && window.currentUser?.role === 'admin' && (
+        <button
+            onClick={() => executerBatch(batch.id)}
+            className="btn btn-warning text-white"
+            disabled={loading}
+        >
+            {loading ? (
+                <span className="spinner-border spinner-border-sm"></span>
+            ) : (
+                <i className="fas fa-play me-2"></i>
+            )}
+            Exécuter le batch
+        </button>
+    )}
+    {batch.statut === "en_cours" && (
+        <button className="btn btn-secondary" disabled>
+            <i className="fas fa-spinner fa-pulse me-2"></i>
+            Traitement en cours...
+        </button>
+    )}
+</div>
                             </>
                         ) : (
                             <div className="text-center py-5 text-muted">
