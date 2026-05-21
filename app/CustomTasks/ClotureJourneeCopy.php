@@ -40,7 +40,6 @@ class ClotureJourneeCopy
     protected $remboursAnticipe;
     protected $numDossier;
 
-
     // protected $compteProvisionCDF1A30Jr;
     // protected $compteProvisionCDF31A60Jr;
     // protected $compteProvisionCDF61A90Jr;
@@ -58,7 +57,6 @@ class ClotureJourneeCopy
 
     public function __construct(Request $request)
     {
-        // Inject any necessary dependencies or configurations if needed
         // Récupération des dernières valeurs de la base de données et initialisation des propriétés
         $latestTauxEtDateSystem = TauxEtDateSystem::latest()->first();
         $porteFeuilleConfig = PorteFeuilleConfing::first();
@@ -71,8 +69,6 @@ class ClotureJourneeCopy
         // $this->compteDotationAuProvisionUSD = "6900000000201";
         // $this->compteRepriseDeProvisionCDF = "7901000000202";
         // $this->compteRepriseDeProvisionUSD = "7900000000201";
-
-
 
         // $this->compteCreanceLitigeuseUSD = "3900000000201";
         // $this->compteCreanceLitigeuseCDF = "3901000000202";
@@ -96,24 +92,6 @@ class ClotureJourneeCopy
      */
     public function execute()
     {
-
-
-        // // Vérification pour le remboursement manuel ou anticipé d'un crédit spécifique
-        // if (!is_null($this->numDossier)) {
-        //     $portefeuille = Portefeuille::where("NumDossier", $this->numDossier)->first();
-
-        //     // Si le crédit est clôturé, on n'exécute rien
-        //     if ($portefeuille && $portefeuille->Cloture == 1) {
-        //         info("Le crédit avec le dossier " . $this->numDossier . " est clôturé. Aucun traitement effectué.");
-        //         return;
-        //     }
-        // }
-
-        // $this->traiterRemboursementsAEcheance();
-        // $this->traiterRemboursementsEnRetard();
-        // // $this->gererProvisions();
-
-
         try {
             // Validation initiale
             $this->validateRequiredData();
@@ -142,6 +120,8 @@ class ClotureJourneeCopy
 
             $this->traiterRemboursementsAEcheance();
             $this->traiterRemboursementsEnRetard();
+            $gestionPostEcheance = new GestionInteretsPostEcheance($this->dateSystem, $this->tauxDuJour);
+            $gestionPostEcheance->execute();
 
             Log::info("Exécution de la clôture terminée avec succès");
         } catch (\Exception $e) {
@@ -167,10 +147,6 @@ class ClotureJourneeCopy
             throw $e;
         }
     }
-
-
-
-
 
     /**
      * Vérifie s'il y a une erreur et arrête l'exécution
@@ -199,9 +175,6 @@ class ClotureJourneeCopy
         }
     }
 
-
-
-
     /**
      * Vérifie les données requises avant exécution
      */
@@ -227,10 +200,6 @@ class ClotureJourneeCopy
         );
     }
 
-
-
-
-
     /**
      * Vérifie les données d'un crédit avant traitement
      */
@@ -253,9 +222,6 @@ class ClotureJourneeCopy
         }
     }
 
-
-
-
     /**
      * Vérifie que le solde du membre est valide
      */
@@ -273,8 +239,6 @@ class ClotureJourneeCopy
             "ERR_SOLDE_002"
         );
     }
-
-
 
     /**
      * Crée un compte s'il n'existe pas déjà.
@@ -408,14 +372,12 @@ class ClotureJourneeCopy
                 );
 
                 //RETOURNE true SI LE MEMBRE EST EN RETARD false SI SON CREDIT EST SAIN
-                $checkRetard = $this->checkRetardMembre(
+                $checkRetard = $this->calculerJoursRetard(
                     $credit->NumDossier,
-                    $credit->DateTranch
                 );
                 /*  SI LE SOLDE DU CLIENT EST SUPERIEUR OU EGAL AU MONTANT
             DE CREDIT QUI'IL DOIT REMBOURSER EST QUE IL N'EST PAS A 
             RETARD DE REMBOURSEMENT */
-                //SI LE SOLDE DU COMPTE EST SUPERIEUR OU EGAL A L'INTERET QU'IL DOIT PAYER + CAPITAL DONC PAS DE RETARD
                 if ($soldeMembre >= $MontantTotalApayer and !$checkRetard) {
 
                     $this->appliquerPaiementInteretPuisCapital($credit);
@@ -442,12 +404,13 @@ class ClotureJourneeCopy
             // Vérification pour les crédits en retard
             // Récupérer le portefeuille associé pour vérifier Cloture
             $portefeuille = Portefeuille::where("NumDossier", $creditRet->NumDossier)->first();
-
+        
             // Si le crédit est clôturé, on passe au suivant
             if ($portefeuille && $portefeuille->Cloture == 1) {
                 info("Crédit en retard avec dossier " . $creditRet->NumDossier . " est clôturé. Traitement ignoré.");
                 continue;
             }
+           
 
             $this->mettreAJourRetard($creditRet);
         }
@@ -642,7 +605,7 @@ class ClotureJourneeCopy
         // $query = Echeancier::join('portefeuilles', DB::raw('TRIM(echeanciers.NumDossier)'), '=', DB::raw('TRIM(portefeuilles.NumDossier)'))
         //     ->where('echeanciers.RetardPayement', 1)
         //     ->where('portefeuilles.Cloture', '=', 0); // Vérification que le crédit n'est pas clôturé
-
+         
         $today = $this->dateSystem;
         $query = Echeancier::join('portefeuilles', DB::raw('TRIM(echeanciers.NumDossier)'), '=', DB::raw('TRIM(portefeuilles.NumDossier)'))
             ->where('portefeuilles.Cloture', '=', 0)
@@ -660,14 +623,18 @@ class ClotureJourneeCopy
                 ->get(['echeanciers.*', 'portefeuilles.*']);
         } else {
             // Cas général : tous les crédits en retard
+            
             return $query->get(['echeanciers.*', 'portefeuilles.*']);
         }
+
+       
     }
     /**
      * Met à jour les informations pour un crédit en retard.
      */
     protected function mettreAJourRetard($creditRet)
     {
+
         // Implémentez la gestion des crédits en retard
         $this->RenseignePayementEnRetard(
             $creditRet->ReferenceEch,
@@ -714,11 +681,11 @@ class ClotureJourneeCopy
         // $TotMontantDejaPaye = $CapDejaPaye + $interetDejaPaye;
         // $MontantTotalApayer = $CapAmmorti + $interetApayer;
         // $MontantRestantApayer = $MontantTotalApayer - $TotMontantDejaPaye;
-        $checkRetard = $this->checkRetardMembre(
+        $checkRetard = $this->calculerJoursRetard(
             $creditRet->NumDossier,
-            $creditRet->DateTranch
         );
 
+        
         if ($checkRetard) {
             if ($soldeMembre > 0) {
                 //VERIFIE SI LE CLIENT A EU FAIRE UN REMBOURSEMENT PARTIEL OU PAS
@@ -1008,7 +975,8 @@ class ClotureJourneeCopy
                 //RENSEIGNE LE RETARD EN INTERET
                 // $this->renseigneMontantRetard($creditRet->ReferenceEch, $creditRet->NumDossier, $creditRet->Interet, 0);
                 //FONCTION D'INCREMENTER LE JOUR RETARD ICI 
-                // $this->gererProvisionPourRetard($creditRet);
+              
+                $this->gererProvisionPourRetard($creditRet);
                 // $this->IncrementerJourRetard(
                 //     $creditRet->NumDossier,
                 //     $this->dateSystem,
@@ -1110,7 +1078,7 @@ class ClotureJourneeCopy
             $typeRemboursement = "partiel";
         }
 
-        $checkRetard = $this->checkRetardMembre($creditRet->NumDossier, $creditRet->DateTranch);
+        $checkRetard = $this->calculerJoursRetard($creditRet->NumDossier);
         if (!$checkRetard) {
             return;
         }
@@ -1637,6 +1605,7 @@ class ClotureJourneeCopy
                 }
             }
         } else {
+          
             info("le solde du crédit capital section: " . $creditRet->numAdherant . " est 0 ou inférieur à 0");
             $this->gererProvisions();
             $this->IncrementerJourRetard($creditRet->NumDossier, $this->dateSystem, $creditRet->NumCompteEpargne, $creditRet->NumCompteCredit);
@@ -1649,19 +1618,66 @@ class ClotureJourneeCopy
      */
     protected function recupererCreditsAvecProvisions()
     {
-        // return Echeancier::join('portefeuilles', DB::raw('TRIM(echeanciers.NumDossier)'), '=', DB::raw('TRIM(portefeuilles.NumDossier)'))
-        //     ->join('jour_retards', DB::raw('TRIM(echeanciers.NumDossier)'), '=', DB::raw('TRIM(jour_retards.NumDossier)'))
-        //     ->where('echeanciers.RetardPayement', 1)
-        //     ->get(['echeanciers.*', 'portefeuilles.*', 'jour_retards.*']);
 
         // return Echeancier::join('portefeuilles', DB::raw('TRIM(echeanciers.NumDossier)'), '=', DB::raw('TRIM(portefeuilles.NumDossier)'))
         //     ->join('jour_retards', DB::raw('TRIM(echeanciers.NumDossier)'), '=', DB::raw('TRIM(jour_retards.NumDossier)'))
         //     ->where('echeanciers.RetardPayement', 1)
         //     ->get(['echeanciers.*', 'portefeuilles.*', 'jour_retards.*']);
 
-        return Portefeuille::join('jour_retards', DB::raw('TRIM(jour_retards.NumDossier)'), '=', DB::raw('TRIM(portefeuilles.NumDossier)'))
-            ->where('jour_retards.NbrJrRetard', '>', 0)
-            ->get(['portefeuilles.*', 'jour_retards.*']);
+        // return Echeancier::join('portefeuilles', DB::raw('TRIM(echeanciers.NumDossier)'), '=', DB::raw('TRIM(portefeuilles.NumDossier)'))
+        //     ->join('jour_retards', DB::raw('TRIM(echeanciers.NumDossier)'), '=', DB::raw('TRIM(jour_retards.NumDossier)'))
+        //     ->where('echeanciers.RetardPayement', 1)
+        //     ->get(['echeanciers.*', 'portefeuilles.*', 'jour_retards.*']);
+
+        // return Portefeuille::join('jour_retards', DB::raw('TRIM(jour_retards.NumDossier)'), '=', DB::raw('TRIM(portefeuilles.NumDossier)'))
+        //     ->where('jour_retards.NbrJrRetard', '>', 0)
+        //     ->get(['portefeuilles.*', 'jour_retards.*']);
+
+         $today = $this->dateSystem;
+        return Portefeuille::where('Cloture', 0)
+        ->where('Octroye', 1)
+        ->whereExists(function ($query) use ($today) {
+            $query->select(DB::raw(1))
+                ->from('echeanciers')
+                ->whereColumn('echeanciers.NumDossier', 'portefeuilles.NumDossier')
+                ->where('echeanciers.DateTranch', '<=', $today)
+                ->where(function ($q) {
+                    $q->whereRaw('echeanciers.CapAmmorti - COALESCE((
+                        SELECT SUM(CapitalPaye) FROM remboursementcredits 
+                        WHERE RefEcheance = echeanciers.ReferenceEch
+                    ), 0) > 0')
+                    ->orWhereRaw('echeanciers.Interet - COALESCE((
+                        SELECT SUM(InteretPaye) FROM remboursementcredits 
+                        WHERE RefEcheance = echeanciers.ReferenceEch
+                    ), 0) > 0');
+                });
+        })
+        ->with(['echeanciers' => function ($q) use ($today) {
+            $q->where('DateTranch', '<=', $today)
+              ->where(function($q2) {
+                  $q2->whereRaw('CapAmmorti - COALESCE((
+                      SELECT SUM(CapitalPaye) FROM remboursementcredits 
+                      WHERE RefEcheance = echeanciers.ReferenceEch
+                  ), 0) > 0')
+                  ->orWhereRaw('Interet - COALESCE((
+                      SELECT SUM(InteretPaye) FROM remboursementcredits 
+                      WHERE RefEcheance = echeanciers.ReferenceEch
+                  ), 0) > 0');
+              });
+        }])
+        ->get()
+       
+        ->map(function ($portefeuille) use ($today) {
+            // Calcul du nombre de jours de retard (max parmi les échéances impayées)
+            $maxRetard = $portefeuille->echeanciers->max(function ($echeance) use ($today) {
+                return max(0, Carbon::parse($today)->diffInDays(Carbon::parse($echeance->DateTranch)));
+            });
+
+              
+            $portefeuille->NbrJrRetard = $maxRetard;
+           
+            return $portefeuille;
+        });
     }
 
     /**
@@ -1680,11 +1696,9 @@ class ClotureJourneeCopy
         if (isset($processingDossiers[$dossierKey])) {
             return;
         }
-
         $processingDossiers[$dossierKey] = true;
         // Implémentez la logique pour provisionner ou annuler les provisions
         $record = JourRetard::where("NumDossier", $creditProv->NumDossier)->first();
-
         //info("record " . $record);
         if ($record) {
             // Vérifie si la DateRetard est différente de la date actuelle
@@ -1700,9 +1714,49 @@ class ClotureJourneeCopy
     }
 
 
+    /**
+ * Calcule le nombre de jours de retard pour un dossier
+ * @param string $numDossier
+ * @return int
+ */
+protected function calculerJoursRetard($numDossier)
+{
+    $today = $this->dateSystem;
+   
+    
+    // Récupérer la date d'échéance la plus ancienne parmi celles non entièrement payées
+    $result = Echeancier::where('NumDossier', $numDossier)
+        ->where('DateTranch', '<=', $today)
+        ->where(function ($q) {
+            $q->whereRaw('CapAmmorti - COALESCE((
+                SELECT SUM(CapitalPaye) FROM remboursementcredits 
+                WHERE RefEcheance = echeanciers.ReferenceEch
+            ), 0) > 0')
+            ->orWhereRaw('Interet - COALESCE((
+                SELECT SUM(InteretPaye) FROM remboursementcredits 
+                WHERE RefEcheance = echeanciers.ReferenceEch
+            ), 0) > 0');
+        })
+        ->min('DateTranch');
+       
+    
+    if (!$result) {
+        return 0;
+    }
+   
+
+    return max(0, Carbon::parse($today)->diffInDays(Carbon::parse($result)));
+}
+
     //PROVISION DE CREDIT
     public function provisionCreditRetard($creditProv)
     {
+         // Calcul dynamique du nombre de jours de retard
+    $jours = $this->calculerJoursRetard($creditProv->NumDossier);
+  
+    if ($jours <= 0) {
+        return; // pas de retard actuel
+    }
         // $soldeRestant = DB::select('SELECT SUM(echeanciers.CapAmmorti) as soldeRestant from echeanciers where echeanciers.NumDossier="' . $creditProv->NumDossier . '" and echeanciers.posted=!1 and echeanciers.statutPayement=!1 GROUP BY echeanciers.NumDossier')[0];
         // $SoldeCreditRestant = $soldeRestant->soldeRestant;
         $codeMonnaie = $creditProv->CodeMonnaie == "CDF" ? 2 : 1;
@@ -1778,8 +1832,209 @@ class ClotureJourneeCopy
         }
 
         $capitalApayer = $capitaRetard ? $capitaRetard->sommeCapitalRetard : 0;
-           if ($capitalApayer > 0) {
-        if ($creditProv->NbrJrRetard <= 30 and $creditProv->provision1 == 0) {
+        //    if ($capitalApayer > 0) {
+        // if ($creditProv->NbrJrRetard <= 30 and $creditProv->provision1 == 0) {
+        //     //
+        //     $this->insertInTransactionProvision(
+        //         abs($sommeCapitalDejaPaye),
+        //         $creditProv->CodeMonnaie,
+        //         $this->dateSystem,
+        //         $creditProv->CodeAgence,
+        //         $creditProv->NumCompteCredit,
+        //         $creditProv->numAdherant,
+        //         abs($SoldeCreditRestant),
+        //         $this->tauxDuJour,
+        //         $creditProv->NomCompte,
+        //         abs($capitalApayer),
+        //         $creditProv->NumDossier,
+        //         "5%",
+        //         5,
+        //         "1 à 30jrs",
+        //         $creditProv->Gestionnaire,
+        //         $creditProv->RefEcheance
+        //     );
+        //     // $this->CheckTransactionStatus();
+
+        //     JourRetard::where("NumDossier", $creditProv->NumDossier)->update([
+        //         "provision1" => 1,
+        //     ]);
+        // } else if ($creditProv->NbrJrRetard > 30 and $creditProv->NbrJrRetard <= 60 and $creditProv->provision2 == 0) {
+        //     //ANNULE D'ABORD l'ANCIENNE PROVISION
+
+        //     $this->annulProvision(
+        //         $creditProv->CodeMonnaie,
+        //         $creditProv->CodeAgence,
+        //         $creditProv->numAdherant,
+        //         1,
+        //         $capitalApayer,
+        //         $this->tauxDuJour,
+        //         $SoldeCreditRestant,
+        //         $creditProv->NumDossier,
+        //         "5%",
+        //         "1 à 30jrs",
+        //         $creditProv->Gestionnaire,
+        //         $creditProv->NumCompteCredit,
+        //         $creditProv->RefEcheance
+        //     );
+
+        //     $this->insertInTransactionProvision(
+        //         abs($sommeCapitalDejaPaye),
+        //         $creditProv->CodeMonnaie,
+        //         $this->dateSystem,
+        //         $creditProv->CodeAgence,
+        //         $creditProv->NumCompteCredit,
+        //         $creditProv->numAdherant,
+        //         abs($SoldeCreditRestant),
+        //         $this->tauxDuJour,
+        //         $creditProv->NomCompte,
+        //         abs($capitalApayer),
+        //         $creditProv->NumDossier,
+        //         "10%",
+        //         10,
+        //         "31 à 60jrs",
+        //         $creditProv->Gestionnaire,
+        //         $creditProv->RefEcheance
+        //     );
+
+        //     // $this->CheckTransactionStatus();
+
+        //     JourRetard::where("NumDossier", $creditProv->NumDossier)->update([
+        //         "provision2" => 1,
+        //     ]);
+        // } else if ($creditProv->NbrJrRetard > 60 and $creditProv->NbrJrRetard <= 90 and $creditProv->provision3 == 0) {
+        //     //ANNULE D'ABORD l'ANCIENNE PROVISION
+
+        //     $this->annulProvision(
+        //         $creditProv->CodeMonnaie,
+        //         $creditProv->CodeAgence,
+        //         $creditProv->numAdherant,
+        //         2,
+        //         $capitalApayer,
+        //         $this->tauxDuJour,
+        //         $SoldeCreditRestant,
+        //         $creditProv->NumDossier,
+        //         "10%",
+        //         "31 à 60jrs",
+        //         $creditProv->Gestionnaire,
+        //         $creditProv->NumCompteCredit,
+        //         $creditProv->RefEcheance
+        //     );
+
+        //     $this->insertInTransactionProvision(
+        //         abs($sommeCapitalDejaPaye),
+        //         $creditProv->CodeMonnaie,
+        //         $this->dateSystem,
+        //         $creditProv->CodeAgence,
+        //         $creditProv->NumCompteCredit,
+        //         $creditProv->numAdherant,
+        //         abs($SoldeCreditRestant),
+        //         $this->tauxDuJour,
+        //         $creditProv->NomCompte,
+        //         abs($capitalApayer),
+        //         $creditProv->NumDossier,
+        //         "25%",
+        //         25,
+        //         "61 à 90jrs",
+        //         $creditProv->Gestionnaire,
+        //         $creditProv->RefEcheance
+        //     );
+
+        //     // $this->CheckTransactionStatus();
+
+        //     JourRetard::where("NumDossier", $creditProv->NumDossier)->update([
+        //         "provision3" => 1,
+        //     ]);
+        // } else if ($creditProv->NbrJrRetard > 90 and $creditProv->NbrJrRetard <= 180 and $creditProv->provision4 == 0) {
+        //     //ANNULE D'ABORD l'ANCIENNE PROVISION
+        //     $this->annulProvision(
+        //         $creditProv->CodeMonnaie,
+        //         $creditProv->CodeAgence,
+        //         $creditProv->numAdherant,
+        //         3,
+        //         $capitalApayer,
+        //         $this->tauxDuJour,
+        //         $SoldeCreditRestant,
+        //         $creditProv->NumDossier,
+        //         "25%",
+        //         "61 à 90jrs",
+        //         $creditProv->Gestionnaire,
+        //         $creditProv->NumCompteCredit,
+        //         $creditProv->RefEcheance
+        //     );
+
+
+        //     $this->insertInTransactionProvision(
+        //         abs($sommeCapitalDejaPaye),
+        //         $creditProv->CodeMonnaie,
+        //         $this->dateSystem,
+        //         $creditProv->CodeAgence,
+        //         $creditProv->NumCompteCredit,
+        //         $creditProv->numAdherant,
+        //         abs($SoldeCreditRestant),
+        //         $this->tauxDuJour,
+        //         $creditProv->NomCompte,
+        //         abs($capitalApayer),
+        //         $creditProv->NumDossier,
+        //         "75%",
+        //         75,
+        //         "91 à 180jrs",
+        //         $creditProv->Gestionnaire,
+        //         $creditProv->RefEcheance
+        //     );
+
+        //     // $this->CheckTransactionStatus();
+
+        //     JourRetard::where("NumDossier", $creditProv->NumDossier)->update([
+        //         "provision4" => 1,
+        //     ]);
+        // } else if ($creditProv->NbrJrRetard > 180 and $creditProv->provision5 == 0) {
+        //     // //ANNULE D'ABORD l'ANCIENNE PROVISION
+
+        //     $this->annulProvision(
+        //         $creditProv->CodeMonnaie,
+        //         $creditProv->CodeAgence,
+        //         $creditProv->numAdherant,
+        //         4,
+        //         $capitalApayer,
+        //         $this->tauxDuJour,
+        //         $SoldeCreditRestant,
+        //         $creditProv->NumDossier,
+        //         "75%",
+        //         "91 à 180jrs",
+        //         $creditProv->Gestionnaire,
+        //         $creditProv->NumCompteCredit,
+        //         $creditProv->RefEcheance
+        //     );
+        //     $this->insertInTransactionProvision(
+        //         abs($sommeCapitalDejaPaye),
+        //         $creditProv->CodeMonnaie,
+        //         $this->dateSystem,
+        //         $creditProv->CodeAgence,
+        //         $creditProv->NumCompteCredit,
+        //         $creditProv->numAdherant,
+        //         abs($SoldeCreditRestant),
+        //         $this->tauxDuJour,
+        //         $creditProv->NomCompte,
+        //         abs($capitalApayer),
+        //         $creditProv->NumDossier,
+        //         "100%",
+        //         100,
+        //         "plus de 180jrs",
+        //         $creditProv->Gestionnaire,
+        //         $creditProv->RefEcheance
+        //     );
+
+        //     // $this->CheckTransactionStatus();
+
+        //     JourRetard::where("NumDossier", $creditProv->NumDossier)->update([
+        //         "provision5" => 1,
+        //     ]);
+        // }
+        // }
+
+       
+         
+         if ($jours <= 30 and $creditProv->provision1 == 0 ) {
             //
             $this->insertInTransactionProvision(
                 abs($sommeCapitalDejaPaye),
@@ -1804,7 +2059,7 @@ class ClotureJourneeCopy
             JourRetard::where("NumDossier", $creditProv->NumDossier)->update([
                 "provision1" => 1,
             ]);
-        } else if ($creditProv->NbrJrRetard > 30 and $creditProv->NbrJrRetard <= 60 and $creditProv->provision2 == 0) {
+        } else if ($jours > 30 and $jours <= 60 and $creditProv->provision2 == 0) {
             //ANNULE D'ABORD l'ANCIENNE PROVISION
 
             $this->annulProvision(
@@ -1847,7 +2102,7 @@ class ClotureJourneeCopy
             JourRetard::where("NumDossier", $creditProv->NumDossier)->update([
                 "provision2" => 1,
             ]);
-        } else if ($creditProv->NbrJrRetard > 60 and $creditProv->NbrJrRetard <= 90 and $creditProv->provision3 == 0) {
+        } else if ($jours > 60 and $jours <= 90 and $creditProv->provision3 == 0) {
             //ANNULE D'ABORD l'ANCIENNE PROVISION
 
             $this->annulProvision(
@@ -1890,7 +2145,7 @@ class ClotureJourneeCopy
             JourRetard::where("NumDossier", $creditProv->NumDossier)->update([
                 "provision3" => 1,
             ]);
-        } else if ($creditProv->NbrJrRetard > 90 and $creditProv->NbrJrRetard <= 180 and $creditProv->provision4 == 0) {
+        } else if ($jours > 90 and $jours <= 180 and $creditProv->provision4 == 0) {
             //ANNULE D'ABORD l'ANCIENNE PROVISION
             $this->annulProvision(
                 $creditProv->CodeMonnaie,
@@ -1933,7 +2188,7 @@ class ClotureJourneeCopy
             JourRetard::where("NumDossier", $creditProv->NumDossier)->update([
                 "provision4" => 1,
             ]);
-        } else if ($creditProv->NbrJrRetard > 180 and $creditProv->provision5 == 0) {
+        } else if ($jours > 180 and $creditProv->provision5 == 0) {
             // //ANNULE D'ABORD l'ANCIENNE PROVISION
 
             $this->annulProvision(
@@ -1975,7 +2230,6 @@ class ClotureJourneeCopy
             JourRetard::where("NumDossier", $creditProv->NumDossier)->update([
                 "provision5" => 1,
             ]);
-        }
         }
     }
 
@@ -3426,16 +3680,16 @@ class ClotureJourneeCopy
     }
 
     //PERMET DE VERIFIER SI LE CLIENT N'EST PAS EN RETARD POUR LA TRANCHE EN COURS
-    public function checkRetardMembre($NumDossier, $dateTombeeTranche)
-    {
-        $data = Echeancier::where("NumDossier", $NumDossier)
-            ->where("DateTranch", $dateTombeeTranche)->first();
-        if ($data->RetardPayement == 1) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+    // public function checkRetardMembre($NumDossier, $dateTombeeTranche)
+    // {
+    //     $data = Echeancier::where("NumDossier", $NumDossier)
+    //         ->where("DateTranch", $dateTombeeTranche)->first();
+    //     if ($data->RetardPayement == 1) {
+    //         return true;
+    //     } else {
+    //         return false;
+    //     }
+    // }
 
 
     //CETTE FONCTION PERMET D'ENREGISTRER DANS LA TABLE REMBOURSEMENT POUR SIGNALE LE PAIEMENT 
@@ -3610,6 +3864,11 @@ class ClotureJourneeCopy
     {
         JourRetard::where("NumDossier", $NumDossier)->update([
             "NbrJrRetard" => 0,
+            "provision1"=>0,
+            "provision2"=>0,
+            "provision3"=>0,
+            "provision4"=>0,
+            "provision5"=>0,
         ]);
     }
 

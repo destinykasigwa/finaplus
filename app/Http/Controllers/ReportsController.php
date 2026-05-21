@@ -732,11 +732,162 @@ class ReportsController extends Controller
         //     }
         // }
 
+        // else if (isset($request->radioValue) and $request->radioValue == "tableau_ammortiss") {
+        //     if (isset($request->searched_num_dossier)) {
+        //         $checkNumDossier = Echeancier::where("NumDossier", "=", $request->searched_num_dossier)->first();
+        //         if ($checkNumDossier) {
+        //             // Date de référence : celle fournie ou aujourd'hui
+        //             $dateReference = $request->filled('date_echeance')
+        //                 ? $request->date_echeance
+        //                 : now()->toDateString();
+
+        //             $checkRow = Portefeuille::where("NumDossier", $request->searched_num_dossier)->first();
+        //             if ($checkRow->Accorde == 0 and $checkRow->Octroye == 0) {
+        //                 return response()->json([
+        //                     "status" => 0,
+        //                     "msg" => "Impossible d'afficher le tableau d'ammortissement d'un crédit non Accordé ni décaissé!",
+        //                 ]);
+        //             }
+
+        //             // -------------------------------------------------------------
+        //             // 1. Tableau d'amortissement (toutes les échéances)
+        //             //    Jointure sur remboursementcredits en ne prenant que les paiements <= dateReference
+        //             // -------------------------------------------------------------
+        //             $data = Portefeuille::where("portefeuilles.NumDossier", "=", $request->searched_num_dossier)
+        //                 ->where("echeanciers.CapAmmorti", ">", 0)
+        //                 ->leftJoin('echeanciers', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
+        //                 ->leftJoin('remboursementcredits', function ($join) use ($dateReference) {
+        //                     $join->on('remboursementcredits.RefEcheance', '=', 'echeanciers.ReferenceEch');
+        //                     // On ne prend que les remboursements effectués à ou avant la date de référence
+        //                     $join->whereDate('remboursementcredits.DateTranche', '<=', $dateReference);
+        //                 })
+        //                 ->when($codeAgence, function ($q) use ($codeAgence) {
+        //                     return $q->where('portefeuilles.CodeAgence', $codeAgence);
+        //                 })
+        //                 ->get();
+
+        //             // -------------------------------------------------------------
+        //             // 2. Somme des intérêts (totale, sur tout le crédit)
+        //             // -------------------------------------------------------------
+        //             $dataSommeInter = Echeancier::select(DB::raw("SUM(echeanciers.Interet) as sommeInteret"))
+        //                 ->where("echeanciers.NumDossier", "=", $request->searched_num_dossier)
+        //                 ->join('portefeuilles', 'portefeuilles.NumDossier', '=', 'echeanciers.NumDossier')
+        //                 ->when($codeAgence, function ($q) use ($codeAgence) {
+        //                     return $q->where('portefeuilles.CodeAgence', $codeAgence);
+        //                 })
+        //                 ->first();
+
+        //             // -------------------------------------------------------------
+        //             // 3. Nom du compte (pour l'affichage)
+        //             // -------------------------------------------------------------
+        //             $NomCompte = Portefeuille::where("NumDossier", $request->searched_num_dossier)
+        //                 ->when($codeAgence, function ($q) use ($codeAgence) {
+        //                     return $q->where('CodeAgence', $codeAgence);
+        //                 })
+        //                 ->first();
+
+        //             // -------------------------------------------------------------
+        //             // 4. Capital total du crédit (montant accordé)
+        //             // -------------------------------------------------------------
+        //             $capitalTotal = Portefeuille::where('NumDossier', $request->searched_num_dossier)
+        //                 ->value('MontantAccorde');
+
+        //             // -------------------------------------------------------------
+        //             // 5. Capital déjà remboursé à la date de référence
+        //             // -------------------------------------------------------------
+        //             $capitalRembourse = DB::table('remboursementcredits')
+        //                 ->join('echeanciers', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
+        //                 ->where('echeanciers.NumDossier', $request->searched_num_dossier)
+        //                 ->whereDate('remboursementcredits.DateTranche', '<=', $dateReference)
+        //                 ->sum('remboursementcredits.CapitalPaye');
+
+        //             $capitalRembours = $capitalRembourse;
+
+        //             // -------------------------------------------------------------
+        //             // 6. Solde restant (capital total - déjà remboursé)
+        //             // -------------------------------------------------------------
+        //             $SoldeCreditRestant = $capitalTotal - $capitalRembourse;
+
+        //             // -------------------------------------------------------------
+        //             // 7. Intérêts remboursés à la date de référence
+        //             // -------------------------------------------------------------
+        //             $InteretRembourse = DB::table('remboursementcredits')
+        //                 ->join('echeanciers', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
+        //                 ->where('echeanciers.NumDossier', $request->searched_num_dossier)
+        //                 ->whereDate('remboursementcredits.DateTranche', '<=', $dateReference)
+        //                 ->sum('remboursementcredits.InteretPaye');
+
+        //             // -------------------------------------------------------------
+        //             // 8. Intérêts restants (total des intérêts du crédit - déjà remboursés)
+        //             // -------------------------------------------------------------
+        //             $interetTotal = Echeancier::where('NumDossier', $request->searched_num_dossier)->sum('Interet');
+        //             $InteretRestant = $interetTotal - $InteretRembourse;
+
+        //             // -------------------------------------------------------------
+        //             // 9. Montant en retard à la date de référence
+        //             //    On prend toutes les échéances échues (DateTranch <= dateReference)
+        //             //    Pour chacune, on calcule le capital et intérêts encore dus
+        //             // -------------------------------------------------------------
+        //             $echeances = Echeancier::where('NumDossier', $request->searched_num_dossier)
+        //                 ->whereDate('DateTranch', '<=', $dateReference)
+        //                 ->get();
+
+        //             $sommeCapitalRetard = 0;
+        //             $sommeInteretRetard = 0;
+        //             foreach ($echeances as $echeance) {
+        //                 $paye = DB::table('remboursementcredits')
+        //                     ->where('RefEcheance', $echeance->ReferenceEch)
+        //                     ->whereDate('DateTranche', '<=', $dateReference)
+        //                     ->select(DB::raw('SUM(CapitalPaye) as cp, SUM(InteretPaye) as ip'))
+        //                     ->first();
+        //                 $capitalPaye = $paye->cp ?? 0;
+        //                 $interetPaye = $paye->ip ?? 0;
+        //                 $capitalRestant = $echeance->CapAmmorti - $capitalPaye;
+        //                 $interetRestant = $echeance->Interet - $interetPaye;
+        //                 if ($capitalRestant > 0 || $interetRestant > 0) {
+        //                     $sommeCapitalRetard += $capitalRestant;
+        //                     $sommeInteretRetard += $interetRestant;
+        //                 }
+        //             }
+
+        //             $soldeEnRetard = (object) [
+        //                 'sommeCapitalRetard' => $sommeCapitalRetard,
+        //                 'sommeInteretRetard' => $sommeInteretRetard
+        //             ];
+
+        //             // -------------------------------------------------------------
+        //             // 10. Retour JSON
+        //             // -------------------------------------------------------------
+        //             return response()->json([
+        //                 "status" => 1,
+        //                 "data_ammortissement" => $data,
+        //                 "msg" => "Résultat trouvé" . ($request->filled('date_echeance') ? " à la date du " . $dateReference : " (état actuel)"),
+        //                 "sommeInteret_ammort" => $dataSommeInter,
+        //                 "NomCompte" => $NomCompte,
+        //                 "soldeRestant" => $SoldeCreditRestant,
+        //                 "soldeEnRetard" => $soldeEnRetard,
+        //                 "capitalRembourse" => $capitalRembours,
+        //                 "interetRembourse" => $InteretRembourse,
+        //                 "interetRestant" => $InteretRestant
+        //             ]);
+        //         } else {
+        //             return response()->json([
+        //                 "status" => 0,
+        //                 "msg" => "Aucun écheancier n'est associé au numéro de dossier renseigné..."
+        //             ]);
+        //         }
+        //     } else {
+        //         return response()->json([
+        //             "status" => 0,
+        //             "msg" => "Vous devez renseigner le numéro de dossier!"
+        //         ]);
+        //     }
+        // } 
+
         else if (isset($request->radioValue) and $request->radioValue == "tableau_ammortiss") {
             if (isset($request->searched_num_dossier)) {
                 $checkNumDossier = Echeancier::where("NumDossier", "=", $request->searched_num_dossier)->first();
                 if ($checkNumDossier) {
-                    // Date de référence : celle fournie ou aujourd'hui
                     $dateReference = $request->filled('date_echeance')
                         ? $request->date_echeance
                         : now()->toDateString();
@@ -751,14 +902,12 @@ class ReportsController extends Controller
 
                     // -------------------------------------------------------------
                     // 1. Tableau d'amortissement (toutes les échéances)
-                    //    Jointure sur remboursementcredits en ne prenant que les paiements <= dateReference
                     // -------------------------------------------------------------
                     $data = Portefeuille::where("portefeuilles.NumDossier", "=", $request->searched_num_dossier)
                         ->where("echeanciers.CapAmmorti", ">", 0)
                         ->leftJoin('echeanciers', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
                         ->leftJoin('remboursementcredits', function ($join) use ($dateReference) {
                             $join->on('remboursementcredits.RefEcheance', '=', 'echeanciers.ReferenceEch');
-                            // On ne prend que les remboursements effectués à ou avant la date de référence
                             $join->whereDate('remboursementcredits.DateTranche', '<=', $dateReference);
                         })
                         ->when($codeAgence, function ($q) use ($codeAgence) {
@@ -767,7 +916,7 @@ class ReportsController extends Controller
                         ->get();
 
                     // -------------------------------------------------------------
-                    // 2. Somme des intérêts (totale, sur tout le crédit)
+                    // 2. Somme des intérêts planifiés (totale)
                     // -------------------------------------------------------------
                     $dataSommeInter = Echeancier::select(DB::raw("SUM(echeanciers.Interet) as sommeInteret"))
                         ->where("echeanciers.NumDossier", "=", $request->searched_num_dossier)
@@ -778,7 +927,7 @@ class ReportsController extends Controller
                         ->first();
 
                     // -------------------------------------------------------------
-                    // 3. Nom du compte (pour l'affichage)
+                    // 3. Nom du compte
                     // -------------------------------------------------------------
                     $NomCompte = Portefeuille::where("NumDossier", $request->searched_num_dossier)
                         ->when($codeAgence, function ($q) use ($codeAgence) {
@@ -787,29 +936,23 @@ class ReportsController extends Controller
                         ->first();
 
                     // -------------------------------------------------------------
-                    // 4. Capital total du crédit (montant accordé)
+                    // 4. Capital total
                     // -------------------------------------------------------------
-                    $capitalTotal = Portefeuille::where('NumDossier', $request->searched_num_dossier)
-                        ->value('MontantAccorde');
+                    $capitalTotal = Portefeuille::where('NumDossier', $request->searched_num_dossier)->value('MontantAccorde');
 
                     // -------------------------------------------------------------
-                    // 5. Capital déjà remboursé à la date de référence
+                    // 5. Capital déjà remboursé
                     // -------------------------------------------------------------
                     $capitalRembourse = DB::table('remboursementcredits')
                         ->join('echeanciers', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
                         ->where('echeanciers.NumDossier', $request->searched_num_dossier)
                         ->whereDate('remboursementcredits.DateTranche', '<=', $dateReference)
                         ->sum('remboursementcredits.CapitalPaye');
-
                     $capitalRembours = $capitalRembourse;
-
-                    // -------------------------------------------------------------
-                    // 6. Solde restant (capital total - déjà remboursé)
-                    // -------------------------------------------------------------
                     $SoldeCreditRestant = $capitalTotal - $capitalRembourse;
 
                     // -------------------------------------------------------------
-                    // 7. Intérêts remboursés à la date de référence
+                    // 6. Intérêts remboursés (planifiés)
                     // -------------------------------------------------------------
                     $InteretRembourse = DB::table('remboursementcredits')
                         ->join('echeanciers', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
@@ -818,22 +961,35 @@ class ReportsController extends Controller
                         ->sum('remboursementcredits.InteretPaye');
 
                     // -------------------------------------------------------------
-                    // 8. Intérêts restants (total des intérêts du crédit - déjà remboursés)
+                    // 7. Intérêts planifiés restants
                     // -------------------------------------------------------------
-                    $interetTotal = Echeancier::where('NumDossier', $request->searched_num_dossier)->sum('Interet');
-                    $InteretRestant = $interetTotal - $InteretRembourse;
+                    $interetTotalPlanifie = Echeancier::where('NumDossier', $request->searched_num_dossier)->sum('Interet');
+                    $InteretRestantPlanifie = $interetTotalPlanifie - $InteretRembourse;
 
                     // -------------------------------------------------------------
-                    // 9. Montant en retard à la date de référence
-                    //    On prend toutes les échéances échues (DateTranch <= dateReference)
-                    //    Pour chacune, on calcule le capital et intérêts encore dus
+                    // 8. Intérêts post-échéance non payés (table interets_courus_suivi)
                     // -------------------------------------------------------------
+                    $interetPostEcheance = DB::table('interets_courus_suivi')
+                        ->where('NumDossier', $request->searched_num_dossier)
+                        ->value('InteretCouruNonPaye');
+                    $interetPostEcheance = $interetPostEcheance ?? 0;
+
+                    // -------------------------------------------------------------
+                    // 9. Intérêts totaux restants (planifiés + post-échéance)
+                    // -------------------------------------------------------------
+                    $InteretRestant = $InteretRestantPlanifie + $interetPostEcheance;
+
+                    // -------------------------------------------------------------
+                    // 10. Montant en retard (capital + intérêts planifiés échus)
+                    //     + intérêts post-échéance si date de référence > date d'échéance
+                    // -------------------------------------------------------------
+                    $dateEcheanceCredit = $checkRow->DateEcheance;
                     $echeances = Echeancier::where('NumDossier', $request->searched_num_dossier)
                         ->whereDate('DateTranch', '<=', $dateReference)
                         ->get();
 
                     $sommeCapitalRetard = 0;
-                    $sommeInteretRetard = 0;
+                    $sommeInteretRetardPlanifie = 0;
                     foreach ($echeances as $echeance) {
                         $paye = DB::table('remboursementcredits')
                             ->where('RefEcheance', $echeance->ReferenceEch)
@@ -846,8 +1002,14 @@ class ReportsController extends Controller
                         $interetRestant = $echeance->Interet - $interetPaye;
                         if ($capitalRestant > 0 || $interetRestant > 0) {
                             $sommeCapitalRetard += $capitalRestant;
-                            $sommeInteretRetard += $interetRestant;
+                            $sommeInteretRetardPlanifie += $interetRestant;
                         }
+                    }
+
+                    $sommeInteretRetard = $sommeInteretRetardPlanifie;
+                    // Si la date de référence est après la date d'échéance du crédit, ajouter les intérêts post-échéance
+                    if ($dateReference > $dateEcheanceCredit) {
+                        $sommeInteretRetard += $interetPostEcheance;
                     }
 
                     $soldeEnRetard = (object) [
@@ -856,7 +1018,7 @@ class ReportsController extends Controller
                     ];
 
                     // -------------------------------------------------------------
-                    // 10. Retour JSON
+                    // 11. Retour JSON (ajout de interetPostEcheance si utile)
                     // -------------------------------------------------------------
                     return response()->json([
                         "status" => 1,
@@ -868,7 +1030,8 @@ class ReportsController extends Controller
                         "soldeEnRetard" => $soldeEnRetard,
                         "capitalRembourse" => $capitalRembours,
                         "interetRembourse" => $InteretRembourse,
-                        "interetRestant" => $InteretRestant
+                        "interetRestant" => $InteretRestant,
+                        "interetPostEcheance" => $interetPostEcheance // nouvelle clé (optionnelle)
                     ]);
                 } else {
                     return response()->json([
@@ -888,38 +1051,216 @@ class ReportsController extends Controller
                 $devise = $request->devise;
 
                 // Requête commune pour la balance âgée (CDF ou USD)
+                // $balanceQuery = Portefeuille::where("portefeuilles.CodeMonnaie", "=", $devise)
+                //     ->where("portefeuilles.Octroye", 1)
+                //     ->where("portefeuilles.Cloture", "!=", 1)
+                //     ->when(!empty($request->selectedDate), function ($query) use ($request) {
+                //         $query->whereDate("portefeuilles.DateOctroi", "<=", $request->selectedDate);
+                //     })
+                //     ->join("comptes", "portefeuilles.NumCompteEpargne", "=", "comptes.NumCompte")
+                //     ->leftJoin("jour_retards", "portefeuilles.NumCompteEpargne", "=", "jour_retards.NumcompteEpargne")
+                //     ->leftJoin("echeanciers", "portefeuilles.NumDossier", "=", "echeanciers.NumDossier")
+                //     ->when(!empty($agentCreditName), function ($query) use ($agentCreditName) {
+                //         $query->where("portefeuilles.Gestionnaire", $agentCreditName);
+                //     })
+                //     ->when($codeAgence, function ($q) use ($codeAgence) {
+                //         return $q->where('portefeuilles.CodeAgence', $codeAgence);
+                //     })
+                //     ->selectRaw('
+                //     portefeuilles.NumDossier,
+                //     portefeuilles.NumCompteEpargne,
+                //     portefeuilles.CodeMonnaie,
+                //     portefeuilles.NumCompteCredit,
+                //     portefeuilles.NomCompte,
+                //     portefeuilles.DateOctroi,
+                //     portefeuilles.DateEcheance,
+                //     portefeuilles.MontantAccorde,
+                //     portefeuilles.Duree,
+                //     jour_retards.DateRetard,
+                //     jour_retards.NbrJrRetard,
+                //     SUM(CASE WHEN echeanciers.statutPayement = 1 AND echeanciers.posted = 1 THEN echeanciers.CapAmmorti ELSE 0 END) AS TotalCapitalRembourse,
+                //     SUM(CASE WHEN echeanciers.statutPayement = 1 AND echeanciers.posted = 1 THEN echeanciers.Interet ELSE 0 END) AS TotalInteretRembourse,
+                //     SUM(echeanciers.CapAmmorti) - SUM(CASE WHEN echeanciers.StatutPayement = 1 AND echeanciers.Posted = 1 THEN echeanciers.CapAmmorti ELSE 0 END) AS CapitalRestant,
+                //     SUM(echeanciers.Interet) - SUM(CASE WHEN echeanciers.StatutPayement = 1 AND echeanciers.Posted = 1 THEN echeanciers.Interet ELSE 0 END) AS InteretRestant
+                // ')
+                //     ->groupBy(
+                //         'portefeuilles.NumDossier',
+                //         'portefeuilles.NumCompteEpargne',
+                //         'portefeuilles.CodeMonnaie',
+                //         'portefeuilles.NumCompteCredit',
+                //         'portefeuilles.NomCompte',
+                //         'portefeuilles.DateOctroi',
+                //         'portefeuilles.DateEcheance',
+                //         'portefeuilles.MontantAccorde',
+                //         'portefeuilles.Duree',
+                //         'jour_retards.DateRetard',
+                //         'jour_retards.NbrJrRetard'
+                //     )
+                //     ->orderBy('portefeuilles.DateOctroi', 'desc');
+
+                // $dataBalanceAgee = $balanceQuery->get();
+                $selectedDate = $request->selectedDate ?? date('Y-m-d');
+
+                // $balanceQuery = Portefeuille::where("portefeuilles.CodeMonnaie", "=", $devise)
+                //     ->where("portefeuilles.Octroye", 1)
+                //     ->where("portefeuilles.Cloture", "!=", 1)
+                //     ->when(!empty($request->selectedDate), function ($query) use ($selectedDate) {
+                //         $query->whereDate("portefeuilles.DateOctroi", "<=", $selectedDate);
+                //     })
+                //     ->join("comptes", "portefeuilles.NumCompteEpargne", "=", "comptes.NumCompte")
+                //     ->leftJoin("jour_retards", "portefeuilles.NumDossier", "=", "jour_retards.NumDossier")
+                //     ->when(!empty($agentCreditName), function ($query) use ($agentCreditName) {
+                //         $query->where("portefeuilles.Gestionnaire", $agentCreditName);
+                //     })
+                //     ->when($codeAgence, function ($q) use ($codeAgence) {
+                //         return $q->where('portefeuilles.CodeAgence', $codeAgence);
+                //     })
+                //     ->selectRaw("
+                //         portefeuilles.NumDossier,
+                //         portefeuilles.NumCompteEpargne,
+                //         portefeuilles.CodeMonnaie,
+                //         portefeuilles.NumCompteCredit,
+                //         portefeuilles.NomCompte,
+                //         portefeuilles.DateOctroi,
+                //         portefeuilles.DateEcheance,
+                //         portefeuilles.MontantAccorde,
+                //         portefeuilles.Duree,
+                //         jour_retards.DateRetard,
+                //         COALESCE((
+                //             SELECT MAX(DATEDIFF(?, e.DateTranch))
+                //             FROM echeanciers e
+                //             WHERE e.NumDossier = portefeuilles.NumDossier
+                //               AND e.DateTranch <= ?
+                //               AND (
+                //                   e.CapAmmorti > (
+                //                       SELECT COALESCE(SUM(rc.CapitalPaye), 0)
+                //                       FROM remboursementcredits rc
+                //                       WHERE rc.RefEcheance = e.ReferenceEch
+                //                         AND rc.DateTranche <= ?
+                //                   )
+                //                   OR e.Interet > (
+                //                       SELECT COALESCE(SUM(rc.InteretPaye), 0)
+                //                       FROM remboursementcredits rc
+                //                       WHERE rc.RefEcheance = e.ReferenceEch
+                //                         AND rc.DateTranche <= ?
+                //                   )
+                //               )
+                //         ), 0) AS NbrJrRetard,
+                //         (
+                //             SELECT COALESCE(SUM(e2.CapAmmorti), 0)
+                //             FROM echeanciers e2
+                //             WHERE e2.NumDossier = portefeuilles.NumDossier
+                //               AND e2.statutPayement = 1 AND e2.posted = 1
+                //         ) AS TotalCapitalRembourse,
+                //         (
+                //             SELECT COALESCE(SUM(e2.Interet), 0)
+                //             FROM echeanciers e2
+                //             WHERE e2.NumDossier = portefeuilles.NumDossier
+                //               AND e2.statutPayement = 1 AND e2.posted = 1
+                //         ) AS TotalInteretRembourse,
+                //         (
+                //             SELECT COALESCE(SUM(e2.CapAmmorti), 0) - COALESCE(SUM(CASE WHEN e2.statutPayement = 1 AND e2.posted = 1 THEN e2.CapAmmorti ELSE 0 END), 0)
+                //             FROM echeanciers e2
+                //             WHERE e2.NumDossier = portefeuilles.NumDossier
+                //         ) AS CapitalRestant,
+                //         (
+                //             SELECT COALESCE(SUM(e2.Interet), 0) - COALESCE(SUM(CASE WHEN e2.statutPayement = 1 AND e2.posted = 1 THEN e2.Interet ELSE 0 END), 0)
+                //             FROM echeanciers e2
+                //             WHERE e2.NumDossier = portefeuilles.NumDossier
+                //         ) AS InteretRestant
+                //     ", [$selectedDate, $selectedDate, $selectedDate, $selectedDate])
+                //     ->groupBy(
+                //         'portefeuilles.NumDossier',
+                //         'portefeuilles.NumCompteEpargne',
+                //         'portefeuilles.CodeMonnaie',
+                //         'portefeuilles.NumCompteCredit',
+                //         'portefeuilles.NomCompte',
+                //         'portefeuilles.DateOctroi',
+                //         'portefeuilles.DateEcheance',
+                //         'portefeuilles.MontantAccorde',
+                //         'portefeuilles.Duree',
+                //         'jour_retards.DateRetard'
+                //     )
+                //     ->orderBy('portefeuilles.DateOctroi', 'desc');
+
+                // $dataBalanceAgee = $balanceQuery->get();
+
+
                 $balanceQuery = Portefeuille::where("portefeuilles.CodeMonnaie", "=", $devise)
                     ->where("portefeuilles.Octroye", 1)
                     ->where("portefeuilles.Cloture", "!=", 1)
-                    ->when(!empty($request->selectedDate), function ($query) use ($request) {
-                        $query->whereDate("portefeuilles.DateOctroi", "<=", $request->selectedDate);
+                    ->when(!empty($request->selectedDate), function ($query) use ($selectedDate) {
+                        $query->whereDate("portefeuilles.DateOctroi", "<=", $selectedDate);
                     })
                     ->join("comptes", "portefeuilles.NumCompteEpargne", "=", "comptes.NumCompte")
-                    ->leftJoin("jour_retards", "portefeuilles.NumCompteEpargne", "=", "jour_retards.NumcompteEpargne")
-                    ->leftJoin("echeanciers", "portefeuilles.NumDossier", "=", "echeanciers.NumDossier")
+                    ->leftJoin("jour_retards", "portefeuilles.NumDossier", "=", "jour_retards.NumDossier")
+                    ->leftJoin("interets_courus_suivi", "portefeuilles.NumDossier", "=", "interets_courus_suivi.NumDossier")
                     ->when(!empty($agentCreditName), function ($query) use ($agentCreditName) {
                         $query->where("portefeuilles.Gestionnaire", $agentCreditName);
                     })
                     ->when($codeAgence, function ($q) use ($codeAgence) {
                         return $q->where('portefeuilles.CodeAgence', $codeAgence);
                     })
-                    ->selectRaw('
-                    portefeuilles.NumDossier,
-                    portefeuilles.NumCompteEpargne,
-                    portefeuilles.CodeMonnaie,
-                    portefeuilles.NumCompteCredit,
-                    portefeuilles.NomCompte,
-                    portefeuilles.DateOctroi,
-                    portefeuilles.DateEcheance,
-                    portefeuilles.MontantAccorde,
-                    portefeuilles.Duree,
-                    jour_retards.DateRetard,
-                    jour_retards.NbrJrRetard,
-                    SUM(CASE WHEN echeanciers.statutPayement = 1 AND echeanciers.posted = 1 THEN echeanciers.CapAmmorti ELSE 0 END) AS TotalCapitalRembourse,
-                    SUM(CASE WHEN echeanciers.statutPayement = 1 AND echeanciers.posted = 1 THEN echeanciers.Interet ELSE 0 END) AS TotalInteretRembourse,
-                    SUM(echeanciers.CapAmmorti) - SUM(CASE WHEN echeanciers.StatutPayement = 1 AND echeanciers.Posted = 1 THEN echeanciers.CapAmmorti ELSE 0 END) AS CapitalRestant,
-                    SUM(echeanciers.Interet) - SUM(CASE WHEN echeanciers.StatutPayement = 1 AND echeanciers.Posted = 1 THEN echeanciers.Interet ELSE 0 END) AS InteretRestant
-                ')
+                    ->selectRaw("
+        portefeuilles.NumDossier,
+        portefeuilles.NumCompteEpargne,
+        portefeuilles.CodeMonnaie,
+        portefeuilles.NumCompteCredit,
+        portefeuilles.NomCompte,
+        portefeuilles.DateOctroi,
+        portefeuilles.DateEcheance,
+        portefeuilles.MontantAccorde,
+        portefeuilles.Duree,
+        jour_retards.DateRetard,
+        COALESCE((
+            SELECT MAX(DATEDIFF(?, e.DateTranch))
+            FROM echeanciers e
+            WHERE e.NumDossier = portefeuilles.NumDossier
+              AND e.DateTranch <= ?
+              AND (
+                  e.CapAmmorti > (
+                      SELECT COALESCE(SUM(rc.CapitalPaye), 0)
+                      FROM remboursementcredits rc
+                      WHERE rc.RefEcheance = e.ReferenceEch
+                        AND rc.DateTranche <= ?
+                  )
+                  OR e.Interet > (
+                      SELECT COALESCE(SUM(rc.InteretPaye), 0)
+                      FROM remboursementcredits rc
+                      WHERE rc.RefEcheance = e.ReferenceEch
+                        AND rc.DateTranche <= ?
+                  )
+              )
+        ), 0) AS NbrJrRetard,
+        COALESCE((
+            SELECT COALESCE(SUM(e2.CapAmmorti), 0)
+            FROM echeanciers e2
+            WHERE e2.NumDossier = portefeuilles.NumDossier
+              AND e2.statutPayement = 1 AND e2.posted = 1
+        ), 0) AS TotalCapitalRembourse,
+        COALESCE((
+            SELECT COALESCE(SUM(e2.Interet), 0)
+            FROM echeanciers e2
+            WHERE e2.NumDossier = portefeuilles.NumDossier
+              AND e2.statutPayement = 1 AND e2.posted = 1
+        ), 0) AS TotalInteretRembourse,
+        COALESCE((
+            SELECT COALESCE(SUM(e2.CapAmmorti), 0) - COALESCE(SUM(CASE WHEN e2.statutPayement = 1 AND e2.posted = 1 THEN e2.CapAmmorti ELSE 0 END), 0)
+            FROM echeanciers e2
+            WHERE e2.NumDossier = portefeuilles.NumDossier
+        ), 0) AS CapitalRestant,
+        COALESCE((
+            SELECT COALESCE(SUM(e2.Interet), 0) - COALESCE(SUM(CASE WHEN e2.statutPayement = 1 AND e2.posted = 1 THEN e2.Interet ELSE 0 END), 0)
+            FROM echeanciers e2
+            WHERE e2.NumDossier = portefeuilles.NumDossier
+        ), 0) AS InteretRestantEcheancier,   -- intérêts planifiés restants
+        COALESCE(interets_courus_suivi.InteretCouruNonPaye, 0) AS InteretPostEcheanceNonPaye,
+        COALESCE((
+            SELECT COALESCE(SUM(e2.Interet), 0) - COALESCE(SUM(CASE WHEN e2.statutPayement = 1 AND e2.posted = 1 THEN e2.Interet ELSE 0 END), 0)
+            FROM echeanciers e2
+            WHERE e2.NumDossier = portefeuilles.NumDossier
+        ), 0) + COALESCE(interets_courus_suivi.InteretCouruNonPaye, 0) AS InteretTotalRestant
+    ", [$selectedDate, $selectedDate, $selectedDate, $selectedDate])
                     ->groupBy(
                         'portefeuilles.NumDossier',
                         'portefeuilles.NumCompteEpargne',
@@ -931,7 +1272,7 @@ class ReportsController extends Controller
                         'portefeuilles.MontantAccorde',
                         'portefeuilles.Duree',
                         'jour_retards.DateRetard',
-                        'jour_retards.NbrJrRetard'
+                        'interets_courus_suivi.InteretCouruNonPaye'
                     )
                     ->orderBy('portefeuilles.DateOctroi', 'desc');
 
@@ -947,6 +1288,7 @@ class ReportsController extends Controller
                         $join->on('p.NumDossier', '=', 'r.NumDossie');
                     })
                     ->where('p.CodeMonnaie', $devise)
+                    ->where('p.Cloture', "=", 0)
                     ->when(!empty($agentCreditName), function ($q) use ($agentCreditName) {
                         $q->where('p.Gestionnaire', $agentCreditName);
                     })
@@ -976,7 +1318,9 @@ class ReportsController extends Controller
 
                 $soldeCreditRetard = $queryCreditRetard->first();
 
-                $denominator = $soldeEncours + ($soldeCreditRetard->TotRetard ?? 0);
+                // $denominator = $soldeEncours + ($soldeCreditRetard->TotRetard ?? 0);
+                $denominator = $soldeCreditRetard->TotRetard ?? 0;
+                // dd($denominator, $soldeCreditRetard->TotRetard);
                 if ($denominator != 0 && $denominator > 0) {
                     $PAR = ($soldeCreditRetard->TotRetard / $denominator) * 100;
                 } else {
@@ -1560,17 +1904,16 @@ class ReportsController extends Controller
             // Valeur nette = brut - amort (car amort est négatif dans la sous-requête)
             $net = $brut - $amort;   // on force la valeur absolue
             $nom = Comptes::where('NumCompte', $brutNum)->value('NomCompte') ?? $brutNum;
-           
-                $immobilisationsNettes->push((object)[
-                    'NumCompte' => (string) $brutNum,
-                    'NomCompte' => $nom,
-                    'NomCadre' => $this->getNomCadre(substr($brutNum, 0, 2)),
-                    'RefCadre' => substr($brutNum, 0, 2),
-                    'soldeDebut' => 0,
-                    'soldeFin' => $net,   // toujours positif
-                    'nature_compte' => 'ACTIF',
-                ]);
-            
+
+            $immobilisationsNettes->push((object)[
+                'NumCompte' => (string) $brutNum,
+                'NomCompte' => $nom,
+                'NomCadre' => $this->getNomCadre(substr($brutNum, 0, 2)),
+                'RefCadre' => substr($brutNum, 0, 2),
+                'soldeDebut' => 0,
+                'soldeFin' => $net,   // toujours positif
+                'nature_compte' => 'ACTIF',
+            ]);
         }
 
         // Ajouter les immobilisations nettes à l'actif
@@ -1585,11 +1928,11 @@ class ReportsController extends Controller
             ->where('t.CodeMonnaie', $monnaieValue)
             ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
             ->value(DB::raw("COALESCE(SUM(t.$debitCol - t.$creditCol), 0)"));
-       $provision38_brut=$provision38->total38;
-       $solde39_brut=$total39;
+        $provision38_brut = $provision38->total38;
+        $solde39_brut = $total39;
         $provision = abs($provision38->total38 ?? 0);
         $solde39_net = $total39 - $provision;
-        
+
 
         // Supprimer les anciennes lignes 39 (venues de la requête) et ajouter la ligne consolidée
         $actifData = collect($actifData)->reject(fn($item) => $item->RefCadre == '39')->values();
@@ -1605,8 +1948,8 @@ class ReportsController extends Controller
             'nature_compte'  => 'ACTIF',
             'soldeDebut'     => 0,
             'soldeFin'       => $solde39_net,
-            'solde38'=>$provision38_brut,
-            'solde39_brut'=>$solde39_brut,
+            'solde38' => $provision38_brut,
+            'solde39_brut' => $solde39_brut,
         ];
         $actifData->push($ligne39);
         $actifData = $actifData->sortBy('NumCompte')->values();
@@ -1644,7 +1987,7 @@ class ReportsController extends Controller
 
                             WHEN '38' THEN 'PROVISIONS'
                             WHEN '39' THEN 'CREANCES DOUTEUSES'
-                            
+
                              WHEN '42' THEN 'PERSONNEL'
 
                             WHEN '45' THEN 'LIAISON INTER-AGENCE'

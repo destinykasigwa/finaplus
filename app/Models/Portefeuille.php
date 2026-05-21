@@ -115,4 +115,9 @@ class Portefeuille extends Model
         'Homme',
         'Femme',
     ];
+
+    public function echeanciers()
+{
+    return $this->hasMany(Echeancier::class, 'NumDossier', 'NumDossier');
+}
 }

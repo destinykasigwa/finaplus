@@ -65,7 +65,7 @@ class ExecuterBatchPaiement implements ShouldQueue
                     continue;
                 }
 
-                $numTransaction = $this->creerTransactionCreditBeneficiaire($beneficiaire, $ligne->montant, $devise, $batch);
+                $numTransaction = $this->creerTransactionCreditBeneficiaire($beneficiaire, $ligne->montant, $devise, $batch, $ligne->reference);
                 $ligne->transaction_id = $numTransaction;
                 $ligne->statut = 'succes';
                 $ligne->save();
@@ -134,14 +134,13 @@ class ExecuterBatchPaiement implements ShouldQueue
             'Libelle' => $libelle,
         ]);
     }
-
-    private function creerTransactionCreditBeneficiaire($beneficiaire, $montant, $devise, $batch)
+    private function creerTransactionCreditBeneficiaire($beneficiaire, $montant, $devise, $batch,$referenceLigne)
     {
         $dataSystem = TauxEtDateSystem::latest()->first();
         $numTransaction = $this->genererNumTransaction();
         $creditCol = ($devise == 1) ? 'Creditusd' : 'Creditfc';
-        $libelle = "Paiement batch {$batch->reference} - Crédit bénéficiaire {$beneficiaire->NumCompte}";
-
+        // $libelle = "Paiement batch {$batch->reference} - Crédit bénéficiaire {$beneficiaire->NumCompte}";
+         $libelle = "Paiement batch {$batch->reference} - Réf: $referenceLigne - Crédit bénéficiaire {$beneficiaire->NumCompte}";
         Transactions::create([
             'NumTransaction' => $numTransaction,
             'DateTransaction' => $dataSystem->DateSystem,

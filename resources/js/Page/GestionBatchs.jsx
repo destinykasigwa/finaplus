@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { Bars } from "react-loader-spinner";
+import * as XLSX from "xlsx";
 
 const GestionBatchs = () => {
     const [batches, setBatches] = useState([]);
@@ -161,6 +162,56 @@ const GestionBatchs = () => {
             }
         }
     };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "-";
+        const date = new Date(dateString);
+        return date.toLocaleString("fr-FR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    };
+
+    const exportDetailToExcel = () => {
+        if (
+            !selectedBatch ||
+            !selectedBatch.lignes ||
+            selectedBatch.lignes.length === 0
+        ) {
+            Swal.fire("Information", "Aucune ligne à exporter", "info");
+            return;
+        }
+
+        const exportData = selectedBatch.lignes.map((ligne) => ({
+            Compte: ligne.compte || "-",
+            Montant: ligne.montant || 0,
+            Référence: ligne.reference || "-",
+            Nom: ligne.nom || "-",
+            Téléphone: ligne.telephone || "-",
+            Statut:
+                ligne.statut === "succes"
+                    ? "Succès"
+                    : ligne.statut === "echec"
+                      ? "Échec"
+                      : "En attente",
+            "Message erreur": ligne.message_erreur || "-",
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(exportData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(
+            wb,
+            ws,
+            `Batch_${selectedBatch.reference}`,
+        );
+        XLSX.writeFile(
+            wb,
+            `batch_${selectedBatch.reference}_${new Date().toISOString().slice(0, 19)}.xlsx`,
+        );
+    };
     const isAdmin = window.currentUser?.admin === 1;
 
     return (
@@ -220,6 +271,13 @@ const GestionBatchs = () => {
                         >
                             Terminés
                         </button>
+                        {/* <button
+                            className="btn btn-success"
+                            onClick={exportToExcel}
+                        >
+                            <i className="fas fa-file-excel me-2"></i>Exporter
+                            en Excel
+                        </button> */}
                     </div>
 
                     {/* Tableau des batches */}
@@ -288,7 +346,7 @@ const GestionBatchs = () => {
                     {/* Détail du batch sélectionné (affiché en bas) */}
                     {selectedBatch && (
                         <div className="mt-4 p-3 border rounded-3 bg-light">
-                            <div className="d-flex justify-content-between align-items-center mb-3">
+                            {/* <div className="d-flex justify-content-between align-items-center mb-3">
                                 <h6 className="fw-bold">
                                     Détail du batch {selectedBatch.reference}
                                 </h6>
@@ -298,6 +356,26 @@ const GestionBatchs = () => {
                                 >
                                     Fermer
                                 </button>
+                            </div> */}
+                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                <h6 className="fw-bold">
+                                    Détail du batch {selectedBatch.reference}
+                                </h6>
+                                <div>
+                                    <button
+                                        className="btn btn-sm btn-success me-2"
+                                        onClick={exportDetailToExcel}
+                                    >
+                                        <i className="fas fa-file-excel me-1"></i>{" "}
+                                        Exporter en Excel
+                                    </button>
+                                    <button
+                                        className="btn btn-sm btn-secondary"
+                                        onClick={() => setSelectedBatch(null)}
+                                    >
+                                        Fermer
+                                    </button>
+                                </div>
                             </div>
                             {loadingDetail ? (
                                 <div className="text-center">
@@ -328,8 +406,9 @@ const GestionBatchs = () => {
                                         </div>
                                         <div className="col-md-3">
                                             <strong>Date exécution :</strong>{" "}
-                                            {selectedBatch.date_execution ||
-                                                "-"}
+                                            {formatDate(
+                                                selectedBatch.date_execution,
+                                            ) || "-"}
                                         </div>
                                     </div>
                                     <div className="table-responsive">
@@ -356,7 +435,9 @@ const GestionBatchs = () => {
                                                                 {ligne.montant.toLocaleString()}
                                                             </td>
                                                             <td>
-                                                             {ligne.reference}
+                                                                {
+                                                                    ligne.reference
+                                                                }
                                                             </td>
                                                             <td>
                                                                 {ligne.statut ===

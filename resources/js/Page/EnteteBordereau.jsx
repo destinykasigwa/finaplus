@@ -36,10 +36,10 @@ export const EnteteBordereau = () => {
         <>
             <div className="entete-rapport">
                 <div className="entete-logo">
-                    <img
+                    {/* <img
                         src={`https://app.ihdemunis.org/uploads/images/logo/1696413083.jpg`}
                         alt="Logo"
-                    />
+                    /> */}
                     {/* <img
                         src={`https://app.nuru.clindrc.com/uploads/images/logo/1736022909.PNG`}
                         alt="Logo"
@@ -50,10 +50,10 @@ export const EnteteBordereau = () => {
                         alt="Logo"
                     /> */}
 
-                     {/* <img
+                     <img
                         src={`https://app.clindrc.com/uploads/images/logo/1778254051.png`}
                         alt="Logo"
-                    /> */}
+                    />
 
                     
                     
