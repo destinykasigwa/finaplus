@@ -43,9 +43,9 @@ const Echeancier = () => {
     const [parCategory, setParCategory] = useState("");
     const [fetchParData, setFetchParData] = useState(null);
     const [totalParData, setTotalParData] = useState(null);
-    const [datePar, setDatePar] = useState(
-        new Date().toISOString().split("T")[0],
-    );
+    // const [datePar, setDatePar] = useState(
+    //     new Date().toISOString().split("T")[0],
+    // );
     const [parGlobalPercent, setParGlobalPercent] = useState(0);
     const [globalPercentages, setGlobalPercentages] = useState(null);
     const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
@@ -100,7 +100,7 @@ const Echeancier = () => {
         if (radioValue === "par") {
             params = {
                 ...params,
-                date_par: datePar,
+                date_par: selectedDate,
                 devise_par: devise,
                 gestionnaire_par: agent_credit_name,
                 par_category: parCategory,
@@ -420,15 +420,6 @@ const Echeancier = () => {
         });
     };
 
-    function numberWithSpaces(x = 0) {
-        if (x === null || x === undefined) {
-            return "0.00"; // ou une autre valeur par défaut appropriée
-        }
-        var parts = x.toString().split(".");
-        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        return parts.join(".");
-    }
-
     const groupByTranches = (data) => {
         const groupedData = {
             "Crédits sains": [],
@@ -482,6 +473,25 @@ const Echeancier = () => {
             pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
             pdf.autoPrint();
             window.open(pdf.output("bloburl"), "_blank");
+        });
+    };
+
+    //  function numberWithSpaces(x = 0) {
+    //     if (x === null || x === undefined) {
+    //         return "0.00"; // ou une autre valeur par défaut appropriée
+    //     }
+    //     var parts = x.toString().split(".");
+    //     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    //     return parts.join(".");
+    // }
+
+    const numberWithSpaces = (x) => {
+        if (x === undefined || x === null) return "0,00";
+        const num = parseFloat(x);
+        if (isNaN(num)) return "0,00";
+        return num.toLocaleString("fr-FR", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
         });
     };
 
@@ -781,7 +791,7 @@ const Echeancier = () => {
                                 {/* PAR */}
                                 {radioValue === "par" && (
                                     <div className="row g-3 mt-3 pt-3 border-top fade-in">
-                                        <div className="col-md-4 col-lg-3">
+                                        {/* <div className="col-md-4 col-lg-3">
                                             <label className="form-label fw-semibold small text-secondary">
                                                 <i className="far fa-calendar-check me-1" />{" "}
                                                 Date référence
@@ -794,7 +804,7 @@ const Echeancier = () => {
                                                     setDatePar(e.target.value)
                                                 }
                                             />
-                                        </div>
+                                        </div> */}
                                         <div className="col-md-4 col-lg-3">
                                             <label className="form-label fw-semibold small text-secondary">
                                                 <i className="fas fa-coins me-1" />{" "}
@@ -889,76 +899,188 @@ const Echeancier = () => {
 
                                         {/* Informations du crédit */}
                                         <div className="row g-2 mb-3">
-  {/* Première carte */}
-  <div className="col-md-6">
-    <div className="card border-0 bg-light rounded-3 h-100">
-      <div className="card-body p-2">
-        <table className="table table-sm table-borderless mb-0 small">
-          <tbody>
-            <tr>
-              <td className="fw-bold text-secondary" style={{ width: "35%" }}>Intitulé :</td>
-              <td className="text-dark">{fetchEcheancier[0]?.NomCompte}</td>
-            </tr>
-            <tr>
-              <td className="fw-bold text-secondary">C. épargne :</td>
-              <td className="text-dark">{fetchEcheancier[0]?.NumCompteEpargne}</td>
-            </tr>
-            <tr>
-              <td className="fw-bold text-secondary">Type crédit :</td>
-              <td className="text-dark">{fetchEcheancier[0]?.RefProduitCredit}</td>
-            </tr>
-            <tr>
-              <td className="fw-bold text-secondary">Durée :</td>
-              <td className="text-dark">{fetchEcheancier[0]?.Duree}</td>
-            </tr>
-            <tr>
-              <td className="fw-bold text-secondary">Montant :</td>
-              <td className="fw-bold text-success">{numberFormat(fetchEcheancier[0]?.MontantAccorde)}</td>
-            </tr>
-            <tr>
-              <td className="fw-bold text-secondary">N° Dossier :</td>
-              <td className="text-dark">{searched_num_dossier}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+                                            {/* Première carte */}
+                                            <div className="col-md-6">
+                                                <div className="card border-0 bg-light rounded-3 h-100">
+                                                    <div className="card-body p-2">
+                                                        <table className="table table-sm table-borderless mb-0 small">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td
+                                                                        className="fw-bold text-secondary"
+                                                                        style={{
+                                                                            width: "35%",
+                                                                        }}
+                                                                    >
+                                                                        Intitulé
+                                                                        :
+                                                                    </td>
+                                                                    <td className="text-dark">
+                                                                        {
+                                                                            fetchEcheancier[0]
+                                                                                ?.NomCompte
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td className="fw-bold text-secondary">
+                                                                        C.
+                                                                        épargne
+                                                                        :
+                                                                    </td>
+                                                                    <td className="text-dark">
+                                                                        {
+                                                                            fetchEcheancier[0]
+                                                                                ?.NumCompteEpargne
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td className="fw-bold text-secondary">
+                                                                        Type
+                                                                        crédit :
+                                                                    </td>
+                                                                    <td className="text-dark">
+                                                                        {
+                                                                            fetchEcheancier[0]
+                                                                                ?.RefProduitCredit
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td className="fw-bold text-secondary">
+                                                                        Durée :
+                                                                    </td>
+                                                                    <td className="text-dark">
+                                                                        {
+                                                                            fetchEcheancier[0]
+                                                                                ?.Duree
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td className="fw-bold text-secondary">
+                                                                        Montant
+                                                                        :
+                                                                    </td>
+                                                                    <td className="fw-bold text-success">
+                                                                        {numberFormat(
+                                                                            fetchEcheancier[0]
+                                                                                ?.MontantAccorde,
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td className="fw-bold text-secondary">
+                                                                        N°
+                                                                        Dossier
+                                                                        :
+                                                                    </td>
+                                                                    <td className="text-dark">
+                                                                        {
+                                                                            searched_num_dossier
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-  {/* Deuxième carte */}
-  <div className="col-md-6">
-    <div className="card border-0 bg-light rounded-3 h-100">
-      <div className="card-body p-2">
-        <table className="table table-sm table-borderless mb-0 small">
-          <tbody>
-            <tr>
-              <td className="fw-bold text-secondary" style={{ width: "35%" }}>Date octroi :</td>
-              <td className="text-dark">{dateParser(fetchEcheancier[0]?.DateOctroi)}</td>
-            </tr>
-            <tr>
-              <td className="fw-bold text-secondary">C. crédit :</td>
-              <td className="text-dark">{fetchEcheancier[0]?.NumCompteCredit}</td>
-            </tr>
-            <tr>
-              <td className="fw-bold text-secondary">Total intérêt :</td>
-              <td className="text-dark">{numberFormat(parseInt(fetchSommeInteret?.sommeInteret))}</td>
-            </tr>
-            <tr>
-              <td className="fw-bold text-secondary">Total Capital :</td>
-              <td className="text-dark">{numberFormat(fetchEcheancier[0]?.MontantAccorde)}</td>
-            </tr>
-            <tr>
-              <td className="fw-bold text-secondary">Total à payer :</td>
-              <td className="fw-bold text-white" style={{ fontSize: "0.95rem" }}>
-                <span className="bg-success p-1 rounded px-2 py-0">{numberFormat(parseFloat(fetchEcheancier[0]?.MontantAccorde) + parseFloat(fetchSommeInteret?.sommeInteret))}</span> 
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
+                                            {/* Deuxième carte */}
+                                            <div className="col-md-6">
+                                                <div className="card border-0 bg-light rounded-3 h-100">
+                                                    <div className="card-body p-2">
+                                                        <table className="table table-sm table-borderless mb-0 small">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td
+                                                                        className="fw-bold text-secondary"
+                                                                        style={{
+                                                                            width: "35%",
+                                                                        }}
+                                                                    >
+                                                                        Date
+                                                                        octroi :
+                                                                    </td>
+                                                                    <td className="text-dark">
+                                                                        {dateParser(
+                                                                            fetchEcheancier[0]
+                                                                                ?.DateOctroi,
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td className="fw-bold text-secondary">
+                                                                        C.
+                                                                        crédit :
+                                                                    </td>
+                                                                    <td className="text-dark">
+                                                                        {
+                                                                            fetchEcheancier[0]
+                                                                                ?.NumCompteCredit
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td className="fw-bold text-secondary">
+                                                                        Total
+                                                                        intérêt
+                                                                        :
+                                                                    </td>
+                                                                    <td className="text-dark">
+                                                                        {numberFormat(
+                                                                            parseInt(
+                                                                                fetchSommeInteret?.sommeInteret,
+                                                                            ),
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td className="fw-bold text-secondary">
+                                                                        Total
+                                                                        Capital
+                                                                        :
+                                                                    </td>
+                                                                    <td className="text-dark">
+                                                                        {numberFormat(
+                                                                            fetchEcheancier[0]
+                                                                                ?.MontantAccorde,
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td className="fw-bold text-secondary">
+                                                                        Total à
+                                                                        payer :
+                                                                    </td>
+                                                                    <td
+                                                                        className="fw-bold text-white"
+                                                                        style={{
+                                                                            fontSize:
+                                                                                "0.95rem",
+                                                                        }}
+                                                                    >
+                                                                        <span className="bg-success p-1 rounded px-2 py-0">
+                                                                            {numberFormat(
+                                                                                parseFloat(
+                                                                                    fetchEcheancier[0]
+                                                                                        ?.MontantAccorde,
+                                                                                ) +
+                                                                                    parseFloat(
+                                                                                        fetchSommeInteret?.sommeInteret,
+                                                                                    ),
+                                                                            )}
+                                                                        </span>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
 
                                         {/* Tableau Échéancier */}
                                         <div className="table-responsive">
@@ -1123,478 +1245,643 @@ const Echeancier = () => {
 
                 {/* TABLEAU D'AMORTISSEMENT */}
                 {/* TABLEAU D'AMORTISSEMENT */}
-            {fetchTableauAmortiss &&
-                radioValue == "tableau_ammortiss" &&
-                fetchTableauAmortiss.length != 0 && (
-                    <div className="card border-0 shadow-sm rounded-3 mb-4">
-                        <div className="card-body p-4">
-                            <div id="content-to-download-ammortissemment">
-                                {/* En-tête */}
-                                <div className="text-center mb-4">
-                                    <EnteteRapport />
+                {fetchTableauAmortiss &&
+                    radioValue == "tableau_ammortiss" &&
+                    fetchTableauAmortiss.length != 0 && (
+                        <div className="card border-0 shadow-sm rounded-3 mb-4">
+                            <div className="card-body p-4">
+                                <div id="content-to-download-ammortissemment">
+                                    {/* En-tête */}
+                                    <div className="text-center mb-4">
+                                        <EnteteRapport />
+                                    </div>
+
+                                    {/* Titre */}
+                                    <div className="text-center mb-4">
+                                        <h4
+                                            style={{
+                                                background: "#1a2632",
+                                                padding: "10px",
+                                                color: "#fff",
+                                                borderRadius: "8px",
+                                                display: "inline-block",
+                                            }}
+                                        >
+                                            <i className="fas fa-chart-line me-2"></i>
+                                            TABLEAU D'AMORTISSEMENT DE CREDIT N°{" "}
+                                            {searched_num_dossier}
+                                        </h4>
+                                    </div>
+
+                                    {/* Informations récapitulatives */}
+                                    <div className="row g-3 mb-4">
+                                        <div className="col-md-3">
+                                            <div
+                                                className="card border-0"
+                                                style={{
+                                                    background: "#e6f2f9",
+                                                    borderRadius: "12px",
+                                                }}
+                                            >
+                                                <div className="card-body p-2">
+                                                    <table
+                                                        style={{
+                                                            width: "100%",
+                                                            fontSize: "12px",
+                                                        }}
+                                                    >
+                                                        <tbody>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    TypeCrédit :
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        fetchTableauAmortiss[0]
+                                                                            ?.RefProduitCredit
+                                                                    }
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    N°COMPTE :
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        fetchTableauAmortiss[0]
+                                                                            ?.NumCompteEpargne
+                                                                    }
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Intitulé :
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        accountName?.NomCompte
+                                                                    }
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    ModeRemb. :
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        fetchTableauAmortiss[0]
+                                                                            ?.ModeRemboursement
+                                                                    }
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Gestionn. :
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        accountName?.Gestionnaire
+                                                                    }
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-3">
+                                            <div
+                                                className="card border-0"
+                                                style={{
+                                                    background: "#e6f2f9",
+                                                    borderRadius: "12px",
+                                                }}
+                                            >
+                                                <div className="card-body p-2">
+                                                    <table
+                                                        style={{
+                                                            width: "100%",
+                                                            fontSize: "12px",
+                                                        }}
+                                                    >
+                                                        <tbody>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Durée en
+                                                                    jour :
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        fetchTableauAmortiss[0]
+                                                                            ?.Duree
+                                                                    }
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Nbre tranche
+                                                                    :
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        fetchTableauAmortiss[0]
+                                                                            ?.NbrTranche
+                                                                    }
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Date Octroi
+                                                                    :
+                                                                </td>
+                                                                <td>
+                                                                    {dateParser(
+                                                                        fetchTableauAmortiss[0]
+                                                                            ?.DateOctroi,
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Date
+                                                                    Échéance :
+                                                                </td>
+                                                                <td>
+                                                                    {dateParser(
+                                                                        fetchTableauAmortiss[0]
+                                                                            ?.DateEcheance,
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    NumDossier :
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        fetchTableauAmortiss[0]
+                                                                            ?.NumDossier
+                                                                    }
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-3">
+                                            <div
+                                                className="card border-0"
+                                                style={{
+                                                    background: "#e6f2f9",
+                                                    borderRadius: "12px",
+                                                }}
+                                            >
+                                                <div className="card-body p-2">
+                                                    <table
+                                                        style={{
+                                                            width: "100%",
+                                                            fontSize: "12px",
+                                                        }}
+                                                    >
+                                                        <tbody>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Type
+                                                                    Mensualité :
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        fetchTableauAmortiss[0]
+                                                                            ?.ModeRemboursement
+                                                                    }
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Taux
+                                                                    d'intérêt :
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        fetchTableauAmortiss[0]
+                                                                            ?.TauxInteret
+                                                                    }{" "}
+                                                                    %
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Intérêt
+                                                                    remboursé :
+                                                                </td>
+                                                                <td>
+                                                                    {numberFormat(
+                                                                        fetchInteretRembourse?.intereRembourse,
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Intérêt
+                                                                    Restant :
+                                                                </td>
+                                                                <td>
+                                                                    {fetchInteretRestant?.intereRestant?.toFixed(
+                                                                        2,
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Intérêt en
+                                                                    Retard :
+                                                                </td>
+                                                                <td>
+                                                                    {numberFormat(
+                                                                        fetchInteretRetard?.sommeInteretRetard,
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="col-md-3">
+                                            <div
+                                                className="card border-0"
+                                                style={{
+                                                    background: "#e6f2f9",
+                                                    borderRadius: "12px",
+                                                }}
+                                            >
+                                                <div className="card-body p-2">
+                                                    <table
+                                                        style={{
+                                                            width: "100%",
+                                                            fontSize: "12px",
+                                                        }}
+                                                    >
+                                                        <tbody>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Montant
+                                                                    Accordé :
+                                                                </td>
+                                                                <td className="text-success fw-bold">
+                                                                    {numberFormat(
+                                                                        parseInt(
+                                                                            fetchTableauAmortiss[0]
+                                                                                ?.MontantAccorde,
+                                                                        ),
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Capital
+                                                                    Remboursé :
+                                                                </td>
+                                                                <td>
+                                                                    {numberFormat(
+                                                                        fetchCapitalRembourse,
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Capital
+                                                                    Restant dû :
+                                                                </td>
+                                                                <td>
+                                                                    {numberFormat(
+                                                                        fetchCapitalRestant,
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td className="fw-bold">
+                                                                    Capital en
+                                                                    Retard :
+                                                                </td>
+                                                                <td className="text-danger">
+                                                                    {numberFormat(
+                                                                        fetchCapitalRetard?.sommeCapitalRetard,
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Tableau d'amortissement */}
+                                    <div className="table-responsive">
+                                        <table
+                                            className="table table-bordered"
+                                            style={{ fontSize: "12px" }}
+                                        >
+                                            <thead
+                                                style={{
+                                                    backgroundColor: "#1a2632",
+                                                    color: "white",
+                                                }}
+                                            >
+                                                <tr>
+                                                    <th rowSpan="2">N°</th>
+                                                    <th rowSpan="2">
+                                                        Date Tranche
+                                                    </th>
+                                                    <th colSpan="4">
+                                                        ÉCHÉANCIER PRÉVISIONNEL
+                                                    </th>
+                                                    <th colSpan="3">
+                                                        REMBOURS. EFFECTIFS
+                                                    </th>
+                                                    <th colSpan="3">
+                                                        REMBOURS. EN RETARD
+                                                    </th>
+                                                    <th rowSpan="2">
+                                                        TOT. EN RETARD
+                                                    </th>
+                                                </tr>
+                                                <tr>
+                                                    <th>Capital</th>
+                                                    <th>Intérêt</th>
+                                                    <th>Épargne</th>
+                                                    <th>Pénalités</th>
+                                                    <th>Capital</th>
+                                                    <th>Intérêt</th>
+                                                    <th>Épargne</th>
+                                                    <th>Capital</th>
+                                                    <th>Intérêt</th>
+                                                    <th>Épargne</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {(() => {
+                                                    let compteur = 1;
+                                                    const dateReference =
+                                                        selectedDate; // la date de référence du filtre
+
+                                                    // Fonctions de sécurité et de formatage
+                                                    const safeFloat = (val) => {
+                                                        const num =
+                                                            parseFloat(val);
+                                                        return isNaN(num)
+                                                            ? 0
+                                                            : num;
+                                                    };
+
+                                                    const numberFormat = (
+                                                        value,
+                                                    ) => {
+                                                        let num =
+                                                            safeFloat(value);
+                                                        return num.toLocaleString(
+                                                            "en-US",
+                                                            {
+                                                                minimumFractionDigits: 2,
+                                                                maximumFractionDigits: 2,
+                                                            },
+                                                        );
+                                                    };
+
+                                                    return fetchTableauAmortiss.map(
+                                                        (res, index) => {
+                                                            // Comparaison des dates au format YYYY-MM-DD (sans heure)
+                                                            const isEchue =
+                                                                dateReference &&
+                                                                res.DateTranch <=
+                                                                    dateReference;
+
+                                                            // Calcul des montants restants (avec des flottants)
+                                                            const capitalRestant =
+                                                                Math.max(
+                                                                    0,
+                                                                    safeFloat(
+                                                                        res.CapAmmorti,
+                                                                    ) -
+                                                                        safeFloat(
+                                                                            res.CapitalPaye,
+                                                                        ),
+                                                                );
+                                                            const interetRestant =
+                                                                Math.max(
+                                                                    0,
+                                                                    safeFloat(
+                                                                        res.Interet,
+                                                                    ) -
+                                                                        safeFloat(
+                                                                            res.InteretPaye,
+                                                                        ),
+                                                                );
+                                                            const epargneRestant =
+                                                                Math.max(
+                                                                    0,
+                                                                    safeFloat(
+                                                                        res.Epargne,
+                                                                    ) -
+                                                                        safeFloat(
+                                                                            res.EpargnePaye,
+                                                                        ),
+                                                                );
+                                                            const totalRetard =
+                                                                capitalRestant +
+                                                                interetRestant +
+                                                                epargneRestant;
+
+                                                            return (
+                                                                <tr key={index}>
+                                                                    <td>
+                                                                        {
+                                                                            compteur++
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {dateParser(
+                                                                            res.DateTranch,
+                                                                        )}
+                                                                    </td>
+
+                                                                    {/* ÉCHÉANCIER PRÉVISIONNEL */}
+                                                                    <td>
+                                                                        {numberFormat(
+                                                                            res.CapAmmorti,
+                                                                        )}
+                                                                    </td>
+                                                                    <td>
+                                                                        {numberFormat(
+                                                                            res.Interet,
+                                                                        )}
+                                                                    </td>
+                                                                    <td>
+                                                                        {numberFormat(
+                                                                            res.Epargne,
+                                                                        )}
+                                                                    </td>
+                                                                    <td>
+                                                                        {numberFormat(
+                                                                            res.Penalite,
+                                                                        )}
+                                                                    </td>
+
+                                                                    {/* REMBOURS. EFFECTIFS */}
+                                                                    <td
+                                                                        className={
+                                                                            safeFloat(
+                                                                                res.CapitalPaye,
+                                                                            ) >
+                                                                            0
+                                                                                ? "bg-success text-white"
+                                                                                : ""
+                                                                        }
+                                                                    >
+                                                                        {numberFormat(
+                                                                            res.CapitalPaye,
+                                                                        )}
+                                                                    </td>
+                                                                    <td
+                                                                        className={
+                                                                            safeFloat(
+                                                                                res.InteretPaye,
+                                                                            ) >
+                                                                            0
+                                                                                ? "bg-success text-white"
+                                                                                : ""
+                                                                        }
+                                                                    >
+                                                                        {numberFormat(
+                                                                            res.InteretPaye,
+                                                                        )}
+                                                                    </td>
+                                                                    <td
+                                                                        className={
+                                                                            safeFloat(
+                                                                                res.EpargnePaye,
+                                                                            ) >
+                                                                            0
+                                                                                ? "bg-success text-white"
+                                                                                : ""
+                                                                        }
+                                                                    >
+                                                                        {numberFormat(
+                                                                            res.EpargnePaye,
+                                                                        )}
+                                                                    </td>
+
+                                                                    {/* REMBOURS. EN RETARD (uniquement si échu) */}
+                                                                    {isEchue ? (
+                                                                        <>
+                                                                            <td
+                                                                                className={
+                                                                                    capitalRestant >
+                                                                                    0
+                                                                                        ? "bg-danger text-white"
+                                                                                        : ""
+                                                                                }
+                                                                            >
+                                                                                {numberFormat(
+                                                                                    capitalRestant,
+                                                                                )}
+                                                                            </td>
+                                                                            <td
+                                                                                className={
+                                                                                    interetRestant >
+                                                                                    0
+                                                                                        ? "bg-danger text-white"
+                                                                                        : ""
+                                                                                }
+                                                                            >
+                                                                                {numberFormat(
+                                                                                    interetRestant,
+                                                                                )}
+                                                                            </td>
+                                                                            <td
+                                                                                className={
+                                                                                    epargneRestant >
+                                                                                    0
+                                                                                        ? "bg-danger text-white"
+                                                                                        : ""
+                                                                                }
+                                                                            >
+                                                                                {numberFormat(
+                                                                                    epargneRestant,
+                                                                                )}
+                                                                            </td>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <td></td>
+                                                                            <td></td>
+                                                                            <td></td>
+                                                                        </>
+                                                                    )}
+
+                                                                    {/* TOTAL EN RETARD */}
+                                                                    {isEchue ? (
+                                                                        <td
+                                                                            className={
+                                                                                totalRetard >
+                                                                                0
+                                                                                    ? "bg-warning"
+                                                                                    : ""
+                                                                            }
+                                                                        >
+                                                                            {numberFormat(
+                                                                                totalRetard,
+                                                                            )}
+                                                                        </td>
+                                                                    ) : (
+                                                                        <td></td>
+                                                                    )}
+                                                                </tr>
+                                                            );
+                                                        },
+                                                    );
+                                                })()}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
 
-                                {/* Titre */}
-                                <div className="text-center mb-4">
-                                    <h4
+                                {/* Boutons d'export */}
+                                <div className="d-flex justify-content-end gap-2 mt-4">
+                                    <button
+                                        onClick={() =>
+                                            exportTableData(
+                                                "content-to-download-ammortissemment",
+                                            )
+                                        }
+                                        className="btn"
                                         style={{
-                                            background: "#1a2632",
-                                            padding: "10px",
-                                            color: "#fff",
+                                            background: "#28a745",
+                                            color: "white",
                                             borderRadius: "8px",
-                                            display: "inline-block",
                                         }}
                                     >
-                                        <i className="fas fa-chart-line me-2"></i>
-                                        TABLEAU D'AMORTISSEMENT DE CREDIT N°{" "}
-                                        {searched_num_dossier}
-                                    </h4>
-                                </div>
-
-                                {/* Informations récapitulatives */}
-                                <div className="row g-3 mb-4">
-                                    <div className="col-md-3">
-                                        <div
-                                            className="card border-0"
-                                            style={{
-                                                background: "#e6f2f9",
-                                                borderRadius: "12px",
-                                            }}
-                                        >
-                                            <div className="card-body p-2">
-                                                <table
-                                                    style={{
-                                                        width: "100%",
-                                                        fontSize: "12px",
-                                                    }}
-                                                >
-                                                    <tbody>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                TypeCrédit :
-                                                            </td>
-                                                            <td>
-                                                                {
-                                                                    fetchTableauAmortiss[0]
-                                                                        ?.RefProduitCredit
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                N°COMPTE :
-                                                            </td>
-                                                            <td>
-                                                                {
-                                                                    fetchTableauAmortiss[0]
-                                                                        ?.NumCompteEpargne
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Intitulé :
-                                                            </td>
-                                                            <td>
-                                                                {
-                                                                    accountName?.NomCompte
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                ModeRemb. :
-                                                            </td>
-                                                            <td>
-                                                                {
-                                                                    fetchTableauAmortiss[0]
-                                                                        ?.ModeRemboursement
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Gestionn. :
-                                                            </td>
-                                                            <td>
-                                                                {
-                                                                    accountName?.Gestionnaire
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-3">
-                                        <div
-                                            className="card border-0"
-                                            style={{
-                                                background: "#e6f2f9",
-                                                borderRadius: "12px",
-                                            }}
-                                        >
-                                            <div className="card-body p-2">
-                                                <table
-                                                    style={{
-                                                        width: "100%",
-                                                        fontSize: "12px",
-                                                    }}
-                                                >
-                                                    <tbody>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Durée en jour :
-                                                            </td>
-                                                            <td>
-                                                                {
-                                                                    fetchTableauAmortiss[0]
-                                                                        ?.Duree
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Nbre tranche :
-                                                            </td>
-                                                            <td>
-                                                                {
-                                                                    fetchTableauAmortiss[0]
-                                                                        ?.NbrTranche
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Date Octroi :
-                                                            </td>
-                                                            <td>
-                                                                {dateParser(
-                                                                    fetchTableauAmortiss[0]
-                                                                        ?.DateOctroi,
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Date Échéance :
-                                                            </td>
-                                                            <td>
-                                                                {dateParser(
-                                                                    fetchTableauAmortiss[0]
-                                                                        ?.DateEcheance,
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                NumDossier :
-                                                            </td>
-                                                            <td>
-                                                                {
-                                                                    fetchTableauAmortiss[0]
-                                                                        ?.NumDossier
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-3">
-                                        <div
-                                            className="card border-0"
-                                            style={{
-                                                background: "#e6f2f9",
-                                                borderRadius: "12px",
-                                            }}
-                                        >
-                                            <div className="card-body p-2">
-                                                <table
-                                                    style={{
-                                                        width: "100%",
-                                                        fontSize: "12px",
-                                                    }}
-                                                >
-                                                    <tbody>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Type Mensualité
-                                                                :
-                                                            </td>
-                                                            <td>
-                                                                {
-                                                                    fetchTableauAmortiss[0]
-                                                                        ?.ModeRemboursement
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Taux d'intérêt :
-                                                            </td>
-                                                            <td>
-                                                                {
-                                                                    fetchTableauAmortiss[0]
-                                                                        ?.TauxInteret
-                                                                }{" "}
-                                                                %
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Intérêt
-                                                                remboursé :
-                                                            </td>
-                                                            <td>
-                                                                {numberFormat(
-                                                                    fetchInteretRembourse?.intereRembourse,
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Intérêt Restant
-                                                                :
-                                                            </td>
-                                                            <td>
-                                                                {fetchInteretRestant?.intereRestant?.toFixed(
-                                                                    2,
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Intérêt en
-                                                                Retard :
-                                                            </td>
-                                                            <td>
-                                                                {numberFormat(
-                                                                    fetchInteretRetard?.sommeInteretRetard,
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-3">
-                                        <div
-                                            className="card border-0"
-                                            style={{
-                                                background: "#e6f2f9",
-                                                borderRadius: "12px",
-                                            }}
-                                        >
-                                            <div className="card-body p-2">
-                                                <table
-                                                    style={{
-                                                        width: "100%",
-                                                        fontSize: "12px",
-                                                    }}
-                                                >
-                                                    <tbody>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Montant Accordé
-                                                                :
-                                                            </td>
-                                                            <td className="text-success fw-bold">
-                                                                {numberFormat(
-                                                                    parseInt(
-                                                                        fetchTableauAmortiss[0]
-                                                                            ?.MontantAccorde,
-                                                                    ),
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Capital
-                                                                Remboursé :
-                                                            </td>
-                                                            <td>
-                                                                {numberFormat(
-                                                                    fetchCapitalRembourse,
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Capital Restant
-                                                                dû :
-                                                            </td>
-                                                            <td>
-                                                                {numberFormat(
-                                                                    fetchCapitalRestant,
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td className="fw-bold">
-                                                                Capital en
-                                                                Retard :
-                                                            </td>
-                                                            <td className="text-danger">
-                                                                {numberFormat(
-                                                                    fetchCapitalRetard?.sommeCapitalRetard,
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Tableau d'amortissement */}
-                                <div className="table-responsive">
-                                    <table
-                                        className="table table-bordered"
-                                        style={{ fontSize: "12px" }}
+                                        <i className="fas fa-file-excel me-2"></i>
+                                        Exporter en Excel
+                                    </button>
+                                    <button
+                                        onClick={exportToPDFAmmortiss}
+                                        className="btn"
+                                        style={{
+                                            background: "#dc3545",
+                                            color: "white",
+                                            borderRadius: "8px",
+                                        }}
                                     >
-                                        <thead
-                                            style={{
-                                                backgroundColor: "#1a2632",
-                                                color: "white",
-                                            }}
-                                        >
-                                            <tr>
-                                                <th rowSpan="2">N°</th>
-                                                <th rowSpan="2">
-                                                    Date Tranche
-                                                </th>
-                                                <th colSpan="4">
-                                                    ÉCHÉANCIER PRÉVISIONNEL
-                                                </th>
-                                                <th colSpan="3">
-                                                    REMBOURS. EFFECTIFS
-                                                </th>
-                                                <th colSpan="3">
-                                                    REMBOURS. EN RETARD
-                                                </th>
-                                                <th rowSpan="2">
-                                                    TOT. EN RETARD
-                                                </th>
-                                            </tr>
-                                            <tr>
-                                                <th>Capital</th>
-                                                <th>Intérêt</th>
-                                                <th>Épargne</th>
-                                                <th>Pénalités</th>
-                                                <th>Capital</th>
-                                                <th>Intérêt</th>
-                                                <th>Épargne</th>
-                                                <th>Capital</th>
-                                                <th>Intérêt</th>
-                                                <th>Épargne</th>
-                                            </tr>
-                                        </thead>
-          <tbody>
-  {(() => {
-    let compteur = 1;
-    // Récupérer la date de référence depuis le state (ex: selectedDate)
-    const dateReference = selectedDate; // ou la variable qui contient la date du filtre
-    return fetchTableauAmortiss.map((res, index) => {
-      // Vérifier si la tranche est échue (DateTranch <= dateReference)
-      const isEchue = dateReference && new Date(res.DateTranch) <= new Date(dateReference);
-      // Calcul des montants restants (utiles même si non échue, mais on ne les affiche pas)
-      const capitalRestant = Math.max(0, parseInt(res.CapAmmorti) - safeParseInt(res.CapitalPaye));
-      const interetRestant = Math.max(0, parseInt(res.Interet) - safeParseInt(res.InteretPaye));
-      const epargneRestant = Math.max(0, parseInt(res.Epargne) - safeParseInt(res.EpargnePaye));
-      const totalRetard = capitalRestant + interetRestant + epargneRestant;
-      return (
-        <tr key={index}>
-          <td>{compteur++}</td>
-          <td>{dateParser(res.DateTranch)}</td>
-          {/* ÉCHÉANCIER PRÉVISIONNEL */}
-          <td>{numberFormat(parseInt(res.CapAmmorti))}</td>
-          <td>{numberFormat(parseInt(res.Interet))}</td>
-          <td>{numberFormat(parseInt(res.Epargne))}</td>
-          <td>{numberFormat(parseInt(res.Penalite))}</td>
-          {/* REMBOURS. EFFECTIFS */}
-          <td className={safeParseInt(res.CapitalPaye) > 0 ? "bg-success text-white" : ""}>
-            {numberFormat(safeParseInt(res.CapitalPaye))}
-          </td>
-          <td className={safeParseInt(res.InteretPaye) > 0 ? "bg-success text-white" : ""}>
-            {numberFormat(safeParseInt(res.InteretPaye))}
-          </td>
-          <td className={safeParseInt(res.EpargnePaye) > 0 ? "bg-success text-white" : ""}>
-            {numberFormat(safeParseInt(res.EpargnePaye))}
-          </td>
-          {/* REMBOURS. EN RETARD - affiché uniquement si échu */}
-          {isEchue ? (
-            <>
-              <td className={capitalRestant > 0 ? "bg-danger text-white" : ""}>
-                {numberFormat(capitalRestant)}
-              </td>
-              <td className={interetRestant > 0 ? "bg-danger text-white" : ""}>
-                {numberFormat(interetRestant)}
-              </td>
-              <td className={epargneRestant > 0 ? "bg-danger text-white" : ""}>
-                {numberFormat(epargneRestant)}
-              </td>
-            </>
-          ) : (
-            <>
-              <td></td> <td></td> <td></td>
-            </>
-          )}
-          {/* TOT. EN RETARD - affiché uniquement si échu, avec fond jaune si >0 */}
-          {isEchue ? (
-            <td className={totalRetard > 0 ? "bg-warning" : ""}>
-              {numberFormat(totalRetard)}
-            </td>
-          ) : (
-            <td></td>
-          )}
-        </tr>
-      );
-    });
-  })()}
-</tbody>
-                                    </table>
+                                        <i className="fas fa-file-pdf me-2"></i>
+                                        Exporter en PDF
+                                    </button>
                                 </div>
-                            </div>
-
-                            {/* Boutons d'export */}
-                            <div className="d-flex justify-content-end gap-2 mt-4">
-                                <button
-                                    onClick={() =>
-                                        exportTableData(
-                                            "content-to-download-ammortissemment",
-                                        )
-                                    }
-                                    className="btn"
-                                    style={{
-                                        background: "#28a745",
-                                        color: "white",
-                                        borderRadius: "8px",
-                                    }}
-                                >
-                                    <i className="fas fa-file-excel me-2"></i>
-                                    Exporter en Excel
-                                </button>
-                                <button
-                                    onClick={exportToPDFAmmortiss}
-                                    className="btn"
-                                    style={{
-                                        background: "#dc3545",
-                                        color: "white",
-                                        borderRadius: "8px",
-                                    }}
-                                >
-                                    <i className="fas fa-file-pdf me-2"></i>
-                                    Exporter en PDF
-                                </button>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
                 {/* BALANCE AGÉE */}
                 {fetchBalanceAgee &&
@@ -1680,133 +1967,155 @@ const Echeancier = () => {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {Object.entries(
-                                                    groupedData,
-                                                ).map(([tranche, items]) => (
-                                                    <React.Fragment
-                                                        key={tranche}
-                                                    >
-                                                        {items.length > 0 && (
-                                                            <>
-                                                                <tr
-                                                                    style={{
-                                                                        backgroundColor:
-                                                                            "#444",
-                                                                        color: "white",
-                                                                    }}
-                                                                >
-                                                                    <td colSpan="20">
-                                                                        <strong>
-                                                                            {
-                                                                                tranche
-                                                                            }
-                                                                        </strong>
-                                                                    </td>
-                                                                </tr>
-                                                                {items.map(
-                                                                    (
-                                                                        res,
-                                                                        idx,
-                                                                    ) => (
+                                                {(() => {
+                                                    // Fonction de sécurité pour formater un nombre avec 2 décimales
+                                                    const safeToFixed = (
+                                                        value,
+                                                    ) => {
+                                                        if (
+                                                            value ===
+                                                                undefined ||
+                                                            value === null
+                                                        )
+                                                            return "0.00";
+                                                        const num =
+                                                            parseFloat(value);
+                                                        return isNaN(num)
+                                                            ? "0.00"
+                                                            : num.toFixed(2);
+                                                    };
+
+                                                    return Object.entries(
+                                                        groupedData,
+                                                    ).map(
+                                                        ([tranche, items]) => (
+                                                            <React.Fragment
+                                                                key={tranche}
+                                                            >
+                                                                {items.length >
+                                                                    0 && (
+                                                                    <>
                                                                         <tr
-                                                                            key={
-                                                                                idx
-                                                                            }
+                                                                            style={{
+                                                                                backgroundColor:
+                                                                                    "#444",
+                                                                                color: "white",
+                                                                            }}
                                                                         >
-                                                                            <td>
-                                                                                {idx +
-                                                                                    1}
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    res.NumDossier
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    res.NumCompteCredit
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    res.NomCompte
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    res.Duree
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {dateParser(
-                                                                                    res.DateOctroi,
-                                                                                )}
-                                                                            </td>
-                                                                            <td>
-                                                                                {dateParser(
-                                                                                    res.DateEcheance,
-                                                                                )}
-                                                                            </td>
-                                                                            <td>
-                                                                                {numberWithSpaces(
-                                                                                    res.MontantAccorde,
-                                                                                )}
-                                                                            </td>
-                                                                            <td>
-                                                                                {numberWithSpaces(
-                                                                                    res.TotalCapitalRembourse?.toFixed(
-                                                                                        2,
-                                                                                    ),
-                                                                                )}
-                                                                            </td>
-                                                                            <td>
-                                                                                {numberWithSpaces(
-                                                                                    res.TotalInteretRembourse?.toFixed(
-                                                                                        2,
-                                                                                    ),
-                                                                                )}
-                                                                            </td>
-                                                                            <td>
-                                                                                {numberWithSpaces(
-                                                                                    res.CapitalRestant?.toFixed(
-                                                                                        2,
-                                                                                    ),
-                                                                                )}
-                                                                            </td>
-                                                                            <td>
-                                                                                {numberWithSpaces(
-                                                                                    res.InteretRestant?.toFixed(
-                                                                                        2,
-                                                                                    ),
-                                                                                )}
-                                                                            </td>
-                                                                            <td>
-                                                                                -
-                                                                            </td>
-                                                                            <td>
-                                                                                -
-                                                                            </td>
-                                                                            <td>
-                                                                                -
-                                                                            </td>
-                                                                            <td>
-                                                                                -
-                                                                            </td>
-                                                                            <td>
-                                                                                -
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    res.NbrJrRetard
-                                                                                }
+                                                                            <td colSpan="20">
+                                                                                <strong>
+                                                                                    {
+                                                                                        tranche
+                                                                                    }
+                                                                                </strong>
                                                                             </td>
                                                                         </tr>
-                                                                    ),
+                                                                        {items.map(
+                                                                            (
+                                                                                res,
+                                                                                idx,
+                                                                            ) => (
+                                                                                <tr
+                                                                                    key={
+                                                                                        idx
+                                                                                    }
+                                                                                >
+                                                                                    <td>
+                                                                                        {idx +
+                                                                                            1}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {
+                                                                                            res.NumDossier
+                                                                                        }
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {
+                                                                                            res.NumCompteCredit
+                                                                                        }
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {
+                                                                                            res.NomCompte
+                                                                                        }
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {
+                                                                                            res.Duree
+                                                                                        }
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {dateParser(
+                                                                                            res.DateOctroi,
+                                                                                        )}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {dateParser(
+                                                                                            res.DateEcheance,
+                                                                                        )}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {numberWithSpaces(
+                                                                                            res.MontantAccorde,
+                                                                                        )}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {numberWithSpaces(
+                                                                                            safeToFixed(
+                                                                                                res.TotalCapitalRembourse,
+                                                                                            ),
+                                                                                        )}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {numberWithSpaces(
+                                                                                            safeToFixed(
+                                                                                                res.TotalInteretRembourse,
+                                                                                            ),
+                                                                                        )}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {numberWithSpaces(
+                                                                                            safeToFixed(
+                                                                                                res.CapitalRestant,
+                                                                                            ),
+                                                                                        )}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {numberWithSpaces(
+                                                                                            safeToFixed(
+                                                                                                res.InteretRestant,
+                                                                                            ),
+                                                                                        )}
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        -
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        -
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        -
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        -
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        -
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        {
+                                                                                            res.NbrJrRetard
+                                                                                        }
+                                                                                    </td>
+                                                                                </tr>
+                                                                            ),
+                                                                        )}
+                                                                    </>
                                                                 )}
-                                                            </>
-                                                        )}
-                                                    </React.Fragment>
-                                                ))}
+                                                            </React.Fragment>
+                                                        ),
+                                                    );
+                                                })()}
                                             </tbody>
                                         </table>
                                     </div>
@@ -1988,7 +2297,7 @@ const Echeancier = () => {
                                             {devise || "TOUTES DEVISES"}
                                             <br />
                                             AGENCE DE GOMA AU{" "}
-                                            {dateParser(datePar)}
+                                            {dateParser(selectedDate)}
                                         </h5>
                                     </div>
 

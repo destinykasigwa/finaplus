@@ -680,7 +680,7 @@
                         </a>
 
                         <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
-
+                            <h6 class="dropdown-header">Paiement</h6>
                             <a class="dropdown-item" href="{{ route('eco.pages.paiment-batch') }}">
 
                                 <i class="fas fa-plus-circle me-2"></i>
@@ -694,12 +694,20 @@
                                 Gestion batch
 
                             </a>
+
+                             <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">Notifications</h6>
                           
                         <a class="dropdown-item" href="{{ route('eco.pages.sms-banking') }}" >
                             <i class="fas fa-sms me-1"></i> SMS Banking
                         </a>
-                    
 
+                          <div class="dropdown-divider"></div>
+                            <h6 class="dropdown-header">Crédits</h6>
+                    
+                           <a class="dropdown-item" href="{{ route('eco.pages.radiation-credit') }}" >
+                            <i class="fas fa-sms me-1"></i> Radiation crédits
+                        </a>
                         </div>
                     </li>
                 </ul>

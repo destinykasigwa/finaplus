@@ -23,6 +23,8 @@ use App\Models\CompteurDossierCredit;
 use App\Models\EpargneAdhesionModel;
 use App\Models\FrequenceRemboursement;
 use Illuminate\Support\Facades\Validator;
+use App\CustomTasks\ClotureJourneeCopy;
+use Illuminate\Support\Facades\Log;
 
 class SuiviCreditController extends Controller
 {
@@ -44,6 +46,11 @@ class SuiviCreditController extends Controller
     public function getMontageCreditHomePage()
     {
         return  view("eco.pages.montage-credit");
+    }
+
+    public function getRadiationCreditHomePage()
+    {
+      return  view("eco.pages.radiation-credit");   
     }
 
     //GET NUM COMPTE TO UPDATE
@@ -463,7 +470,6 @@ class SuiviCreditController extends Controller
                 'validate_error' => $validator->messages()
             ]);
         } else {
-
             if (isset($request->NumDossier)) {
                 $currentAgence = session('current_agence');
                 $codeAgence = $currentAgence['code_agence'] ?? null;
@@ -472,27 +478,34 @@ class SuiviCreditController extends Controller
                 //POUR REECHELONNER LE CREDIT
                 if ($request->reechelonne and $checkRow) {
                     //ICI LES ECRITURES POUR FAIRES UNE REPRISE 
-
-
-
+                    // Appel à la méthode de reprise de provision et reclassement
+                    $clotureTask = new ClotureJourneeCopy($request);
+                    $clotureTask->annulerProvisionEtReclasser($request->NumDossier);
                     //VERIFIE SI LE CREDIT N'EST PAS EN RETARD CAR INTERDIT DE REECHELONNER UN CREDIT EN RETARD
-                    $chechCreditRetard = JourRetard::where("NumDossier", $request->NumDossier)
-                        ->where("NbrJrRetard", ">", 0)->where("CodeAgence", $codeAgence)->first();
-                    if (!$chechCreditRetard) {
+                    $chechCredit = Portefeuille::where("NumDossier", $request->NumDossier)->first();
+                    $isCloture = $chechCredit ? $chechCredit->Cloture : null;
+                    if ($isCloture == 1) {
                         //RECUPERE LE RESTANT DU DU CREDIT
-                        $soldeRestant =  Echeancier::selectRaw('
-                            echeanciers.NumDossier,
-                            SUM(echeanciers.Interet) - SUM(COALESCE(remboursementcredits.InteretPaye, 0)) AS InteretRetard,
-                            SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS soldeRestant
+                        $today = date("Y-m-d");
+                        $totalCapitalRestant = Echeancier::selectRaw('
+                          SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS totalRestant
                             ')
-                            ->leftJoin('remboursementcredits', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
-                            ->where('echeanciers.posted', '=!', 1)
-                            ->where('echeanciers.statutPayement', '=!', 1)
+                            ->leftJoin('remboursementcredits', function ($join) use ($today) {
+                                $join->on('echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
+                                    ->whereDate('remboursementcredits.DateTranche', '<=', $today);
+                            })
                             ->where('echeanciers.NumDossier', $request->NumDossier)
-                            ->groupBy('echeanciers.NumDossier')
                             ->first();
-                        $capitalRestantDu = $soldeRestant->soldeRestant;
-                        //LOGIQUE POUR GEBNERER L'ECHEANCIER
+                        $SoldeCreditRestant = $totalCapitalRestant ? $totalCapitalRestant->totalRestant : 0;
+                        if ($SoldeCreditRestant <= 0) {
+                            return response()->json([
+                                "status" => 0,
+                                "msg" => "Aucun solde restant restant le montant restant pour ce crédit est " . $SoldeCreditRestant,
+                                'validate_error' => $validator->messages()
+                            ]);
+                        }
+                        $capitalRestantDu = $SoldeCreditRestant;
+                        //LOGIQUE POUR GENERER L'ECHEANCIER
                         $this->genereEcheancier(
                             $request->desicion,
                             $request->ModeCalcul,
@@ -514,7 +527,7 @@ class SuiviCreditController extends Controller
                     } else {
                         return response()->json([
                             'status' => 0,
-                            'msg' => "Impossible de réechelonner un crédit en retard ça fait " . $chechCreditRetard->NbrJrRetard . " Jours qu'il est en retard",
+                            'msg' => "Impossible de réechelonner un crédit clotûré",
                         ]);
                     }
                 }
@@ -703,10 +716,21 @@ class SuiviCreditController extends Controller
             ]);
 
 
-            $dateOctroie = $DateOctroi;
-            $dates = array($DateTombeEcheance);
-            for ($i = 1; $i < $data->NbrTranche; $i++) {
-                $NewDate = date('Y-m-d', strtotime("+" . $i . "week", strtotime("$dateOctroie")));
+            // $dateOctroie = $DateOctroi;
+            // $dates = array($DateTombeEcheance);
+            // for ($i = 1; $i < $data->NbrTranche; $i++) {
+            //     $NewDate = date('Y-m-d', strtotime("+" . $i . "week", strtotime("$dateOctroie")));
+            //     $dates[] = $NewDate;
+            // }
+            $dates = [];
+
+            for ($i = 0; $i < $data->NbrTranche; $i++) {
+
+                $NewDate = date(
+                    'Y-m-d',
+                    strtotime("+$i week", strtotime($DateTombeEcheance))
+                );
+
                 $dates[] = $NewDate;
             }
             if ($ModeCalcul == "Constant") {
@@ -785,11 +809,21 @@ class SuiviCreditController extends Controller
                 "DateTranch" => $DateOctroi,
             ]);
 
-            $dateOctroie = $DateOctroi;
-            $dates = array($DateTombeEcheance);
-            $NbrTranche = $data->NbrTranche + 1;
-            for ($i = 2; $i < $NbrTranche; $i++) {
-                $NewDate = date('Y-m-d', strtotime("+" . $i . "month", strtotime("$dateOctroie")));
+            // $dateOctroie = $DateOctroi;
+            // $dates = array($DateTombeEcheance);
+            // $NbrTranche = $data->NbrTranche + 1;
+            // for ($i = 2; $i < $NbrTranche; $i++) {
+            //     $NewDate = date('Y-m-d', strtotime("+" . $i . "month", strtotime("$dateOctroie")));
+            //     $dates[] = $NewDate;
+            // }
+            $dates = [];
+            for ($i = 0; $i < $data->NbrTranche; $i++) {
+
+                $NewDate = date(
+                    'Y-m-d',
+                    strtotime("+$i month", strtotime($DateTombeEcheance))
+                );
+
                 $dates[] = $NewDate;
             }
             if ($ModeCalcul == "Constant") {
@@ -1173,12 +1207,11 @@ class SuiviCreditController extends Controller
                             "InteretDu" => $soldeInteret->sommeInteret
                         ]);
 
-                         return response()->json([
-                        'status' => 1,
-                        'msg' => "Crédit bien accordé"
-                    ]);
+                        return response()->json([
+                            'status' => 1,
+                            'msg' => "Crédit bien accordé"
+                        ]);
                     }
-
                 } else {
                     return response()->json([
                         'status' => 0,
@@ -1200,7 +1233,6 @@ class SuiviCreditController extends Controller
     }
 
     //PERMET DE CLOTURER UN CREDIT 
-
     public function ClotureCredit(Request $request)
     {
 
@@ -1222,6 +1254,9 @@ class SuiviCreditController extends Controller
             $dateSaisie = date("Y-m-d");
             $getNumCompte = Portefeuille::where("NumDossier", "=", $request->NumDossier)->where("Cloture", "=", 0)->first();
             $NumCompte = $getNumCompte->NumCompteEpargne;
+            // Appel à la méthode de reprise de provision et reclassement
+            $clotureTask = new ClotureJourneeCopy($request);
+            $clotureTask->annulerProvisionEtReclasser($request->NumDossier);
             if ($getNumCompte->CodeMonnaie == "CDF") {
                 //RECUPERE LE MONTANT DANS LA TABLE CONCERNE
                 $getData = LockedGarantie::where("NumCompte", "=", $NumCompte)->where("paidState", "=", 0)->first();
@@ -1519,4 +1554,389 @@ class SuiviCreditController extends Controller
             return response()->json(["status" => 0, "msg" => "Aucun numéro de dossier trouvé."]);
         }
     }
+
+
+
+
+
+    //CES FONCTIONS PERMETTENT UN REMBOURSEMENT MANUEL EN CAPITAL ET INTERET
+    public function rembourserCapital(Request $request)
+    {
+        try {
+            $cloture = new ClotureJourneeCopy($request);
+            $result = $cloture->remboursementManuelCapital(
+                $request->montant,
+                $request->numDossier,
+                $request->anticipe ?? false
+            );
+            return response()->json(['status' => 1, 'data' => $result]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 0, 'msg' => $e->getMessage()]);
+        }
+    }
+
+    public function rembourserInteret(Request $request)
+    {
+        try {
+            $cloture = new ClotureJourneeCopy($request);
+            $result = $cloture->remboursementManuelInteret(
+                $request->montant,
+                $request->numDossier,
+                $request->anticipe ?? false
+            );
+            return response()->json(['status' => 1, 'data' => $result]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 0, 'msg' => $e->getMessage()]);
+        }
+    }
+
+
+
+    public function rembourserAnticipe(Request $request)
+    {
+        try {
+            $cloture = new ClotureJourneeCopy($request);
+            $result = $cloture->remboursementAnticipe($request->numDossier);
+            return response()->json(['status' => 1, 'data' => $result]);
+        } catch (\Exception $e) {
+            return response()->json(['status' => 0, 'msg' => $e->getMessage()]);
+        }
+    }
+
+
+
+//  public function listeCreditsARadier(Request $request)
+// {
+//     $user = auth()->user();
+//     $agenceIds = $user->agences()->pluck('code_agence')->toArray();
+
+//     $gestionnaire = $request->get('gestionnaire');
+//     $devise = $request->get('devise');
+
+//     $query = DB::table('portefeuilles as p')
+//         ->join('echeanciers as e', 'p.NumDossier', '=', 'e.NumDossier')
+//         ->leftJoin('remboursementcredits as r', 'e.ReferenceEch', '=', 'r.RefEcheance')
+//         ->whereIn('p.CodeAgence', $agenceIds)
+//         ->where('p.Cloture', 0)
+//         ->where('p.Octroye', 1)
+//         ->where('p.Accorde', 1)
+//         ->when($gestionnaire, fn($q) => $q->where('p.Gestionnaire', $gestionnaire))
+//         ->when($devise, fn($q) => $q->where('p.CodeMonnaie', $devise))
+//         ->select(
+//             'p.NumDossier',
+//             'p.NomCompte',
+//             'p.MontantAccorde',
+//             'p.CodeAgence',
+//             'p.Gestionnaire',
+//             'p.CodeMonnaie',
+//             DB::raw('SUM(e.CapAmmorti) - SUM(COALESCE(r.CapitalPaye, 0)) as CapitalRestant'),
+//             DB::raw('
+//                 DATEDIFF(CURDATE(), (
+//                     SELECT MAX(e2.DateTranch)
+//                     FROM echeanciers e2
+//                     LEFT JOIN remboursementcredits r2 ON e2.ReferenceEch = r2.RefEcheance
+//                     WHERE e2.NumDossier = p.NumDossier
+//                       AND (e2.CapAmmorti - COALESCE(r2.CapitalPaye, 0)) > 0
+//                       AND e2.DateTranch < CURDATE()
+//                 )) as JoursRetard
+//             ')
+//         )
+//         ->groupBy('p.NumDossier', 'p.NomCompte', 'p.MontantAccorde', 'p.CodeAgence', 'p.Gestionnaire', 'p.CodeMonnaie')
+//         ->having('CapitalRestant', '>', 1) // seuil > 1 (éviter les centimes résiduels)
+//         ->having('JoursRetard', '>', 180)
+//         ->orderBy('JoursRetard', 'desc');
+
+//     $credits = $query->get();
+//     $totalMontant = $credits->sum('CapitalRestant');
+
+//     // Récupérer la liste des gestionnaires distincts pour le filtre
+//     $gestionnaires = DB::table('portefeuilles')
+//         ->whereIn('CodeAgence', $agenceIds)
+//         ->where('Octroye', 1)
+//         ->where('Accorde', 1)
+//         ->where('Cloture', 0)
+//         ->select('Gestionnaire')
+//         ->distinct()
+//         ->pluck('Gestionnaire');
+
+//     return response()->json([
+//         'status' => 1,
+//         'data' => $credits,
+//         'total' => [
+//             'count' => $credits->count(),
+//             'montant' => $totalMontant,
+//         ],
+//         'filters' => [
+//             'gestionnaires' => $gestionnaires,
+//         ]
+//     ]);
+// }
+
+
+public function listeCreditsARadier(Request $request)
+{
+    $user = auth()->user();
+    $currentAgence = session('current_agence');
+    $codeAgence = $currentAgence['code_agence'] ?? null;
+    if (!$codeAgence) {
+        return response()->json(['status' => 0, 'msg' => 'Aucune agence active']);
+    }
+
+    $gestionnaire = $request->gestionnaire;
+    $devise = $request->devise; // 'CDF' ou 'USD'
+
+    $query = DB::table('portefeuilles as p')
+        ->join('echeanciers as e', 'p.NumDossier', '=', 'e.NumDossier')
+        ->leftJoin('remboursementcredits as r', 'e.ReferenceEch', '=', 'r.RefEcheance')
+        ->where('p.CodeAgence', $codeAgence)
+        ->where('p.Cloture', 0)
+        ->where('p.Octroye', 1)
+        ->where('p.Accorde', 1)
+        ->where('p.Radie', 0)
+        ->select(
+            'p.NumDossier',
+            'p.NomCompte',
+            'p.MontantAccorde',
+            'p.CodeAgence',
+            'p.Gestionnaire',
+            'p.CodeMonnaie',
+            DB::raw('SUM(e.CapAmmorti) - SUM(COALESCE(r.CapitalPaye, 0)) as CapitalRestant'),
+            DB::raw('
+                DATEDIFF(CURDATE(), (
+                    SELECT MAX(e2.DateTranch)
+                    FROM echeanciers e2
+                    LEFT JOIN remboursementcredits r2 ON e2.ReferenceEch = r2.RefEcheance
+                    WHERE e2.NumDossier = p.NumDossier
+                      AND (e2.CapAmmorti - COALESCE(r2.CapitalPaye, 0)) > 0
+                      AND e2.DateTranch < CURDATE()
+                )) as JoursRetard
+            ')
+        )
+        ->groupBy('p.NumDossier', 'p.NomCompte', 'p.MontantAccorde', 'p.CodeAgence', 'p.Gestionnaire', 'p.CodeMonnaie')
+        ->having('CapitalRestant', '>', 1) // seuil > 1
+        ->having('JoursRetard', '>', 360);
+
+    if ($gestionnaire) {
+        $query->having('p.Gestionnaire', $gestionnaire);
+    }
+    if ($devise) {
+        $query->having('p.CodeMonnaie', $devise);
+    }
+
+    $credits = $query->get();
+    $totalMontant = $credits->sum('CapitalRestant');
+
+    // Liste des gestionnaires pour le filtre
+    $gestionnaires = DB::table('portefeuilles')
+        ->where('CodeAgence', $codeAgence)
+        ->select('Gestionnaire')
+        ->distinct()
+        ->pluck('Gestionnaire');
+
+    return response()->json([
+        'status' => 1,
+        'data' => $credits,
+        'total' => [
+            'count' => $credits->count(),
+            'montant' => $totalMontant,
+        ],
+        'gestionnaires' => $gestionnaires,
+    ]);
+}
+
+
+
+/**
+ * Crée un compte s'il n'existe pas
+ */
+private function ensureCompteExiste($numCompte, $nomCompte, $nature, $codeAgence, $codeMonnaie)
+{
+    if (!Comptes::where('NumCompte', $numCompte)->exists()) {
+        $refCadre = substr($numCompte, 0, 2);
+        $refGroupe = substr($numCompte, 0, 3);
+        $refSousGroupe = substr($numCompte, 0, 4);
+        Comptes::create([
+            'CodeAgence'    => $codeAgence,
+            'NumCompte'     => $numCompte,
+            'NomCompte'     => $nomCompte,
+            'nature_compte' => $nature,
+            'niveau'        => 5,
+            'est_classe'    => 0,
+            'CodeMonnaie'   => $codeMonnaie,
+            'RefCadre'      => $refCadre,
+            'RefGroupe'     => $refGroupe,
+            'RefSousGroupe' => $refSousGroupe,
+            'RefTypeCompte' => substr($numCompte, 0, 1),
+            'compte_parent' => $refSousGroupe,
+        ]);
+    }
+}
+
+/**
+ * Génère le compte 67 (perte sur créances) pour une agence et une devise
+ */
+private function getComptePerte($codeAgence, $codeMonnaie)
+{
+    $suffixe = ($codeMonnaie == 1) ? '1' : '2';
+    $codeAgencePad = str_pad($codeAgence, 2, '0', STR_PAD_LEFT);
+    $numCompte = "670" . $codeAgencePad . $suffixe;
+    $nomCompte = "Pertes sur créances - Agence " . $codeAgence . ($codeMonnaie == 1 ? ' USD' : ' CDF');
+    $this->ensureCompteExiste($numCompte, $nomCompte, 'CHARGE', $codeAgence, $codeMonnaie);
+    return $numCompte;
+}
+
+private function getCompteHorsBilan($codeAgence, $codeMonnaie)
+{
+    $suffixe = ($codeMonnaie == 1) ? '1' : '2';
+    $codeAgencePad = str_pad($codeAgence, 2, '0', STR_PAD_LEFT);
+    $numCompte = "900" . $codeAgencePad . $suffixe;
+    $nomCompte = "Créances radiées - Agence " . $codeAgence . ($codeMonnaie == 1 ? ' USD' : ' CDF');
+    $this->ensureCompteExiste($numCompte, $nomCompte, 'HORS_BILAN', $codeAgence, $codeMonnaie);
+    return $numCompte;
+}
+
+  private function getCapitalRestant($numDossier)
+    {
+        $result = DB::selectOne("
+            SELECT SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) as reste
+            FROM echeanciers
+            LEFT JOIN remboursementcredits ON echeanciers.ReferenceEch = remboursementcredits.RefEcheance
+            WHERE echeanciers.NumDossier = ?
+        ", [$numDossier]);
+        return $result->reste ?? 0;
+    }
+
+    private function genererNumTransaction()
+    {
+        $id = DB::table('compteur_transactions')->insertGetId(['fakevalue' => '0000']);
+        return 'RD' . str_pad($id, 8, '0', STR_PAD_LEFT);
+    }
+    
+public function radierCredits(Request $request)
+{
+    $request->validate([
+        'dossiers' => 'required|array',
+        'dossiers.*' => 'string'
+    ]);
+
+    $currentAgence = session('current_agence');
+    $codeAgence = $currentAgence['code_agence'] ?? null;
+    if (!$codeAgence) {
+        return response()->json(['status' => 0, 'msg' => 'Aucune agence active']);
+    }
+
+    $radies = 0;
+    DB::beginTransaction();
+    try {
+        foreach ($request->dossiers as $numDossier) {
+            $portefeuille = Portefeuille::where('NumDossier', $numDossier)
+                ->where('CodeAgence', $codeAgence)
+                ->first();
+
+            if (!$portefeuille || $portefeuille->Cloture == 1 || $portefeuille->Radie == 1) continue;
+
+            // Écriture comptable de radiation
+            $this->ecrireRadiation($portefeuille);
+
+            // Marquer comme radié
+            $portefeuille->Radie = 1;
+            $portefeuille->save();
+
+            $radies++;
+        }
+        DB::commit();
+
+        return response()->json([
+            'status' => 1,
+            'radies' => $radies,
+            'msg' => "$radies crédit(s) radié(s) avec succès"
+        ]);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error("Radiation échouée : " . $e->getMessage());
+        return response()->json(['status' => 0, 'msg' => 'Erreur lors de la radiation']);
+    }
+}
+
+
+
+
+
+
+
+private function ecrireRadiation($portefeuille)
+{
+    $dataSystem = TauxEtDateSystem::latest()->first();
+    $codeAgence = $portefeuille->CodeAgence;
+    $codeMonnaie = ($portefeuille->CodeMonnaie == 'USD') ? 1 : 2;
+    $montant = $this->getCapitalRestant($portefeuille->NumDossier);
+    if ($montant <= 0) return;
+
+    // Récupérer le compte 39 (créance litigieuse)
+    $jourRetard = JourRetard::where('NumDossier', $portefeuille->NumDossier)->first();
+    $compte39 = $jourRetard ? $jourRetard->NumCompteCreanceLitigieuse : null;
+    if (!$compte39) {
+        $compte39 = $portefeuille->NumCompteEpargne; // fallback
+    }
+
+    $numTransaction = $this->genererNumTransaction();
+    $comptePerte = $this->getComptePerte($codeAgence, $codeMonnaie);      // 67
+    $compteHorsBilan = $this->getCompteHorsBilan($codeAgence, $codeMonnaie); // 90
+
+    // 1. Constatation de la perte et annulation de la créance
+    // Débit 67 (charge), Crédit 39 (actif)
+    Transactions::create([
+        'NumTransaction' => $numTransaction,
+        'DateTransaction' => $dataSystem->DateSystem,
+        'DateSaisie' => now(),
+        'TypeTransaction' => 'D',
+        'CodeMonnaie' => $codeMonnaie,
+        'CodeAgence' => $codeAgence,
+        'NumDossier' => $portefeuille->NumDossier,
+        'NumCompte' => $comptePerte,
+        'NumComptecp' => $compte39,
+        'Debit' => $montant,
+        'Debitfc' => $codeMonnaie == 2 ? $montant : $montant * $dataSystem->TauxEnFc,
+        'Debitusd' => $codeMonnaie == 1 ? $montant : $montant / $dataSystem->TauxEnFc,
+        'NomUtilisateur' => auth()->user()->name,
+        'Libelle' => "Radiation du crédit dossier {$portefeuille->NumDossier} (perte)",
+    ]);
+
+    Transactions::create([
+        'NumTransaction' => $numTransaction,
+        'DateTransaction' => $dataSystem->DateSystem,
+        'DateSaisie' => now(),
+        'TypeTransaction' => 'C',
+        'CodeMonnaie' => $codeMonnaie,
+        'CodeAgence' => $codeAgence,
+        'NumDossier' => $portefeuille->NumDossier,
+        'NumCompte' => $compte39,
+        'NumComptecp' => $comptePerte,
+        'Credit' => $montant,
+        'Creditfc' => $codeMonnaie == 2 ? $montant : $montant * $dataSystem->TauxEnFc,
+        'Creditusd' => $codeMonnaie == 1 ? $montant : $montant / $dataSystem->TauxEnFc,
+        'NomUtilisateur' => auth()->user()->name,
+        'Libelle' => "Radiation du crédit dossier {$portefeuille->NumDossier} (annulation créance)",
+    ]);
+
+    // 2. Enregistrement hors bilan (crédit du compte 90)
+    Transactions::create([
+        'NumTransaction' => $numTransaction,
+        'DateTransaction' => $dataSystem->DateSystem,
+        'DateSaisie' => now(),
+        'TypeTransaction' => 'C',
+        'CodeMonnaie' => $codeMonnaie,
+        'CodeAgence' => $codeAgence,
+        'NumDossier' => $portefeuille->NumDossier,
+        'NumCompte' => $compteHorsBilan,
+        'Credit' => $montant,
+        'Creditfc' => $codeMonnaie == 2 ? $montant : $montant * $dataSystem->TauxEnFc,
+        'Creditusd' => $codeMonnaie == 1 ? $montant : $montant / $dataSystem->TauxEnFc,
+        'NomUtilisateur' => auth()->user()->name,
+        'Libelle' => "Radiation du crédit dossier {$portefeuille->NumDossier} (hors bilan)",
+    ]);
+}
+
+
+ 
 }

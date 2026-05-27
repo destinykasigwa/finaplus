@@ -1233,3 +1233,305 @@ tr {
 };
 
 export default Bilan;
+
+
+
+
+
+
+
+
+
+
+//TABLEAU DE PAR AVEC MISE EN FORME 
+<div className="table-responsive">
+    <table
+        className="table table-bordered table-hover table-sm align-middle"
+        id="par-table"
+        style={{
+            fontSize: "12px",
+            whiteSpace: "nowrap",
+        }}
+    >
+        <thead
+            style={{
+                backgroundColor: "#0d6efd",
+                color: "white",
+                position: "sticky",
+                top: 0,
+                zIndex: 2,
+            }}
+        >
+            <tr>
+                <th>GESTIONNAIRE</th>
+                <th className="text-end">Nbr</th>
+                <th className="text-end">Accordé</th>
+                <th className="text-end bg-dark">Encours</th>
+                <th className="text-end text-success">Sain</th>
+                <th className="text-end text-warning">1-30</th>
+                <th className="text-end text-danger">31-60</th>
+                <th className="text-end text-danger">61-90</th>
+                <th className="text-end text-danger">91-180</th>
+                <th className="text-end text-danger">+180</th>
+                <th className="text-end bg-danger">PAR≥1</th>
+                <th className="text-end">PAR{">"}30</th>
+                <th className="text-end">PAR{">"}60</th>
+                <th className="text-end">PAR{">"}90</th>
+                <th className="text-end bg-warning text-dark">
+                    % PAR
+                </th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {fetchParData.map((item, idx) => {
+                const taux = item.TAUX_PAR_INTERNE || 0;
+
+                let parColor = "success";
+
+                if (taux >= 5 && taux < 10) {
+                    parColor = "warning";
+                } else if (taux >= 10) {
+                    parColor = "danger";
+                }
+
+                return (
+                    <tr key={idx}>
+                        <td className="fw-bold">
+                            {item.Gestionnaire}
+                        </td>
+
+                        <td className="text-end">
+                            {item.NbrCredits}
+                        </td>
+
+                        <td className="text-end">
+                            {numberWithSpaces(
+                                item.TotalAccorde?.toFixed(2)
+                            )}
+                        </td>
+
+                        <td className="text-end fw-bold bg-light">
+                            {numberWithSpaces(
+                                item.EncoursTotal?.toFixed(2)
+                            )}
+                        </td>
+
+                        <td className="text-end text-success fw-bold">
+                            {numberWithSpaces(
+                                item.EncoursSain?.toFixed(2)
+                            )}
+                        </td>
+
+                        <td className="text-end text-warning fw-bold">
+                            {formatPAR(item.PAR_1_30)}
+                        </td>
+
+                        <td className="text-end text-danger">
+                            {formatPAR(item.PAR_31_60)}
+                        </td>
+
+                        <td className="text-end text-danger">
+                            {formatPAR(item.PAR_61_90)}
+                        </td>
+
+                        <td className="text-end text-danger">
+                            {formatPAR(item.PAR_91_180)}
+                        </td>
+
+                        <td className="text-end text-danger fw-bold">
+                            {formatPAR(item.PAR_PLUS_180)}
+                        </td>
+
+                        <td className="text-end fw-bold bg-danger text-white">
+                            {formatPAR(item.PAR_SUP_1)}
+                        </td>
+
+                        <td className="text-end">
+                            {formatPAR(item.PAR_SUP_30)}
+                        </td>
+
+                        <td className="text-end">
+                            {formatPAR(item.PAR_SUP_60)}
+                        </td>
+
+                        <td className="text-end">
+                            {formatPAR(item.PAR_SUP_90)}
+                        </td>
+
+                        <td className="text-end fw-bold">
+                            <span
+                                className={`badge bg-${parColor}`}
+                            >
+                                {taux.toFixed(2)} %
+                            </span>
+                        </td>
+                    </tr>
+                );
+            })}
+
+            {/* TOTAL GENERAL */}
+            {totalParData && (
+                <tr
+                    style={{
+                        backgroundColor: "#212529",
+                        color: "white",
+                        fontWeight: "bold",
+                    }}
+                >
+                    <td>TOTAL GENERAL</td>
+
+                    <td className="text-end">
+                        {totalParData.NbrCredits}
+                    </td>
+
+                    <td className="text-end">
+                        {numberWithSpaces(
+                            totalParData.TotalAccorde?.toFixed(2)
+                        )}
+                    </td>
+
+                    <td className="text-end">
+                        {numberWithSpaces(
+                            totalParData.EncoursTotal?.toFixed(2)
+                        )}
+                    </td>
+
+                    <td className="text-end">
+                        {numberWithSpaces(
+                            totalParData.EncoursSain?.toFixed(2)
+                        )}
+                    </td>
+
+                    <td className="text-end">
+                        {formatPAR(totalParData.PAR_1_30)}
+                    </td>
+
+                    <td className="text-end">
+                        {formatPAR(totalParData.PAR_31_60)}
+                    </td>
+
+                    <td className="text-end">
+                        {formatPAR(totalParData.PAR_61_90)}
+                    </td>
+
+                    <td className="text-end">
+                        {formatPAR(totalParData.PAR_91_180)}
+                    </td>
+
+                    <td className="text-end">
+                        {formatPAR(totalParData.PAR_PLUS_180)}
+                    </td>
+
+                    <td className="text-end bg-danger">
+                        {formatPAR(totalParData.PAR_SUP_1)}
+                    </td>
+
+                    <td className="text-end">
+                        {formatPAR(totalParData.PAR_SUP_30)}
+                    </td>
+
+                    <td className="text-end">
+                        {formatPAR(totalParData.PAR_SUP_60)}
+                    </td>
+
+                    <td className="text-end">
+                        {formatPAR(totalParData.PAR_SUP_90)}
+                    </td>
+
+                    <td className="text-end">
+                        {totalParData.TAUX_PAR_INTERNE?.toFixed(
+                            2
+                        )} %
+                    </td>
+                </tr>
+            )}
+
+            {/* POURCENTAGES */}
+            {globalPercentages && (
+                <tr
+                    style={{
+                        backgroundColor: "#f8f9fa",
+                        fontStyle: "italic",
+                    }}
+                >
+                    <td className="fw-bold">
+                        % / Encours Global
+                    </td>
+
+                    <td colSpan="3"></td>
+
+                    <td className="text-end text-success fw-bold">
+                        {globalPercentages.Sain} %
+                    </td>
+
+                    <td className="text-end text-warning fw-bold">
+                        {globalPercentages["1_30"]} %
+                    </td>
+
+                    <td className="text-end text-danger">
+                        {globalPercentages["31_60"]} %
+                    </td>
+
+                    <td className="text-end text-danger">
+                        {globalPercentages["61_90"]} %
+                    </td>
+
+                    <td className="text-end text-danger">
+                        {globalPercentages["91_180"]} %
+                    </td>
+
+                    <td className="text-end text-danger">
+                        {globalPercentages.Plus180} %
+                    </td>
+
+                    <td className="text-end fw-bold bg-danger text-white">
+                        {globalPercentages.PAR_SUP_1} %
+                    </td>
+
+                    <td className="text-end">
+                        {globalPercentages.PAR_SUP_30} %
+                    </td>
+
+                    <td className="text-end">
+                        {globalPercentages.PAR_SUP_60} %
+                    </td>
+
+                    <td className="text-end">
+                        {globalPercentages.PAR_SUP_90} %
+                    </td>
+
+                    <td></td>
+                </tr>
+            )}
+
+            {/* MOYENNE GLOBALE */}
+            <tr
+                style={{
+                    backgroundColor: "#fff3cd",
+                }}
+            >
+                <td
+                    colSpan="14"
+                    className="text-end fw-bold"
+                >
+                    MOYENNE GLOBALE DU PAR :
+                </td>
+
+                <td className="text-end fw-bold">
+                    <span
+                        className={`badge bg-${
+                            parGlobalPercent >= 10
+                                ? "danger"
+                                : parGlobalPercent >= 5
+                                ? "warning"
+                                : "success"
+                        }`}
+                    >
+                        {parGlobalPercent} %
+                    </span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

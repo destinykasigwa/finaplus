@@ -247,7 +247,7 @@ const GestionBatchs = () => {
                 </div>
             )}
             <div className="card border-0 shadow-sm rounded-4">
-                <div className="card-header bg-gradient-teal text-white">
+                <div className="card-header text-white" style={{ background:"#138496" }}>
                     <h5 className="mb-0">Gestion des paiements batch</h5>
                 </div>
                 <div className="card-body">

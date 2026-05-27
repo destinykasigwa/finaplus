@@ -357,8 +357,17 @@ eco/page/report/get-searched-repertoire', [ReportsController::class, 'getSearche
 
 
     //PERMET D'EFFECTUER EUN REMBOURSEMENT EN CAPITAL
-    Route::post('eco/page/montage-credit/remboursement-manuel', [ClotureJourneeCopy::class, 'RemboursementManuel']);
+    Route::post('eco/page/montage-credit/remboursement-manuel-capital', [SuiviCreditController::class, 'rembourserCapital']);
 
+
+      //PERMET D'EFFECTUER EUN REMBOURSEMENT EN INTERET
+    Route::post('eco/page/montage-credit/remboursement-manuel-interet', [SuiviCreditController::class, 'rembourserInteret']);
+
+
+
+    
+      //PERMET D'EFFECTUER EUN REMBOURSEMENT ANTICIPE
+    Route::post('eco/page/montage-credit/remboursement-manuel-anticipe', [SuiviCreditController::class, 'rembourserAnticipe']);
 
 
 
@@ -700,6 +709,11 @@ Route::middleware(['auth'])->prefix('eco/batch')->group(function () {
  Route::get('/eco/batch/detail/{id}', [BatchPaiementController::class, 'detailAdmin']);
 
 
+Route::get('/eco/pages/radiation-credit', [SuiviCreditController::class, 'getRadiationCreditHomePage'])->name('eco.pages.radiation-credit');
+ Route::middleware(['auth'])->prefix('eco/credits/radies')->group(function () {
+    Route::get('/liste', [SuiviCreditController::class, 'listeCreditsARadier']);
+    Route::post('/radier', [SuiviCreditController::class, 'radierCredits']);
+});
 });
 
 

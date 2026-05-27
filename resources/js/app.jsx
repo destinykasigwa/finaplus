@@ -55,6 +55,7 @@ import ImmoEnregistrement from "./Page/ImmoEnregistrement";
 import RapportImmobilisations from "./Page/RapportImmobilisations";
 import BatchPaiement from "./Page/BatchPaiement";
 import GestionBatchs from "./Page/GestionBatchs";
+import CreditsRadies from "./Page/CreditsRadies";
 
 if (document.getElementById("app")) {
     ReactDOM.createRoot(document.getElementById("app")).render(
@@ -344,6 +345,14 @@ if (document.getElementById("gestion-batch")) {
     );
 }
 
+
+if (document.getElementById("radiationCredit")) {
+    ReactDOM.createRoot(document.getElementById("radiationCredit")).render(
+        <BrowserRouter>
+            <CreditsRadies />
+        </BrowserRouter>
+    );
+}
 
 
 

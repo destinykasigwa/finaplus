@@ -458,7 +458,6 @@ class SendNotification
                         )->where("NumCompte", '=', $NumCompteUSD)
                             ->groupBy("NumCompte")
                             ->first();
-
                         $receiver_number = $getMembreInfo->Telephone;
                         // $message = ($getMembreInfo2->sexe == "Homme")
                         //     ? "Bonjour Monsieur "
@@ -838,7 +837,7 @@ class SendNotification
 
             info($getPorteFeuille);
             if ($getPorteFeuille->isNotEmpty()) {
-                info("okkk22");
+                //info("okkk22");
                 for ($i = 0; $i < sizeof($getPorteFeuille); $i++) {
                     //CHECK IF USER EXISTER ON NOTIFICATION
                     $checkMembreExistOnSMSAlert = SMSBanking::where("NumAbrege", "=", $getPorteFeuille[$i]->numAdherant)->where("ActivatedSMS", 1)->first();
@@ -846,14 +845,8 @@ class SendNotification
                         info("ok message sould be sent");
                         //S'IL EST ABONNE SUR LES SMS ON L'ENVOIE UN MESSAGE
                         $receiver_number = $checkMembreExistOnSMSAlert->Telephone;
-                        $message = ($checkMembreExistOnSMSAlert->sexe == "Homme")
-                            ? "Bonjour Monsieur "
-                            : (($checkMembreExistOnSMSAlert->sexe == "Femme")
-                                ? "Bonjour Madame "
-                                : "Bonjour ");
-
-                        $message .= $getPorteFeuille[$i]->NomCompte . " Nous vous rappellons que votre " . $getPorteFeuille[$i]->NbreJour .
-                            " e tranche Doss. " . $getPorteFeuille[$i]->NumDossier
+                        $message =" Ns vs rappellons que votre " . $getPorteFeuille[$i]->NbreJour .
+                            "e tranche Doss. " . $getPorteFeuille[$i]->NumDossier
                             . " tombe ce " . Carbon::parse($getPorteFeuille[$i]->DateTranch)->format('d-m-Y')
                             . ". Cap " . $getPorteFeuille[$i]->CapAmmorti . " Int " . $getPorteFeuille[$i]->Interet
                             . " " . $getPorteFeuille[$i]->CodeMonnaie
@@ -887,7 +880,7 @@ class SendNotification
                     }
                     $checkMembreExistOnEmailAlert = SMSBanking::where("NumAbrege", "=", $getPorteFeuille[$i]->numAdherant)->where("ActivatedEmail", 1)->first();
                     if ($checkMembreExistOnEmailAlert) {
-                        info("ok email sould be sent");
+                        //info("ok email sould be sent");
                         $data = ($checkMembreExistOnEmailAlert->sexe == "Homme")
                             ? "Bonjour Monsieur "
                             : (($checkMembreExistOnEmailAlert->sexe == "Femme")

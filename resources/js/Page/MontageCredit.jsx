@@ -87,11 +87,18 @@ const MontageCredit = () => {
     const [MontantAccorde, setMontantAccorde] = useState();
     const [garantie, setgarantie] = useState();
     const [hypotheque_name, sethypotheque_name] = useState();
-    const [montantRemboursementManuel, setmontantRemboursementManuel] =
+    // const [montantRemboursementManuel, setmontantRemboursementManuel] =
+    //     useState();
+
+        const [montantRemboursementCapital, setMontantRemboursementCapital] =
+        useState();
+           const [montantRemboursementInteret, setMontantRemboursementInteret] =
         useState();
 
     const [checkboxValues, setCheckboxValues] = useState({
         RemboursementAnticipative: false,
+        RemboursementAnticipativeCapital:false,
+        RemboursementAnticipativeInteret:false
     });
 
     const [ReechelonnerCheckboxValues, setReechelonnerCheckboxValues] =
@@ -346,6 +353,7 @@ const MontageCredit = () => {
 
     const AccordeCredit = async (e) => {
         e.preventDefault();
+        setisLoadingRemb(true)
         const confirmation = await Swal.fire({
             title: "Êtes-vous sûr?",
             text: "Voulez-vous vraiment Accorder ce crédit ?",
@@ -378,6 +386,10 @@ const MontageCredit = () => {
                     confirmButtonText: "Okay",
                 });
             }
+        }else{
+         
+            setisLoadingRemb(false); // désactiver le chargement à la fin (succès ou erreur)
+        
         }
     };
 
@@ -385,6 +397,7 @@ const MontageCredit = () => {
 
     const ClotureCredit = async (e) => {
         e.preventDefault();
+        setisLoadingRemb(true)
         // Afficher une boîte de dialogue de confirmation
         const confirmation = await Swal.fire({
             title: "Êtes-vous sûr?",
@@ -420,6 +433,10 @@ const MontageCredit = () => {
                     confirmButtonText: "Okay",
                 });
             }
+        }else{
+         
+            setisLoadingRemb(false); // désactiver le chargement à la fin (succès ou erreur)
+        
         }
     };
 
@@ -427,6 +444,7 @@ const MontageCredit = () => {
 
     const DeccaissementCredit = async (e) => {
         e.preventDefault();
+        setisLoadingRemb(true);
         // Afficher une boîte de dialogue de confirmation
         const confirmation = await Swal.fire({
             title: "Êtes-vous sûr?",
@@ -462,6 +480,10 @@ const MontageCredit = () => {
                     confirmButtonText: "Okay",
                 });
             }
+        }else{
+         
+            setisLoadingRemb(false); // désactiver le chargement à la fin (succès ou erreur)
+        
         }
     };
     const handleCheckboxChange = (event) => {
@@ -482,7 +504,7 @@ const MontageCredit = () => {
     };
 
     //PERMET DE FAIRE UN REMBOURSEMENT MANUEL EN CAPITAL
-    const RemboursementManuel = async (e) => {
+    const handleRemboursementCapital= async (e) => {
         e.preventDefault();
         setisLoadingRemb(true);
         // Afficher une boîte de dialogue de confirmation
@@ -498,11 +520,11 @@ const MontageCredit = () => {
         // Si l'utilisateur confirme
         if (confirmation.isConfirmed) {
             const res = await axios.post(
-                "/eco/page/montage-credit/remboursement-manuel",
+                "/eco/page/montage-credit/remboursement-manuel-capital",
                 {
                     numDossier: numDossier_up,
-                    remboursAnticipe: checkboxValues.RemboursementAnticipative,
-                    montantRemboursementManuel: montantRemboursementManuel,
+                    anticipe: checkboxValues.RemboursementAnticipativeCapital,
+                    montant: montantRemboursementCapital,
                 },
             );
 
@@ -526,9 +548,114 @@ const MontageCredit = () => {
                     confirmButtonText: "Okay",
                 });
             }
+        }else{
+         
+            setisLoadingRemb(false); // désactiver le chargement à la fin (succès ou erreur)
+        
         }
     };
 
+
+     const handleRemboursementInteret= async (e) => {
+        e.preventDefault();
+        setisLoadingRemb(true);
+        // Afficher une boîte de dialogue de confirmation
+        const confirmation = await Swal.fire({
+            title: "Êtes-vous sûr?",
+            text: "Voulez-vous vraiment Effectuer le remboursement ?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        });
+
+        // Si l'utilisateur confirme
+        if (confirmation.isConfirmed) {
+            const res = await axios.post(
+                "/eco/page/montage-credit/remboursement-manuel-interet",
+                {
+                    numDossier: numDossier_up,
+                    anticipe: checkboxValues.RemboursementAnticipativeInteret,
+                    montant: montantRemboursementInteret,
+                },
+            );
+
+            if (res.data.status == 1) {
+                setisLoadingRemb(false);
+                Swal.fire({
+                    title: "Remboursement crédit",
+                    text: res.data.msg,
+                    icon: "success",
+                    timer: 8000,
+                    confirmButtonText: "Okay",
+                });
+            } else {
+                setisLoadingRemb(false);
+                Swal.fire({
+                    // Le remboursement est entrain de s'effectuer en arrière-plan...😎
+                    title: "Erreur!",
+                    text: res.data.msg,
+                    icon: "error",
+                    timer: 8000,
+                    confirmButtonText: "Okay",
+                });
+            }
+        }else{
+         
+            setisLoadingRemb(false); // désactiver le chargement à la fin (succès ou erreur)
+        
+        }
+    };
+
+
+      const handleRemboursementAnticipe= async (e) => {
+        e.preventDefault();
+        setisLoadingRemb(true);
+        // Afficher une boîte de dialogue de confirmation
+        const confirmation = await Swal.fire({
+            title: "Êtes-vous sûr?",
+            text: "Voulez-vous vraiment Effectuer le remboursement ?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Oui",
+            cancelButtonText: "Non",
+        });
+
+        // Si l'utilisateur confirme
+        if (confirmation.isConfirmed) {
+            const res = await axios.post(
+                "/eco/page/montage-credit/remboursement-manuel-anticipe",
+                {
+                    numDossier: numDossier_up,
+                },
+            );
+
+            if (res.data.status == 1) {
+                setisLoadingRemb(false);
+                Swal.fire({
+                    title: "Remboursement crédit",
+                    text: res.data.msg,
+                    icon: "success",
+                    timer: 8000,
+                    confirmButtonText: "Okay",
+                });
+            } else {
+                setisLoadingRemb(false);
+                Swal.fire({
+                    // Le remboursement est entrain de s'effectuer en arrière-plan...😎
+                    title: "Erreur!",
+                    text: res.data.msg,
+                    icon: "error",
+                    timer: 8000,
+                    confirmButtonText: "Okay",
+                });
+            }
+        }else{
+         
+            setisLoadingRemb(false); // désactiver le chargement à la fin (succès ou erreur)
+        
+        }
+    };
     function numberWithSpaces(x) {
         if (x === null || x === undefined) {
             return "0.00"; // ou une autre valeur par défaut appropriée
@@ -2480,18 +2607,32 @@ const MontageCredit = () => {
                                     Échéancier
                                 </a>
                             </li>
-                            <li className="nav-item">
+                         
+                               <li className="nav-item">
                                 <a
                                     className="nav-link"
-                                    id="remboursement-tab"
+                                    id="remboursement-cap-tab"
                                     data-toggle="pill"
-                                    href="#remboursement"
+                                    href="#remboursement-cap"
                                     role="tab"
                                 >
                                     <i className="fas fa-hand-holding-usd me-2"></i>
-                                    Remboursement Manuel
+                                    Remboursement Capital
                                 </a>
                             </li>
+                              <li className="nav-item">
+                                <a
+                                    className="nav-link"
+                                    id="remboursement-int-tab"
+                                    data-toggle="pill"
+                                    href="#remboursement-int"
+                                    role="tab"
+                                >
+                                    <i className="fas fa-hand-holding-usd me-2"></i>
+                                    Remboursement Intérêt
+                                </a>
+                            </li>
+                            
                             <li className="nav-item">
                                 <a
                                     className="nav-link"
@@ -3025,312 +3166,214 @@ const MontageCredit = () => {
                                     </div>
                                 </div>
 
-                                {/* Onglet Remboursement Manuel */}
-                                <div
-                                    className="tab-pane fade"
-                                    id="remboursement"
-                                    role="tabpanel"
-                                >
-                                    <div className="row">
-                                        <div className="col-md-8">
-                                            <div className="card border-0 bg-light">
-                                                <div className="card-body">
-                                                    <form>
-                                                        <table
-                                                            style={{
-                                                                width: "100%",
-                                                            }}
-                                                        >
-                                                            <tbody>
-                                                                <tr>
-                                                                    <td
-                                                                        style={{
-                                                                            padding:
-                                                                                "12px",
-                                                                            width: "35%",
-                                                                        }}
-                                                                    >
-                                                                        {/* Switch Remboursement Anticipé */}
-                                                                        <div className="form-check form-switch">
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                className="form-check-input"
-                                                                                id="RemboursementAnticipative"
-                                                                                name="RemboursementAnticipative"
-                                                                                style={{
-                                                                                    width: "40px",
-                                                                                    height: "20px",
-                                                                                    cursor: "pointer",
-                                                                                }}
-                                                                                checked={
-                                                                                    checkboxValues.RemboursementAnticipative
-                                                                                }
-                                                                                onChange={
-                                                                                    handleCheckboxChange
-                                                                                }
-                                                                            />
-                                                                            <label
-                                                                                className="form-check-label ms-2"
-                                                                                htmlFor="RemboursementAnticipative"
-                                                                                style={{
-                                                                                    color: "steelblue",
-                                                                                    fontWeight:
-                                                                                        "500",
-                                                                                    fontSize:
-                                                                                        "14px",
-                                                                                    cursor: "pointer",
-                                                                                }}
-                                                                            >
-                                                                                <i className="fas fa-forward me-2"></i>
-                                                                                Remboursement
-                                                                                Anticipé
-                                                                                ?
-                                                                            </label>
-                                                                        </div>
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td
-                                                                        style={{
-                                                                            padding:
-                                                                                "12px",
-                                                                        }}
-                                                                    >
-                                                                        <label
-                                                                            style={{
-                                                                                color: "steelblue",
-                                                                                fontWeight:
-                                                                                    "500",
-                                                                            }}
-                                                                        >
-                                                                            Montant
-                                                                            à
-                                                                            rembourser
-                                                                        </label>
-                                                                        <input
-                                                                            type="text"
-                                                                            className="form-control form-control-sm modern-input"
-                                                                            onChange={(
-                                                                                e,
-                                                                            ) =>
-                                                                                setmontantRemboursementManuel(
-                                                                                    e
-                                                                                        .target
-                                                                                        .value,
-                                                                                )
-                                                                            }
-                                                                            placeholder="0,00"
-                                                                        />
-                                                                    </td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <td
-                                                                        style={{
-                                                                            padding:
-                                                                                "12px",
-                                                                        }}
-                                                                    >
-                                                                        <button
-                                                                            onClick={
-                                                                                RemboursementManuel
-                                                                            }
-                                                                            className="btn w-100 py-2"
-                                                                            style={{
-                                                                                background:
-                                                                                    "linear-gradient(135deg, #20c997, #198764)",
-                                                                                color: "white",
-                                                                                borderRadius:
-                                                                                    "8px",
-                                                                            }}
-                                                                        >
-                                                                            <i className="fas fa-database me-2"></i>
-                                                                            Rembourser
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </form>
-                                                </div>
-                                            </div>
+                              {/* Onglet Remboursement Manuel - CAPITAL */}
+<div className="tab-pane fade" id="remboursement-cap" role="tabpanel" aria-labelledby="remboursement-cap-tab">
+    <div className="row">
+        <div className="col-md-8">
+            <div className="card border-0 bg-light">
+                <div className="card-body">
+                    <form>
+                        <table style={{ width: "100%" }}>
+                            <tbody>
+                                <tr>
+                                    <td style={{ padding: "12px", width: "35%" }}>
+                                        <div className="form-check form-switch">
+                                            <input
+                                                type="checkbox"
+                                                className="form-check-input"
+                                                id="RemboursementAnticipativeCapital"
+                                                name="RemboursementAnticipativeCapital"
+                                                style={{ width: "40px", height: "20px", cursor: "pointer" }}
+                                                checked={checkboxValues.RemboursementAnticipativeCapital}
+                                                onChange={handleCheckboxChange}
+                                            />
+                                            <label
+                                                className="form-check-label ms-2"
+                                                htmlFor="RemboursementAnticipativeCapital"
+                                                style={{ color: "steelblue", fontWeight: "500", fontSize: "14px", cursor: "pointer" }}
+                                            >
+                                                <i className="fas fa-forward me-2"></i>
+                                                Remboursement Anticipé ?
+                                            </label>
                                         </div>
-                                    </div>
-                                </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style={{ padding: "12px" }}>
+                                        <label style={{ color: "steelblue", fontWeight: "500" }}>
+                                            Montant à rembourser (Capital)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-sm modern-input"
+                                            onChange={(e) => setMontantRemboursementCapital(e.target.value)}
+                                            placeholder="0,00"
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style={{ padding: "12px" }}>
+                                        <button
+                                            onClick={handleRemboursementCapital}
+                                            className="btn w-100 py-2"
+                                            style={{ background: "linear-gradient(135deg, #20c997, #198764)", color: "white", borderRadius: "8px" }}
+                                        >
+                                            <i className="fas fa-database me-2"></i>
+                                            Rembourser le capital
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                                {/* Onglet Action */}
-                                <div
-                                    className="tab-pane fade"
-                                    id="action"
-                                    role="tabpanel"
-                                >
-                                    <div className="row">
-                                        <div className="col-md-8">
-                                            <div className="card border-0 bg-light">
-                                                <div className="card-body">
-                                                    <div className="d-flex flex-wrap gap-3">
-                                                        <div>
-                                                            {fetchDataToUpdate &&
-                                                            fetchDataToUpdate.Accorde ==
-                                                                1 ? (
-                                                                <button
-                                                                    disabled
-                                                                    className="btn btn-secondary"
-                                                                    style={{
-                                                                        borderRadius:
-                                                                            "10px",
-                                                                        padding:
-                                                                            "12px 24px",
-                                                                        opacity: 0.6,
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-thumbs-up me-2"></i>
-                                                                    Déjà Accordé
-                                                                </button>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={
-                                                                        AccordeCredit
-                                                                    }
-                                                                    className="btn"
-                                                                    style={{
-                                                                        background:
-                                                                            "linear-gradient(135deg, #28a745, #1e7e34)",
-                                                                        color: "white",
-                                                                        borderRadius:
-                                                                            "10px",
-                                                                        padding:
-                                                                            "12px 24px",
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-thumbs-up me-2"></i>
-                                                                    Accorder
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            {fetchDataToUpdate &&
-                                                            fetchDataToUpdate.Octroye ==
-                                                                1 ? (
-                                                                <button
-                                                                    disabled
-                                                                    className="btn btn-secondary"
-                                                                    style={{
-                                                                        borderRadius:
-                                                                            "10px",
-                                                                        padding:
-                                                                            "12px 24px",
-                                                                        opacity: 0.6,
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-hand-holding-usd me-2"></i>
-                                                                    Déjà
-                                                                    Déboursé
-                                                                </button>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={
-                                                                        DeccaissementCredit
-                                                                    }
-                                                                    className="btn"
-                                                                    style={{
-                                                                        background:
-                                                                            "linear-gradient(135deg, #17a2b8, #138496)",
-                                                                        color: "white",
-                                                                        borderRadius:
-                                                                            "10px",
-                                                                        padding:
-                                                                            "12px 24px",
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-hand-holding-usd me-2"></i>
-                                                                    Débourser
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            {fetchDataToUpdate &&
-                                                            fetchDataToUpdate.Cloture ==
-                                                                1 ? (
-                                                                <button
-                                                                    disabled
-                                                                    className="btn btn-secondary"
-                                                                    style={{
-                                                                        borderRadius:
-                                                                            "10px",
-                                                                        padding:
-                                                                            "12px 24px",
-                                                                        opacity: 0.6,
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-lock me-2"></i>
-                                                                    Déjà Clôturé
-                                                                </button>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={
-                                                                        ClotureCredit
-                                                                    }
-                                                                    className="btn"
-                                                                    style={{
-                                                                        background:
-                                                                            "linear-gradient(135deg, #dc3545, #b02a37)",
-                                                                        color: "white",
-                                                                        borderRadius:
-                                                                            "10px",
-                                                                        padding:
-                                                                            "12px 24px",
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-unlock-alt me-2"></i>
-                                                                    Clôturer
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div
-                                                        className="mt-4 p-3"
-                                                        style={{
-                                                            background:
-                                                                "#e6f2f9",
-                                                            borderRadius:
-                                                                "10px",
-                                                        }}
-                                                    >
-                                                        <small className="text-muted">
-                                                            <i className="fas fa-info-circle me-2"></i>
-                                                            {fetchDataToUpdate &&
-                                                                fetchDataToUpdate.Accorde ==
-                                                                    1 &&
-                                                                fetchDataToUpdate.Octroye ==
-                                                                    0 &&
-                                                                "Crédit accordé mais non encore déboursé. Cliquez sur 'Débourser' pour libérer les fonds."}
-                                                            {fetchDataToUpdate &&
-                                                                fetchDataToUpdate.Accorde ==
-                                                                    1 &&
-                                                                fetchDataToUpdate.Octroye ==
-                                                                    1 &&
-                                                                fetchDataToUpdate.Cloture ==
-                                                                    0 &&
-                                                                "Crédit en cours de remboursement. Les échéances sont actives."}
-                                                            {fetchDataToUpdate &&
-                                                                fetchDataToUpdate.Cloture ==
-                                                                    1 &&
-                                                                "Crédit clôturé. Aucune action supplémentaire n'est requise."}
-                                                            {(!fetchDataToUpdate ||
-                                                                (fetchDataToUpdate.Accorde ==
-                                                                    0 &&
-                                                                    fetchDataToUpdate.Octroye ==
-                                                                        0 &&
-                                                                    fetchDataToUpdate.Cloture ==
-                                                                        0)) &&
-                                                                "Crédit en attente de validation. Veuillez d'abord accorder le crédit."}
-                                                        </small>
-                                                    </div>
-                                                </div>
-                                            </div>
+{/* Onglet Remboursement Manuel - INTÉRÊTS */}
+<div className="tab-pane fade" id="remboursement-int" role="tabpanel" aria-labelledby="remboursement-int-tab">
+    <div className="row">
+        <div className="col-md-8">
+            <div className="card border-0 bg-light">
+                <div className="card-body">
+                    <form>
+                        <table style={{ width: "100%" }}>
+                            <tbody>
+                                <tr>
+                                    <td style={{ padding: "12px", width: "35%" }}>
+                                        <div className="form-check form-switch">
+                                            <input
+                                                type="checkbox"
+                                                className="form-check-input"
+                                                id="RemboursementAnticipativeInteret"
+                                                name="RemboursementAnticipativeInteret"
+                                                style={{ width: "40px", height: "20px", cursor: "pointer" }}
+                                                checked={checkboxValues.RemboursementAnticipativeInteret}
+                                                onChange={handleCheckboxChange}
+                                            />
+                                            <label
+                                                className="form-check-label ms-2"
+                                                htmlFor="RemboursementAnticipativeInteret"
+                                                style={{ color: "steelblue", fontWeight: "500", fontSize: "14px", cursor: "pointer" }}
+                                            >
+                                                <i className="fas fa-forward me-2"></i>
+                                                Remboursement Anticipé ?
+                                            </label>
                                         </div>
-                                    </div>
-                                </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style={{ padding: "12px" }}>
+                                        <label style={{ color: "steelblue", fontWeight: "500" }}>
+                                            Montant à rembourser (Intérêts)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            className="form-control form-control-sm modern-input"
+                                            onChange={(e) => setMontantRemboursementInteret(e.target.value)}
+                                            placeholder="0,00"
+                                        />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style={{ padding: "12px" }}>
+                                        <button
+                                            onClick={handleRemboursementInteret}
+                                            className="btn w-100 py-2"
+                                            style={{ background: "linear-gradient(135deg, #20c997, #198764)", color: "white", borderRadius: "8px" }}
+                                        >
+                                            <i className="fas fa-database me-2"></i>
+                                            Rembourser les intérêts
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><div className="tab-pane fade" id="action" role="tabpanel">
+    <div className="row">
+        <div className="col-md-12">
+            <div className="card border-0 bg-light">
+                <div className="card-body">
+                    {/* Grille des 4 boutons */}
+                    <div className="row g-3">
+                        {/* Bouton Accorder */}
+                        <div className="col-md-3">
+                            {fetchDataToUpdate && fetchDataToUpdate.Accorde == 1 ? (
+                                <button disabled className="btn btn-secondary w-100" style={{ borderRadius: "10px", padding: "12px 0", opacity: 0.6 }}>
+                                    <i className="fas fa-thumbs-up me-2"></i> Déjà Accordé
+                                </button>
+                            ) : (
+                                <button onClick={AccordeCredit} className="btn w-100" style={{ background: "linear-gradient(135deg, #28a745, #1e7e34)", color: "white", borderRadius: "10px", padding: "12px 0" }}>
+                                    <i className="fas fa-thumbs-up me-2"></i> Accorder
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Bouton Débourser */}
+                        <div className="col-md-3">
+                            {fetchDataToUpdate && fetchDataToUpdate.Octroye == 1 ? (
+                                <button disabled className="btn btn-secondary w-100" style={{ borderRadius: "10px", padding: "12px 0", opacity: 0.6 }}>
+                                    <i className="fas fa-hand-holding-usd me-2"></i> Déjà Déboursé
+                                </button>
+                            ) : (
+                                <button onClick={DeccaissementCredit} className="btn w-100" style={{ background: "linear-gradient(135deg, #17a2b8, #138496)", color: "white", borderRadius: "10px", padding: "12px 0" }}>
+                                    <i className="fas fa-hand-holding-usd me-2"></i> Débourser
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Bouton Clôturer */}
+                        <div className="col-md-3">
+                            {fetchDataToUpdate && fetchDataToUpdate.Cloture == 1 ? (
+                                <button disabled className="btn btn-secondary w-100" style={{ borderRadius: "10px", padding: "12px 0", opacity: 0.6 }}>
+                                    <i className="fas fa-lock me-2"></i> Déjà Clôturé
+                                </button>
+                            ) : (
+                                <button onClick={ClotureCredit} className="btn w-100" style={{ background: "linear-gradient(135deg, #dc3545, #b02a37)", color: "white", borderRadius: "10px", padding: "12px 0" }}>
+                                    <i className="fas fa-unlock-alt me-2"></i> Clôturer
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Bouton Remboursement Anticipé (avec info-bulle) */}
+                        <div className="col-md-3">
+                            <button
+                                onClick={handleRemboursementAnticipe}
+                                className="btn w-100"
+                                style={{ background: "linear-gradient(135deg, #ffc107, #e0a800)", color: "#333", borderRadius: "10px", padding: "12px 0" }}
+                                title="Ce remboursement utilise le solde du membre pour solder le capital et les intérêts restants (toutes échéances)"
+                            >
+                                <i className="fas fa-forward me-2"></i> Remboursement Anticipé
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Message d'information contextuel */}
+                    <div className="mt-4 p-3" style={{ background: "#e6f2f9", borderRadius: "10px" }}>
+                        <small className="text-muted">
+                            <i className="fas fa-info-circle me-2"></i>
+                            {fetchDataToUpdate && fetchDataToUpdate.Accorde == 1 && fetchDataToUpdate.Octroye == 0 &&
+                                "Crédit accordé mais non encore déboursé. Cliquez sur 'Débourser' pour libérer les fonds."}
+                            {fetchDataToUpdate && fetchDataToUpdate.Accorde == 1 && fetchDataToUpdate.Octroye == 1 && fetchDataToUpdate.Cloture == 0 &&
+                                "Crédit en cours de remboursement. Les échéances sont actives."}
+                            {fetchDataToUpdate && fetchDataToUpdate.Cloture == 1 &&
+                                "Crédit clôturé. Aucune action supplémentaire n'est requise."}
+                            {(!fetchDataToUpdate || (fetchDataToUpdate.Accorde == 0 && fetchDataToUpdate.Octroye == 0 && fetchDataToUpdate.Cloture == 0)) &&
+                                "Crédit en attente de validation. Veuillez d'abord accorder le crédit."}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
                             </div>
                         </div>
                     </div>
