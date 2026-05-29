@@ -309,48 +309,114 @@ const MontageCredit = () => {
         return montantFormate.replace(/\s/g, ""); // "200 000" → "200000"
     };
 
-    const saveEcheancier = async (e) => {
-        const montantAccorde = nettoyerMontant(MontantAccorde); // ← Nettoie ici
-        e.preventDefault();
-        const res = await axios.post(
-            "/eco/page/montage-credit/save-echeancier",
-            {
-                NumDossier: numDossier_up,
-                desicion,
-                ModeCalcul,
-                DateOctroi,
-                dateEcheance,
-                DateTombeEcheance,
-                MontantAccorde: montantAccorde,
-                garantie,
-                hypotheque_name,
-                reechelonne: ReechelonnerCheckboxValues.Reechelonner,
-            },
-        );
+    // const saveEcheancier = async (e) => {
+    //      e.preventDefault();
+    //     const montantAccorde = nettoyerMontant(MontantAccorde); // ← Nettoie ici
+    //     const res = await axios.post(
+    //         "/eco/page/montage-credit/save-echeancier",
+    //         {
+    //             NumDossier: numDossier_up,
+    //             desicion,
+    //             ModeCalcul,
+    //             DateOctroi,
+    //             dateEcheance,
+    //             DateTombeEcheance,
+    //             MontantAccorde: montantAccorde,
+    //             garantie,
+    //             hypotheque_name,
+    //             reechelonne: ReechelonnerCheckboxValues.Reechelonner,
+    //         },
+    //     );
+
+    //     if (res.data.status == 1) {
+    //         Swal.fire({
+    //             title: "Echéancier",
+    //             text: res.data.msg,
+    //             icon: "success",
+    //             timer: 8000,
+    //             confirmButtonText: "Okay",
+    //         });
+    //         setError(res.data.validate_error);
+    //     } else if (res.data.status == 0) {
+    //         Swal.fire({
+    //             title: "Echéancier",
+    //             text: res.data.msg,
+    //             icon: "error",
+    //             timer: 8000,
+    //             confirmButtonText: "Okay",
+    //         });
+    //         setError(res.data.validate_error);
+    //     } else {
+    //         setError(res.data.validate_error);
+    //     }
+    // };
+const saveEcheancier = async (e) => {
+    e.preventDefault();
+
+    // Construction de l'objet de base
+    const payload = {
+        NumDossier: numDossier_up,
+        desicion,
+        ModeCalcul,
+        DateOctroi,
+        dateEcheance,
+        DateTombeEcheance,
+        garantie,
+        hypotheque_name,
+        reechelonne: ReechelonnerCheckboxValues.Reechelonner,
+    };
+
+    // Ajouter MontantAccorde uniquement si PAS en rééchelonnement
+    if (!ReechelonnerCheckboxValues.Reechelonner) {
+        // Vérifier que MontantAccorde existe et est valide
+        let montant_accorde = 0;
+        if (MontantAccorde && typeof MontantAccorde === 'string') {
+            montant_accorde = nettoyerMontant(MontantAccorde);
+        } else if (typeof MontantAccorde === 'number') {
+            montant_accorde = MontantAccorde;
+        }
+        
+        if (montant_accorde <= 0) {
+            Swal.fire({
+                title: "Attention",
+                text: "Veuillez saisir un montant valide",
+                icon: "warning",
+            });
+            return;
+        }
+        payload.MontantAccorde = montant_accorde;
+    }
+
+    try {
+        const res = await axios.post("/eco/page/montage-credit/save-echeancier", payload);
 
         if (res.data.status == 1) {
             Swal.fire({
-                title: "Echéancier",
+                title: "Échéancier",
                 text: res.data.msg,
                 icon: "success",
                 timer: 8000,
                 confirmButtonText: "Okay",
             });
-            setError(res.data.validate_error);
-        } else if (res.data.status == 0) {
+        } else {
             Swal.fire({
-                title: "Echéancier",
+                title: "Échéancier",
                 text: res.data.msg,
                 icon: "error",
                 timer: 8000,
                 confirmButtonText: "Okay",
             });
-            setError(res.data.validate_error);
-        } else {
-            setError(res.data.validate_error);
         }
-    };
-
+        setError(res.data.validate_error);
+    } catch (error) {
+        console.error(error);
+        Swal.fire({
+            title: "Erreur",
+            text: "Une erreur est survenue",
+            icon: "error",
+        });
+    }
+};
     const AccordeCredit = async (e) => {
         e.preventDefault();
         setisLoadingRemb(true)
@@ -780,7 +846,7 @@ const MontageCredit = () => {
 
             {/* Section Recherche et État */}
             <div className="row g-3 mb-4">
-                <div className="col-md-8">
+                <div className="col-md-7">
                     <div className="card border-0 shadow-sm rounded-3">
                         <div className="card-header bg-white border-0 pt-3">
                             <h6
@@ -847,7 +913,7 @@ const MontageCredit = () => {
                     </div>
                 </div>
 
-                <div className="col-md-4">
+                <div className="col-md-5">
                     <div className="card border-0 shadow-sm rounded-3">
                         <div className="card-header bg-white border-0 pt-3">
                             <h6
@@ -858,64 +924,84 @@ const MontageCredit = () => {
                                 du crédit
                             </h6>
                         </div>
-                        <div className="card-body">
-                            <div className="d-flex flex-wrap gap-3 justify-content-around">
-                                <div className="form-check form-switch">
-                                    <input
-                                        className="form-check-input modern-input"
-                                        type="checkbox"
-                                        id="accordedSwitch"
-                                        disabled
-                                        checked={
-                                            fetchDataToUpdate &&
-                                            fetchDataToUpdate.Accorde == 1
-                                        }
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        Accordé
-                                    </label>
-                                </div>
-                                <div className="form-check form-switch">
-                                    <input
-                                        className="form-check-input modern-input"
-                                        type="checkbox"
-                                        id="debourseSwitch"
-                                        disabled
-                                        checked={
-                                            fetchDataToUpdate &&
-                                            fetchDataToUpdate.Octroye == 1
-                                        }
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        Déboursé
-                                    </label>
-                                </div>
-                                <div className="form-check form-switch">
-                                    <input
-                                        className="form-check-input modern-input"
-                                        type="checkbox"
-                                        id="clotureSwitch"
-                                        disabled
-                                        checked={
-                                            fetchDataToUpdate &&
-                                            fetchDataToUpdate.Cloture == 1
-                                        }
-                                    />
-                                    <label
-                                        className="form-check-label"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        Clôturé
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
+                       <div className="card-body">
+    <div className="card-body">
+    <div className="d-flex flex-wrap gap-3 justify-content-around">
+        {/* Accordé */}
+        <div className="form-check form-switch">
+            <input
+                className={`form-check-input modern-input ${
+                    fetchDataToUpdate && fetchDataToUpdate.Accorde == 1
+                        ? "switch-success"
+                        : "switch-secondary"
+                }`}
+                type="checkbox"
+                id="accordedSwitch"
+                disabled
+                checked={fetchDataToUpdate && fetchDataToUpdate.Accorde == 1}
+            />
+            <label className="form-check-label" style={{ color: "steelblue" }}>
+                Accordé
+            </label>
+        </div>
+
+        {/* Déboursé */}
+        <div className="form-check form-switch">
+            <input
+                className={`form-check-input modern-input ${
+                    fetchDataToUpdate && fetchDataToUpdate.Octroye == 1
+                        ? "switch-info"
+                        : "switch-secondary"
+                }`}
+                type="checkbox"
+                id="debourseSwitch"
+                disabled
+                checked={fetchDataToUpdate && fetchDataToUpdate.Octroye == 1}
+            />
+            <label className="form-check-label" style={{ color: "steelblue" }}>
+                Déboursé
+            </label>
+        </div>
+          {/* Rééchelonné - NOUVEAU */}
+        <div className="form-check form-switch">
+            <input
+                className={`form-check-input modern-input ${
+                    fetchDataToUpdate && fetchDataToUpdate.Reechelonne == 1
+                        ? "switch-purple"
+                        : "switch-secondary"
+                }`}
+                type="checkbox"
+                id="reechelonneSwitch"
+                disabled
+                checked={fetchDataToUpdate && fetchDataToUpdate.Reechelonne == 1}
+            />
+            <label className="form-check-label" style={{ color: "steelblue" }}>
+                Rééchelonné
+            </label>
+        </div>
+
+        {/* Clôturé */}
+        <div className="form-check form-switch">
+            <input
+                className={`form-check-input modern-input ${
+                    fetchDataToUpdate && fetchDataToUpdate.Cloture == 1
+                        ? "switch-warning"
+                        : "switch-secondary"
+                }`}
+                type="checkbox"
+                id="clotureSwitch"
+                disabled
+                checked={fetchDataToUpdate && fetchDataToUpdate.Cloture == 1}
+            />
+            <label className="form-check-label" style={{ color: "steelblue" }}>
+                Clôturé
+            </label>
+        </div>
+
+      
+    </div>
+</div>
+</div>
                     </div>
                 </div>
             </div>
@@ -3040,7 +3126,7 @@ const MontageCredit = () => {
                                                                                         "20px",
                                                                                 }}
                                                                                 value={
-                                                                                    MontantAccorde
+                                                                                    MontantAccorde || ""
                                                                                 }
                                                                                 onChange={
                                                                                     handleMontantChange

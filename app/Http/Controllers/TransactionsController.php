@@ -5129,41 +5129,49 @@ class TransactionsController extends Controller
     }
 
     //OBTIENT LES OPERATION JOURNALIERES DU COMPTABLE
-    public function getDailyOperation(Request $request)
-    {
-        $date = $request->input('date');
-        if (!$date) {
-            $dataSystem = TauxEtDateSystem::latest()->first();
-            $date = $dataSystem->DateSystem;
-        }
-        // $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
-        //data = DB::select('SELECT * FROM transactions WHERE transactions.NomUtilisateur="' . Auth::user()->name . '" AND  transactions.DateTransaction="' . $date . '" GROUP BY transactions.NumTransaction LIMIT 20');
-        $data = Transactions::where("transactions.NomUtilisateur", "=", Auth::user()->name)
-            ->where("transactions.DateTransaction", "=", $date)
-            ->where("comptes.isBilanAccount", "!=", 1)
-            ->whereNotIn('comptes.NumCompte', [871, 851, 870, 850]) // Utiliser whereNotIn pour exclure plusieurs valeurs
-            ->join("comptes", "transactions.NumCompte", "=", "comptes.NumCompte")
-            ->selectRaw("transactions.NumTransaction,transactions.Creditfc,transactions.Debitfc,transactions.Creditusd,transactions.Debitusd,transactions.Libelle,transactions.Credit,transactions.Debit,transactions.TypeTransaction,transactions.NumCompte,transactions.CodeMonnaie")
-            ->groupBy(
-
-                "transactions.NumTransaction",
-                "transactions.NumCompte",
-                "transactions.Credit",
-                "transactions.Debit",
-                "transactions.Creditfc",
-                "transactions.Debitfc",
-                "transactions.Creditusd",
-                "transactions.Debitusd",
-                "transactions.Libelle",
-                "transactions.TypeTransaction",
-                "transactions.CodeMonnaie"
-            )
-
-            ->orderBy("transactions.NumTransaction", "desc")
-            ->limit("20", "desc")
-            ->get();
-        return response()->json(["status" => 1, "data" => $data]);
+   public function getDailyOperation(Request $request)
+{
+    $date = $request->input('date');
+    if (!$date) {
+        $dataSystem = TauxEtDateSystem::latest()->first();
+        $date = $dataSystem->DateSystem;
     }
+
+    $data = Transactions::where("transactions.NomUtilisateur", "=", Auth::user()->name)
+        ->where("transactions.DateTransaction", "=", $date)
+        ->join("comptes", "transactions.NumCompte", "=", "comptes.NumCompte")
+        ->selectRaw("
+            transactions.NumTransaction,
+            transactions.Creditfc,
+            transactions.Debitfc,
+            transactions.Creditusd,
+            transactions.Debitusd,
+            transactions.Libelle,
+            transactions.Credit,
+            transactions.Debit,
+            transactions.TypeTransaction,
+            transactions.NumCompte,
+            transactions.CodeMonnaie
+        ")
+        ->groupBy(
+            "transactions.NumTransaction",
+            "transactions.NumCompte",
+            "transactions.Credit",
+            "transactions.Debit",
+            "transactions.Creditfc",
+            "transactions.Debitfc",
+            "transactions.Creditusd",
+            "transactions.Debitusd",
+            "transactions.Libelle",
+            "transactions.TypeTransaction",
+            "transactions.CodeMonnaie"
+        )
+        ->orderBy("transactions.RefTransaction", "desc") // décroissant (le plus récent en premier)
+        ->limit(100)   // 🔧 correction : on ne met que l'entier
+        ->get();
+
+    return response()->json(["status" => 1, "data" => $data]);
+}
 
 
     //PERMET DE TROUVER UNE OPERATION RECHERCHEE MOYENNANT SA REFERENCE

@@ -73,7 +73,7 @@ setPrelevementDateFin(formatLocalDate(lastDay));   // 2026-04-25
             setClosingProgress(20);
 
             const res = await axios.get("/eco/pages/cloture/journee", {
-                timeout: 30000,
+                timeout: 180000,
                 headers: {
                     "X-Requested-With": "XMLHttpRequest",
                 },

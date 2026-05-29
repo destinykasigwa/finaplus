@@ -42,6 +42,8 @@ class GestionInteretsPostEcheance
     {
         return Portefeuille::where('Cloture', 0)
             ->where('Octroye', 1)
+            ->where('Radie', 0)
+            ->where("Reechelonne", "=", 0)
             ->where('DateEcheance', '<', $this->dateSystem)
             ->whereRaw('MontantAccorde - (
                 SELECT COALESCE(SUM(CapitalPaye), 0)

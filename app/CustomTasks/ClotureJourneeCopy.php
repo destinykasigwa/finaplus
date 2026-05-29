@@ -93,6 +93,7 @@ class ClotureJourneeCopy
      */
     public function execute()
     {
+   
         DB::beginTransaction();
         try {
             $this->validateRequiredData();
@@ -120,6 +121,8 @@ class ClotureJourneeCopy
                     return;
                 }
             }
+
+        
 
             // $lock = DB::table('cloture_lock')->first();
             // if ($lock && $lock->last_cloture_date == $this->dateSystem) {
@@ -484,8 +487,10 @@ class ClotureJourneeCopy
         $baseQuery = Portefeuille::where("portefeuilles.Cloture", "=", 0)
             ->lockForUpdate()
             ->where("portefeuilles.Octroye", "=", 1)
+            ->where("portefeuilles.Radie", "=", 0)
             ->join('echeanciers', 'echeanciers.NumDossier', '=', 'portefeuilles.NumDossier')
             ->where("echeanciers.statutPayement", "=", 0)
+            ->where("echeanciers.Reechelonne", "=", 0)
             ->where("echeanciers.posted", "=", 0)
             ->where("echeanciers.CapAmmorti", ">", 0);
 
@@ -607,6 +612,8 @@ class ClotureJourneeCopy
         $today = $this->dateSystem;
         $query = Echeancier::join('portefeuilles', DB::raw('TRIM(echeanciers.NumDossier)'), '=', DB::raw('TRIM(portefeuilles.NumDossier)'))
             ->where('portefeuilles.Cloture', '=', 0)
+            ->where("portefeuilles.Radie", "=", 0)
+            ->where("echeanciers.Reechelonne", "=", 0)
             ->lockForUpdate()
             ->whereDate('echeanciers.DateTranch', '<=', $today)
             ->where(function ($q) use ($today) {
@@ -2418,8 +2425,21 @@ class ClotureJourneeCopy
             $montantProvision = $SoldeCreditRestant * 100 / 100;
         }
 
-        $getCompteProvisionCustumer = JourRetard::where("NumcompteEpargne", $NumcompteCredit)->first();
+        $getCompteProvisionCustumer = JourRetard::where("NumDossier", $NumDossier)->first();
+        if (!$getCompteProvisionCustumer) {
+            return null; // Aucune provision à annuler, on sort sans erreur
+        }
         $compteProvisionCustomer = $getCompteProvisionCustumer->CompteProvision;
+        // Conversion au début de annulProvision
+        if ($codeMonnaie == "USD") {
+            $codeMonnaie = 1;
+        } else if ($codeMonnaie == "CDF") {
+            $codeMonnaie = 2;
+        } else {
+            $codeMonnaie = $codeMonnaie;
+        }
+
+        // Dans les Transactions::create, remplacer 'CodeMonnaie' => $codeMonnaie par 'CodeMonnaie' => $codeMonnaieNum
         //ANNULE L'ANCIENNE PROVISION 38
         // COMPTE DU CLIENT 38
         $NumTransaction = $this->generateTransactionNumber();
@@ -2509,7 +2529,7 @@ class ClotureJourneeCopy
             return null;
         }
         if ($getCompteJourRetard) {
-        
+
             $compteProvisionCustomer = $getCompteJourRetard->CompteProvision;
             $compteCreanceLitigieuseCustomer = $getCompteJourRetard->NumCompteCreanceLitigieuse;
             $NumCompteCreditCustomer = $getCompteJourRetard->NumcompteCredit;
@@ -2561,8 +2581,6 @@ class ClotureJourneeCopy
                         ->groupBy("NumCompte")
                         ->first();
                     if ($soldeMembreProv->soldeMembreCDF or $soldeMembreProv->soldeMembreUSD > 0) {
-
-
                         //DEBITE LE COMPTE  38 DU CLIENT
                         $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
                         Transactions::create([
@@ -2608,73 +2626,72 @@ class ClotureJourneeCopy
                     }
                     $NumTransaction = $this->generateTransactionNumber();
 
-
                     //DEBITE LE COMPTE DU CLIENT DE CE MONTANT
-                    Transactions::create([
-                        "NumTransaction" => $NumTransaction,
-                        "DateTransaction" => $dateSystem,
-                        "DateSaisie" => $dateSystem,
-                        "TypeTransaction" => "D",
-                        "CodeMonnaie" => $devise,
-                        "CodeAgence" => $CodeAgence,
-                        "NumDossier" => $NumDossier,
-                        "NumCompte" => $compteEpargneCustomer,
-                        "NumComptecp" => $provisionMatirute == 5 ? $NumCompteCreditCustomer : $compteCreanceLitigieuseCustomer,
-                        "Debit" => $capitalPaye,
-                        "Operant" =>  $Gestionnaire,
-                        "Debitfc" => $devise == 2 ? $capitalPaye : $capitalPaye * ($tauxDuJour),
-                        "Debitusd" =>  $devise == 1 ? $capitalPaye : $capitalPaye / ($tauxDuJour),
-                        "NomUtilisateur" => "AUTO",
-                        "Libelle" => "Remboursement partiel capital de " . $capitalPaye . ($devise == 1 ? "USD " : "CDF ") . $trancheNumber . " e tranche tombée le " . $dateTranche . " sur votre crédit de " . $MontantAccorde . " dossier " . $NumDossier,
-                        "RefEcheance" => $RefEcheance
-                    ]);
+                    // Transactions::create([
+                    //     "NumTransaction" => $NumTransaction,
+                    //     "DateTransaction" => $dateSystem,
+                    //     "DateSaisie" => $dateSystem,
+                    //     "TypeTransaction" => "D",
+                    //     "CodeMonnaie" => $devise,
+                    //     "CodeAgence" => $CodeAgence,
+                    //     "NumDossier" => $NumDossier,
+                    //     "NumCompte" => $compteEpargneCustomer,
+                    //     "NumComptecp" => $provisionMatirute == 5 ? $NumCompteCreditCustomer : $compteCreanceLitigieuseCustomer,
+                    //     "Debit" => $capitalPaye,
+                    //     "Operant" =>  $Gestionnaire,
+                    //     "Debitfc" => $devise == 2 ? $capitalPaye : $capitalPaye * ($tauxDuJour),
+                    //     "Debitusd" =>  $devise == 1 ? $capitalPaye : $capitalPaye / ($tauxDuJour),
+                    //     "NomUtilisateur" => "AUTO",
+                    //     "Libelle" => "Remboursement partiel capital de " . $capitalPaye . ($devise == 1 ? "USD " : "CDF ") . $trancheNumber . " e tranche tombée le " . $dateTranche . " sur votre crédit de " . $MontantAccorde . " dossier " . $NumDossier,
+                    //     "RefEcheance" => $RefEcheance
+                    // ]);
 
 
-                    //ICI ON VERIFIE SI LE COMPTE DU CLIENT 39 A UN SOLDE SI OUI  DONC IL ETAIT DEJA EN RETARD on CREDITE 39
-                    $solde39 = $this->checkSoldeMembreACTIF($devise, $compteCreanceLitigieuseCustomer, $NumDossier);
-                    if ($solde39 > 0) {
-                        Transactions::create([
-                            "NumTransaction" => $NumTransaction,
-                            "DateTransaction" => $dateSystem,
-                            "DateSaisie" => $dateSystem,
-                            "TypeTransaction" => "C",
-                            "CodeMonnaie" => $devise,
-                            "CodeAgence" => $CodeAgence,
-                            "NumDossier" => $NumDossier,
-                            "NumCompte" => $compteCreanceLitigieuseCustomer,
-                            "NumComptecp" => $compteEpargneCustomer,
-                            "Credit" => $capitalPaye,
-                            "Operant" =>  $Gestionnaire,
-                            "Creditfc" => $devise == 2 ? $capitalPaye : $capitalPaye * ($tauxDuJour),
-                            "Creditusd" =>  $devise == 1 ? $capitalPaye : $capitalPaye / ($tauxDuJour),
-                            "NomUtilisateur" => "AUTO",
-                            "Libelle" => "Remboursement partiel de " . $capitalPaye . ($devise == 1 ? "USD " : "CDF ") . $trancheNumber . " e tranche tombée le " . $dateTranche . " sur votre crédit de " . $MontantAccorde . " dossier " . $NumDossier,
-                            "RefEcheance" => $RefEcheance
+                    // //ICI ON VERIFIE SI LE COMPTE DU CLIENT 39 A UN SOLDE SI OUI  DONC IL ETAIT DEJA EN RETARD on CREDITE 39
+                    // $solde39 = $this->checkSoldeMembreACTIF($devise, $compteCreanceLitigieuseCustomer, $NumDossier);
+                    // if ($solde39 > 0) {
+                    //     Transactions::create([
+                    //         "NumTransaction" => $NumTransaction,
+                    //         "DateTransaction" => $dateSystem,
+                    //         "DateSaisie" => $dateSystem,
+                    //         "TypeTransaction" => "C",
+                    //         "CodeMonnaie" => $devise,
+                    //         "CodeAgence" => $CodeAgence,
+                    //         "NumDossier" => $NumDossier,
+                    //         "NumCompte" => $compteCreanceLitigieuseCustomer,
+                    //         "NumComptecp" => $compteEpargneCustomer,
+                    //         "Credit" => $capitalPaye,
+                    //         "Operant" =>  $Gestionnaire,
+                    //         "Creditfc" => $devise == 2 ? $capitalPaye : $capitalPaye * ($tauxDuJour),
+                    //         "Creditusd" =>  $devise == 1 ? $capitalPaye : $capitalPaye / ($tauxDuJour),
+                    //         "NomUtilisateur" => "AUTO",
+                    //         "Libelle" => "Remboursement partiel de " . $capitalPaye . ($devise == 1 ? "USD " : "CDF ") . $trancheNumber . " e tranche tombée le " . $dateTranche . " sur votre crédit de " . $MontantAccorde . " dossier " . $NumDossier,
+                    //         "RefEcheance" => $RefEcheance
 
-                        ]);
+                    //     ]);
 
-                        //SINON CREDITE 32 DU CLIENT MONTANT PARTIEL REMBOURSEMENT
-                    } else {
+                    //     //SINON CREDITE 32 DU CLIENT MONTANT PARTIEL REMBOURSEMENT
+                    // } else {
 
-                        Transactions::create([
-                            "NumTransaction" => $NumTransaction,
-                            "DateTransaction" => $dateSystem,
-                            "DateSaisie" => $dateSystem,
-                            "TypeTransaction" => "C",
-                            "CodeMonnaie" => $devise,
-                            "CodeAgence" => $CodeAgence,
-                            "NumDossier" => $NumDossier,
-                            "NumCompte" => $NumCompteCreditCustomer,
-                            "NumComptecp" => $compteEpargneCustomer,
-                            "Credit" => $capitalPaye,
-                            "Operant" =>  $Gestionnaire,
-                            "Creditfc" => $devise == 2 ? $capitalPaye : $capitalPaye * ($tauxDuJour),
-                            "Creditusd" =>  $devise == 1 ? $capitalPaye : $capitalPaye / ($tauxDuJour),
-                            "NomUtilisateur" => "AUTO",
-                            "Libelle" => "Remboursement partiel de " . $capitalPaye . ($devise == 1 ? "USD " : "CDF ") . $trancheNumber . " e tranche tombée le " . $dateTranche . " sur votre crédit de " . $MontantAccorde . " dossier " . $NumDossier,
-                            "RefEcheance" => $RefEcheance
-                        ]);
-                    }
+                    //     Transactions::create([
+                    //         "NumTransaction" => $NumTransaction,
+                    //         "DateTransaction" => $dateSystem,
+                    //         "DateSaisie" => $dateSystem,
+                    //         "TypeTransaction" => "C",
+                    //         "CodeMonnaie" => $devise,
+                    //         "CodeAgence" => $CodeAgence,
+                    //         "NumDossier" => $NumDossier,
+                    //         "NumCompte" => $NumCompteCreditCustomer,
+                    //         "NumComptecp" => $compteEpargneCustomer,
+                    //         "Credit" => $capitalPaye,
+                    //         "Operant" =>  $Gestionnaire,
+                    //         "Creditfc" => $devise == 2 ? $capitalPaye : $capitalPaye * ($tauxDuJour),
+                    //         "Creditusd" =>  $devise == 1 ? $capitalPaye : $capitalPaye / ($tauxDuJour),
+                    //         "NomUtilisateur" => "AUTO",
+                    //         "Libelle" => "Remboursement partiel de " . $capitalPaye . ($devise == 1 ? "USD " : "CDF ") . $trancheNumber . " e tranche tombée le " . $dateTranche . " sur votre crédit de " . $MontantAccorde . " dossier " . $NumDossier,
+                    //         "RefEcheance" => $RefEcheance
+                    //     ]);
+                    // }
                 } else if ($typeRemboursement == "complet") {
 
                     //SI LE MONTANT A REMBOURSER COUVRE LE MONTANT EN RETARD
@@ -3252,91 +3269,91 @@ class ClotureJourneeCopy
 
 
     protected function insertInTransactionRepriseProvisionSansDebitClient(
-    $capitalPaye,
-    $codeMonnaie,
-    $dateSystem,
-    $CodeAgence,
-    $tauxDuJour,
-    $typeRemboursement,
-    $compteEpargneCustomer,
-    $trancheNumber,
-    $dateTranche,
-    $MontantAccorde,
-    $NumDossier,
-    $Gestionnaire,
-    $RefEcheance
-) {
-    $montant = round($capitalPaye, 2);
-    if ($montant <= 0) return null;
+        $capitalPaye,
+        $codeMonnaie,
+        $dateSystem,
+        $CodeAgence,
+        $tauxDuJour,
+        $typeRemboursement,
+        $compteEpargneCustomer,
+        $trancheNumber,
+        $dateTranche,
+        $MontantAccorde,
+        $NumDossier,
+        $Gestionnaire,
+        $RefEcheance
+    ) {
+        $montant = round($capitalPaye, 2);
+        if ($montant <= 0) return null;
 
-    $devise = ($codeMonnaie == "USD") ? 1 : 2;
+        $devise = ($codeMonnaie == "USD") ? 1 : 2;
 
-    $getCompteJourRetard = JourRetard::where("NumDossier", $NumDossier)->where("provision1", "!=", 0)->first();
-    if (!$getCompteJourRetard) return null;
+        $getCompteJourRetard = JourRetard::where("NumDossier", $NumDossier)->where("provision1", "!=", 0)->first();
+        if (!$getCompteJourRetard) return null;
 
-    $compteProvisionCustomer = $getCompteJourRetard->CompteProvision;
-     
-    // Déterminer le pourcentage de provision actif
-    $provisionMatirute = 0;
-    if ($getCompteJourRetard->provision1 == 1) {
-        if ($getCompteJourRetard->provision2 == 1) {
-            if ($getCompteJourRetard->provision3 == 1) {
-                if ($getCompteJourRetard->provision4 == 1) {
-                    if ($getCompteJourRetard->provision5 == 1) $provisionMatirute = 100;
-                    else $provisionMatirute = 75;
-                } else $provisionMatirute = 25;
-            } else $provisionMatirute = 10;
-        } else $provisionMatirute = 5;
+        $compteProvisionCustomer = $getCompteJourRetard->CompteProvision;
+
+        // Déterminer le pourcentage de provision actif
+        $provisionMatirute = 0;
+        if ($getCompteJourRetard->provision1 == 1) {
+            if ($getCompteJourRetard->provision2 == 1) {
+                if ($getCompteJourRetard->provision3 == 1) {
+                    if ($getCompteJourRetard->provision4 == 1) {
+                        if ($getCompteJourRetard->provision5 == 1) $provisionMatirute = 100;
+                        else $provisionMatirute = 75;
+                    } else $provisionMatirute = 25;
+                } else $provisionMatirute = 10;
+            } else $provisionMatirute = 5;
+        }
+        if ($provisionMatirute == 0) return null;
+
+        $montantReprise = $montant * $provisionMatirute / 100;
+
+        // Écritures de reprise de provision (uniquement)
+        $numTransaction = $this->generateTransactionNumber();
+
+        // Débit du compte de provision (38)
+        Transactions::create([
+            "NumTransaction" => $numTransaction,
+            "DateTransaction" => $dateSystem,
+            "DateSaisie" => $dateSystem,
+            "TypeTransaction" => "D",
+            "CodeMonnaie" => $devise,
+            "CodeAgence" => $CodeAgence,
+            "NumDossier" => $NumDossier,
+            "NumCompte" => $compteProvisionCustomer,
+            "NumComptecp" => $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie),
+            "Debit" => $montantReprise,
+            "Operant" => $Gestionnaire,
+            "Debitfc" => $devise == 2 ? $montantReprise : $montantReprise * $tauxDuJour,
+            "Debitusd" => $devise == 1 ? $montantReprise : $montantReprise / $tauxDuJour,
+            "NomUtilisateur" => "AUTO",
+            "Libelle" => "Reprise sur provision (manuel) dossier " . $NumDossier,
+            "RefEcheance" => $RefEcheance
+        ]);
+
+        // Crédit du compte de reprise (79)
+        Transactions::create([
+            "NumTransaction" => $numTransaction,
+            "DateTransaction" => $dateSystem,
+            "DateSaisie" => $dateSystem,
+            "TypeTransaction" => "C",
+            "CodeMonnaie" => $devise,
+            "CodeAgence" => $CodeAgence,
+            "NumDossier" => $NumDossier,
+            "NumCompte" => $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie),
+            "NumComptecp" => $compteProvisionCustomer,
+            "Credit" => $montantReprise,
+            "Operant" => $Gestionnaire,
+            "Creditfc" => $devise == 2 ? $montantReprise : $montantReprise * $tauxDuJour,
+            "Creditusd" => $devise == 1 ? $montantReprise : $montantReprise / $tauxDuJour,
+            "NomUtilisateur" => "AUTO",
+            "Libelle" => "Reprise sur provision (manuel) dossier " . $NumDossier,
+            "RefEcheance" => $RefEcheance
+        ]);
+
+        return $numTransaction;
     }
-    if ($provisionMatirute == 0) return null;
-
-    $montantReprise = $montant * $provisionMatirute / 100;
-
-    // Écritures de reprise de provision (uniquement)
-    $numTransaction = $this->generateTransactionNumber();
-
-    // Débit du compte de provision (38)
-    Transactions::create([
-        "NumTransaction" => $numTransaction,
-        "DateTransaction" => $dateSystem,
-        "DateSaisie" => $dateSystem,
-        "TypeTransaction" => "D",
-        "CodeMonnaie" => $devise,
-        "CodeAgence" => $CodeAgence,
-        "NumDossier" => $NumDossier,
-        "NumCompte" => $compteProvisionCustomer,
-        "NumComptecp" => $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie),
-        "Debit" => $montantReprise,
-        "Operant" => $Gestionnaire,
-        "Debitfc" => $devise == 2 ? $montantReprise : $montantReprise * $tauxDuJour,
-        "Debitusd" => $devise == 1 ? $montantReprise : $montantReprise / $tauxDuJour,
-        "NomUtilisateur" => "AUTO",
-        "Libelle" => "Reprise sur provision (manuel) dossier " . $NumDossier,
-        "RefEcheance" => $RefEcheance
-    ]);
-
-    // Crédit du compte de reprise (79)
-    Transactions::create([
-        "NumTransaction" => $numTransaction,
-        "DateTransaction" => $dateSystem,
-        "DateSaisie" => $dateSystem,
-        "TypeTransaction" => "C",
-        "CodeMonnaie" => $devise,
-        "CodeAgence" => $CodeAgence,
-        "NumDossier" => $NumDossier,
-        "NumCompte" => $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie),
-        "NumComptecp" => $compteProvisionCustomer,
-        "Credit" => $montantReprise,
-        "Operant" => $Gestionnaire,
-        "Creditfc" => $devise == 2 ? $montantReprise : $montantReprise * $tauxDuJour,
-        "Creditusd" => $devise == 1 ? $montantReprise : $montantReprise / $tauxDuJour,
-        "NomUtilisateur" => "AUTO",
-        "Libelle" => "Reprise sur provision (manuel) dossier " . $NumDossier,
-        "RefEcheance" => $RefEcheance
-    ]);
-
-    return $numTransaction;
-}
 
 
     /**
@@ -3446,7 +3463,7 @@ class ClotureJourneeCopy
             );
             // Reprise de provision (sans débit client)
             if ($totalRembourse > 0) {
-              
+
                 $this->insertInTransactionRepriseProvisionSansDebitClient(
                     $totalRembourse,
                     $portefeuille->CodeMonnaie,
@@ -4272,101 +4289,101 @@ class ClotureJourneeCopy
 
 
 
-/**
- * Annule toutes les provisions et reclassement 39 -> 32 pour un dossier clôturé
- * @param string $numDossier
- * @return void
- */
-public function annulerProvisionEtReclasser($numDossier)
-{
-    $jourRetard = JourRetard::where('NumDossier', $numDossier)->first();
-    if (!$jourRetard) return;
+    /**
+     * Annule toutes les provisions et reclassement 39 -> 32 pour un dossier clôturé
+     * @param string $numDossier
+     * @return void
+     */
+    public function annulerProvisionEtReclasser($numDossier)
+    {
+        $jourRetard = JourRetard::where('NumDossier', $numDossier)->first();
+        if (!$jourRetard) return;
 
-    // Capital restant = total capital - total remboursé
-    $totalCapital = Echeancier::where('NumDossier', $numDossier)->sum('CapAmmorti');
-    $totalRembourse = Remboursementcredit::where('NumDossie', $numDossier)->sum('CapitalPaye');
-    $capitalRestant = $totalCapital - $totalRembourse;
+        // Capital restant = total capital - total remboursé
+        $totalCapital = Echeancier::where('NumDossier', $numDossier)->sum('CapAmmorti');
+        $totalRembourse = Remboursementcredit::where('NumDossie', $numDossier)->sum('CapitalPaye');
+        $capitalRestant = $totalCapital - $totalRembourse;
 
-    $aProvision = $jourRetard->provision1 || $jourRetard->provision2 || $jourRetard->provision3 || $jourRetard->provision4 || $jourRetard->provision5;
+        $aProvision = $jourRetard->provision1 || $jourRetard->provision2 || $jourRetard->provision3 || $jourRetard->provision4 || $jourRetard->provision5;
 
-    if ($capitalRestant > 0 && $aProvision) {
-        $this->insertInTransactionRepriseProvision(
-            $capitalRestant,
-            Portefeuille::where('NumDossier', $numDossier)->value('CodeMonnaie'),
-            $this->dateSystem,
-            $jourRetard->CodeAgence,
-            $this->tauxDuJour,
-            'complet',
-            $jourRetard->NumcompteEpargne,
-            0,
-            $this->dateSystem,
-            Portefeuille::where('NumDossier', $numDossier)->value('MontantAccorde'),
-            $numDossier,
-            'SYSTEM',
-            null
-        );
-    }
-
-    // Reclassement du compte 39 vers 32 (s'il y a un solde)
-    $compte39 = $jourRetard->NumCompteCreanceLitigieuse;
-    $compte32 = $jourRetard->NumcompteCredit;
-    if ($compte39 && $compte32) {
-        $devise = (Portefeuille::where('NumDossier', $numDossier)->value('CodeMonnaie') == 'USD') ? 1 : 2;
-        $solde39 = $this->checkSoldeMembreACTIF($devise, $compte39, $numDossier);
-        if ($solde39 > 0) {
-            $numTransaction = $this->generateTransactionNumber();
-            // Débit du compte 32 (crédit client)
-            Transactions::create([
-                "NumTransaction" => $numTransaction,
-                "DateTransaction" => $this->dateSystem,
-                "DateSaisie" => $this->dateSystem,
-                "TypeTransaction" => "D",
-                "CodeMonnaie" => $devise,
-                "CodeAgence" => $jourRetard->CodeAgence,
-                "NumDossier" => $numDossier,
-                "NumCompte" => $compte32,
-                "NumComptecp" => $compte39,
-                "Debit" => $solde39,
-                "Operant" => "SYSTEM",
-                "Debitfc" => $devise == 2 ? $solde39 : $solde39 * $this->tauxDuJour,
-                "Debitusd" => $devise == 1 ? $solde39 : $solde39 / $this->tauxDuJour,
-                "NomUtilisateur" => "SYSTEM",
-                "Libelle" => "Reclassement capital restant (clôture crédit) - dossier " . $numDossier,
-                "refCompteMembre" => $jourRetard->NumAdherent,
-                "RefEcheance" => null,
-            ]);
-            // Crédit du compte 39
-            Transactions::create([
-                "NumTransaction" => $numTransaction,
-                "DateTransaction" => $this->dateSystem,
-                "DateSaisie" => $this->dateSystem,
-                "TypeTransaction" => "C",
-                "CodeMonnaie" => $devise,
-                "CodeAgence" => $jourRetard->CodeAgence,
-                "NumDossier" => $numDossier,
-                "NumCompte" => $compte39,
-                "NumComptecp" => $compte32,
-                "Credit" => $solde39,
-                "Operant" => "SYSTEM",
-                "Creditfc" => $devise == 2 ? $solde39 : $solde39 * $this->tauxDuJour,
-                "Creditusd" => $devise == 1 ? $solde39 : $solde39 / $this->tauxDuJour,
-                "NomUtilisateur" => "SYSTEM",
-                "Libelle" => "Reclassement capital restant (clôture crédit) - dossier " . $numDossier,
-                "refCompteMembre" => $jourRetard->NumAdherent,
-                "RefEcheance" => null,
-            ]);
+        if ($capitalRestant > 0 && $aProvision) {
+            $this->insertInTransactionRepriseProvision(
+                $capitalRestant,
+                Portefeuille::where('NumDossier', $numDossier)->value('CodeMonnaie'),
+                $this->dateSystem,
+                $jourRetard->CodeAgence,
+                $this->tauxDuJour,
+                'complet',
+                $jourRetard->NumcompteEpargne,
+                0,
+                $this->dateSystem,
+                Portefeuille::where('NumDossier', $numDossier)->value('MontantAccorde'),
+                $numDossier,
+                'SYSTEM',
+                null
+            );
         }
-    }
 
-    // Nettoyage des flags de provision et jours de retard
-    $jourRetard->update([
-        'provision1' => 0,
-        'provision2' => 0,
-        'provision3' => 0,
-        'provision4' => 0,
-        'provision5' => 0,
-        'NbrJrRetard' => 0,
-        'DateRetard' => $this->dateSystem,
-    ]);
-}
+        // Reclassement du compte 39 vers 32 (s'il y a un solde)
+        $compte39 = $jourRetard->NumCompteCreanceLitigieuse;
+        $compte32 = $jourRetard->NumcompteCredit;
+        if ($compte39 && $compte32) {
+            $devise = (Portefeuille::where('NumDossier', $numDossier)->value('CodeMonnaie') == 'USD') ? 1 : 2;
+            $solde39 = $this->checkSoldeMembreACTIF($devise, $compte39, $numDossier);
+            if ($solde39 > 0) {
+                $numTransaction = $this->generateTransactionNumber();
+                // Débit du compte 32 (crédit client)
+                Transactions::create([
+                    "NumTransaction" => $numTransaction,
+                    "DateTransaction" => $this->dateSystem,
+                    "DateSaisie" => $this->dateSystem,
+                    "TypeTransaction" => "D",
+                    "CodeMonnaie" => $devise,
+                    "CodeAgence" => $jourRetard->CodeAgence,
+                    "NumDossier" => $numDossier,
+                    "NumCompte" => $compte32,
+                    "NumComptecp" => $compte39,
+                    "Debit" => $solde39,
+                    "Operant" => "SYSTEM",
+                    "Debitfc" => $devise == 2 ? $solde39 : $solde39 * $this->tauxDuJour,
+                    "Debitusd" => $devise == 1 ? $solde39 : $solde39 / $this->tauxDuJour,
+                    "NomUtilisateur" => "SYSTEM",
+                    "Libelle" => "Reclassement capital restant (clôture crédit) - dossier " . $numDossier,
+                    "refCompteMembre" => $jourRetard->NumAdherent,
+                    "RefEcheance" => null,
+                ]);
+                // Crédit du compte 39
+                Transactions::create([
+                    "NumTransaction" => $numTransaction,
+                    "DateTransaction" => $this->dateSystem,
+                    "DateSaisie" => $this->dateSystem,
+                    "TypeTransaction" => "C",
+                    "CodeMonnaie" => $devise,
+                    "CodeAgence" => $jourRetard->CodeAgence,
+                    "NumDossier" => $numDossier,
+                    "NumCompte" => $compte39,
+                    "NumComptecp" => $compte32,
+                    "Credit" => $solde39,
+                    "Operant" => "SYSTEM",
+                    "Creditfc" => $devise == 2 ? $solde39 : $solde39 * $this->tauxDuJour,
+                    "Creditusd" => $devise == 1 ? $solde39 : $solde39 / $this->tauxDuJour,
+                    "NomUtilisateur" => "SYSTEM",
+                    "Libelle" => "Reclassement capital restant (clôture crédit) - dossier " . $numDossier,
+                    "refCompteMembre" => $jourRetard->NumAdherent,
+                    "RefEcheance" => null,
+                ]);
+            }
+        }
+
+        // Nettoyage des flags de provision et jours de retard
+        $jourRetard->update([
+            'provision1' => 0,
+            'provision2' => 0,
+            'provision3' => 0,
+            'provision4' => 0,
+            'provision5' => 0,
+            'NbrJrRetard' => 0,
+            'DateRetard' => $this->dateSystem,
+        ]);
+    }
 }

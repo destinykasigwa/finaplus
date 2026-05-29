@@ -920,6 +920,7 @@ class ReportsController extends Controller
                     // -------------------------------------------------------------
                     $dataSommeInter = Echeancier::select(DB::raw("SUM(echeanciers.Interet) as sommeInteret"))
                         ->where("echeanciers.NumDossier", "=", $request->searched_num_dossier)
+                         ->where("echeanciers.Reechelonne", 0)
                         ->join('portefeuilles', 'portefeuilles.NumDossier', '=', 'echeanciers.NumDossier')
                         ->when($codeAgence, function ($q) use ($codeAgence) {
                             return $q->where('portefeuilles.CodeAgence', $codeAgence);
@@ -946,6 +947,7 @@ class ReportsController extends Controller
                     $capitalRembourse = DB::table('remboursementcredits')
                         ->join('echeanciers', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
                         ->where('echeanciers.NumDossier', $request->searched_num_dossier)
+                         ->where("echeanciers.Reechelonne", 0)
                         ->whereDate('remboursementcredits.DateTranche', '<=', $dateReference)
                         ->sum('remboursementcredits.CapitalPaye');
                     $capitalRembours = $capitalRembourse;
@@ -957,6 +959,7 @@ class ReportsController extends Controller
                     $InteretRembourse = DB::table('remboursementcredits')
                         ->join('echeanciers', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
                         ->where('echeanciers.NumDossier', $request->searched_num_dossier)
+                         ->where("echeanciers.Reechelonne", 0)
                         ->whereDate('remboursementcredits.DateTranche', '<=', $dateReference)
                         ->sum('remboursementcredits.InteretPaye');
 
@@ -1278,7 +1281,7 @@ class ReportsController extends Controller
                     ->orderBy('portefeuilles.DateOctroi', 'desc');
 
                 $dataBalanceAgee = $balanceQuery->get();
-                $dataBalanceAgee = $balanceQuery->get();
+                
                 $dataBalanceAgee = $dataBalanceAgee->map(function ($item) use ($selectedDate) {
                     if ($item->NbrJrRetard == 0) {
                         // Vérifier s'il existe une échéance non payée à la date du jour

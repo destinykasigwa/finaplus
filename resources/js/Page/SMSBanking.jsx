@@ -28,6 +28,8 @@ export default class SMSbanking extends React.Component {
             currentPage: 1,
             itemsPerPage: 10,
             totalPages: 1,
+            // Modal state
+            showAddModal: false,
         };
         this.actualiser = this.actualiser.bind(this);
         this.handleChange = this.handleChange.bind(this);
@@ -45,6 +47,10 @@ export default class SMSbanking extends React.Component {
         this.goToNextPage = this.goToNextPage.bind(this);
         this.handlePageChange = this.handlePageChange.bind(this);
         this.renderPagination = this.renderPagination.bind(this);
+        // Modal methods
+        this.openAddModal = this.openAddModal.bind(this);
+        this.closeAddModal = this.closeAddModal.bind(this);
+        this.resetForm = this.resetForm.bind(this);
     }
 
     componentDidMount() {
@@ -54,16 +60,34 @@ export default class SMSbanking extends React.Component {
         this.getData();
     }
 
-    //to refresh
     actualiser() {
         location.reload();
     }
 
-    //GET DATA FROM INPUT
     handleChange(event) {
         this.setState({
             [event.target.name]: event.target.value,
         });
+    }
+
+    resetForm() {
+        this.setState({
+            NumCompte: "",
+            NomCompte: "",
+            Civilite: "",
+            Email: "",
+            Telephone: "+243",
+            loading2: false,
+        });
+    }
+
+    openAddModal() {
+        this.resetForm();
+        this.setState({ showAddModal: true });
+    }
+
+    closeAddModal() {
+        this.setState({ showAddModal: false });
     }
 
     // Pagination methods
@@ -198,16 +222,13 @@ export default class SMSbanking extends React.Component {
                     icon: "success",
                     button: "OK!",
                 });
-                this.getData(); // Refresh data after adding
+                this.getData();
+                this.closeAddModal(); // Fermer le modal après ajout réussi
             }
             this.setState({
                 loading2: false,
-                NumCompte: "",
-                NomCompte: "",
-                Civilite: "",
-                Email: "",
-                Telephone: "+243",
             });
+            this.resetForm();
         } else if (res.data.success == 0) {
             Swal.fire({
                 title: "Erreur",
@@ -272,7 +293,7 @@ export default class SMSbanking extends React.Component {
                     icon: "success",
                     button: "OK!",
                 });
-                this.getData(); // Refresh data after deletion
+                this.getData();
             }
         }
     };
@@ -286,7 +307,7 @@ export default class SMSbanking extends React.Component {
                 icon: "success",
                 button: "OK!",
             });
-            this.getData(); // Refresh data after activation
+            this.getData();
         } else if (res.data.success == 0) {
             Swal.fire({
                 title: "Erreur",
@@ -306,7 +327,7 @@ export default class SMSbanking extends React.Component {
                 icon: "success",
                 button: "OK!",
             });
-            this.getData(); // Refresh data after activation
+            this.getData();
         } else if (res.data.success == 0) {
             Swal.fire({
                 title: "Erreur",
@@ -348,7 +369,6 @@ export default class SMSbanking extends React.Component {
             });
     };
 
-    // Get current page data
     getCurrentPageData() {
         const {
             fetchData,
@@ -392,12 +412,6 @@ export default class SMSbanking extends React.Component {
                     "0 20px 35px -12px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.02)",
                 border: "1px solid rgba(203, 213, 225, 0.4)",
                 transition: "box-shadow 0.2s ease",
-            },
-            table: {
-                width: "100%",
-                borderCollapse: "separate",
-                borderSpacing: "0 16px",
-                margin: "-8px 0",
             },
             label: {
                 color: "#1e293b",
@@ -447,7 +461,30 @@ export default class SMSbanking extends React.Component {
                 width: "auto",
                 minWidth: "160px",
             },
+            modalOverlay: {
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: "rgba(0,0,0,0.5)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1050,
+            },
+            modalContent: {
+                background: "white",
+                borderRadius: "28px",
+                maxWidth: "650px",
+                width: "90%",
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+                animation: "fadeInUp 0.3s ease",
+            },
         };
+
         return (
             <React.Fragment>
                 {this.state.isloading ? (
@@ -524,398 +561,96 @@ export default class SMSbanking extends React.Component {
                             <div className="col-lg-12">
                                 <div className="card border-0 shadow-sm rounded-3">
                                     <div className="card-body p-4">
-                                        {/* Formulaire d'ajout/modification */}
-                                        <div className="row g-4 mb-5">
-                                            <div className="col-md-8 col-lg-7">
+                                        {/* Barre de recherche + bouton Ajouter */}
+                                        <div className="row mb-4 align-items-center">
+                                            <div className="col-md-8">
                                                 <div
                                                     className="card border-0"
-                                                    style={modernStyles.card}
+                                                    style={{
+                                                        background: "#e6f2f9",
+                                                        borderRadius: "12px",
+                                                    }}
                                                 >
-                                                    <div className="card-body p-4 p-xl-5">
-                                                        <h6
-                                                            className="fw-bold mb-4 d-flex align-items-center"
-                                                            style={{
-                                                                color: "#0f3b5c",
-                                                                fontSize:
-                                                                    "1.1rem",
-                                                            }}
-                                                        >
-                                                            <i
-                                                                className="fas fa-user-circle me-2"
-                                                                style={{
-                                                                    fontSize:
-                                                                        "1.3rem",
-                                                                    color: "#10b981",
+                                                    <div className="card-body py-2 px-3">
+                                                        <div className="d-flex align-items-center gap-2">
+                                                            <i className="fas fa-search text-secondary"></i>
+                                                            <input
+                                                                type="text"
+                                                                className="form-control form-control-sm border-0 bg-transparent"
+                                                                placeholder="Rechercher par numéro de compte..."
+                                                                name="searchedItem"
+                                                                value={
+                                                                    this.state
+                                                                        .searchedItem
+                                                                }
+                                                                onChange={
+                                                                    this
+                                                                        .handleChange
+                                                                }
+                                                                onKeyPress={(
+                                                                    e,
+                                                                ) => {
+                                                                    if (
+                                                                        e.key ===
+                                                                        "Enter"
+                                                                    ) {
+                                                                        this.handleSeach(
+                                                                            this
+                                                                                .state
+                                                                                .searchedItem,
+                                                                        );
+                                                                    }
                                                                 }}
-                                                            ></i>
-                                                            Informations du
-                                                            client
-                                                        </h6>
-
-                                                        <form>
-                                                            <table
-                                                                style={
-                                                                    modernStyles.table
+                                                            />
+                                                            <button
+                                                                className="btn btn-sm"
+                                                                style={{
+                                                                    background:
+                                                                        "#20c997",
+                                                                    color: "white",
+                                                                    borderRadius:
+                                                                        "8px",
+                                                                }}
+                                                                onClick={() =>
+                                                                    this.handleSeach(
+                                                                        this
+                                                                            .state
+                                                                            .searchedItem,
+                                                                    )
                                                                 }
                                                             >
-                                                                <tbody>
-                                                                    <tr>
-                                                                        <td
-                                                                            style={{
-                                                                                width: "33%",
-                                                                                verticalAlign:
-                                                                                    "top",
-                                                                                paddingRight:
-                                                                                    "16px",
-                                                                            }}
-                                                                        >
-                                                                            <label
-                                                                                style={
-                                                                                    modernStyles.label
-                                                                                }
-                                                                            >
-                                                                                <i
-                                                                                    className="fas fa-hashtag"
-                                                                                    style={{
-                                                                                        fontSize:
-                                                                                            "0.8rem",
-                                                                                        opacity: 0.7,
-                                                                                    }}
-                                                                                ></i>
-                                                                                Numéro
-                                                                                Compte
-                                                                            </label>
-                                                                        </td>
-                                                                        <td
-                                                                            style={{
-                                                                                verticalAlign:
-                                                                                    "top",
-                                                                            }}
-                                                                        >
-                                                                            <input
-                                                                                name="NumCompte"
-                                                                                type="text"
-                                                                                className="modern-input"
-                                                                                style={
-                                                                                    modernStyles.input
-                                                                                }
-                                                                                value={
-                                                                                    this
-                                                                                        .state
-                                                                                        .NumCompte
-                                                                                }
-                                                                                disabled={
-                                                                                    this
-                                                                                        .state
-                                                                                        .disabled
-                                                                                }
-                                                                                onChange={
-                                                                                    this
-                                                                                        .handleChange
-                                                                                }
-                                                                                placeholder="Ex: 12345678"
-                                                                            />
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td
-                                                                            style={{
-                                                                                width: "33%",
-                                                                                verticalAlign:
-                                                                                    "top",
-                                                                                paddingRight:
-                                                                                    "16px",
-                                                                            }}
-                                                                        >
-                                                                            <label
-                                                                                style={
-                                                                                    modernStyles.label
-                                                                                }
-                                                                            >
-                                                                                <i
-                                                                                    className="fas fa-user-tag"
-                                                                                    style={{
-                                                                                        fontSize:
-                                                                                            "0.8rem",
-                                                                                        opacity: 0.7,
-                                                                                    }}
-                                                                                ></i>
-                                                                                Civilité
-                                                                            </label>
-                                                                        </td>
-                                                                        <td
-                                                                            style={{
-                                                                                verticalAlign:
-                                                                                    "top",
-                                                                            }}
-                                                                        >
-                                                                            <select
-                                                                                name="Civilite"
-                                                                                className="modern-select"
-                                                                                style={
-                                                                                    modernStyles.select
-                                                                                }
-                                                                                value={
-                                                                                    this
-                                                                                        .state
-                                                                                        .Civilite
-                                                                                }
-                                                                                disabled={
-                                                                                    this
-                                                                                        .state
-                                                                                        .disabled
-                                                                                }
-                                                                                onChange={
-                                                                                    this
-                                                                                        .handleChange
-                                                                                }
-                                                                            >
-                                                                                <option value="">
-                                                                                    Sélectionnez
-                                                                                </option>
-                                                                                <option value="Monsieur">
-                                                                                    Monsieur
-                                                                                </option>
-                                                                                <option value="Madame">
-                                                                                    Madame
-                                                                                </option>
-                                                                                <option value="Mademoiselle">
-                                                                                    Mademoiselle
-                                                                                </option>
-                                                                            </select>
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td
-                                                                            style={{
-                                                                                width: "33%",
-                                                                                verticalAlign:
-                                                                                    "top",
-                                                                                paddingRight:
-                                                                                    "16px",
-                                                                            }}
-                                                                        >
-                                                                            <label
-                                                                                style={
-                                                                                    modernStyles.label
-                                                                                }
-                                                                            >
-                                                                                <i
-                                                                                    className="fas fa-envelope"
-                                                                                    style={{
-                                                                                        fontSize:
-                                                                                            "0.8rem",
-                                                                                        opacity: 0.7,
-                                                                                    }}
-                                                                                ></i>
-                                                                                Email
-                                                                            </label>
-                                                                        </td>
-                                                                        <td
-                                                                            style={{
-                                                                                verticalAlign:
-                                                                                    "top",
-                                                                            }}
-                                                                        >
-                                                                            <input
-                                                                                name="Email"
-                                                                                type="email"
-                                                                                className="modern-input"
-                                                                                style={
-                                                                                    modernStyles.input
-                                                                                }
-                                                                                value={
-                                                                                    this
-                                                                                        .state
-                                                                                        .Email
-                                                                                }
-                                                                                disabled={
-                                                                                    this
-                                                                                        .state
-                                                                                        .disabled
-                                                                                }
-                                                                                onChange={
-                                                                                    this
-                                                                                        .handleChange
-                                                                                }
-                                                                                placeholder="client@exemple.com"
-                                                                            />
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td
-                                                                            style={{
-                                                                                width: "33%",
-                                                                                verticalAlign:
-                                                                                    "top",
-                                                                                paddingRight:
-                                                                                    "16px",
-                                                                            }}
-                                                                        >
-                                                                            <label
-                                                                                style={
-                                                                                    modernStyles.label
-                                                                                }
-                                                                            >
-                                                                                <i
-                                                                                    className="fas fa-phone-alt"
-                                                                                    style={{
-                                                                                        fontSize:
-                                                                                            "0.8rem",
-                                                                                        opacity: 0.7,
-                                                                                    }}
-                                                                                ></i>
-                                                                                Téléphone
-                                                                            </label>
-                                                                        </td>
-                                                                        <td
-                                                                            style={{
-                                                                                verticalAlign:
-                                                                                    "top",
-                                                                            }}
-                                                                        >
-                                                                            <input
-                                                                                name="Telephone"
-                                                                                type="tel"
-                                                                                className="modern-input"
-                                                                                style={
-                                                                                    modernStyles.input
-                                                                                }
-                                                                                value={
-                                                                                    this
-                                                                                        .state
-                                                                                        .Telephone
-                                                                                }
-                                                                                disabled={
-                                                                                    this
-                                                                                        .state
-                                                                                        .disabled
-                                                                                }
-                                                                                onChange={
-                                                                                    this
-                                                                                        .handleChange
-                                                                                }
-                                                                                placeholder="+243 xxxxxxxx"
-                                                                            />
-                                                                        </td>
-                                                                    </tr>
-                                                                    <tr>
-                                                                        <td
-                                                                            colSpan="2"
-                                                                            style={{
-                                                                                paddingTop:
-                                                                                    "8px",
-                                                                                textAlign:
-                                                                                    "center",
-                                                                            }}
-                                                                        >
-                                                                            <button
-                                                                                onClick={
-                                                                                    this
-                                                                                        .saveBtn
-                                                                                }
-                                                                                type="button"
-                                                                                className="btn gradient-btn"
-                                                                                style={
-                                                                                    modernStyles.button
-                                                                                }
-                                                                                onMouseEnter={(
-                                                                                    e,
-                                                                                ) => {
-                                                                                    e.currentTarget.style.transform =
-                                                                                        "translateY(-2px)";
-                                                                                    e.currentTarget.style.boxShadow =
-                                                                                        "0 10px 20px -5px rgba(16,185,129,0.4)";
-                                                                                }}
-                                                                                onMouseLeave={(
-                                                                                    e,
-                                                                                ) => {
-                                                                                    e.currentTarget.style.transform =
-                                                                                        "translateY(0)";
-                                                                                    e.currentTarget.style.boxShadow =
-                                                                                        "0 4px 8px rgba(16,185,129,0.2)";
-                                                                                }}
-                                                                            >
-                                                                                <i
-                                                                                    className={`${this.state.loading2 ? "spinner-border spinner-border-sm me-2" : "fas fa-check-circle me-2"}`}
-                                                                                ></i>
-                                                                                Valider
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        </form>
+                                                                <i
+                                                                    className={`${this.state.loading3 ? "spinner-border spinner-border-sm" : "fas fa-search"}`}
+                                                                ></i>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-
-                                        {/* Barre de recherche */}
-                                        <div className="col-md-4">
-                                            <div
-                                                className="card border-0"
-                                                style={{
-                                                    background: "#e6f2f9",
-                                                    borderRadius: "12px",
-                                                }}
-                                            >
-                                                <div className="card-body">
-                                                    <h6
-                                                        className="fw-bold mb-3"
-                                                        style={{
-                                                            color: "steelblue",
-                                                        }}
-                                                    >
-                                                        <i className="fas fa-search me-2"></i>
-                                                        Rechercher un client
-                                                    </h6>
-                                                    <div className="input-group">
-                                                        <input
-                                                            type="text"
-                                                            className="modern-select"
-                                                            style={{
-                                                                borderRadius:
-                                                                    "8px 0 0 8px",
-                                                            }}
-                                                            ref={this.textInput}
-                                                            placeholder="Numéro compte..."
-                                                            name="searchedItem"
-                                                            value={
-                                                                this.state
-                                                                    .searchedItem
-                                                            }
-                                                            onChange={
-                                                                this
-                                                                    .handleChange
-                                                            }
-                                                        />
-                                                        <button
-                                                            className="btn"
-                                                            style={{
-                                                                background:
-                                                                    "#20c997",
-                                                                color: "white",
-                                                                borderRadius:
-                                                                    "0 8px 8px 0",
-                                                            }}
-                                                            onClick={() =>
-                                                                this.handleSeach(
-                                                                    this.state
-                                                                        .searchedItem,
-                                                                )
-                                                            }
-                                                        >
-                                                            <i
-                                                                className={`${this.state.loading3 ? "spinner-border spinner-border-sm" : "fas fa-search"}`}
-                                                            ></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                            <div className="col-md-4 text-md-end mt-3 mt-md-0">
+                                                <button
+                                                    onClick={this.openAddModal}
+                                                    className="btn"
+                                                    style={{
+                                                        background:
+                                                            "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                                        color: "white",
+                                                        borderRadius: "40px",
+                                                        padding:
+                                                            "10px 24px",
+                                                        fontWeight: "600",
+                                                        border: "none",
+                                                        boxShadow:
+                                                            "0 4px 10px rgba(16,185,129,0.3)",
+                                                    }}
+                                                >
+                                                    <i className="fas fa-plus-circle me-2"></i>
+                                                    Ajouter nouveau
+                                                </button>
                                             </div>
                                         </div>
 
-                                        {/* Liste des clients */}
+                                        {/* Liste des clients - tableau remonté */}
                                         <div className="card border-0 shadow-sm rounded-3">
                                             <div className="card-header bg-white border-0 pt-3">
                                                 <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -948,10 +683,9 @@ export default class SMSbanking extends React.Component {
                                             </div>
                                             <div className="card-body p-0">
                                                 <div className="table-responsive">
-                                                    {this.state.searchData ==
-                                                    false
+                                                    {!this.state.searchData
                                                         ? this.state.fetchData
-                                                              .length != 0 && (
+                                                              .length !== 0 && (
                                                               <table
                                                                   className="table table-hover mb-0"
                                                                   style={{
@@ -992,7 +726,7 @@ export default class SMSbanking extends React.Component {
                                                                           <th>
                                                                               Notifications
                                                                           </th>
-                                                                      </tr>
+                                                                              </tr>
                                                                   </thead>
                                                                   <tbody>
                                                                       {currentData.map(
@@ -1178,18 +912,6 @@ export default class SMSbanking extends React.Component {
                                                                                       </div>
                                                                                   </td>
                                                                                   <td>
-                                                                                      {/* <div className="d-flex gap-2">
-                                                                                    <div className="form-check form-switch">
-                                                                                        <input className="form-check-input" type="checkbox" id={`SMS-${res.id}`}
-                                                                                            disabled checked={res.Telephone != null && res.ActivatedSMS != 0} />
-                                                                                        <label className="form-check-label" htmlFor={`SMS-${res.id}`} style={{ fontSize: "12px" }}>SMS</label>
-                                                                                    </div>
-                                                                                    <div className="form-check form-switch">
-                                                                                        <input className="form-check-input" type="checkbox" id={`Email-${res.id}`}
-                                                                                            disabled checked={res.Email != null && res.ActivatedEmail != 0} />
-                                                                                        <label className="form-check-label" htmlFor={`Email-${res.id}`} style={{ fontSize: "12px" }}>Email</label>
-                                                                                    </div>
-                                                                                </div> */}
                                                                                       <UpdateSMSBankingUser
                                                                                           modalId={
                                                                                               res.id
@@ -1468,18 +1190,6 @@ export default class SMSbanking extends React.Component {
                                                                               </div>
                                                                           </td>
                                                                           <td>
-                                                                              {/* <div className="d-flex gap-2">
-                                                                                <div className="form-check form-switch">
-                                                                                    <input className="form-check-input" type="checkbox" id="SMS-search"
-                                                                                        disabled checked={this.state.fetchSeachedData.Telephone && this.state.fetchSeachedData.ActivatedSMS == 1} />
-                                                                                    <label className="form-check-label" htmlFor="SMS-search" style={{ fontSize: "12px" }}>SMS</label>
-                                                                                </div>
-                                                                                <div className="form-check form-switch">
-                                                                                    <input className="form-check-input" type="checkbox" id="Email-search"
-                                                                                        disabled checked={this.state.fetchSeachedData.Email && this.state.fetchSeachedData.ActivatedEmail == 1} />
-                                                                                    <label className="form-check-label" htmlFor="Email-search" style={{ fontSize: "12px" }}>Email</label>
-                                                                                </div>
-                                                                            </div> */}
                                                                               <UpdateSMSBankingUser
                                                                                   modalId={
                                                                                       this
@@ -1582,6 +1292,138 @@ export default class SMSbanking extends React.Component {
                         </div>
                     </div>
                 )}
+
+                {/* Modal d'ajout */}
+                {this.state.showAddModal && (
+                    <div style={modernStyles.modalOverlay} onClick={this.closeAddModal}>
+                        <div
+                            style={modernStyles.modalContent}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="p-4 p-xl-5">
+                                <div className="d-flex justify-content-between align-items-center mb-4">
+                                    <h5 className="fw-bold m-0" style={{ color: "#0f3b5c" }}>
+                                        <i className="fas fa-user-plus me-2 text-success"></i>
+                                        Nouveau client SMS Banking
+                                    </h5>
+                                    <button
+                                        type="button"
+                                        className="btn-close"
+                                        onClick={this.closeAddModal}
+                                        aria-label="Fermer"
+                                    ></button>
+                                </div>
+
+                                <form>
+                                    <div className="mb-4">
+                                        <label style={modernStyles.label}>
+                                            <i className="fas fa-hashtag"></i> Numéro de compte *
+                                        </label>
+                                        <input
+                                            name="NumCompte"
+                                            type="text"
+                                            className="form-control"
+                                            style={modernStyles.input}
+                                            value={this.state.NumCompte}
+                                            onChange={this.handleChange}
+                                            placeholder="Ex: 12345678"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="mb-4">
+                                        <label style={modernStyles.label}>
+                                            <i className="fas fa-user-tag"></i> Civilité *
+                                        </label>
+                                        <select
+                                            name="Civilite"
+                                            className="form-select"
+                                            style={modernStyles.select}
+                                            value={this.state.Civilite}
+                                            onChange={this.handleChange}
+                                            required
+                                        >
+                                            <option value="">Sélectionnez</option>
+                                            <option value="Monsieur">Monsieur</option>
+                                            <option value="Madame">Madame</option>
+                                            <option value="Mademoiselle">Mademoiselle</option>
+                                        </select>
+                                    </div>
+                                    <div className="mb-4">
+                                        <label style={modernStyles.label}>
+                                            <i className="fas fa-envelope"></i> Email
+                                        </label>
+                                        <input
+                                            name="Email"
+                                            type="email"
+                                            className="form-control"
+                                            style={modernStyles.input}
+                                            value={this.state.Email}
+                                            onChange={this.handleChange}
+                                            placeholder="client@exemple.com"
+                                        />
+                                    </div>
+                                    <div className="mb-4">
+                                        <label style={modernStyles.label}>
+                                            <i className="fas fa-phone-alt"></i> Téléphone *
+                                        </label>
+                                        <input
+                                            name="Telephone"
+                                            type="tel"
+                                            className="form-control"
+                                            style={modernStyles.input}
+                                            value={this.state.Telephone}
+                                            onChange={this.handleChange}
+                                            placeholder="+243 xxxxxxxx"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="d-flex justify-content-end gap-3 mt-4">
+                                        <button
+                                            type="button"
+                                            className="btn btn-light"
+                                            onClick={this.closeAddModal}
+                                            style={{ borderRadius: "40px", padding: "10px 24px" }}
+                                        >
+                                            Annuler
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={this.saveBtn}
+                                            className="btn gradient-btn"
+                                            style={modernStyles.button}
+                                            disabled={this.state.loading2}
+                                        >
+                                            {this.state.loading2 ? (
+                                                <>
+                                                    <span className="spinner-border spinner-border-sm me-2"></span>
+                                                    Envoi...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="fas fa-check-circle me-2"></i>
+                                                    Valider
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <style>{`
+                    @keyframes fadeInUp {
+                        from {
+                            opacity: 0;
+                            transform: translateY(20px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                `}</style>
             </React.Fragment>
         );
     }

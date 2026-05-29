@@ -663,3 +663,37 @@ body {
 .btn-primary-modern:active {
   transform: translateY(1px);
 }
+
+
+/* Switch personnalisé - couleur selon état */
+.form-switch .form-check-input.switch-success:checked {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+
+.form-switch .form-check-input.switch-warning:checked {
+    background-color: #ffc107 !important;
+    border-color: #ffc107 !important;
+}
+
+.form-switch .form-check-input.switch-info:checked {
+    background-color: #17a2b8 !important;
+    border-color: #17a2b8 !important;
+}
+
+.form-switch .form-check-input.switch-secondary:checked {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+/* Optionnel : changer l'opacité du switch désactivé */
+.form-switch .form-check-input:disabled {
+    opacity: 0.9;
+    cursor: not-allowed;
+}
+
+/* Switch violet pour Rééchelonné */
+.form-switch .form-check-input.switch-purple:checked {
+    background-color: #6f42c1 !important;
+    border-color: #6f42c1 !important;
+}

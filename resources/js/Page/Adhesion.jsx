@@ -758,7 +758,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                             >
                                                                 <input
                                                                     type="text"
-                                                                    className={`form-control ${error.intitule_compte ? "is-invalid" : ""}`}
+                                                                    className={`form-control ${error.intitule_compte ? "is-invalid" : ""} modern-input`}
                                                                     style={{
                                                                         borderRadius:
                                                                             "8px",

@@ -736,7 +736,7 @@ const RetraitEspece = () => {
             <div className="row g-3">
                 {/* Informations du retrait */}
                 <div className="col-md-4">
-                    <div className="card border-0 shadow-sm rounded-3">
+                    <div className="card border-0 shadow-sm rounded-3 h-100">
                         <div className="card-header bg-white border-0 pt-3">
                             <h6
                                 className="fw-bold"
@@ -973,7 +973,7 @@ const RetraitEspece = () => {
 
                 {/* Billetage */}
                 <div className="col-md-5">
-                    <div className="card border-0 shadow-sm rounded-3">
+                    <div className="card border-0 shadow-sm rounded-3  h-100">
                         <div className="card-header bg-white border-0 pt-3">
                             <h6
                                 className="fw-bold"
@@ -1277,8 +1277,8 @@ const RetraitEspece = () => {
                 </div>
 
                 {/* Actions et historique */}
-                <div className="col-md-3">
-                    <div className="card border-0 shadow-sm rounded-3 mb-3">
+                <div className="col-md-3 d-flex flex-column">
+                    <div className="card border-0 shadow-sm rounded-3 mb-3 flex-grow-1 d-flex flex-column">
                         <div className="card-body">
                             <button
                                 className="btn w-100 py-2 fw-bold"

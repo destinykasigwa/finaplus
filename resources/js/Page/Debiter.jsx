@@ -4,1431 +4,441 @@ import Swal from "sweetalert2";
 import { Bars } from "react-loader-spinner";
 
 const Debiter = () => {
-    const [loading, setloading] = useState(false);
-    const [compte_a_debiter, setcompte_a_debiter] = useState();
-    const [compte_a_crediter, setcompte_a_crediter] = useState();
-    const [Libelle, setLibelle] = useState();
-    const [Montant, setMontant] = useState();
-    const [FetchDataDebit, setFetchDataDebit] = useState();
-    const [FetchDataCredit, setFetchDataCredit] = useState();
-    const [FetchSoldeDebit, setFetchSoldeDebit] = useState();
-    const [FetchSoldeCredit, setFetchSoldeCredit] = useState();
-    const [fetchDayOperation, setfetchDayOperation] = useState();
-    const [searchRefOperation, setsearchRefOperation] = useState();
-    const [fetchSearchedOperation, setfetchSearchedOperation] = useState();
-    const [chargement, setchargement] = useState(false);
-    const [searched_account_by_name, setsearched_account_by_name] = useState();
-    const [fetchDataByName, setFetchDataByName] = useState();
+    const [loading, setLoading] = useState(false);
+    const [chargement, setChargement] = useState(false);
+    
+    // Comptes
+    const [compteADebiter, setCompteADebiter] = useState("");
+    const [compteACrediter, setCompteACrediter] = useState("");
+    const [fetchDataDebit, setFetchDataDebit] = useState(null);
+    const [fetchDataCredit, setFetchDataCredit] = useState(null);
+    const [soldeDebit, setSoldeDebit] = useState(null);
+    const [soldeCredit, setSoldeCredit] = useState(null);
+    
+    // Opération
+    const [montant, setMontant] = useState("");
+    const [libelle, setLibelle] = useState("");
+    
+    // Recherche
+    const [searchByName, setSearchByName] = useState("");
+    const [fetchDataByName, setFetchDataByName] = useState([]);
+    const [searchRefOperation, setSearchRefOperation] = useState("");
+    const [fetchSearchedOperation, setFetchSearchedOperation] = useState(null);
+    const [fetchDayOperation, setFetchDayOperation] = useState([]);
+    
+    // État pour le champ actif (débit ou crédit)
+    const [activeField, setActiveField] = useState(null); // 'debit' ou 'credit'
+    
+    // Pagination pour l'historique
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+    
+    // Copie
     const [copiedText, setCopiedText] = useState("");
-    const [selectedRowIndex, setSelectedRowIndex] = useState(null);
-    const [selectedRowType, setSelectedRowType] = useState(null); // 'debit' ou 'credit'
-    const [checkboxValues, setCheckboxValues] = useState({
-        RemboursementAnticipative: false,
-    });
-    const handleCheckboxChange = (event) => {
-        const { name, checked } = event.target;
-        setCheckboxValues((prevValues) => ({
-            ...prevValues,
-            [name]: checked,
-        }));
-    };
-    const saveOperation = async (e) => {
-        e.preventDefault();
-        setloading(true);
-        setchargement(true);
-
-        let confirmation;
-        console.log(checkboxValues.isVirement);
-
-        if (checkboxValues.isVirement === true) {
-            confirmation = await Swal.fire({
-                title: "Êtes-vous sûr?",
-                text: "Il semble que l'opération que vous voulez enregistrer est une operation de virement voulez vous continuer ?",
-                icon: "question",
-                showCancelButton: true,
-                confirmButtonText: "Oui",
-                cancelButtonText: "Non",
-            });
-        } else {
-            confirmation = await Swal.fire({
-                title: "Êtes-vous sûr?",
-                text: "Vous êtes sur le point de valider cette opération voulez vous continuer ?",
-                icon: "question",
-                showCancelButton: true,
-                confirmButtonText: "Oui",
-                cancelButtonText: "Non",
-            });
-        }
-
-        // Si l'utilisateur confirme
-        if (confirmation.isConfirmed) {
-            // 🔥 ========== Vérifie que les deux comptes ont la même devise ==========
-            if (
-                FetchDataDebit &&
-                FetchDataCredit &&
-                FetchDataDebit.CodeMonnaie !== FetchDataCredit.CodeMonnaie
-            ) {
-                setchargement(false);
-                setloading(false);
-                Swal.fire({
-                    title: "Erreur de devise",
-                    text: `Les deux comptes doivent avoir la même devise. 
-                       Compte à débiter: ${FetchDataDebit.NumCompte} | 
-                       Compte à créditer: ${FetchDataCredit.NumCompte}`,
-                    icon: "error",
-                    confirmButtonText: "Okay",
-                });
-                return; // Arrête l'exécution
-            }
-            // ========== FIN DU CONTRÔLE ==========
-
-            try {
-                const res = await axios.post(
-                    "/eco/page/transaction/debiter/save",
-                    {
-                        compte_a_debiter: compte_a_debiter,
-                        compte_a_crediter: compte_a_crediter,
-                        Montant,
-                        devise: FetchDataDebit.CodeMonnaie,
-                        Libelle: Libelle,
-                        isVirement: checkboxValues.isVirement,
-                    },
-                );
-
-                if (res.data.status === 1) {
-                    setchargement(false);
-                    setloading(false);
-                    Swal.fire({
-                        title: "Succès",
-                        text: res.data.msg,
-                        icon: "success",
-                        timer: 8000,
-                        confirmButtonText: "Okay",
-                    });
-                    setMontant("");
-                    setLibelle("");
-                    getDayOperation();
-                } else if (res.data.status === 0) {
-                    setchargement(false);
-                    setloading(false);
-                    Swal.fire({
-                        title: "Erreur",
-                        text: res.data.msg,
-                        icon: "error",
-                        timer: 8000,
-                        confirmButtonText: "Okay",
-                    });
-                } else {
-                    setError(res.data.validate_error);
-                }
-            } catch (error) {
-                setchargement(false);
-                setloading(false);
-                Swal.fire({
-                    title: "Erreur",
-                    text: "Une erreur s'est produite lors de l'enregistrement de l'opération.",
-                    icon: "error",
-                    confirmButtonText: "Okay",
-                });
-            }
-        } else {
-            setloading(false);
-            setchargement(false);
-        }
-    };
-
-    const getSeachedDataDebit = async (e) => {
-        e.preventDefault();
-        const res = await axios.post("/eco/page/debiter/get-data", {
-            compte_a_debiter,
-        });
-        if (res.data.status == 1) {
-            setFetchDataDebit(res.data.dataDebit);
-            setFetchSoldeDebit(res.data.soldeCompteDebit);
-            console.log(FetchSolde);
-        } else {
-            Swal.fire({
-                title: "Erreur",
-                text: res.data.msg,
-                icon: "error",
-                timer: 8000,
-                confirmButtonText: "Okay",
-            });
-        }
-    };
-    const getSeachedDataCredit = async (e) => {
-        e.preventDefault();
-        const res = await axios.post("/eco/page/crediter/get-data", {
-            compte_a_crediter,
-        });
-        if (res.data.status == 1) {
-            setFetchDataCredit(res.data.dataCredit);
-            setFetchSoldeCredit(res.data.soldeCompteCredit);
-        } else {
-            Swal.fire({
-                title: "Erreur",
-                text: res.data.msg,
-                icon: "error",
-                timer: 8000,
-                confirmButtonText: "Okay",
-            });
-        }
-    };
-
-    function numberWithSpaces(x) {
-        if (x === null || x === undefined) {
-            return "0.00"; // ou une autre valeur par défaut appropriée
-        }
-        var parts = x.toString().split(".");
+    
+    // --------------------------------------------------------------
+    // Utilitaires
+    // --------------------------------------------------------------
+    const numberWithSpaces = (x) => {
+        if (x === null || x === undefined) return "0,00";
+        let parts = x.toFixed(2).split(".");
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        return parts.join(".");
-    }
-
+        return parts.join(",");
+    };
+    
+    const parseFormattedNumber = (formatted) => {
+        // Convertit "1 234 567,89" en 1234567.89
+        return parseFloat(formatted.replace(/ /g, "").replace(",", "."));
+    };
+    
+    const formatMontantSaisie = (value) => {
+        // Nettoyer : enlever tout sauf chiffres et virgule
+        let clean = value.replace(/[^\d,]/g, "");
+        if (clean === "") return "";
+        let parts = clean.split(",");
+        if (parts.length > 2) parts = [parts[0], parts.slice(1).join("")];
+        let entier = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        if (parts.length === 2) return entier + "," + parts[1].slice(0, 2);
+        return entier;
+    };
+    
+    const handleMontantChange = (e) => {
+        const raw = e.target.value;
+        const formatted = formatMontantSaisie(raw);
+        setMontant(formatted);
+    };
+    
+    // Suggérer un libellé basé sur les comptes
+    useEffect(() => {
+        if (fetchDataDebit && fetchDataCredit && !libelle) {
+            const sugg = `Virement de ${fetchDataDebit.NumCompte} vers ${fetchDataCredit.NumCompte}`;
+            setLibelle(sugg);
+        }
+    }, [fetchDataDebit, fetchDataCredit]);
+    
+    // --------------------------------------------------------------
+    // API Calls
+    // --------------------------------------------------------------
+    const getSeachedDataDebit = async (e) => {
+        if (e) e.preventDefault();
+        if (!compteADebiter) return;
+        const res = await axios.post("/eco/page/debiter/get-data", { compte_a_debiter: compteADebiter });
+        if (res.data.status === 1) {
+            setFetchDataDebit(res.data.dataDebit);
+            setSoldeDebit(res.data.soldeCompteDebit);
+        } else {
+            Swal.fire({ title: "Erreur", text: res.data.msg, icon: "error" });
+        }
+    };
+    
+    const getSeachedDataCredit = async (e) => {
+        if (e) e.preventDefault();
+        if (!compteACrediter) return;
+        const res = await axios.post("/eco/page/crediter/get-data", { compte_a_crediter: compteACrediter });
+        if (res.data.status === 1) {
+            setFetchDataCredit(res.data.dataCredit);
+            setSoldeCredit(res.data.soldeCompteCredit);
+        } else {
+            Swal.fire({ title: "Erreur", text: res.data.msg, icon: "error" });
+        }
+    };
+    
+    const getDayOperation = async () => {
+        const res = await axios.get("/eco/page/debiteur/operation-journaliere");
+        setFetchDayOperation(res.data.data || []);
+        setCurrentPage(1);
+    };
+    
+    const handleSeachOperation = async (ref) => {
+        if (!ref) return;
+        const res = await axios.get("/eco/page/debiteur/extourne-operation/reference/" + ref);
+        if (res.data.status === 1) {
+            setFetchSearchedOperation(res.data.data);
+        } else {
+            Swal.fire({ title: "Erreur", text: res.data.msg, icon: "error" });
+        }
+    };
+    
+    const getSeachedDataByName = async (e) => {
+        e.preventDefault();
+        if (!searchByName.trim()) return;
+        setChargement(true);
+        const res = await axios.post("/eco/page/releve/get-account-by-name", {
+            searched_account_by_name: searchByName,
+        });
+        setChargement(false);
+        if (res.data.status === 1) {
+            setFetchDataByName(res.data.data);
+        } else {
+            Swal.fire({ title: "Erreur", text: res.data.msg, icon: "error" });
+        }
+    };
+    
     const extourneOperation = async (reference) => {
-        setchargement(true);
         const confirmation = await Swal.fire({
             title: "Êtes-vous sûr?",
             text: "Voulez-vous vraiment extourner cette opération ?",
             icon: "question",
             showCancelButton: true,
-            confirmButtonText: "Oui",
-            cancelButtonText: "Non",
         });
-        if (confirmation.isConfirmed) {
-            const res = await axios.get(
-                "/eco/page/debiteur/extourne-operation/" + reference,
-            );
-            if (res.data.status == 1) {
-                setchargement(false);
-                Swal.fire({
-                    title: "Créditeur",
-                    text: res.data.msg,
-                    icon: "success",
-                    button: "OK!",
-                });
-            } else if (res.data.status == 0) {
-                setchargement(false);
-                Swal.fire({
-                    title: "Erreur",
-                    text: res.data.msg,
-                    icon: "error",
-                    button: "OK!",
-                });
-            }
-        } else {
-            setchargement(false);
+        if (!confirmation.isConfirmed) return;
+        setChargement(true);
+        const res = await axios.get("/eco/page/debiteur/extourne-operation/" + reference);
+        setChargement(false);
+        Swal.fire({
+            title: res.data.status === 1 ? "Succès" : "Erreur",
+            text: res.data.msg,
+            icon: res.data.status === 1 ? "success" : "error",
+        });
+        if (res.data.status === 1) getDayOperation();
+    };
+    
+    const saveOperation = async (e) => {
+        e.preventDefault();
+        if (!montant || !fetchDataDebit || !fetchDataCredit) {
+            Swal.fire({ title: "Attention", text: "Veuillez sélectionner les deux comptes et un montant.", icon: "warning" });
+            return;
+        }
+        
+        const montantNumerique = parseFormattedNumber(montant);
+        if (isNaN(montantNumerique) || montantNumerique <= 0) {
+            Swal.fire({ title: "Erreur", text: "Montant invalide", icon: "error" });
+            return;
+        }
+        
+        if (fetchDataDebit.CodeMonnaie !== fetchDataCredit.CodeMonnaie) {
             Swal.fire({
-                title: "Annulation",
-                text: "L'extourne n'a pas eu lieu",
-                icon: "info",
-                button: "OK!",
+                title: "Erreur de devise",
+                text: `Les deux comptes doivent avoir la même devise.`,
+                icon: "error",
             });
+            return;
+        }
+        
+        const confirmation = await Swal.fire({
+            title: "Confirmation",
+            text: `Valider l'opération de ${montant} ${fetchDataDebit.CodeMonnaie === 1 ? "USD" : "CDF"} ?`,
+            icon: "question",
+            showCancelButton: true,
+        });
+        if (!confirmation.isConfirmed) return;
+        
+        setLoading(true);
+        setChargement(true);
+        try {
+            const res = await axios.post("/eco/page/transaction/debiter/save", {
+                compte_a_debiter: compteADebiter,
+                compte_a_crediter: compteACrediter,
+                Montant: montantNumerique,
+                devise: fetchDataDebit.CodeMonnaie,
+                Libelle: libelle,
+                isVirement: false, // ou selon besoin
+            });
+            if (res.data.status === 1) {
+                Swal.fire({ title: "Succès", text: res.data.msg, icon: "success", timer: 3000 });
+                // Réinitialiser après succès ?
+                const reset = await Swal.fire({
+                    title: "Nouvelle opération ?",
+                    text: "Voulez-vous vider le formulaire pour une nouvelle saisie ?",
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonText: "Oui, vider",
+                    cancelButtonText: "Rester",
+                });
+                if (reset.isConfirmed) {
+                    resetForm();
+                } else {
+                    // Garder les comptes mais vider montant/libellé
+                    setMontant("");
+                    setLibelle("");
+                }
+                getDayOperation();
+            } else {
+                Swal.fire({ title: "Erreur", text: res.data.msg, icon: "error" });
+            }
+        } catch (error) {
+            Swal.fire({ title: "Erreur", text: "Problème serveur", icon: "error" });
+        } finally {
+            setLoading(false);
+            setChargement(false);
         }
     };
-
+    
+    const resetForm = () => {
+        setCompteADebiter("");
+        setCompteACrediter("");
+        setFetchDataDebit(null);
+        setFetchDataCredit(null);
+        setSoldeDebit(null);
+        setSoldeCredit(null);
+        setMontant("");
+        setLibelle("");
+        setActiveField(null);
+        setFetchDataByName([]);
+    };
+    
+    // Remplissage automatique par clic sur un compte dans la liste
+    const handleAccountClick = (accountNumber, accountData) => {
+        if (activeField === "debit") {
+            setCompteADebiter(accountNumber);
+            // Petit délai pour laisser setter l'état
+            setTimeout(() => {
+                getSeachedDataDebit(null);
+            }, 50);
+            setActiveField(null);
+            Swal.fire({ title: "Compte à débiter", text: `${accountNumber} sélectionné`, icon: "success", timer: 1500, showConfirmButton: false });
+        } else if (activeField === "credit") {
+            setCompteACrediter(accountNumber);
+            setTimeout(() => {
+                getSeachedDataCredit(null);
+            }, 50);
+            setActiveField(null);
+            Swal.fire({ title: "Compte à créditer", text: `${accountNumber} sélectionné`, icon: "success", timer: 1500, showConfirmButton: false });
+        } else {
+            Swal.fire({ title: "Info", text: "Veuillez d'abord cliquer sur le champ Débit ou Crédit pour l'activer.", icon: "info", timer: 2000 });
+        }
+    };
+    
+    // Raccourci clavier : Ctrl+Entrée ou Entrée sur montant
+    const handleKeyDown = (e) => {
+        if ((e.ctrlKey && e.key === "Enter") || (e.key === "Enter" && document.activeElement?.id === "montantInput")) {
+            saveOperation(e);
+        }
+    };
+    
     useEffect(() => {
         getDayOperation();
-    }, []);
-
-    //put focus on given input
-    //    const focusTextInput=()=> {
-    //         this.textInput.current.focus();
-    //     }
-    const getDayOperation = async () => {
-        const res = await axios.get("/eco/page/debiteur/operation-journaliere");
-
-        setfetchDayOperation(res.data.data);
-    };
-
-    const handleSeachOperation = async (ref) => {
-        const res = await axios.get(
-            "/eco/page/debiteur/extourne-operation/reference/" + ref,
-        );
-        if (res.data.status == 1) {
-            setfetchSearchedOperation(res.data.data);
-        } else if (res.data.status == 0) {
-            Swal.fire({
-                title: "Erreur",
-                text: res.data.msg,
-                icon: "error",
-                button: "OK!",
-            });
-        }
-    };
-
-    //GET DATA FROM INPUT
-    function handleChange(event) {
-        setsearchRefOperation(
-            // Computed property names
-            // keys of the objects are computed dynamically
-            event.target.value,
-        );
-    }
-    const getSeachedDataByName = async (e) => {
-        e.preventDefault();
-        setchargement(true);
-        const res = await axios.post("/eco/page/releve/get-account-by-name", {
-            searched_account_by_name: searched_account_by_name,
-        });
-        if (res.data.status == 1) {
-            setFetchDataByName(res.data.data);
-            console.log(fetchDataByName);
-            setchargement(false);
-        } else {
-            setchargement(false);
-            Swal.fire({
-                title: "Erreur",
-                text: res.data.msg,
-                icon: "error",
-                timer: 8000,
-                confirmButtonText: "Okay",
-            });
-        }
-    };
-
-    const handleCopy = (text) => {
-        navigator.clipboard
-            .writeText(text)
-            .then(() => {
-                setCopiedText(text);
-                alert(
-                    `Le texte "${text}" a été copié dans le presse-papiers coller simplement à l'endroit souhaiter CTRL+V`,
-                );
-            })
-            .catch((err) => console.error("Erreur lors de la copie : ", err));
-    };
-
-    // Fonction pour gérer le double-clic sur un compte
-    const handleDoubleClickOnAccount = (accountNumber, targetField) => {
-        if (targetField === "debit") {
-            setcompte_a_debiter(accountNumber);
-            // Déclencher automatiquement la recherche
-            setTimeout(() => {
-                const fakeEvent = { preventDefault: () => {} };
-                getSeachedDataDebit(fakeEvent);
-            }, 100);
-            // Réinitialiser la sélection
-            setSelectedRowIndex(null);
-            setSelectedRowType(null);
-            setSelectedTargetField(null);
-        } else if (targetField === "credit") {
-            setcompte_a_crediter(accountNumber);
-            // Déclencher automatiquement la recherche
-            setTimeout(() => {
-                const fakeEvent = { preventDefault: () => {} };
-                getSeachedDataCredit(fakeEvent);
-            }, 100);
-            // Réinitialiser la sélection
-            setSelectedRowIndex(null);
-            setSelectedRowType(null);
-            setSelectedTargetField(null);
-        }
-    };
-
-    // État pour suivre quel champ est actuellement sélectionné pour le remplissage
-    const [selectedTargetField, setSelectedTargetField] = useState(null);
-
-    let compteur = 1;
+        document.addEventListener("keydown", handleKeyDown);
+        return () => document.removeEventListener("keydown", handleKeyDown);
+    }, [montant, fetchDataDebit, fetchDataCredit, libelle, compteADebiter, compteACrediter]);
+    
+    // Pagination de l'historique
+    const totalPages = Math.ceil((fetchSearchedOperation ? fetchSearchedOperation.length : fetchDayOperation.length) / itemsPerPage);
+    const paginatedData = (fetchSearchedOperation || fetchDayOperation).slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    
+    // --------------------------------------------------------------
+    // Rendu
+    // --------------------------------------------------------------
     return (
-        <div
-            className="container-fluid"
-            style={{ marginTop: "10px", padding: "0 15px" }}
-        >
-            {/* En-tête moderne */}
+        <div className="container-fluid" style={{ marginTop: "10px", padding: "0 15px" }}>
+            {/* En-tête */}
             <div className="row mb-4">
                 <div className="col-12">
                     <div className="card border-0 shadow-sm rounded-3">
-                        <div
-                            className="card-body p-3"
-                            style={{
-                                background: "#138496",
-                                borderRadius: "12px",
-                            }}
-                        >
+                        <div className="card-body p-3" style={{ background: "#138496", borderRadius: "12px" }}>
                             <div className="d-flex align-items-center">
-                                <div className="me-3">
-                                    <i
-                                        className="fas fa-calculator"
-                                        style={{
-                                            fontSize: "28px",
-                                            color: "white",
-                                        }}
-                                    ></i>
-                                </div>
+                                <i className="fas fa-calculator me-3" style={{ fontSize: "28px", color: "white" }}></i>
                                 <div>
-                                    <h5 className="text-white fw-bold mb-0">
-                                        Opérations comptables
-                                    </h5>
-                                    <small className="text-white-50">
-                                        Débit et crédit des comptes
-                                    </small>
+                                    <h5 className="text-white fw-bold mb-0">Opérations comptables</h5>
+                                    <small className="text-white-50">Débit et crédit des comptes</small>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            {/* Loading Overlay */}
+            
+            {/* Loading overlay */}
             {chargement && (
-                <div
-                    style={{
-                        position: "fixed",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        backgroundColor: "rgba(0, 0, 0, 0.7)",
-                        zIndex: 1050,
-                        backdropFilter: "blur(3px)",
-                    }}
-                >
+                <div style={{ position: "fixed", top: 0, left: 0, width: "100%", height: "100%", display: "flex", justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.7)", zIndex: 1050 }}>
                     <div className="text-center bg-white p-4 rounded-4 shadow-lg">
-                        <Bars
-                            height="80"
-                            width="80"
-                            color="#20c997"
-                            ariaLabel="loading"
-                        />
-                        <h5 className="mt-3 text-dark">Patientez...</h5>
-                        <small className="text-muted">
-                            Traitement en cours
-                        </small>
+                        <Bars height="80" width="80" color="#20c997" />
+                        <h5 className="mt-3">Patientez...</h5>
                     </div>
                 </div>
             )}
-
-            {selectedTargetField && (
-                <div
-                    className="alert alert-info alert-dismissible fade show mt-2 mb-0"
-                    role="alert"
-                >
-                    <i className="fas fa-info-circle me-2"></i>
-                    Mode de remplissage actif pour :
-                    <strong className="mx-1">
-                        {selectedTargetField === "debit"
-                            ? "Compte à débiter"
-                            : "Compte à créditer"}
-                    </strong>
-                    <button
-                        type="button"
-                        className="btn-close"
-                        data-bs-dismiss="alert"
-                        aria-label="Close"
-                        onClick={() => setSelectedTargetField(null)}
-                    ></button>
-                    <small className="ms-2">
-                        (Double-cliquez sur n'importe quel compte dans la liste
-                        ci-dessus pour le remplir automatiquement)
-                    </small>
-                </div>
-            )}
-            {/* Section Recherche des comptes */}
+            
+            {/* Panneau de sélection des comptes */}
             <div className="row g-3 mb-4">
                 <div className="col-md-4">
-                    <div className="card border-0 shadow-sm rounded-3">
-                        <div className="card-header bg-white border-0 pt-3">
-                            <h6
-                                className="fw-bold"
-                                style={{ color: "steelblue" }}
-                            >
-                                <i className="fas fa-arrow-down me-2"></i>Compte
-                                à débiter
-                            </h6>
-                        </div>
+                    <div className="card border-0 shadow-sm rounded-3 h-100">
                         <div className="card-body">
-                            <div className="input-group">
-                                {/* <input
-                            id="compte_a_debiter"
-                            name="compte_a_debiter"
-                            type="text"
-                            className="form-control"
-                            placeholder="Numéro de compte..."
-                            style={{ borderRadius: "10px 0 0 10px" }}
-                            onChange={(e) => setcompte_a_debiter(e.target.value)}
-                        /> */}
+                            <label className="fw-bold" style={{ color: "steelblue" }}>Compte à débiter</label>
+                            <div className="input-group mt-2">
                                 <input
-                                    id="compte_a_debiter"
-                                    name="compte_a_debiter"
                                     type="text"
-                                    className={`form-control ${selectedTargetField === "debit" ? "border-danger border-2" : ""}`}
-                                    placeholder="Numéro de compte..."
-                                    style={{ borderRadius: "10px 0 0 10px" }}
-                                    onChange={(e) =>
-                                        setcompte_a_debiter(e.target.value)
-                                    }
-                                    value={compte_a_debiter}
+                                    className={`form-control ${activeField === "debit" ? "border-danger border-3" : ""}`}
+                                    placeholder="Numéro compte"
+                                    value={compteADebiter}
+                                    onChange={(e) => setCompteADebiter(e.target.value)}
+                                    onFocus={() => setActiveField("debit")}
                                 />
-                                <button
-                                    className="btn"
-                                    style={{
-                                        borderRadius: "0 10px 10px 0",
-                                        background: "#dc3545",
-                                        color: "white",
-                                        border: "none",
-                                    }}
-                                    onClick={getSeachedDataDebit}
-                                >
-                                    <i className="fas fa-search me-1"></i>
-                                    Rechercher
+                                <button className="btn btn-danger" onClick={getSeachedDataDebit}>
+                                    <i className="fas fa-search"></i>
                                 </button>
                             </div>
+                            {activeField === "debit" && <small className="text-danger">Mode débit actif – cliquez sur un compte dans la liste</small>}
                         </div>
                     </div>
                 </div>
-
                 <div className="col-md-4">
-                    <div className="card border-0 shadow-sm rounded-3">
-                        <div className="card-header bg-white border-0 pt-3">
-                            <h6
-                                className="fw-bold"
-                                style={{ color: "steelblue" }}
-                            >
-                                <i className="fas fa-arrow-up me-2"></i>Compte à
-                                créditer
-                            </h6>
-                        </div>
+                    <div className="card border-0 shadow-sm rounded-3 h-100">
                         <div className="card-body">
-                            <div className="input-group">
-                                {/* <input
-                            id="compte_a_crediter"
-                            name="compte_a_crediter"
-                            type="text"
-                            className="form-control"
-                            placeholder="Numéro de compte..."
-                            style={{ borderRadius: "10px 0 0 10px" }}
-                            onChange={(e) => setcompte_a_crediter(e.target.value)}
-                        /> */}
+                            <label className="fw-bold" style={{ color: "steelblue" }}>Compte à créditer</label>
+                            <div className="input-group mt-2">
                                 <input
-                                    id="compte_a_crediter"
-                                    name="compte_a_crediter"
                                     type="text"
-                                    className={`form-control ${selectedTargetField === "credit" ? "border-success border-2" : ""}`}
-                                    placeholder="Numéro de compte..."
-                                    style={{ borderRadius: "10px 0 0 10px" }}
-                                    onChange={(e) =>
-                                        setcompte_a_crediter(e.target.value)
-                                    }
-                                    value={compte_a_crediter}
+                                    className={`form-control ${activeField === "credit" ? "border-success border-3" : ""}`}
+                                    placeholder="Numéro compte"
+                                    value={compteACrediter}
+                                    onChange={(e) => setCompteACrediter(e.target.value)}
+                                    onFocus={() => setActiveField("credit")}
                                 />
-                                <button
-                                    className="btn"
-                                    style={{
-                                        borderRadius: "0 10px 10px 0",
-                                        background: "#28a745",
-                                        color: "white",
-                                        border: "none",
-                                    }}
-                                    onClick={getSeachedDataCredit}
-                                >
-                                    <i className="fas fa-search me-1"></i>
-                                    Rechercher
+                                <button className="btn btn-success" onClick={getSeachedDataCredit}>
+                                    <i className="fas fa-search"></i>
                                 </button>
                             </div>
+                            {activeField === "credit" && <small className="text-success">Mode crédit actif – cliquez sur un compte dans la liste</small>}
                         </div>
                     </div>
                 </div>
-
-                <div className="col-md-3">
-                    <div className="card border-0 shadow-sm rounded-3">
-                        <div className="card-header bg-white border-0 pt-3">
-                            <h6
-                                className="fw-bold"
-                                style={{ color: "steelblue" }}
-                            >
-                                <i className="fas fa-user-search me-2"></i>
-                                Recherche par nom
-                            </h6>
-                        </div>
+                <div className="col-md-4">
+                    <div className="card border-0 shadow-sm rounded-3 h-100">
                         <div className="card-body">
-                            <div className="input-group">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder="Nom du titulaire..."
-                                    style={{
-                                        borderRadius: "0px",
-                                        // width: "100%",
-                                    }}
-                                    onChange={(e) =>
-                                        setsearched_account_by_name(
-                                            e.target.value,
-                                        )
-                                    }
-                                />
-
-                                <button
-                                    className="btn"
-                                    style={{
-                                        background: "#20c997",
-                                        color: "white",
-                                        borderRadius: "0px",
-                                    }}
-                                    onClick={getSeachedDataByName}
-                                >
-                                    <i className="fas fa-search me-1"></i>
+                            <label className="fw-bold" style={{ color: "steelblue" }}>Recherche par nom</label>
+                            <div className="input-group mt-2">
+                                <input type="text" className="form-control" placeholder="Nom du client" value={searchByName} onChange={(e) => setSearchByName(e.target.value)} />
+                                <button className="btn btn-info" onClick={getSeachedDataByName}>
+                                    <i className="fas fa-search"></i>
                                 </button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
-            {/* Informations des comptes - Version Élégante */}
-            {/* Informations des comptes - Version Élégante */}
+            
+            {/* Informations des comptes sélectionnés (cartes) */}
             <div className="row g-4 mb-4">
-                {/* Compte à débiter */}
-                {FetchDataDebit && (
+                {fetchDataDebit && (
                     <div className="col-md-6">
-                        <div
-                            className="card border-0 shadow-lg rounded-4 overflow-hidden h-100"
-                            style={{
-                                background:
-                                    "linear-gradient(135deg, #fff 0%, #fff8f8 100%)",
-                                transition:
-                                    "transform 0.3s ease, box-shadow 0.3s ease",
-                                cursor: "pointer",
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform =
-                                    "translateY(-5px)";
-                                e.currentTarget.style.boxShadow =
-                                    "0 15px 35px rgba(220, 53, 69, 0.15)";
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform =
-                                    "translateY(0)";
-                                e.currentTarget.style.boxShadow =
-                                    "0 1rem 3rem rgba(0,0,0,.175)";
-                            }}
-                        >
-                            <div
-                                style={{
-                                    height: "4px",
-                                    background:
-                                        "linear-gradient(90deg, #dc3545, #ff6b6b, #dc3545)",
-                                    backgroundSize: "200% 100%",
-                                    animation: "gradientMove 3s ease infinite",
-                                }}
-                            />
+                        <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
+                            <div style={{ height: "4px", background: "linear-gradient(90deg, #dc3545, #ff6b6b)" }} />
                             <div className="card-body p-3">
-                                {" "}
-                                {/* modifié p-4 → p-3 */}
-                                {/* En-tête */}
-                                <div className="d-flex align-items-center justify-content-between mb-3">
-                                    {" "}
-                                    {/* mb-4 → mb-3 */}
-                                    <div className="d-flex align-items-center gap-3">
-                                        <div
-                                            style={{
-                                                width: "40px",
-                                                height: "40px",
-                                                borderRadius: "12px",
-                                                background:
-                                                    "linear-gradient(135deg, #dc3545, #ff6b6b)",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                boxShadow:
-                                                    "0 4px 15px rgba(220, 53, 69, 0.3)",
-                                            }}
-                                        >
-                                            <i
-                                                className="fas fa-arrow-down"
-                                                style={{
-                                                    color: "white",
-                                                    fontSize: "1.2rem",
-                                                }}
-                                            ></i>
-                                        </div>
-                                        <div>
-                                            <h6
-                                                className="fw-bold mb-0"
-                                                style={{
-                                                    color: "#dc3545",
-                                                    fontSize: "0.95rem",
-                                                }}
-                                            >
-                                                Compte à débiter
-                                            </h6>{" "}
-                                            {/* h5 → h6 */}
-                                            <small
-                                                className="text-muted"
-                                                style={{ fontSize: "0.7rem" }}
-                                            >
-                                                Détails du compte source
-                                            </small>
-                                        </div>
-                                    </div>
-                                    <div className="text-end">
-                                        <div className="dropdown">
-                                            <button
-                                                className="btn btn-sm text-muted"
-                                                type="button"
-                                                data-bs-toggle="dropdown"
-                                                style={{
-                                                    background: "none",
-                                                    border: "none",
-                                                }}
-                                            >
-                                                <i className="fas fa-ellipsis-v"></i>
-                                            </button>
-                                            <ul className="dropdown-menu">
-                                                <li>
-                                                    <a
-                                                        className="dropdown-item"
-                                                        href="#"
-                                                        onClick={() =>
-                                                            handleCopy(
-                                                                FetchDataDebit.NumCompte,
-                                                            )
-                                                        }
-                                                    >
-                                                        <i className="fas fa-copy me-2"></i>
-                                                        Copier le numéro
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
+                                <div className="d-flex justify-content-between">
+                                    <h6 className="text-danger fw-bold">Compte à débiter</h6>
+                                    <button className="btn btn-sm" onClick={() => handleCopy(fetchDataDebit.NumCompte)}><i className="fas fa-copy"></i></button>
                                 </div>
-                                {/* Infos */}
-                                <div className="row g-2">
-                                    {" "}
-                                    {/* g-3 → g-2 */}
-                                    <div className="col-12">
-                                        <div
-                                            className="p-2 rounded-3"
-                                            style={{
-                                                background: "#f8f9fa",
-                                                borderLeft: "3px solid #dc3545",
-                                            }}
-                                        >
-                                            {" "}
-                                            {/* p-3 → p-2 */}
-                                            <div className="d-flex justify-content-between align-items-center mb-1">
-                                                {" "}
-                                                {/* mb-2 → mb-1 */}
-                                                <span
-                                                    className="text-muted small text-uppercase"
-                                                    style={{
-                                                        fontSize: "0.65rem",
-                                                    }}
-                                                >
-                                                    Nom du titulaire
-                                                </span>
-                                                <i
-                                                    className="fas fa-user text-danger opacity-50"
-                                                    style={{
-                                                        fontSize: "0.8rem",
-                                                    }}
-                                                ></i>
-                                            </div>
-                                            <h6
-                                                className="fw-bold mb-0"
-                                                style={{ fontSize: "0.85rem" }}
-                                            >
-                                                {FetchDataDebit.NomCompte}
-                                            </h6>
-                                        </div>
+                                <p className="mb-1"><strong>{fetchDataDebit.NomCompte}</strong></p>
+                                <code>{fetchDataDebit.NumCompte}</code>
+                                {soldeDebit && (
+                                    <div className="mt-2 p-2 rounded bg-light">
+                                        <small>Solde</small>
+                                        <h5 className="text-danger">{numberWithSpaces(soldeDebit.soldeCompte)} {fetchDataDebit.CodeMonnaie === 1 ? "USD" : "CDF"}</h5>
                                     </div>
-                                    <div className="col-12">
-                                        <div
-                                            className="p-2 rounded-3"
-                                            style={{
-                                                background: "#f8f9fa",
-                                                borderLeft: "3px solid #17a2b8",
-                                            }}
-                                        >
-                                            <div className="d-flex justify-content-between align-items-center mb-1">
-                                                <span
-                                                    className="text-muted small text-uppercase"
-                                                    style={{
-                                                        fontSize: "0.65rem",
-                                                    }}
-                                                >
-                                                    Numéro de compte
-                                                </span>
-                                                <i
-                                                    className="fas fa-hashtag text-info opacity-50"
-                                                    style={{
-                                                        fontSize: "0.8rem",
-                                                    }}
-                                                ></i>
-                                            </div>
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <code
-                                                    className="fw-bold"
-                                                    style={{
-                                                        fontSize: "0.75rem",
-                                                    }}
-                                                >
-                                                    {FetchDataDebit.NumCompte}
-                                                </code>
-                                                <button
-                                                    className="btn btn-sm btn-link text-decoration-none p-0"
-                                                    onClick={() =>
-                                                        handleCopy(
-                                                            FetchDataDebit.NumCompte,
-                                                        )
-                                                    }
-                                                    style={{
-                                                        color: "#17a2b8",
-                                                        fontSize: "0.75rem",
-                                                    }}
-                                                >
-                                                    <i className="fas fa-copy"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {FetchSoldeDebit && (
-                                        <div className="col-12">
-                                            <div
-                                                className="p-2 rounded-3"
-                                                style={{
-                                                    background:
-                                                        "linear-gradient(135deg, #dc3545, #ff6b6b)",
-                                                    boxShadow:
-                                                        "0 4px 15px rgba(220, 53, 69, 0.2)",
-                                                }}
-                                            >
-                                                <div className="d-flex justify-content-between align-items-center mb-1">
-                                                    <span
-                                                        className="text-white-50 small text-uppercase"
-                                                        style={{
-                                                            fontSize: "0.65rem",
-                                                        }}
-                                                    >
-                                                        Solde actuel
-                                                    </span>
-                                                    <i
-                                                        className="fas fa-chart-line text-white-50"
-                                                        style={{
-                                                            fontSize: "0.75rem",
-                                                        }}
-                                                    ></i>
-                                                </div>
-                                                <div className="d-flex justify-content-between align-items-end">
-                                                    <h5
-                                                        className="fw-bold text-white mb-0"
-                                                        style={{
-                                                            fontSize: "1rem",
-                                                        }}
-                                                    >
-                                                        {numberWithSpaces(
-                                                            FetchSoldeDebit.soldeCompte?.toFixed(
-                                                                2,
-                                                            ),
-                                                        )}
-                                                    </h5>{" "}
-                                                    {/* h3 → h5 */}
-                                                    <span
-                                                        className="badge bg-white text-danger px-2 py-1 rounded-pill"
-                                                        style={{
-                                                            fontSize: "0.65rem",
-                                                        }}
-                                                    >
-                                                        {FetchDataDebit.CodeMonnaie ==
-                                                        1
-                                                            ? "USD"
-                                                            : "CDF"}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                )}
                             </div>
                         </div>
                     </div>
                 )}
-
-                {/* Compte à créditer - mêmes modifications */}
-                {FetchDataCredit && (
+                {fetchDataCredit && (
                     <div className="col-md-6">
-                        <div
-                            className="card border-0 shadow-lg rounded-4 overflow-hidden h-100"
-                            style={{
-                                background:
-                                    "linear-gradient(135deg, #fff 0%, #f0fff4 100%)",
-                                transition:
-                                    "transform 0.3s ease, box-shadow 0.3s ease",
-                                cursor: "pointer",
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.transform =
-                                    "translateY(-5px)";
-                                e.currentTarget.style.boxShadow =
-                                    "0 15px 35px rgba(40, 167, 69, 0.15)";
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.transform =
-                                    "translateY(0)";
-                                e.currentTarget.style.boxShadow =
-                                    "0 1rem 3rem rgba(0,0,0,.175)";
-                            }}
-                        >
-                            <div
-                                style={{
-                                    height: "4px",
-                                    background:
-                                        "linear-gradient(90deg, #28a745, #34ce57, #28a745)",
-                                    backgroundSize: "200% 100%",
-                                    animation: "gradientMove 3s ease infinite",
-                                }}
-                            />
+                        <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
+                            <div style={{ height: "4px", background: "linear-gradient(90deg, #28a745, #34ce57)" }} />
                             <div className="card-body p-3">
-                                <div className="d-flex align-items-center justify-content-between mb-3">
-                                    <div className="d-flex align-items-center gap-3">
-                                        <div
-                                            style={{
-                                                width: "40px",
-                                                height: "40px",
-                                                borderRadius: "12px",
-                                                background:
-                                                    "linear-gradient(135deg, #28a745, #34ce57)",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                boxShadow:
-                                                    "0 4px 15px rgba(40, 167, 69, 0.3)",
-                                            }}
-                                        >
-                                            <i
-                                                className="fas fa-arrow-up"
-                                                style={{
-                                                    color: "white",
-                                                    fontSize: "1.2rem",
-                                                }}
-                                            ></i>
-                                        </div>
-                                        <div>
-                                            <h6
-                                                className="fw-bold mb-0"
-                                                style={{
-                                                    color: "#28a745",
-                                                    fontSize: "0.95rem",
-                                                }}
-                                            >
-                                                Compte à créditer
-                                            </h6>
-                                            <small
-                                                className="text-muted"
-                                                style={{ fontSize: "0.7rem" }}
-                                            >
-                                                Détails du compte destination
-                                            </small>
-                                        </div>
-                                    </div>
-                                    <div className="text-end">
-                                        <div className="dropdown">
-                                            <button
-                                                className="btn btn-sm text-muted"
-                                                type="button"
-                                                data-bs-toggle="dropdown"
-                                                style={{
-                                                    background: "none",
-                                                    border: "none",
-                                                }}
-                                            >
-                                                <i className="fas fa-ellipsis-v"></i>
-                                            </button>
-                                            <ul className="dropdown-menu">
-                                                <li>
-                                                    <a
-                                                        className="dropdown-item"
-                                                        href="#"
-                                                        onClick={() =>
-                                                            handleCopy(
-                                                                FetchDataCredit.NumCompte,
-                                                            )
-                                                        }
-                                                    >
-                                                        <i className="fas fa-copy me-2"></i>
-                                                        Copier le numéro
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
+                                <div className="d-flex justify-content-between">
+                                    <h6 className="text-success fw-bold">Compte à créditer</h6>
+                                    <button className="btn btn-sm" onClick={() => handleCopy(fetchDataCredit.NumCompte)}><i className="fas fa-copy"></i></button>
                                 </div>
-                                <div className="row g-2">
-                                    <div className="col-12">
-                                        <div
-                                            className="p-2 rounded-3"
-                                            style={{
-                                                background: "#f8f9fa",
-                                                borderLeft: "3px solid #28a745",
-                                            }}
-                                        >
-                                            <div className="d-flex justify-content-between align-items-center mb-1">
-                                                <span
-                                                    className="text-muted small text-uppercase"
-                                                    style={{
-                                                        fontSize: "0.65rem",
-                                                    }}
-                                                >
-                                                    Nom du titulaire
-                                                </span>
-                                                <i
-                                                    className="fas fa-user text-success opacity-50"
-                                                    style={{
-                                                        fontSize: "0.8rem",
-                                                    }}
-                                                ></i>
-                                            </div>
-                                            <h6
-                                                className="fw-bold mb-0"
-                                                style={{ fontSize: "0.85rem" }}
-                                            >
-                                                {FetchDataCredit.NomCompte}
-                                            </h6>
-                                        </div>
+                                <p className="mb-1"><strong>{fetchDataCredit.NomCompte}</strong></p>
+                                <code>{fetchDataCredit.NumCompte}</code>
+                                {soldeCredit && (
+                                    <div className="mt-2 p-2 rounded bg-light">
+                                        <small>Solde</small>
+                                        <h5 className="text-success">{numberWithSpaces(soldeCredit.soldeCompte)} {fetchDataCredit.CodeMonnaie === 1 ? "USD" : "CDF"}</h5>
                                     </div>
-                                    <div className="col-12">
-                                        <div
-                                            className="p-2 rounded-3"
-                                            style={{
-                                                background: "#f8f9fa",
-                                                borderLeft: "3px solid #17a2b8",
-                                            }}
-                                        >
-                                            <div className="d-flex justify-content-between align-items-center mb-1">
-                                                <span
-                                                    className="text-muted small text-uppercase"
-                                                    style={{
-                                                        fontSize: "0.65rem",
-                                                    }}
-                                                >
-                                                    Numéro de compte
-                                                </span>
-                                                <i
-                                                    className="fas fa-hashtag text-info opacity-50"
-                                                    style={{
-                                                        fontSize: "0.8rem",
-                                                    }}
-                                                ></i>
-                                            </div>
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <code
-                                                    className="fw-bold"
-                                                    style={{
-                                                        fontSize: "0.75rem",
-                                                    }}
-                                                >
-                                                    {FetchDataCredit.NumCompte}
-                                                </code>
-                                                <button
-                                                    className="btn btn-sm btn-link text-decoration-none p-0"
-                                                    onClick={() =>
-                                                        handleCopy(
-                                                            FetchDataCredit.NumCompte,
-                                                        )
-                                                    }
-                                                    style={{
-                                                        color: "#17a2b8",
-                                                        fontSize: "0.75rem",
-                                                    }}
-                                                >
-                                                    <i className="fas fa-copy"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {FetchSoldeCredit && (
-                                        <div className="col-12">
-                                            <div
-                                                className="p-2 rounded-3"
-                                                style={{
-                                                    background:
-                                                        "linear-gradient(135deg, #28a745, #34ce57)",
-                                                    boxShadow:
-                                                        "0 4px 15px rgba(40, 167, 69, 0.2)",
-                                                }}
-                                            >
-                                                <div className="d-flex justify-content-between align-items-center mb-1">
-                                                    <span
-                                                        className="text-white-50 small text-uppercase"
-                                                        style={{
-                                                            fontSize: "0.65rem",
-                                                        }}
-                                                    >
-                                                        Solde actuel
-                                                    </span>
-                                                    <i
-                                                        className="fas fa-chart-line text-white-50"
-                                                        style={{
-                                                            fontSize: "0.75rem",
-                                                        }}
-                                                    ></i>
-                                                </div>
-                                                <div className="d-flex justify-content-between align-items-end">
-                                                    <h5
-                                                        className="fw-bold text-white mb-0"
-                                                        style={{
-                                                            fontSize: "1rem",
-                                                        }}
-                                                    >
-                                                        {numberWithSpaces(
-                                                            FetchSoldeCredit.soldeCompte?.toFixed(
-                                                                2,
-                                                            ),
-                                                        )}
-                                                    </h5>
-                                                    <span
-                                                        className="badge bg-white text-success px-2 py-1 rounded-pill"
-                                                        style={{
-                                                            fontSize: "0.65rem",
-                                                        }}
-                                                    >
-                                                        {FetchDataCredit.CodeMonnaie ==
-                                                        1
-                                                            ? "USD"
-                                                            : "CDF"}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                )}
                             </div>
                         </div>
                     </div>
                 )}
             </div>
-
-            {/* Ajoutez ces styles CSS dans votre fichier CSS ou dans une balise style */}
-            <style jsx>{`
-                @keyframes gradientMove {
-                    0% {
-                        background-position: 0% 50%;
-                    }
-                    50% {
-                        background-position: 100% 50%;
-                    }
-                    100% {
-                        background-position: 0% 50%;
-                    }
-                }
-
-                /* Animation d'entrée pour les cartes */
-                @keyframes fadeInUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(30px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                .card {
-                    animation: fadeInUp 0.5s ease-out;
-                }
-            `}</style>
-
-            {/* Liste des comptes trouvés par nom */}
-
-            {/* Liste des comptes trouvés par nom */}
-            {fetchDataByName && fetchDataByName.length > 0 && (
+            
+            {/* Liste des comptes trouvés par nom – avec clic pour remplir */}
+            {fetchDataByName.length > 0 && (
                 <div className="row mb-4">
                     <div className="col-12">
-                        <div className="card border-0 shadow-sm rounded-3">
-                            <div className="card-header bg-white border-0 pt-3">
-                                <div className="d-flex justify-content-between align-items-center">
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-list me-2"></i>
-                                        Comptes trouvés (
-                                        {fetchDataByName.length})
-                                    </h6>
-                                    <div className="text-muted small">
-                                        <i className="fas fa-info-circle me-1"></i>
-                                        Cliquez sur Débit ou Crédit, puis
-                                        double-cliquez sur un compte
-                                    </div>
-                                </div>
+                        <div className="card border-0 shadow-sm">
+                            <div className="card-header bg-white">
+                                <h6 className="fw-bold">Comptes trouvés ({fetchDataByName.length}) – cliquez sur une ligne pour remplir le champ actif</h6>
                             </div>
                             <div className="card-body p-0">
-                                <div
-                                    className="table-responsive"
-                                    style={{
-                                        maxHeight: "250px",
-                                        overflowY: "auto",
-                                    }}
-                                >
-                                    <table className="table table-hover mb-0 w-100">
-                                        <thead
-                                            style={{
-                                                backgroundColor: "#e6f2f9",
-                                                position: "sticky",
-                                                top: 0,
-                                            }}
-                                        >
-                                            <tr style={{ color: "steelblue" }}>
-                                                <th style={{ width: "20%" }}>
-                                                    Numéro Compte
-                                                </th>
-                                                <th style={{ width: "35%" }}>
-                                                    Intitulé
-                                                </th>
-                                                <th style={{ width: "10%" }}>
-                                                    Devise
-                                                </th>
-                                                <th style={{ width: "25%" }}>
-                                                    Remplir dans
-                                                </th>
-                                                <th style={{ width: "10%" }}>
-                                                    Action
-                                                </th>
+                                <div className="table-responsive" style={{ maxHeight: "300px", overflowY: "auto" }}>
+                                    <table className="table table-hover mb-0">
+                                        <thead style={{ backgroundColor: "#e6f2f9", position: "sticky", top: 0 }}>
+                                            <tr>
+                                                <th>Numéro</th>
+                                                <th>Intitulé</th>
+                                                <th>Devise</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {fetchDataByName.map(
-                                                (res, index) => (
-                                                    <tr
-                                                        key={index}
-                                                        className="account-row"
-                                                        data-index={index}
-                                                        style={{
-                                                            cursor: "pointer",
-                                                            transition:
-                                                                "all 0.3s ease",
-                                                            backgroundColor:
-                                                                selectedRowIndex ===
-                                                                    index &&
-                                                                selectedRowType ===
-                                                                    "debit"
-                                                                    ? "#fff5f5" // Rouge clair
-                                                                    : selectedRowIndex ===
-                                                                            index &&
-                                                                        selectedRowType ===
-                                                                            "credit"
-                                                                      ? "#f0fff4" // Vert clair
-                                                                      : "transparent",
-                                                            borderLeft:
-                                                                selectedRowIndex ===
-                                                                    index &&
-                                                                selectedRowType ===
-                                                                    "debit"
-                                                                    ? "4px solid #dc3545"
-                                                                    : selectedRowIndex ===
-                                                                            index &&
-                                                                        selectedRowType ===
-                                                                            "credit"
-                                                                      ? "4px solid #28a745"
-                                                                      : "4px solid transparent",
-                                                            boxShadow:
-                                                                selectedRowIndex ===
-                                                                index
-                                                                    ? "0 2px 12px rgba(0,0,0,0.15)"
-                                                                    : "none",
-                                                            fontWeight:
-                                                                selectedRowIndex ===
-                                                                index
-                                                                    ? "500"
-                                                                    : "normal",
-                                                        }}
-                                                        onMouseEnter={(e) => {
-                                                            if (
-                                                                selectedRowIndex !==
-                                                                index
-                                                            ) {
-                                                                e.currentTarget.style.backgroundColor =
-                                                                    "#f8f9fa";
-                                                            }
-                                                        }}
-                                                        onMouseLeave={(e) => {
-                                                            if (
-                                                                selectedRowIndex !==
-                                                                index
-                                                            ) {
-                                                                e.currentTarget.style.backgroundColor =
-                                                                    "transparent";
-                                                            }
-                                                        }}
-                                                        onDoubleClick={() => {
-                                                            // Vérifier si une ligne est sélectionnée avec un type (débit ou crédit)
-                                                            if (
-                                                                selectedRowIndex ===
-                                                                    index &&
-                                                                selectedRowType ===
-                                                                    "debit"
-                                                            ) {
-                                                                handleDoubleClickOnAccount(
-                                                                    res.NumCompte,
-                                                                    "debit",
-                                                                );
-                                                                Swal.fire({
-                                                                    title: "Succès",
-                                                                    text: `Compte ${res.NumCompte} ajouté au champ "Compte à débiter"`,
-                                                                    icon: "success",
-                                                                    timer: 2000,
-                                                                    showConfirmButton: false,
-                                                                    toast: true,
-                                                                    position:
-                                                                        "top-end",
-                                                                });
-                                                            } else if (
-                                                                selectedRowIndex ===
-                                                                    index &&
-                                                                selectedRowType ===
-                                                                    "credit"
-                                                            ) {
-                                                                handleDoubleClickOnAccount(
-                                                                    res.NumCompte,
-                                                                    "credit",
-                                                                );
-                                                                Swal.fire({
-                                                                    title: "Succès",
-                                                                    text: `Compte ${res.NumCompte} ajouté au champ "Compte à créditer"`,
-                                                                    icon: "success",
-                                                                    timer: 2000,
-                                                                    showConfirmButton: false,
-                                                                    toast: true,
-                                                                    position:
-                                                                        "top-end",
-                                                                });
-                                                            } else {
-                                                                // Si aucun type n'est sélectionné pour cette ligne
-                                                                Swal.fire({
-                                                                    title: "Information",
-                                                                    text: "Veuillez d'abord cliquer sur 'Débit' ou 'Crédit' pour cette ligne",
-                                                                    icon: "info",
-                                                                    timer: 2000,
-                                                                    showConfirmButton: false,
-                                                                    toast: true,
-                                                                    position:
-                                                                        "top-end",
-                                                                });
-                                                            }
-                                                        }}
-                                                    >
-                                                        <td className="fw-semibold">
-                                                            {res.NumCompte}
-                                                        </td>
-                                                        <td>{res.NomCompte}</td>
-                                                        <td>
-                                                            <span
-                                                                className={`badge ${res.CodeMonnaie == 1 ? "bg-info" : "bg-success"}`}
-                                                            >
-                                                                {res.CodeMonnaie ==
-                                                                1
-                                                                    ? "USD"
-                                                                    : "CDF"}
-                                                            </span>
-                                                        </td>
-                                                        <td>
-                                                            <div
-                                                                className="btn-group btn-group-sm"
-                                                                role="group"
-                                                            >
-                                                                <button
-                                                                    type="button"
-                                                                    className={`btn ${selectedRowIndex === index && selectedRowType === "debit" ? "btn-danger" : "btn-outline-danger"}`}
-                                                                    onClick={(
-                                                                        e,
-                                                                    ) => {
-                                                                        e.stopPropagation();
-                                                                        // Réinitialiser la sélection précédente
-                                                                        setSelectedRowIndex(
-                                                                            index,
-                                                                        );
-                                                                        setSelectedRowType(
-                                                                            "debit",
-                                                                        );
-                                                                        setSelectedTargetField(
-                                                                            "debit",
-                                                                        );
-
-                                                                        Swal.fire(
-                                                                            {
-                                                                                title: "Mode Débit activé",
-                                                                                text: `Le compte ${res.NumCompte} sera mis dans "Compte à débiter". Double-cliquez pour confirmer.`,
-                                                                                icon: "info",
-                                                                                timer: 2000,
-                                                                                showConfirmButton: false,
-                                                                                toast: true,
-                                                                                position:
-                                                                                    "top-end",
-                                                                            },
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-arrow-down me-1"></i>
-                                                                    Débit
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    className={`btn ${selectedRowIndex === index && selectedRowType === "credit" ? "btn-success" : "btn-outline-success"}`}
-                                                                    onClick={(
-                                                                        e,
-                                                                    ) => {
-                                                                        e.stopPropagation();
-                                                                        // Réinitialiser la sélection précédente
-                                                                        setSelectedRowIndex(
-                                                                            index,
-                                                                        );
-                                                                        setSelectedRowType(
-                                                                            "credit",
-                                                                        );
-                                                                        setSelectedTargetField(
-                                                                            "credit",
-                                                                        );
-
-                                                                        Swal.fire(
-                                                                            {
-                                                                                title: "Mode Crédit activé",
-                                                                                text: `Le compte ${res.NumCompte} sera mis dans "Compte à créditer". Double-cliquez pour confirmer.`,
-                                                                                icon: "info",
-                                                                                timer: 2000,
-                                                                                showConfirmButton: false,
-                                                                                toast: true,
-                                                                                position:
-                                                                                    "top-end",
-                                                                            },
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-arrow-up me-1"></i>
-                                                                    Crédit
-                                                                </button>
-                                                            </div>
-                                                        </td>
-                                                        <td>
-                                                            <button
-                                                                onClick={(
-                                                                    e,
-                                                                ) => {
-                                                                    e.stopPropagation();
-                                                                    handleCopy(
-                                                                        res.NumCompte,
-                                                                    );
-                                                                }}
-                                                                className="btn btn-sm"
-                                                                style={{
-                                                                    background:
-                                                                        "#20c997",
-                                                                    color: "white",
-                                                                    borderRadius:
-                                                                        "6px",
-                                                                }}
-                                                                title="Copier le numéro de compte"
-                                                            >
-                                                                <i className="fas fa-copy me-1"></i>
-                                                                Copier
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ),
-                                            )}
+                                            {fetchDataByName.map((acc, idx) => (
+                                                <tr key={idx} onClick={() => handleAccountClick(acc.NumCompte, acc)} style={{ cursor: "pointer" }}>
+                                                    <td className="fw-semibold">{acc.NumCompte}</td>
+                                                    <td>{acc.NomCompte}</td>
+                                                    <td><span className={`badge ${acc.CodeMonnaie === 1 ? "bg-info" : "bg-success"}`}>{acc.CodeMonnaie === 1 ? "USD" : "CDF"}</span></td>
+                                                </tr>
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1437,427 +447,124 @@ const Debiter = () => {
                     </div>
                 </div>
             )}
-
-            {/* Séparateur décoratif */}
-            <div className="position-relative my-4">
-                <hr className="border-2" style={{ borderColor: "#e9ecef" }} />
-                <span className="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small">
-                    <i className="fas fa-pen me-1"></i> Détails de l'opération
-                </span>
-            </div>
-
-            {/* Formulaire de l'opération */}
+            
+            {/* Formulaire opération */}
             <div className="row g-3 mb-4">
-                <div className="col-md-8">
-                    <div className="card border-0 shadow-sm rounded-3">
-                        <div className="card-header bg-white border-0 pt-3">
-                            <h6
-                                className="fw-bold"
-                                style={{ color: "steelblue" }}
-                            >
-                                <i className="fas fa-info-circle me-2"></i>
-                                Informations de l'opération
-                            </h6>
-                        </div>
+                <div className="col-md-4">
+                    <div className="card border-0 shadow-sm h-100">
                         <div className="card-body">
-                            <div className="row g-3">
-                                <div className="col-md-4">
-                                    <label
-                                        style={{
-                                            color: "steelblue",
-                                            fontWeight: "500",
-                                        }}
-                                    >
-                                        Montant
-                                    </label>
-                                    <input
-                                        id="Montant"
-                                        name="Montant"
-                                        type="text"
-                                        className="form-control form-control"
-                                        style={{
-                                            borderRadius: "10px",
-                                            fontSize: "20px",
-                                            fontWeight: "bold",
-                                            textAlign: "right",
-                                        }}
-                                        onChange={(e) =>
-                                            setMontant(e.target.value)
-                                        }
-                                        value={Montant}
-                                        placeholder="0,00"
-                                    />
-                                </div>
-                                <div className="col-md-8">
-                                    <label
-                                        style={{
-                                            color: "steelblue",
-                                            fontWeight: "500",
-                                        }}
-                                    >
-                                        Libellé
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="Libelle"
-                                        name="Libelle"
-                                        className="form-control"
-                                        style={{
-                                            borderRadius: "10px",
-                                            textTransform: "uppercase",
-                                        }}
-                                        onChange={(e) =>
-                                            setLibelle(
-                                                e.target.value.toUpperCase(),
-                                            )
-                                        }
-                                        value={Libelle}
-                                        placeholder="Description de l'opération"
-                                    />
-                                </div>
-                            </div>
+                            <label className="fw-bold">Montant</label>
+                            <input
+                                id="montantInput"
+                                type="text"
+                                className="form-control form-control-lg text-end fw-bold"
+                                placeholder="0,00"
+                                value={montant}
+                                onChange={handleMontantChange}
+                                style={{ fontSize: "1.2rem" }}
+                            />
+                            <small className="text-muted">Appuyez sur Ctrl+Enter pour valider</small>
                         </div>
                     </div>
                 </div>
-
-                <div className="col-md-4">
-                    <div className="card border-0 shadow-sm rounded-3 h-100">
-                        <div className="card-body d-flex align-items-center justify-content-center">
-                            <button
-                                className="btn w-100 py-3 fw-bold"
-                                id="validerbtn"
-                                style={{
-                                    background:
-                                        "linear-gradient(135deg, #20c997, #198764)",
-                                    border: "none",
-                                    borderRadius: "12px",
-                                    fontSize: "16px",
-                                    color: "white",
-                                    transition: "all 0.3s ease",
-                                }}
-                                onClick={saveOperation}
-                                disabled={
-                                    !Montant ||
-                                    (!FetchDataDebit && !FetchDataCredit)
-                                }
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform =
-                                        "translateY(-2px)";
-                                    e.currentTarget.style.boxShadow =
-                                        "0 6px 16px rgba(32,201,151,0.4)";
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform =
-                                        "translateY(0)";
-                                    e.currentTarget.style.boxShadow = "none";
-                                }}
-                            >
-                                <i
-                                    className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-check me-2"}`}
-                                ></i>
-                                Valider l'opération
+                <div className="col-md-6">
+                    <div className="card border-0 shadow-sm h-100">
+                        <div className="card-body">
+                            <label className="fw-bold">Libellé</label>
+                            <input type="text" className="form-control" value={libelle} onChange={(e) => setLibelle(e.target.value.toUpperCase())} />
+                        </div>
+                    </div>
+                </div>
+                <div className="col-md-2">
+                    <div className="card border-0 shadow-sm h-100">
+                        <div className="card-body d-flex flex-column justify-content-center gap-2">
+                            <button className="btn btn-success w-100 py-2" onClick={saveOperation} disabled={!montant || !fetchDataDebit || !fetchDataCredit}>
+                                <i className="fas fa-check me-2"></i> Valider
+                            </button>
+                            <button className="btn btn-outline-secondary w-100" onClick={resetForm}>
+                                <i className="fas fa-eraser me-2"></i> Nouvelle opération
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            {/* Historique des opérations */}
+            
+            {/* Historique des opérations avec pagination */}
             <div className="row">
                 <div className="col-12">
-                    <div className="card border-0 shadow-sm rounded-3">
-                        <div className="card-header bg-white border-0 pt-3">
-                            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                <h6
-                                    className="fw-bold"
-                                    style={{ color: "steelblue" }}
-                                >
-                                    <i className="fas fa-history me-2"></i>
-                                    Opérations récentes
-                                </h6>
-                                <div className="d-flex gap-2">
-                                    <div
-                                        className="input-group"
-                                        style={{ width: "280px" }}
-                                    >
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            placeholder="Rechercher par référence..."
-                                            style={{
-                                                borderRadius: "8px 0 0 8px",
-                                            }}
-                                            name="searchRefOperation"
-                                            value={searchRefOperation}
-                                            onChange={handleChange}
-                                        />
-                                        <button
-                                            type="button"
-                                            className="btn"
-                                            style={{
-                                                background: "#20c997",
-                                                color: "white",
-                                                borderRadius: "0 8px 8px 0",
-                                            }}
-                                            onClick={() =>
-                                                handleSeachOperation(
-                                                    searchRefOperation,
-                                                )
-                                            }
-                                        >
-                                            <i className="fas fa-search"></i>
-                                        </button>
-                                    </div>
-                                    <button
-                                        className="btn"
-                                        style={{
-                                            background: "#ffc107",
-                                            color: "#1a2632",
-                                            borderRadius: "8px",
-                                        }}
-                                        onClick={() =>
-                                            extourneOperation(
-                                                searchRefOperation,
-                                            )
-                                        }
-                                    >
-                                        <i className="fas fa-exchange-alt me-1"></i>
-                                        Extourner
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="card border-0 shadow-sm">
+                        <div className="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h6 className="fw-bold mb-0">
+        <i className="fas fa-history me-2"></i> Opérations récentes
+    </h6>
+    
+    {/* Ce bloc sera à droite */}
+    <div className="input-group w-auto ms-auto">
+        <input type="text" className="form-control form-control-sm" placeholder="Référence" value={searchRefOperation} onChange={(e) => setSearchRefOperation(e.target.value)} />
+        <button className="btn btn-sm btn-info" onClick={() => handleSeachOperation(searchRefOperation)}><i className="fas fa-search"></i></button>
+        <button className="btn btn-sm btn-warning" onClick={() => extourneOperation(searchRefOperation)}><i className="fas fa-exchange-alt"></i> Extourner</button>
+    </div>
+</div>
                         <div className="card-body p-0">
-                            <div
-                                className="table-responsive"
-                                style={{
-                                    maxHeight: "400px",
-                                    overflowY: "auto",
-                                }}
-                            >
-                                <table
-                                    className="table table-hover mb-0"
-                                    style={{ fontSize: "13px" }}
-                                >
-                                    <thead
-                                        style={{
-                                            backgroundColor: "#1a2632",
-                                            color: "white",
-                                            position: "sticky",
-                                            top: 0,
-                                        }}
-                                    >
+                            <div className="table-responsive">
+                                <table className="table table-hover mb-0">
+                                    <thead style={{ backgroundColor: "#1a2632", color: "white" }}>
                                         <tr>
                                             <th>#</th>
                                             <th>Référence</th>
-                                            <th>Numéro Compte</th>
+                                            <th>Compte</th>
                                             <th>Montant</th>
                                             <th>Devise</th>
-                                            <th>Opération</th>
+                                            <th>Type</th>
                                             <th>Libellé</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {!fetchSearchedOperation &&
-                                        fetchDayOperation
-                                            ? fetchDayOperation.map(
-                                                  (res, index) => {
-                                                      let compteurLocal =
-                                                          index + 1;
-                                                      return (
-                                                          <tr key={index}>
-                                                              <td className="fw-bold">
-                                                                  {
-                                                                      compteurLocal
-                                                                  }
-                                                              </td>
-                                                              <td className="fw-semibold">
-                                                                  {
-                                                                      res.NumTransaction
-                                                                  }
-                                                              </td>
-                                                              <td>
-                                                                  {
-                                                                      res.NumCompte
-                                                                  }
-                                                              </td>
-                                                              <td className="fw-bold">
-                                                                  {res.CodeMonnaie ==
-                                                                  1
-                                                                      ? parseInt(
-                                                                            res.Creditusd,
-                                                                        ) > 0
-                                                                          ? parseInt(
-                                                                                res.Creditusd,
-                                                                            )
-                                                                          : parseInt(
-                                                                                res.Debitusd,
-                                                                            )
-                                                                      : parseInt(
-                                                                              res.Creditfc,
-                                                                          ) > 0
-                                                                        ? parseInt(
-                                                                              res.Creditfc,
-                                                                          )
-                                                                        : parseInt(
-                                                                              res.Debitfc,
-                                                                          )}
-                                                              </td>
-                                                              <td>
-                                                                  <span
-                                                                      className={`badge ${res.CodeMonnaie == 1 ? "bg-info" : "bg-success"}`}
-                                                                  >
-                                                                      {res.CodeMonnaie ==
-                                                                      1
-                                                                          ? "USD"
-                                                                          : "CDF"}
-                                                                  </span>
-                                                              </td>
-                                                              <td>
-                                                                  <span
-                                                                      className={`badge ${res.TypeTransaction === "Crédit" ? "bg-success" : "bg-danger"}`}
-                                                                  >
-                                                                      {
-                                                                          res.TypeTransaction
-                                                                      }
-                                                                  </span>
-                                                              </td>
-                                                              <td>
-                                                                  {res.Libelle}
-                                                              </td>
-                                                              <td>
-                                                                  <button
-                                                                      className="btn btn-sm"
-                                                                      style={{
-                                                                          background:
-                                                                              "#ffc107",
-                                                                          color: "#1a2632",
-                                                                          borderRadius:
-                                                                              "6px",
-                                                                      }}
-                                                                      onClick={() =>
-                                                                          extourneOperation(
-                                                                              res.NumTransaction,
-                                                                          )
-                                                                      }
-                                                                  >
-                                                                      <i className="fas fa-exchange-alt me-1"></i>
-                                                                      Extourner
-                                                                  </button>
-                                                              </td>
-                                                          </tr>
-                                                      );
-                                                  },
-                                              )
-                                            : fetchSearchedOperation &&
-                                              fetchSearchedOperation.map(
-                                                  (res, index) => {
-                                                      let compteurLocal =
-                                                          index + 1;
-                                                      return (
-                                                          <tr key={index}>
-                                                              <td className="fw-bold">
-                                                                  {
-                                                                      compteurLocal
-                                                                  }
-                                                              </td>
-                                                              <td className="fw-semibold">
-                                                                  {
-                                                                      res.NumTransaction
-                                                                  }
-                                                              </td>
-                                                              <td>
-                                                                  {
-                                                                      res.NumCompte
-                                                                  }
-                                                              </td>
-                                                              <td className="fw-bold">
-                                                                  {res.CodeMonnaie ==
-                                                                  1
-                                                                      ? parseInt(
-                                                                            res.Creditusd,
-                                                                        ) > 0
-                                                                          ? parseInt(
-                                                                                res.Creditusd,
-                                                                            )
-                                                                          : parseInt(
-                                                                                res.Debitusd,
-                                                                            )
-                                                                      : parseInt(
-                                                                              res.Creditfc,
-                                                                          ) > 0
-                                                                        ? parseInt(
-                                                                              res.Creditfc,
-                                                                          )
-                                                                        : parseInt(
-                                                                              res.Debitfc,
-                                                                          )}
-                                                              </td>
-                                                              <td>
-                                                                  <span
-                                                                      className={`badge ${res.CodeMonnaie == 1 ? "bg-info" : "bg-success"}`}
-                                                                  >
-                                                                      {res.CodeMonnaie ==
-                                                                      1
-                                                                          ? "USD"
-                                                                          : "CDF"}
-                                                                  </span>
-                                                              </td>
-                                                              <td>
-                                                                  <span
-                                                                      className={`badge ${res.TypeTransaction === "Crédit" ? "bg-success" : "bg-danger"}`}
-                                                                  >
-                                                                      {
-                                                                          res.TypeTransaction
-                                                                      }
-                                                                  </span>
-                                                              </td>
-                                                              <td>
-                                                                  {res.Libelle}
-                                                              </td>
-                                                              <td>
-                                                                  <button
-                                                                      className="btn btn-sm"
-                                                                      style={{
-                                                                          background:
-                                                                              "#ffc107",
-                                                                          color: "#1a2632",
-                                                                          borderRadius:
-                                                                              "6px",
-                                                                      }}
-                                                                      onClick={() =>
-                                                                          extourneOperation(
-                                                                              res.NumTransaction,
-                                                                          )
-                                                                      }
-                                                                  >
-                                                                      <i className="fas fa-exchange-alt me-1"></i>
-                                                                      Extourner
-                                                                  </button>
-                                                              </td>
-                                                          </tr>
-                                                      );
-                                                  },
-                                              )}
+                                        {paginatedData.map((op, idx) => (
+                                            <tr key={idx}>
+                                                <td>{(currentPage-1)*itemsPerPage + idx + 1}</td>
+                                                <td className="fw-semibold">{op.NumTransaction}</td>
+                                                <td>{op.NumCompte}</td>
+                                                <td className="fw-bold">
+                                                    {op.CodeMonnaie === 1
+                                                        ? (parseInt(op.Creditusd) > 0 ? parseInt(op.Creditusd) : parseInt(op.Debitusd))
+                                                        : (parseInt(op.Creditfc) > 0 ? parseInt(op.Creditfc) : parseInt(op.Debitfc))
+                                                    }
+                                                </td>
+                                                <td><span className={`badge ${op.CodeMonnaie === 1 ? "bg-info" : "bg-success"}`}>{op.CodeMonnaie === 1 ? "USD" : "CDF"}</span></td>
+                                                <td><span className={`badge ${op.TypeTransaction === "Crédit" ? "bg-success" : "bg-danger"}`}>{op.TypeTransaction}</span></td>
+                                                <td>{op.Libelle}</td>
+                                                <td><button className="btn btn-sm btn-warning" onClick={() => extourneOperation(op.NumTransaction)}><i className="fas fa-exchange-alt"></i></button></td>
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
-                                {!fetchSearchedOperation &&
-                                    (!fetchDayOperation ||
-                                        fetchDayOperation.length === 0) && (
-                                        <div className="text-center py-5 text-muted">
-                                            <i className="fas fa-inbox fa-3x mb-2 opacity-50"></i>
-                                            <p className="mb-0">
-                                                Aucune opération récente
-                                            </p>
-                                        </div>
-                                    )}
                             </div>
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                                <div className="d-flex justify-content-center mt-3">
+                                    <nav>
+                                        <ul className="pagination pagination-sm">
+                                            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                                                <button className="page-link" onClick={() => setCurrentPage(prev => Math.max(prev-1,1))}>Précédent</button>
+                                            </li>
+                                            {[...Array(totalPages)].map((_, i) => (
+                                                <li key={i} className={`page-item ${currentPage === i+1 ? "active" : ""}`}>
+                                                    <button className="page-link" onClick={() => setCurrentPage(i+1)}>{i+1}</button>
+                                                </li>
+                                            ))}
+                                            <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
+                                                <button className="page-link" onClick={() => setCurrentPage(prev => Math.min(prev+1, totalPages))}>Suivant</button>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
-
             <div style={{ height: "30px" }}></div>
         </div>
     );

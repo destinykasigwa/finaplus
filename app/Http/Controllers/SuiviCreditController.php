@@ -476,61 +476,69 @@ class SuiviCreditController extends Controller
                 //VERIFIE SI L'ECHEACHIER N'ETAIT PAS DEJA GENERER POUR CE CREDIT
                 $checkRow = Echeancier::where("NumDossier", $request->NumDossier)->where("CodeAgence", $codeAgence)->first();
                 //POUR REECHELONNER LE CREDIT
-                if ($request->reechelonne and $checkRow) {
-                    //ICI LES ECRITURES POUR FAIRES UNE REPRISE 
-                    // Appel à la méthode de reprise de provision et reclassement
-                    $clotureTask = new ClotureJourneeCopy($request);
-                    $clotureTask->annulerProvisionEtReclasser($request->NumDossier);
-                    //VERIFIE SI LE CREDIT N'EST PAS EN RETARD CAR INTERDIT DE REECHELONNER UN CREDIT EN RETARD
-                    $chechCredit = Portefeuille::where("NumDossier", $request->NumDossier)->first();
-                    $isCloture = $chechCredit ? $chechCredit->Cloture : null;
-                    if ($isCloture == 1) {
-                        //RECUPERE LE RESTANT DU DU CREDIT
-                        $today = date("Y-m-d");
-                        $totalCapitalRestant = Echeancier::selectRaw('
-                          SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS totalRestant
-                            ')
-                            ->leftJoin('remboursementcredits', function ($join) use ($today) {
-                                $join->on('echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
-                                    ->whereDate('remboursementcredits.DateTranche', '<=', $today);
-                            })
-                            ->where('echeanciers.NumDossier', $request->NumDossier)
-                            ->first();
-                        $SoldeCreditRestant = $totalCapitalRestant ? $totalCapitalRestant->totalRestant : 0;
-                        if ($SoldeCreditRestant <= 0) {
-                            return response()->json([
-                                "status" => 0,
-                                "msg" => "Aucun solde restant restant le montant restant pour ce crédit est " . $SoldeCreditRestant,
-                                'validate_error' => $validator->messages()
-                            ]);
-                        }
-                        $capitalRestantDu = $SoldeCreditRestant;
-                        //LOGIQUE POUR GENERER L'ECHEANCIER
-                        $this->genereEcheancier(
-                            $request->desicion,
-                            $request->ModeCalcul,
-                            $request->DateOctroi,
-                            $request->DateTombeEcheance,
-                            $capitalRestantDu,
-                            $request->TauxInteret,
-                            $request->DateTranche,
-                            $request->dateEcheance,
-                            $request->NumDossier,
+                if ($request->reechelonne && $checkRow) {
+    // 1. Vérifier que le crédit n'est pas déjà clôturé
+    $credit = Portefeuille::where("NumDossier", $request->NumDossier)->first();
+    if (!$credit || $credit->Cloture == 1) {
+        return response()->json([
+            'status' => 0,
+            'msg' => "Impossible de rééchelonner un crédit déjà clôturé.",
+        ]);
+    }
 
-                        );
+    // 2. Calcul du capital restant réel (toutes échéances)
+    $today = date("Y-m-d");
+    $totalCapitalRestant = Echeancier::selectRaw('
+        SUM(echeanciers.CapAmmorti) - SUM(COALESCE(remboursementcredits.CapitalPaye, 0)) AS totalRestant
+    ')
+    ->leftJoin('remboursementcredits', function ($join) use ($today) {
+        $join->on('echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
+            ->whereDate('remboursementcredits.DateTranche', '<=', $today);
+    })
+    ->where('echeanciers.NumDossier', $request->NumDossier)
+    ->first();
+    $capitalRestantDu = $totalCapitalRestant ? $totalCapitalRestant->totalRestant : 0;
+    if ($capitalRestantDu <= 0) {
+        return response()->json([
+            "status" => 0,
+            "msg" => "Aucun capital restant. Le crédit est déjà soldé.",
+        ]);
+    }
 
-                        return response()->json([
-                            "status" => 1,
-                            "msg" => "Géneration de l'écheancier bien effectuée",
-                            'validate_error' => $validator->messages()
-                        ]);
-                    } else {
-                        return response()->json([
-                            'status' => 0,
-                            'msg' => "Impossible de réechelonner un crédit clotûré",
-                        ]);
-                    }
-                }
+    // 3. Annuler les provisions et reclasser (39 -> 32)
+    $clotureTask = new ClotureJourneeCopy($request);
+    $clotureTask->annulerProvisionEtReclasser($request->NumDossier);
+
+    // 4. Marquer les anciennes échéances futures comme annulées
+    $dateReechelonnement = $request->dateReechelonnement ?? $today;
+    Echeancier::where('NumDossier', $request->NumDossier)
+        ->where('DateTranch', '>', $dateReechelonnement)
+        ->update(['Reechelonne' => 1]); // 2 = annulé (à adapter selon votre schéma)
+
+    // 5. Mettre à jour le portefeuille (champ reechelonne)
+    Portefeuille::where('NumDossier', $request->NumDossier)
+        ->update(['Reechelonne' => 1,
+         "MontantReechelonne" =>$capitalRestantDu
+        ]);
+
+    // 6. Générer le nouvel échéancier avec le capital restant
+    $this->genereEcheancier(
+        $request->desicion,
+        $request->ModeCalcul,
+        $request->DateOctroi,
+        $request->DateTombeEcheance,
+        $capitalRestantDu,
+        $request->TauxInteret,
+        $request->DateTranche,
+        $request->dateEcheance,
+        $request->NumDossier,
+    );
+
+    return response()->json([
+        "status" => 1,
+        "msg" => "Rééchelonnement effectué avec succès.",
+    ]);
+}
                 //SI L'ECHEANCIER ETAIT DEJA GENERER POUR CE CREDIT EST QUE C PAS UN REECHELONNEMENT
                 if ($checkRow and !$request->reechelonne) {
                     //VERIFIE S'IL N'EXISTE PAS UN REMBOURSEMENT DEJA EFFECTUE
@@ -1779,7 +1787,7 @@ private function getComptePerte($codeAgence, $codeMonnaie)
 {
     $suffixe = ($codeMonnaie == 1) ? '1' : '2';
     $codeAgencePad = str_pad($codeAgence, 2, '0', STR_PAD_LEFT);
-    $numCompte = "670" . $codeAgencePad . $suffixe;
+    $numCompte = "6700000000" . $codeAgencePad . $suffixe;
     $nomCompte = "Pertes sur créances - Agence " . $codeAgence . ($codeMonnaie == 1 ? ' USD' : ' CDF');
     $this->ensureCompteExiste($numCompte, $nomCompte, 'CHARGE', $codeAgence, $codeMonnaie);
     return $numCompte;
@@ -1789,7 +1797,7 @@ private function getCompteHorsBilan($codeAgence, $codeMonnaie)
 {
     $suffixe = ($codeMonnaie == 1) ? '1' : '2';
     $codeAgencePad = str_pad($codeAgence, 2, '0', STR_PAD_LEFT);
-    $numCompte = "900" . $codeAgencePad . $suffixe;
+    $numCompte = "9000000000" . $codeAgencePad . $suffixe;
     $nomCompte = "Créances radiées - Agence " . $codeAgence . ($codeMonnaie == 1 ? ' USD' : ' CDF');
     $this->ensureCompteExiste($numCompte, $nomCompte, 'HORS_BILAN', $codeAgence, $codeMonnaie);
     return $numCompte;
