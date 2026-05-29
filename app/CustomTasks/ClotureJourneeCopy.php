@@ -93,7 +93,7 @@ class ClotureJourneeCopy
      */
     public function execute()
     {
-   
+
         DB::beginTransaction();
         try {
             $this->validateRequiredData();
@@ -122,7 +122,7 @@ class ClotureJourneeCopy
                 }
             }
 
-        
+
 
             // $lock = DB::table('cloture_lock')->first();
             // if ($lock && $lock->last_cloture_date == $this->dateSystem) {
@@ -1021,6 +1021,7 @@ class ClotureJourneeCopy
                     ->whereDate('remboursementcredits.DateTranche', '<=', $today);
             })
             ->where('echeanciers.NumDossier', $creditRet->NumDossier)
+            ->where("echeanciers.Reechelonne", "=", 0)
             ->whereDate('echeanciers.DateTranch', '<=', $today)   // ← on ne prend que les échéances échues
             ->groupBy('echeanciers.NumDossier')
             ->first();
@@ -1558,6 +1559,7 @@ class ClotureJourneeCopy
 
         $result = Echeancier::where('NumDossier', $numDossier)
             ->where('DateTranch', '<=', $today)
+            ->where("echeanciers.Reechelonne", "=", 0)
             ->where(function ($q) {
                 $q->whereRaw('CapAmmorti - COALESCE((
                 SELECT SUM(CapitalPaye) FROM remboursementcredits 
@@ -1604,6 +1606,7 @@ class ClotureJourneeCopy
                     ->whereDate('remboursementcredits.DateTranche', '<=', $today);
             })
             ->where('echeanciers.NumDossier', $creditProv->NumDossier)
+            ->where("echeanciers.Reechelonne", "=", 0)
             ->first();
 
         $SoldeCreditRestant = $totalCapitalRestant ? $totalCapitalRestant->totalRestant : 0;
@@ -1622,6 +1625,7 @@ class ClotureJourneeCopy
             })
             ->whereDate('echeanciers.DateTranch', '<=', $today)
             ->where('echeanciers.NumDossier', $creditProv->NumDossier)
+            ->where("echeanciers.Reechelonne", "=", 0)
             ->groupBy('echeanciers.NumDossier')
             ->first();
 
@@ -1634,6 +1638,7 @@ class ClotureJourneeCopy
             ->leftJoin('remboursementcredits', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
             // ->where('echeanciers.statutPayement', 1)
             ->where('echeanciers.NumDossier', $creditProv->NumDossier)
+            ->where("echeanciers.Reechelonne", "=", 0)
             ->groupBy('echeanciers.NumDossier')
             ->first();
         if ($capitaDejaPaye) {
@@ -2580,7 +2585,16 @@ class ClotureJourneeCopy
                     )->where("NumCompte", '=', $compteProvisionCustomer)
                         ->groupBy("NumCompte")
                         ->first();
-                    if ($soldeMembreProv->soldeMembreCDF or $soldeMembreProv->soldeMembreUSD > 0) {
+                    if ($devise == 1) {
+                        $soldeProvision = $soldeMembreProv->soldeMembreUSD ?? 0;
+                    } else {
+                        $soldeProvision = $soldeMembreProv->soldeMembreCDF ?? 0;
+                    }
+
+                    if ($soldeProvision <= 0) {
+                        return null; // rien à reprendre
+                    }
+                    if ($soldeProvision > 0) {
                         //DEBITE LE COMPTE  38 DU CLIENT
                         $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
                         Transactions::create([
@@ -2719,6 +2733,10 @@ class ClotureJourneeCopy
                         $soldeProvision = $soldeMembreProv->soldeMembreUSD;
                     } else {
                         $soldeProvision = $soldeMembreProv->soldeMembreCDF;
+                    }
+
+                    if ($soldeProvision <= 0) {
+                        return null;
                     }
 
                     //GENERE LE NUMERO AUTOMATIQUE DE L'OPERATION
@@ -3385,6 +3403,7 @@ class ClotureJourneeCopy
             // Récupérer les échéances non encore totalement remboursées en capital
             $echeances = Echeancier::where('NumDossier', $numDossier)
                 ->where('CapAmmorti', '>', 0)
+                ->where("echeanciers.Reechelonne", "=", 0)
                 ->whereRaw('CapAmmorti - COALESCE((
                 SELECT SUM(CapitalPaye) FROM remboursementcredits 
                 WHERE RefEcheance = echeanciers.ReferenceEch
@@ -3553,6 +3572,7 @@ class ClotureJourneeCopy
             // Récupérer les échéances non encore totalement remboursées en intérêts
             $echeances = Echeancier::where('NumDossier', $numDossier)
                 ->where('Interet', '>', 0)
+                ->where("echeanciers.Reechelonne", "=", 0)
                 ->whereRaw('Interet - COALESCE((
                 SELECT SUM(InteretPaye) FROM remboursementcredits 
                 WHERE RefEcheance = echeanciers.ReferenceEch
@@ -4330,6 +4350,65 @@ class ClotureJourneeCopy
         if ($compte39 && $compte32) {
             $devise = (Portefeuille::where('NumDossier', $numDossier)->value('CodeMonnaie') == 'USD') ? 1 : 2;
             $solde39 = $this->checkSoldeMembreACTIF($devise, $compte39, $numDossier);
+            // if ($solde39 > 0) {
+            //     $numTransaction = $this->generateTransactionNumber();
+            //     // Débit du compte 32 (crédit client)
+            //     Transactions::create([
+            //         "NumTransaction" => $numTransaction,
+            //         "DateTransaction" => $this->dateSystem,
+            //         "DateSaisie" => $this->dateSystem,
+            //         "TypeTransaction" => "D",
+            //         "CodeMonnaie" => $devise,
+            //         "CodeAgence" => $jourRetard->CodeAgence,
+            //         "NumDossier" => $numDossier,
+            //         "NumCompte" => $compte32,
+            //         "NumComptecp" => $compte39,
+            //         "Debit" => $solde39,
+            //         "Operant" => "SYSTEM",
+            //         "Debitfc" => $devise == 2 ? $solde39 : $solde39 * $this->tauxDuJour,
+            //         "Debitusd" => $devise == 1 ? $solde39 : $solde39 / $this->tauxDuJour,
+            //         "NomUtilisateur" => "SYSTEM",
+            //         "Libelle" => "Reclassement capital restant (clôture crédit) - dossier " . $numDossier,
+            //         "refCompteMembre" => $jourRetard->NumAdherent,
+            //         "RefEcheance" => null,
+            //     ]);
+            //     // Crédit du compte 39
+            //     Transactions::create([
+            //         "NumTransaction" => $numTransaction,
+            //         "DateTransaction" => $this->dateSystem,
+            //         "DateSaisie" => $this->dateSystem,
+            //         "TypeTransaction" => "C",
+            //         "CodeMonnaie" => $devise,
+            //         "CodeAgence" => $jourRetard->CodeAgence,
+            //         "NumDossier" => $numDossier,
+            //         "NumCompte" => $compte39,
+            //         "NumComptecp" => $compte32,
+            //         "Credit" => $solde39,
+            //         "Operant" => "SYSTEM",
+            //         "Creditfc" => $devise == 2 ? $solde39 : $solde39 * $this->tauxDuJour,
+            //         "Creditusd" => $devise == 1 ? $solde39 : $solde39 / $this->tauxDuJour,
+            //         "NomUtilisateur" => "SYSTEM",
+            //         "Libelle" => "Reclassement capital restant (clôture crédit) - dossier " . $numDossier,
+            //         "refCompteMembre" => $jourRetard->NumAdherent,
+            //         "RefEcheance" => null,
+            //     ]);
+            // }
+            // Si le solde du compte 39 est nul ou négatif, on calcule le capital restant réel via les échéanciers
+            if ($solde39 <= 0) {
+                $totalCapital = Echeancier::where('NumDossier', $numDossier)
+                    ->where('Reechelonne', 0)
+                    ->sum('CapAmmorti');
+
+                $totalRembourse = Remboursementcredit::whereIn('RefEcheance', function ($q) use ($numDossier) {
+                    $q->select('ReferenceEch')
+                        ->from('echeanciers')
+                        ->where('NumDossier', $numDossier)
+                        ->where('Reechelonne', 0);
+                })->sum('CapitalPaye');
+
+                $solde39 = $totalCapital - $totalRembourse;
+                // dd($solde39);
+            }
             if ($solde39 > 0) {
                 $numTransaction = $this->generateTransactionNumber();
                 // Débit du compte 32 (crédit client)

@@ -1025,7 +1025,7 @@ const Releve = () => {
                                                             "Solde d'ouverture",
                                                             "Solde de clôture",
                                                             "Solde disponible",
-                                                            "Effets en instance",
+                                                            // "Effets en instance",
                                                             "Total débit",
                                                             "Total Crédit",
                                                             "Période",
@@ -1124,7 +1124,7 @@ const Releve = () => {
                                                                 )}
                                                             </td>
                                                         </tr>
-                                                        <tr>
+                                                        {/* <tr>
                                                             <td
                                                                 style={
                                                                     valueStyle
@@ -1136,7 +1136,7 @@ const Releve = () => {
                                                                     ) || 0,
                                                                 )}
                                                             </td>
-                                                        </tr>
+                                                        </tr> */}
                                                         <tr>
                                                             <td
                                                                 style={
@@ -1598,7 +1598,7 @@ const Releve = () => {
                                                             "Solde d'ouverture",
                                                             "Solde de clôture",
                                                             "Solde disponible",
-                                                            "Effets en instance",
+                                                            // "Effets en instance",
                                                             "Total débit",
                                                             "Total Crédit",
                                                             "Période",
@@ -1711,7 +1711,7 @@ const Releve = () => {
                                                                 )}
                                                             </td>
                                                         </tr>
-                                                        <tr>
+                                                        {/* <tr>
                                                             <td
                                                                 style={
                                                                     valueStyle
@@ -1723,7 +1723,7 @@ const Releve = () => {
                                                                     ) || 0,
                                                                 )}
                                                             </td>
-                                                        </tr>
+                                                        </tr> */}
                                                         <tr>
                                                             <td
                                                                 style={

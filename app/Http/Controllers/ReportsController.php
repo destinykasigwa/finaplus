@@ -988,6 +988,7 @@ class ReportsController extends Controller
                     // -------------------------------------------------------------
                     $dateEcheanceCredit = $checkRow->DateEcheance;
                     $echeances = Echeancier::where('NumDossier', $request->searched_num_dossier)
+                         ->where('Reechelonne', 0) // ← exclut les rééchelonnées
                         ->whereDate('DateTranch', '<=', $dateReference)
                         ->get();
 
