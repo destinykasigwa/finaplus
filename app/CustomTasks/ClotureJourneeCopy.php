@@ -4394,21 +4394,21 @@ class ClotureJourneeCopy
             //     ]);
             // }
             // Si le solde du compte 39 est nul ou négatif, on calcule le capital restant réel via les échéanciers
-            if ($solde39 <= 0) {
-                $totalCapital = Echeancier::where('NumDossier', $numDossier)
-                    ->where('Reechelonne', 0)
-                    ->sum('CapAmmorti');
+            // if ($solde39 <= 0) {
+            //     $totalCapital = Echeancier::where('NumDossier', $numDossier)
+            //         ->where('Reechelonne', 0)
+            //         ->sum('CapAmmorti');
 
-                $totalRembourse = Remboursementcredit::whereIn('RefEcheance', function ($q) use ($numDossier) {
-                    $q->select('ReferenceEch')
-                        ->from('echeanciers')
-                        ->where('NumDossier', $numDossier)
-                        ->where('Reechelonne', 0);
-                })->sum('CapitalPaye');
+            //     $totalRembourse = Remboursementcredit::whereIn('RefEcheance', function ($q) use ($numDossier) {
+            //         $q->select('ReferenceEch')
+            //             ->from('echeanciers')
+            //             ->where('NumDossier', $numDossier)
+            //             ->where('Reechelonne', 0);
+            //     })->sum('CapitalPaye');
 
-                $solde39 = $totalCapital - $totalRembourse;
-                // dd($solde39);
-            }
+            //     $solde39 = $totalCapital - $totalRembourse;
+            //     // dd($solde39);
+            // }
             if ($solde39 > 0) {
                 $numTransaction = $this->generateTransactionNumber();
                 // Débit du compte 32 (crédit client)
@@ -4427,7 +4427,7 @@ class ClotureJourneeCopy
                     "Debitfc" => $devise == 2 ? $solde39 : $solde39 * $this->tauxDuJour,
                     "Debitusd" => $devise == 1 ? $solde39 : $solde39 / $this->tauxDuJour,
                     "NomUtilisateur" => "SYSTEM",
-                    "Libelle" => "Reclassement capital restant (clôture crédit) - dossier " . $numDossier,
+                    "Libelle" => "Reclassement capital restant dû du crédit - dossier " . $numDossier,
                     "refCompteMembre" => $jourRetard->NumAdherent,
                     "RefEcheance" => null,
                 ]);
@@ -4447,7 +4447,7 @@ class ClotureJourneeCopy
                     "Creditfc" => $devise == 2 ? $solde39 : $solde39 * $this->tauxDuJour,
                     "Creditusd" => $devise == 1 ? $solde39 : $solde39 / $this->tauxDuJour,
                     "NomUtilisateur" => "SYSTEM",
-                    "Libelle" => "Reclassement capital restant (clôture crédit) - dossier " . $numDossier,
+                    "Libelle" => "Reclassement capital restant dû du crédit - dossier " . $numDossier,
                     "refCompteMembre" => $jourRetard->NumAdherent,
                     "RefEcheance" => null,
                 ]);

@@ -338,7 +338,6 @@ class SuiviCreditController extends Controller
                     $agence->last_ref_numdossier = $numDocument;
                     // $agence->save();
                     $data_numdossier = "ND" . $codeAgence . "0" . $numDocument;
-
                     $data = Comptes::where('niveau', 5)
                         ->where('CodeAgence', $codeAgenceCourante)
                         ->where(function ($query) use ($search) {
@@ -389,6 +388,7 @@ class SuiviCreditController extends Controller
                             $compteCreditEnUSD = "3200" . $data->NumAdherant . $codeAgence . "1";
                         }
                     }
+
                     return response()->json([
                         "status" => 1,
                         "data" => $data,
@@ -1404,6 +1404,7 @@ class SuiviCreditController extends Controller
             if ($creditExist->Accorde == 1) {
                 Portefeuille::where("NumDossier", "=", $request->NumDossier)->update([
                     "Octroye" => 1,
+                    "OctroyePar"=>Auth::user()->name,
                 ]);
                 //VERIE SI LE CREDIT NE PAS ENCORE DEBOURSER
                 if ($creditExist->Octroye == 1) {
@@ -1440,7 +1441,7 @@ class SuiviCreditController extends Controller
                         "Debitusd" => $dataCredit->MontantAccorde / $tauxDuJour,
                         "Debitfc" => $dataCredit->MontantAccorde,
                         "NomUtilisateur" => Auth::user()->name,
-                        "Libelle" => "Crédit à court terme octroyé à " . $dataCredit->NomCompte . " en date du " . $dateSystem . " Numéro dossier " . $dataCredit->NumDossier,
+                        "Libelle" => "Crédit à court terme octroyé à " . $dataCredit->NomCompte . " en date du " . $creditExist->DateOctroi . " Numéro dossier " . $dataCredit->NumDossier,
                         "refCompteMembre" => $dataCredit->numAdherant,
                     ]);
                     //PUIS ON DEBITE LE COMPTE CREDIT DU MEMBRE
@@ -1484,7 +1485,7 @@ class SuiviCreditController extends Controller
                         "Creditusd" => $dataCredit->MontantAccorde / $tauxDuJour,
                         "Creditfc" => $dataCredit->MontantAccorde,
                         "NomUtilisateur" => Auth::user()->name,
-                        "Libelle" => "Votre crédit à court terme octroyé en date du " . $dateSystem . " Numéro dossier " . $dataCredit->NumDossier,
+                        "Libelle" => "Votre crédit à court terme octroyé en date du " . $creditExist->DateOctroi . " Numéro dossier " . $dataCredit->NumDossier,
                         "refCompteMembre" => $dataCredit->numAdherant,
                     ]);
                 } else if ($dataCredit->CodeMonnaie == "USD") {
@@ -1537,7 +1538,7 @@ class SuiviCreditController extends Controller
                         "Debitusd" => $dataCredit->MontantAccorde,
                         "Debitfc" => $dataCredit->MontantAccorde * $tauxDuJour,
                         "NomUtilisateur" => Auth::user()->name,
-                        "Libelle" => "Crédit à court terme octroyé à " . $dataCredit->NomCompte . " en date du " . $dateSaisie . " Numéro dossier " . $dataCredit->NumDossier,
+                        "Libelle" => "Crédit à court terme octroyé à " . $dataCredit->NomCompte . " en date du " . $creditExist->DateOctroi . " Numéro dossier " . $dataCredit->NumDossier,
                         "refCompteMembre" => $dataCredit->numAdherant,
                     ]);
 
@@ -1566,7 +1567,7 @@ class SuiviCreditController extends Controller
                 }
                 //ENVOIE UNE NOTIFICATION
                 $Libelle = "Votre crédit à court terme octroyé en date du " . $creditExist->DateOctroi;
-                $this->sendNotification->sendNotificationComptabilite($dataCredit->numAdherant, $dataCredit->CodeMonnaie, $dataCredit->MontantAccorde, "C", $Libelle);
+                $this->sendNotification->sendNotificationOctroiCredit($dataCredit->numAdherant, $dataCredit->CodeMonnaie, $dataCredit->MontantAccorde, $Libelle);
                 return response()->json(["status" => 1, "msg" => "Ce crédit a bien été décaissé merci."]);
             } else {
                 return response()->json(["status" => 0, "msg" => "Le crédit ne pas encore accordé merci."]);

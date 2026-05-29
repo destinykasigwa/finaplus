@@ -12,6 +12,7 @@ use App\Models\Transactions;
 use App\Mail\TransactionsEmail;
 use App\Models\TauxEtDateSystem;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 
@@ -32,7 +33,7 @@ class SendNotification
             $devise = "USD"; //USD
         } else if ($devise == 2) {
             $devise = "CDF"; //CDF
-        }else{
+        } else {
             $devise;
         }
 
@@ -113,27 +114,27 @@ class SendNotification
                         //Log::info(json_encode($response));
                         if ($response['status'] == 'success') {
                             // Traiter le succès, par exemple, loguer ou notifier l'utilisateur
-                            $CodeMonnaie= 2;
+                            $CodeMonnaie = 2;
                             SendedSMS::create([
                                 "numPhone" => $receiver_number,
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                 "NumCompte"=>$NumCompteCDF,
-                                "CodeMonnaie"=>$CodeMonnaie,
-                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
+                                "NumCompte" => $NumCompteCDF,
+                                "CodeMonnaie" => $CodeMonnaie,
+                                "statut" => $typeTransaction == "C" ? "depot" : "retrait"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
-                            $CodeMonnaie= 2;
+                            $CodeMonnaie = 2;
                             SendedSMS::create([
                                 "numPhone" => $receiver_number,
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                 "NumCompte"=>$NumCompteCDF,
-                                "CodeMonnaie"=>$CodeMonnaie,
-                                 "statut"=>$typeTransaction == "C"?"depot":"retrait"
+                                "NumCompte" => $NumCompteCDF,
+                                "CodeMonnaie" => $CodeMonnaie,
+                                "statut" => $typeTransaction == "C" ? "depot" : "retrait"
                             ]);
                         }
                     } catch (\Throwable $th) {
@@ -171,9 +172,9 @@ class SendNotification
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                "NumCompte"=>$NumCompteUSD,
-                                "CodeMonnaie"=>1,
-                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
+                                "NumCompte" => $NumCompteUSD,
+                                "CodeMonnaie" => 1,
+                                "statut" => $typeTransaction == "C" ? "depot" : "retrait"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
@@ -182,9 +183,9 @@ class SendNotification
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                 "NumCompte"=>$NumCompteUSD,
-                                "CodeMonnaie"=>1,
-                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
+                                "NumCompte" => $NumCompteUSD,
+                                "CodeMonnaie" => 1,
+                                "statut" => $typeTransaction == "C" ? "depot" : "retrait"
                             ]);
                         }
                     } catch (\Throwable $th) {
@@ -280,9 +281,9 @@ class SendNotification
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                 "NumCompte"=>$NumCompteCDF,
-                                "CodeMonnaie"=>2,
-                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
+                                "NumCompte" => $NumCompteCDF,
+                                "CodeMonnaie" => 2,
+                                "statut" => $typeTransaction == "C" ? "depot" : "retrait"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
@@ -291,9 +292,9 @@ class SendNotification
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                  "NumCompte"=>$NumCompteCDF,
-                                "CodeMonnaie"=>2,
-                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
+                                "NumCompte" => $NumCompteCDF,
+                                "CodeMonnaie" => 2,
+                                "statut" => $typeTransaction == "C" ? "depot" : "retrait"
                             ]);
                         }
                     } catch (\Throwable $th) {
@@ -317,7 +318,7 @@ class SendNotification
                         //         ? "Bonjour Madame "
                         //         : "Bonjour ");
 
-                        $message =  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre depot " : "de votre retrait ") . " de " . $montant . " sur votre compte USD-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD). " USD";
+                        $message =  $getMembreInfo2->NomCompte . ", Annulation " . ($typeTransaction == "C" ? " de votre depot " : "de votre retrait ") . " de " . $montant . " sur votre compte USD-" . $NumCompte . "  Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
                         $receiver_number = $getMembreInfo->Telephone;
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
 
@@ -328,9 +329,9 @@ class SendNotification
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                  "NumCompte"=>$NumCompteUSD,
-                                "CodeMonnaie"=>1,
-                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
+                                "NumCompte" => $NumCompteUSD,
+                                "CodeMonnaie" => 1,
+                                "statut" => $typeTransaction == "C" ? "depot" : "retrait"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
@@ -339,9 +340,9 @@ class SendNotification
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                  "NumCompte"=>$NumCompteUSD,
-                                "CodeMonnaie"=>1,
-                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
+                                "NumCompte" => $NumCompteUSD,
+                                "CodeMonnaie" => 1,
+                                "statut" => $typeTransaction == "C" ? "depot" : "retrait"
                             ]);
                         }
                     } catch (\Throwable $th) {
@@ -429,9 +430,9 @@ class SendNotification
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                  "NumCompte"=>$NumCompteCDF,
-                                "CodeMonnaie"=>2,
-                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
+                                "NumCompte" => $NumCompteCDF,
+                                "CodeMonnaie" => 2,
+                                "statut" => $typeTransaction == "C" ? "depot" : "retrait"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
@@ -440,9 +441,9 @@ class SendNotification
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                  "NumCompte"=>$NumCompteCDF,
-                                "CodeMonnaie"=>2,
-                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
+                                "NumCompte" => $NumCompteCDF,
+                                "CodeMonnaie" => 2,
+                                "statut" => $typeTransaction == "C" ? "depot" : "retrait"
                             ]);
                         }
                     } catch (\Throwable $th) {
@@ -476,9 +477,9 @@ class SendNotification
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                  "NumCompte"=>$NumCompteUSD,
-                                "CodeMonnaie"=>1,
-                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
+                                "NumCompte" => $NumCompteUSD,
+                                "CodeMonnaie" => 1,
+                                "statut" => $typeTransaction == "C" ? "depot" : "retrait"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
@@ -487,9 +488,9 @@ class SendNotification
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                  "NumCompte"=>$NumCompteUSD,
-                                "CodeMonnaie"=>1,
-                                "statut"=>$typeTransaction == "C"?"depot":"retrait"
+                                "NumCompte" => $NumCompteUSD,
+                                "CodeMonnaie" => 1,
+                                "statut" => $typeTransaction == "C" ? "depot" : "retrait"
                             ]);
                         }
                     } catch (\Throwable $th) {
@@ -499,6 +500,90 @@ class SendNotification
             }
         }
     }
+
+
+  public function sendNotificationOctroiCredit($NumCompte, $devise, $montant, $libelle)
+{
+    // Récupérer les informations du membre
+    $getMembreInfo = SMSBanking::where("NumAbrege", $NumCompte)
+        ->orWhere("NumCompte", $NumCompte)
+        ->first();
+    if (!$getMembreInfo) return;
+
+    // Récupérer le compte (nom, sexe) via NumCompte, NumAdherant ou Num_Manuel
+    $compte = Comptes::where("NumCompte", $NumCompte)
+        ->orWhere("NumAdherant", $NumCompte)
+        ->orWhere("Num_Manuel", $NumCompte)
+        ->first();
+    if (!$compte) return;
+
+    // Convertir le montant en float pour number_format
+    $montantFloat = (float)$montant;
+    $montantFormate = number_format($montantFloat, 0, ',', ' ');
+
+    // Récupérer le solde du compte après octroi (dans la bonne devise)
+    $solde = 0;
+    if ($devise == "CDF") {
+        $soldeMembre = Transactions::select(DB::raw("SUM(Creditfc)-SUM(Debitfc) as solde"))
+            ->where("NumCompte", $compte->NumCompte)
+            ->first();
+        $solde = $soldeMembre ? (float)$soldeMembre->solde : 0;
+    } else {
+        $soldeMembre = Transactions::select(DB::raw("SUM(Creditusd)-SUM(Debitusd) as solde"))
+            ->where("NumCompte", $compte->NumCompte)
+            ->first();
+        $solde = $soldeMembre ? (float)$soldeMembre->solde : 0;
+    }
+    $soldeFormate = number_format($solde, 0, ',', ' ');
+
+    // Construction du message court
+    $nomCourt = strtok($compte->NomCompte, ' ');
+    $civilite = '';
+    if ($compte->sexe == 'Homme') $civilite = 'M. ';
+    elseif ($compte->sexe == 'Femme') $civilite = 'Mme ';
+
+    $message = $civilite . $nomCourt . ", votre credit de " . $montantFormate . " " . $devise . " a ete decaisse. Nouveau solde: " . $soldeFormate . " " . $devise;
+
+    // Raccourcir si > 160 caractères
+    if (strlen($message) > 160) {
+        $message = $civilite . $nomCourt . ", crédit décaissé: " . $montantFormate . " " . $devise . ". Solde: " . $soldeFormate . " " . $devise;
+    }
+    if (strlen($message) > 160) {
+        $message = "Crédit décaissé: " . $montantFormate . " " . $devise . ". Solde: " . $soldeFormate . " " . $devise;
+    }
+    if (strlen($message) > 160) {
+        $message = substr($message, 0, 157) . '...';
+    }
+
+    // Envoi Email
+    
+    $message = $civilite . $nomCourt . ", votre crédit de " . $montantFormate . " " . $devise . " a été décaissé. Nouveau solde: " . $soldeFormate . " " . $devise;
+    if ($getMembreInfo->Email && $getMembreInfo->ActivatedEmail == 1) {
+        Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($message));
+    }
+
+    // Envoi SMS
+    if ($getMembreInfo->Telephone && $getMembreInfo->ActivatedSMS == 1) {
+        try {
+            
+            $message = $civilite . $nomCourt . ", votre credit de " . $montantFormate . " " . $devise . " a ete decaisse. Nouveau solde: " . $soldeFormate . " " . $devise;
+            $response = $this->africaTalking->sendSms($getMembreInfo->Telephone, $message);
+            $status = ($response['status'] == 'success') ? 1 : 0;
+            SendedSMS::create([
+                "numPhone" => $getMembreInfo->Telephone,
+                "messageStatus" => $status,
+                "paidStatus" => 0,
+                "dateEnvoie" => date("Y-m-d"),
+                "NumCompte" => $compte->NumCompte,
+                "CodeMonnaie" => ($devise == "CDF") ? 2 : 1,
+                "statut" => "octroi_credit"
+            ]);
+        } catch (\Throwable $th) {
+            Log::error("Erreur envoi SMS octroi crédit: " . $th->getMessage());
+        }
+    }
+}
+
 
     //PERMET D'ENVOYER DES NOTIFICATION
     public function sendNotificationRemboursementCredit($NumCompte, $devise, $montant, $typeTransaction, $isPartielOrComplete)
@@ -588,9 +673,9 @@ class SendNotification
                                     "messageStatus" => 1,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
-                                      "NumCompte"=>$NumCompteCDF,
-                                "CodeMonnaie"=>2,
-                                "statut"=>"remboursement"
+                                    "NumCompte" => $NumCompteCDF,
+                                    "CodeMonnaie" => 2,
+                                    "statut" => "remboursement"
                                 ]);
                             } else {
                                 // Traiter l'échec, par exemple, loguer l'erreur
@@ -599,9 +684,9 @@ class SendNotification
                                     "messageStatus" => 0,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
-                                      "NumCompte"=>$NumCompteCDF,
-                                "CodeMonnaie"=>2,
-                               "statut"=>"remboursement"
+                                    "NumCompte" => $NumCompteCDF,
+                                    "CodeMonnaie" => 2,
+                                    "statut" => "remboursement"
                                 ]);
                             }
                         } catch (\Throwable $th) {
@@ -638,10 +723,10 @@ class SendNotification
                                     "messageStatus" => 1,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
-                                     "NumCompte"=>$NumCompteUSD,
-                                "CodeMonnaie"=>1,
-                               "statut"=>"remboursement"
-                                    
+                                    "NumCompte" => $NumCompteUSD,
+                                    "CodeMonnaie" => 1,
+                                    "statut" => "remboursement"
+
                                 ]);
                             } else {
                                 // Traiter l'échec, par exemple, loguer l'erreur
@@ -650,9 +735,9 @@ class SendNotification
                                     "messageStatus" => 0,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
-                                     "NumCompte"=>$NumCompteUSD,
-                                "CodeMonnaie"=>1,
-                               "statut"=>"remboursement"
+                                    "NumCompte" => $NumCompteUSD,
+                                    "CodeMonnaie" => 1,
+                                    "statut" => "remboursement"
                                 ]);
                             }
                         } catch (\Throwable $th) {
@@ -735,9 +820,9 @@ class SendNotification
                                     "messageStatus" => 1,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
-                                     "NumCompte"=>$NumCompteCDF,
-                                "CodeMonnaie"=>2,
-                               "statut"=>"remboursement"
+                                    "NumCompte" => $NumCompteCDF,
+                                    "CodeMonnaie" => 2,
+                                    "statut" => "remboursement"
                                 ]);
                             } else {
                                 // Traiter l'échec, par exemple, loguer l'erreur
@@ -746,9 +831,9 @@ class SendNotification
                                     "messageStatus" => 0,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
-                                     "NumCompte"=>$NumCompteCDF,
-                                "CodeMonnaie"=>2,
-                               "statut"=>"remboursement"
+                                    "NumCompte" => $NumCompteCDF,
+                                    "CodeMonnaie" => 2,
+                                    "statut" => "remboursement"
                                 ]);
                             }
                         } catch (\Throwable $th) {
@@ -785,9 +870,9 @@ class SendNotification
                                     "messageStatus" => 1,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
-                                     "NumCompte"=>$NumCompteUSD,
-                                "CodeMonnaie"=>1,
-                               "statut"=>"remboursement"
+                                    "NumCompte" => $NumCompteUSD,
+                                    "CodeMonnaie" => 1,
+                                    "statut" => "remboursement"
                                 ]);
                             } else {
                                 // Traiter l'échec, par exemple, loguer l'erreur
@@ -796,9 +881,9 @@ class SendNotification
                                     "messageStatus" => 0,
                                     "paidStatus" => 0,
                                     "dateEnvoie" => date("Y-m-d"),
-                                     "NumCompte"=>$NumCompteUSD,
-                                "CodeMonnaie"=>1,
-                               "statut"=>"remboursement"
+                                    "NumCompte" => $NumCompteUSD,
+                                    "CodeMonnaie" => 1,
+                                    "statut" => "remboursement"
                                 ]);
                             }
                         } catch (\Throwable $th) {
@@ -845,7 +930,7 @@ class SendNotification
                         info("ok message sould be sent");
                         //S'IL EST ABONNE SUR LES SMS ON L'ENVOIE UN MESSAGE
                         $receiver_number = $checkMembreExistOnSMSAlert->Telephone;
-                        $message =" Ns vs rappellons que votre " . $getPorteFeuille[$i]->NbreJour .
+                        $message = " Ns vs rappellons que votre " . $getPorteFeuille[$i]->NbreJour .
                             "e tranche Doss. " . $getPorteFeuille[$i]->NumDossier
                             . " tombe ce " . Carbon::parse($getPorteFeuille[$i]->DateTranch)->format('d-m-Y')
                             . ". Cap " . $getPorteFeuille[$i]->CapAmmorti . " Int " . $getPorteFeuille[$i]->Interet
@@ -854,27 +939,27 @@ class SendNotification
                         $response = $this->africaTalking->sendSms($receiver_number, $message);
                         if ($response['status'] == 'success') {
                             // Traiter le succès, par exemple, loguer ou notifier l'utilisateur
-                             $CodeMonnaie= $getPorteFeuille[$i]->CodeMonnaie=="CDF"?2:1;
+                            $CodeMonnaie = $getPorteFeuille[$i]->CodeMonnaie == "CDF" ? 2 : 1;
                             SendedSMS::create([
                                 "numPhone" => $receiver_number,
                                 "messageStatus" => 1,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                 "NumCompte"=>$getPorteFeuille[$i]->NumCompteEpargne,
-                                "CodeMonnaie"=>$CodeMonnaie,
-                                "statut"=>"rappel_remboursement"
+                                "NumCompte" => $getPorteFeuille[$i]->NumCompteEpargne,
+                                "CodeMonnaie" => $CodeMonnaie,
+                                "statut" => "rappel_remboursement"
                             ]);
                         } else {
                             // Traiter l'échec, par exemple, loguer l'erreur
-                           $CodeMonnaie= $getPorteFeuille[$i]->CodeMonnaie=="CDF"?2:1;
+                            $CodeMonnaie = $getPorteFeuille[$i]->CodeMonnaie == "CDF" ? 2 : 1;
                             SendedSMS::create([
                                 "numPhone" => $receiver_number,
                                 "messageStatus" => 0,
                                 "paidStatus" => 0,
                                 "dateEnvoie" => date("Y-m-d"),
-                                "NumCompte"=>$getPorteFeuille[$i]->NumCompteEpargne,
-                                "CodeMonnaie"=>$CodeMonnaie,
-                                "statut"=>"rappel_remboursement"
+                                "NumCompte" => $getPorteFeuille[$i]->NumCompteEpargne,
+                                "CodeMonnaie" => $CodeMonnaie,
+                                "statut" => "rappel_remboursement"
                             ]);
                         }
                     }

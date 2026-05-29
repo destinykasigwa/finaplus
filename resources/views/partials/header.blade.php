@@ -362,7 +362,7 @@
                 <li class="nav-item">
                     <a href="eco/home" class="nav-link">
                         <i class="fas fa-home me-1"></i>
-                        Accueil
+                        <span class="d-none d-md-inline">Accueil</span>
                     </a>
                 </li>
                 <!-- ========== SÉLECTEUR D'AGENCE MODERNE ========== -->
@@ -562,7 +562,7 @@
                         </a>
                     </li>
 
-                  
+
 
                     <li class="nav-item dropdown">
 
@@ -669,7 +669,7 @@
                         </div>
                     </li>
 
-                    
+
                     <li class="nav-item dropdown">
 
                         <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
@@ -695,19 +695,19 @@
 
                             </a>
 
-                             <div class="dropdown-divider"></div>
+                            <div class="dropdown-divider"></div>
                             <h6 class="dropdown-header">Notifications</h6>
-                          
-                        <a class="dropdown-item" href="{{ route('eco.pages.sms-banking') }}" >
-                            <i class="fas fa-sms me-1"></i> SMS Banking
-                        </a>
 
-                          <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ route('eco.pages.sms-banking') }}">
+                                <i class="fas fa-sms me-1"></i> SMS Banking
+                            </a>
+
+                            <div class="dropdown-divider"></div>
                             <h6 class="dropdown-header">Crédits</h6>
-                    
-                           <a class="dropdown-item" href="{{ route('eco.pages.radiation-credit') }}" >
-                            <i class="fas fa-sms me-1"></i> Radiation crédits
-                        </a>
+
+                            <a class="dropdown-item" href="{{ route('eco.pages.radiation-credit') }}">
+                                <i class="fas fa-sms me-1"></i> Radiation crédits
+                            </a>
                         </div>
                     </li>
                 </ul>

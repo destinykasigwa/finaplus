@@ -436,6 +436,7 @@ const saveEcheancier = async (e) => {
                 },
             );
             if (res.data.status == 1) {
+                setisLoadingRemb(false); 
                 Swal.fire({
                     title: "Accord crédit",
                     text: res.data.msg,
@@ -443,7 +444,9 @@ const saveEcheancier = async (e) => {
                     timer: 8000,
                     confirmButtonText: "Okay",
                 });
+                  
             } else {
+                 setisLoadingRemb(false);
                 Swal.fire({
                     title: "Accord crédit",
                     text: res.data.msg,
@@ -451,6 +454,7 @@ const saveEcheancier = async (e) => {
                     timer: 8000,
                     confirmButtonText: "Okay",
                 });
+                  
             }
         }else{
          
@@ -483,6 +487,7 @@ const saveEcheancier = async (e) => {
                 },
             );
             if (res.data.status == 1) {
+                    setisLoadingRemb(false); 
                 Swal.fire({
                     title: "Clôture crédit",
                     text: res.data.msg,
@@ -490,7 +495,9 @@ const saveEcheancier = async (e) => {
                     timer: 8000,
                     confirmButtonText: "Okay",
                 });
+              
             } else {
+                setisLoadingRemb(false); 
                 Swal.fire({
                     title: "Clôture crédit",
                     text: res.data.msg,
@@ -498,6 +505,7 @@ const saveEcheancier = async (e) => {
                     timer: 8000,
                     confirmButtonText: "Okay",
                 });
+                  
             }
         }else{
          
@@ -530,6 +538,7 @@ const saveEcheancier = async (e) => {
                 },
             );
             if (res.data.status == 1) {
+                  setisLoadingRemb(false); 
                 Swal.fire({
                     title: "Déboursement crédit",
                     text: res.data.msg,
@@ -537,7 +546,9 @@ const saveEcheancier = async (e) => {
                     timer: 8000,
                     confirmButtonText: "Okay",
                 });
+                
             } else {
+                setisLoadingRemb(false); 
                 Swal.fire({
                     title: "Déboursement crédit",
                     text: res.data.msg,
@@ -545,6 +556,7 @@ const saveEcheancier = async (e) => {
                     timer: 8000,
                     confirmButtonText: "Okay",
                 });
+                  
             }
         }else{
          
@@ -3388,58 +3400,93 @@ const saveEcheancier = async (e) => {
             <div className="card border-0 bg-light">
                 <div className="card-body">
                     {/* Grille des 4 boutons */}
-                    <div className="row g-3">
-                        {/* Bouton Accorder */}
-                        <div className="col-md-3">
-                            {fetchDataToUpdate && fetchDataToUpdate.Accorde == 1 ? (
-                                <button disabled className="btn btn-secondary w-100" style={{ borderRadius: "10px", padding: "12px 0", opacity: 0.6 }}>
-                                    <i className="fas fa-thumbs-up me-2"></i> Déjà Accordé
-                                </button>
-                            ) : (
-                                <button onClick={AccordeCredit} className="btn w-100" style={{ background: "linear-gradient(135deg, #28a745, #1e7e34)", color: "white", borderRadius: "10px", padding: "12px 0" }}>
-                                    <i className="fas fa-thumbs-up me-2"></i> Accorder
-                                </button>
-                            )}
-                        </div>
+                 <div className="row g-4">
+    {/* Bouton Accorder */}
+    <div className="col-md-3">
+        <div className="card h-100 border-0 shadow-sm">
+            <div className="card-body text-center">
+                <i className="fas fa-thumbs-up fa-2x text-success mb-2"></i>
+                <h6 className="card-title mb-1">Accorder le crédit</h6>
+                <p className="card-text small text-muted">
+                    Validation administrative du dossier.
+                </p>
+                {fetchDataToUpdate && fetchDataToUpdate.Accorde == 1 ? (
+                    <button disabled className="btn btn-secondary w-100 mt-2">
+                        <i className="fas fa-check-circle me-2"></i> Déjà accordé
+                    </button>
+                ) : (
+                    <button onClick={AccordeCredit} className="btn btn-success w-100 mt-2">
+                        <i className="fas fa-thumbs-up me-2"></i> Accorder
+                    </button>
+                )}
+            </div>
+        </div>
+    </div>
 
-                        {/* Bouton Débourser */}
-                        <div className="col-md-3">
-                            {fetchDataToUpdate && fetchDataToUpdate.Octroye == 1 ? (
-                                <button disabled className="btn btn-secondary w-100" style={{ borderRadius: "10px", padding: "12px 0", opacity: 0.6 }}>
-                                    <i className="fas fa-hand-holding-usd me-2"></i> Déjà Déboursé
-                                </button>
-                            ) : (
-                                <button onClick={DeccaissementCredit} className="btn w-100" style={{ background: "linear-gradient(135deg, #17a2b8, #138496)", color: "white", borderRadius: "10px", padding: "12px 0" }}>
-                                    <i className="fas fa-hand-holding-usd me-2"></i> Débourser
-                                </button>
-                            )}
-                        </div>
+    {/* Bouton Débourser */}
+    <div className="col-md-3">
+        <div className="card h-100 border-0 shadow-sm">
+            <div className="card-body text-center">
+                <i className="fas fa-hand-holding-usd fa-2x text-info mb-2"></i>
+                <h6 className="card-title mb-1">Débourser les fonds</h6>
+                <p className="card-text small text-muted">
+                    Transfert des fonds sur le compte épargne.
+                </p>
+                {fetchDataToUpdate && fetchDataToUpdate.Octroye == 1 ? (
+                    <button disabled className="btn btn-secondary w-100 mt-2">
+                        <i className="fas fa-check-circle me-2"></i> Déjà déboursé
+                    </button>
+                ) : (
+                    <button onClick={DeccaissementCredit} className="btn btn-info w-100 mt-2 text-white">
+                        <i className="fas fa-hand-holding-usd me-2"></i> Débourser
+                    </button>
+                )}
+            </div>
+        </div>
+    </div>
 
-                        {/* Bouton Clôturer */}
-                        <div className="col-md-3">
-                            {fetchDataToUpdate && fetchDataToUpdate.Cloture == 1 ? (
-                                <button disabled className="btn btn-secondary w-100" style={{ borderRadius: "10px", padding: "12px 0", opacity: 0.6 }}>
-                                    <i className="fas fa-lock me-2"></i> Déjà Clôturé
-                                </button>
-                            ) : (
-                                <button onClick={ClotureCredit} className="btn w-100" style={{ background: "linear-gradient(135deg, #dc3545, #b02a37)", color: "white", borderRadius: "10px", padding: "12px 0" }}>
-                                    <i className="fas fa-unlock-alt me-2"></i> Clôturer
-                                </button>
-                            )}
-                        </div>
+    {/* Bouton Clôturer */}
+    <div className="col-md-3">
+        <div className="card h-100 border-0 shadow-sm">
+            <div className="card-body text-center">
+                <i className="fas fa-lock fa-2x text-danger mb-2"></i>
+                <h6 className="card-title mb-1">Clôturer le crédit</h6>
+                <p className="card-text small text-muted">
+                    Terminer le crédit, restituer la garantie.
+                </p>
+                {fetchDataToUpdate && fetchDataToUpdate.Cloture == 1 ? (
+                    <button disabled className="btn btn-secondary w-100 mt-2">
+                        <i className="fas fa-lock me-2"></i> Déjà clôturé
+                    </button>
+                ) : (
+                    <button onClick={ClotureCredit} className="btn btn-danger w-100 mt-2">
+                        <i className="fas fa-lock me-2"></i> Clôturer
+                    </button>
+                )}
+            </div>
+        </div>
+    </div>
 
-                        {/* Bouton Remboursement Anticipé (avec info-bulle) */}
-                        <div className="col-md-3">
-                            <button
-                                onClick={handleRemboursementAnticipe}
-                                className="btn w-100"
-                                style={{ background: "linear-gradient(135deg, #ffc107, #e0a800)", color: "#333", borderRadius: "10px", padding: "12px 0" }}
-                                title="Ce remboursement utilise le solde du membre pour solder le capital et les intérêts restants (toutes échéances)"
-                            >
-                                <i className="fas fa-forward me-2"></i> Remboursement Anticipé
-                            </button>
-                        </div>
-                    </div>
+    {/* Bouton Remboursement Anticipé */}
+    <div className="col-md-3">
+        <div className="card h-100 border-0 shadow-sm">
+            <div className="card-body text-center">
+                <i className="fas fa-forward fa-2x text-warning mb-2"></i>
+                <h6 className="card-title mb-1">Remboursement anticipé</h6>
+                <p className="card-text small text-muted">
+                    Solde total du crédit (capital + intérêts).
+                </p>
+                <button
+                    onClick={handleRemboursementAnticipe}
+                    className="btn btn-warning w-100 mt-2"
+                    title="Utilise le solde du compte pour solder tout le restant dû"
+                >
+                    <i className="fas fa-forward me-2"></i> Remboursement anticipé
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
                     {/* Message d'information contextuel */}
                     <div className="mt-4 p-3" style={{ background: "#e6f2f9", borderRadius: "10px" }}>
