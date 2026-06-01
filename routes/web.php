@@ -714,6 +714,12 @@ Route::get('/eco/pages/radiation-credit', [SuiviCreditController::class, 'getRad
     Route::get('/liste', [SuiviCreditController::class, 'listeCreditsARadier']);
     Route::post('/radier', [SuiviCreditController::class, 'radierCredits']);
 });
+
+
+
+ Route::post('/eco/page/montage-credit/get-credits-by-member', [SuiviCreditController::class, 'getCreditsByMember']);
+  Route::post('/eco/page/montage-credit/get-credit-by-dossier', [SuiviCreditController::class, 'getCreditByDossier']);
+
 });
 
 

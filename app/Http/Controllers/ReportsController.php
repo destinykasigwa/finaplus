@@ -920,7 +920,7 @@ class ReportsController extends Controller
                     // -------------------------------------------------------------
                     $dataSommeInter = Echeancier::select(DB::raw("SUM(echeanciers.Interet) as sommeInteret"))
                         ->where("echeanciers.NumDossier", "=", $request->searched_num_dossier)
-                         ->where("echeanciers.Reechelonne", 0)
+                        ->where("echeanciers.Reechelonne", 0)
                         ->join('portefeuilles', 'portefeuilles.NumDossier', '=', 'echeanciers.NumDossier')
                         ->when($codeAgence, function ($q) use ($codeAgence) {
                             return $q->where('portefeuilles.CodeAgence', $codeAgence);
@@ -947,7 +947,7 @@ class ReportsController extends Controller
                     $capitalRembourse = DB::table('remboursementcredits')
                         ->join('echeanciers', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
                         ->where('echeanciers.NumDossier', $request->searched_num_dossier)
-                         ->where("echeanciers.Reechelonne", 0)
+                        ->where("echeanciers.Reechelonne", 0)
                         ->whereDate('remboursementcredits.DateTranche', '<=', $dateReference)
                         ->sum('remboursementcredits.CapitalPaye');
                     $capitalRembours = $capitalRembourse;
@@ -959,7 +959,7 @@ class ReportsController extends Controller
                     $InteretRembourse = DB::table('remboursementcredits')
                         ->join('echeanciers', 'echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
                         ->where('echeanciers.NumDossier', $request->searched_num_dossier)
-                         ->where("echeanciers.Reechelonne", 0)
+                        ->where("echeanciers.Reechelonne", 0)
                         ->whereDate('remboursementcredits.DateTranche', '<=', $dateReference)
                         ->sum('remboursementcredits.InteretPaye');
 
@@ -976,19 +976,26 @@ class ReportsController extends Controller
                         ->where('NumDossier', $request->searched_num_dossier)
                         ->value('InteretCouruNonPaye');
                     $interetPostEcheance = $interetPostEcheance ?? 0;
+                    // -------------------------------------------------------------
+                    // 9. Pénalités de retard (table penalites_suivi)
+                    // -------------------------------------------------------------
+                    $totalPenalites = DB::table('penalites_suivi')
+                        ->where('NumDossier', $request->searched_num_dossier)
+                        ->value('TotalPenalites');
+                    $totalPenalites = $totalPenalites ?? 0;
 
                     // -------------------------------------------------------------
-                    // 9. Intérêts totaux restants (planifiés + post-échéance)
+                    // 10. Intérêts totaux restants (planifiés + post-échéance)
                     // -------------------------------------------------------------
                     $InteretRestant = $InteretRestantPlanifie + $interetPostEcheance;
 
                     // -------------------------------------------------------------
-                    // 10. Montant en retard (capital + intérêts planifiés échus)
+                    // 11. Montant en retard (capital + intérêts planifiés échus)
                     //     + intérêts post-échéance si date de référence > date d'échéance
                     // -------------------------------------------------------------
                     $dateEcheanceCredit = $checkRow->DateEcheance;
                     $echeances = Echeancier::where('NumDossier', $request->searched_num_dossier)
-                         ->where('Reechelonne', 0) // ← exclut les rééchelonnées
+                        ->where('Reechelonne', 0) // ← exclut les rééchelonnées
                         ->whereDate('DateTranch', '<=', $dateReference)
                         ->get();
 
@@ -1018,11 +1025,12 @@ class ReportsController extends Controller
 
                     $soldeEnRetard = (object) [
                         'sommeCapitalRetard' => $sommeCapitalRetard,
-                        'sommeInteretRetard' => $sommeInteretRetard
+                        'sommeInteretRetard' => $sommeInteretRetard,
+                        'sommePenalites' => $totalPenalites  // 👈 pénalités séparées
                     ];
 
                     // -------------------------------------------------------------
-                    // 11. Retour JSON (ajout de interetPostEcheance si utile)
+                    // 12. Retour JSON (ajout de interetPostEcheance si utile)
                     // -------------------------------------------------------------
                     return response()->json([
                         "status" => 1,
@@ -1035,7 +1043,8 @@ class ReportsController extends Controller
                         "capitalRembourse" => $capitalRembours,
                         "interetRembourse" => $InteretRembourse,
                         "interetRestant" => $InteretRestant,
-                        "interetPostEcheance" => $interetPostEcheance // nouvelle clé (optionnelle)
+                        "interetPostEcheance" => $interetPostEcheance, // nouvelle clé (optionnelle)
+                        "totalPenalites" => $totalPenalites  // 👈 optionnel
                     ]);
                 } else {
                     return response()->json([
@@ -1193,7 +1202,7 @@ class ReportsController extends Controller
                 $balanceQuery = Portefeuille::where("portefeuilles.CodeMonnaie", "=", $devise)
                     ->where("portefeuilles.Octroye", 1)
                     ->where("portefeuilles.Cloture", "!=", 1)
-                     ->where("portefeuilles.Radie", "!=", 1)
+                    ->where("portefeuilles.Radie", "!=", 1)
                     ->when(!empty($request->selectedDate), function ($query) use ($selectedDate) {
                         $query->whereDate("portefeuilles.DateOctroi", "<=", $selectedDate);
                     })
@@ -1282,7 +1291,7 @@ class ReportsController extends Controller
                     ->orderBy('portefeuilles.DateOctroi', 'desc');
 
                 $dataBalanceAgee = $balanceQuery->get();
-                
+
                 $dataBalanceAgee = $dataBalanceAgee->map(function ($item) use ($selectedDate) {
                     if ($item->NbrJrRetard == 0) {
                         // Vérifier s'il existe une échéance non payée à la date du jour
@@ -1332,39 +1341,65 @@ class ReportsController extends Controller
                 $resultEncours = $encoursQuery->first();
                 $soldeEncours = $resultEncours->SoldeEncours ?? 0;
 
-                $debitCol = $devise === 'USD' ? 'Debitusd' : 'Debitfc';
-                $creditCol = $devise === 'USD' ? 'Creditusd' : 'Creditfc';
-                $codeMonnaie = $devise === 'USD' ? 1 : 2;
+                // $debitCol = $devise === 'USD' ? 'Debitusd' : 'Debitfc';
+                // $creditCol = $devise === 'USD' ? 'Creditusd' : 'Creditfc';
+                // $codeMonnaie = $devise === 'USD' ? 1 : 2;
 
-                $queryCreditRetard = DB::table('transactions')
-                    ->join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
-                    ->selectRaw("SUM(transactions.$debitCol) - SUM(transactions.$creditCol) AS TotRetard")
-                    ->where('comptes.RefSousGroupe', 3900)
-                    ->where('comptes.CodeMonnaie', $codeMonnaie)
-                    ->when(!empty($request->selectedDate), function ($query) use ($request) {
-                        $query->whereDate('transactions.DateTransaction', '<=', $request->selectedDate);
+                // $queryCreditRetard = DB::table('transactions')
+                //     ->join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
+                //     ->selectRaw("SUM(transactions.$debitCol) - SUM(transactions.$creditCol) AS TotRetard")
+                //     ->where('comptes.RefSousGroupe', 3900)
+                //     ->where('comptes.CodeMonnaie', $codeMonnaie)
+                //     ->when(!empty($request->selectedDate), function ($query) use ($request) {
+                //         $query->whereDate('transactions.DateTransaction', '<=', $request->selectedDate);
+                //     })
+                //     ->when(!empty($agentCreditName), function ($query) use ($agentCreditName) {
+                //         $query->where('transactions.Operant', $agentCreditName);
+                //     });
+
+                // $soldeCreditRetard = $queryCreditRetard->first();
+
+
+                // Sous-requête : encours total restant pour chaque dossier (toutes échéances)
+                $subEncours = DB::table('echeanciers')
+                    ->select('NumDossier')
+                    ->selectRaw('SUM(CapAmmorti) - COALESCE(SUM(remboursementcredits.CapitalPaye), 0) as encours_total')
+                    ->leftJoin('remboursementcredits', function ($join) use ($selectedDate) {
+                        $join->on('echeanciers.ReferenceEch', '=', 'remboursementcredits.RefEcheance')
+                            ->whereDate('remboursementcredits.DateTranche', '<=', $selectedDate);
                     })
-                    ->when(!empty($agentCreditName), function ($query) use ($agentCreditName) {
-                        $query->where('transactions.Operant', $agentCreditName);
-                    });
+                    ->groupBy('echeanciers.NumDossier');
 
-                $soldeCreditRetard = $queryCreditRetard->first();
+                // Requête principale : dossiers ayant au moins une échéance échue impayée
+                $totRetard = Portefeuille::where('Cloture', 0)
+                    ->where('Octroye', 1)
+                    ->where('CodeMonnaie', $devise)
+                    ->when($agentCreditName, fn($q) => $q->where('Gestionnaire', $agentCreditName))
+                    ->when($codeAgence, fn($q) => $q->where('CodeAgence', $codeAgence))
+                    ->whereExists(function ($q) use ($selectedDate) {
+                        $q->select(DB::raw(1))
+                            ->from('echeanciers')
+                            ->whereColumn('echeanciers.NumDossier', 'portefeuilles.NumDossier')
+                            ->whereDate('echeanciers.DateTranch', '<=', $selectedDate)
+                            ->whereRaw('echeanciers.CapAmmorti > COALESCE((
+                                SELECT SUM(CapitalPaye) FROM remboursementcredits
+                                WHERE RefEcheance = echeanciers.ReferenceEch
+                                    AND DateTranche <= ?
+                            ), 0)', [$selectedDate]);
+                    })
+                    ->leftJoinSub($subEncours, 'e', 'portefeuilles.NumDossier', '=', 'e.NumDossier')
+                    ->sum('e.encours_total');
 
-                // $denominator = $soldeEncours + ($soldeCreditRetard->TotRetard ?? 0);
-                // $denominator = $soldeCreditRetard->TotRetard ?? 0;
-                // // dd($denominator, $soldeCreditRetard->TotRetard);
-                // if ($denominator != 0 && $denominator > 0) {
-                //     $PAR = ($soldeCreditRetard->TotRetard / $denominator) * 100;
-                // } else {
-                //     $PAR = 0;
-                // }
-                $numerateur = $soldeCreditRetard->TotRetard ?? 0;
+                $soldeCreditRetard = $totRetard;
+
+                $numerateur = $soldeCreditRetard ?? 0;
                 $denominateur = $soldeEncours; // encours total (crédits sains + en retard)
                 if ($denominateur > 0) {
                     $PAR = ($numerateur / $denominateur) * 100;
                 } else {
                     $PAR = 0;
                 }
+                // dd($numerateur,$denominateur);
 
                 return response()->json([
                     "status" => 1,
@@ -1378,8 +1413,8 @@ class ReportsController extends Controller
                     "msg" => "Vous devez sélectionner la devise pour afficher la balance"
                 ]);
             }
-        } 
-        
+        }
+
         // else if ($request->radioValue == "par") {
         //     $date = $request->date_par ?? now()->toDateString();
         //     $devise = $request->devise_par;
@@ -1506,27 +1541,27 @@ class ReportsController extends Controller
         // }
         else if ($request->radioValue == "par") {
 
-    $date = $request->date_par ?? now()->toDateString();
-    $devise = $request->devise_par;
-    $gestionnaire = $request->gestionnaire_par;
+            $date = $request->date_par ?? now()->toDateString();
+            $devise = $request->devise_par;
+            $gestionnaire = $request->gestionnaire_par;
 
-    /**
-     * ============================================
-     * 1. TOTAL REMBOURSÉ PAR DOSSIER
-     * ============================================
-     */
-    $subRemboursementGlobal = DB::table('remboursementcredits')
-        ->selectRaw('NumDossie as NumDossier, SUM(CapitalPaye) as total_rembourse')
-        ->groupBy('NumDossie');
+            /**
+             * ============================================
+             * 1. TOTAL REMBOURSÉ PAR DOSSIER
+             * ============================================
+             */
+            $subRemboursementGlobal = DB::table('remboursementcredits')
+                ->selectRaw('NumDossie as NumDossier, SUM(CapitalPaye) as total_rembourse')
+                ->groupBy('NumDossie');
 
-    /**
-     * ============================================
-     * 2. RETARD MAXIMUM PAR DOSSIER
-     * ============================================
-     */
-    $subRetardMax = DB::table('echeanciers as e')
-    ->leftJoin('remboursementcredits as r', 'e.ReferenceEch', '=', 'r.RefEcheance')
-    ->selectRaw("
+            /**
+             * ============================================
+             * 2. RETARD MAXIMUM PAR DOSSIER
+             * ============================================
+             */
+            $subRetardMax = DB::table('echeanciers as e')
+                ->leftJoin('remboursementcredits as r', 'e.ReferenceEch', '=', 'r.RefEcheance')
+                ->selectRaw("
         e.NumDossier,
         MAX(
             CASE
@@ -1540,56 +1575,56 @@ class ReportsController extends Controller
             END
         ) as retard_max
     ")
-    ->groupBy('e.NumDossier');
+                ->groupBy('e.NumDossier');
 
-    /**
-     * ============================================
-     * 3. REQUÊTE PRINCIPALE
-     * ============================================
-     */
-    $query = DB::table('portefeuilles as p')
+            /**
+             * ============================================
+             * 3. REQUÊTE PRINCIPALE
+             * ============================================
+             */
+            $query = DB::table('portefeuilles as p')
 
-        ->leftJoinSub($subRemboursementGlobal, 'rg', function ($join) {
-            $join->on('p.NumDossier', '=', 'rg.NumDossier');
-        })
+                ->leftJoinSub($subRemboursementGlobal, 'rg', function ($join) {
+                    $join->on('p.NumDossier', '=', 'rg.NumDossier');
+                })
 
-        ->leftJoinSub($subRetardMax, 'ret', function ($join) {
-            $join->on('p.NumDossier', '=', 'ret.NumDossier');
-        })
+                ->leftJoinSub($subRetardMax, 'ret', function ($join) {
+                    $join->on('p.NumDossier', '=', 'ret.NumDossier');
+                })
 
-        ->where(function ($q) {
-            $q->where('p.Cloture', '!=', 1)
-                ->orWhereNull('p.Cloture');
-        })
+                ->where(function ($q) {
+                    $q->where('p.Cloture', '!=', 1)
+                        ->orWhereNull('p.Cloture');
+                })
 
-        ->where(function ($q) {
-            $q->where('p.Accorde', '=', 1)
-                ->orWhereNull('p.Accorde');
-        })
+                ->where(function ($q) {
+                    $q->where('p.Accorde', '=', 1)
+                        ->orWhereNull('p.Accorde');
+                })
 
-        ->where(function ($q) {
-            $q->where('p.Octroye', '=', 1)
-                ->orWhereNull('p.Octroye');
-        })
+                ->where(function ($q) {
+                    $q->where('p.Octroye', '=', 1)
+                        ->orWhereNull('p.Octroye');
+                })
 
-         ->where(function ($q) {
-            $q->where('p.Radie', '=', 0)
-                ->orWhereNull('p.Radie');
-        })
+                ->where(function ($q) {
+                    $q->where('p.Radie', '=', 0)
+                        ->orWhereNull('p.Radie');
+                })
 
-        ->when($codeAgence, function ($q) use ($codeAgence) {
-            return $q->where('p.CodeAgence', $codeAgence);
-        })
+                ->when($codeAgence, function ($q) use ($codeAgence) {
+                    return $q->where('p.CodeAgence', $codeAgence);
+                })
 
-        ->when(!empty($devise), function ($q) use ($devise) {
-            return $q->where('p.CodeMonnaie', $devise);
-        })
+                ->when(!empty($devise), function ($q) use ($devise) {
+                    return $q->where('p.CodeMonnaie', $devise);
+                })
 
-        ->when(!empty($gestionnaire) && $gestionnaire !== 'Tous', function ($q) use ($gestionnaire) {
-            return $q->where('p.Gestionnaire', $gestionnaire);
-        })
+                ->when(!empty($gestionnaire) && $gestionnaire !== 'Tous', function ($q) use ($gestionnaire) {
+                    return $q->where('p.Gestionnaire', $gestionnaire);
+                })
 
-        ->selectRaw("
+                ->selectRaw("
             p.Gestionnaire,
 
             COUNT(DISTINCT p.NumDossier) AS NbrCredits,
@@ -1680,148 +1715,148 @@ class ReportsController extends Controller
 
         ")
 
-        ->groupBy('p.Gestionnaire');
+                ->groupBy('p.Gestionnaire');
 
-    /**
-     * ============================================
-     * 4. EXÉCUTION
-     * ============================================
-     */
-    $data = $query->get();
+            /**
+             * ============================================
+             * 4. EXÉCUTION
+             * ============================================
+             */
+            $data = $query->get();
 
-    /**
-     * ============================================
-     * 5. CALCULS COMPLÉMENTAIRES
-     * ============================================
-     */
-    $data = $data->map(function ($row) {
+            /**
+             * ============================================
+             * 5. CALCULS COMPLÉMENTAIRES
+             * ============================================
+             */
+            $data = $data->map(function ($row) {
 
-        $row->PAR_SUP_1 =
-            $row->PAR_1_30 +
-            $row->PAR_31_60 +
-            $row->PAR_61_90 +
-            $row->PAR_91_180 +
-            $row->PAR_PLUS_180;
+                $row->PAR_SUP_1 =
+                    $row->PAR_1_30 +
+                    $row->PAR_31_60 +
+                    $row->PAR_61_90 +
+                    $row->PAR_91_180 +
+                    $row->PAR_PLUS_180;
 
-        $row->PAR_SUP_30 =
-            $row->PAR_31_60 +
-            $row->PAR_61_90 +
-            $row->PAR_91_180 +
-            $row->PAR_PLUS_180;
+                $row->PAR_SUP_30 =
+                    $row->PAR_31_60 +
+                    $row->PAR_61_90 +
+                    $row->PAR_91_180 +
+                    $row->PAR_PLUS_180;
 
-        $row->PAR_SUP_60 =
-            $row->PAR_61_90 +
-            $row->PAR_91_180 +
-            $row->PAR_PLUS_180;
+                $row->PAR_SUP_60 =
+                    $row->PAR_61_90 +
+                    $row->PAR_91_180 +
+                    $row->PAR_PLUS_180;
 
-        $row->PAR_SUP_90 =
-            $row->PAR_91_180 +
-            $row->PAR_PLUS_180;
+                $row->PAR_SUP_90 =
+                    $row->PAR_91_180 +
+                    $row->PAR_PLUS_180;
 
-        $encours = max($row->EncoursTotal, 0.0001);
+                $encours = max($row->EncoursTotal, 0.0001);
 
-        $row->TAUX_PAR_INTERNE = round(
-            ($row->PAR_SUP_1 / $encours) * 100,
-            2
-        );
+                $row->TAUX_PAR_INTERNE = round(
+                    ($row->PAR_SUP_1 / $encours) * 100,
+                    2
+                );
 
-        return $row;
-    });
+                return $row;
+            });
 
-    /**
-     * ============================================
-     * 6. TOTAL GÉNÉRAL
-     * ============================================
-     */
-    $total = [
-        'Gestionnaire' => 'TOTAL GENERAL',
+            /**
+             * ============================================
+             * 6. TOTAL GÉNÉRAL
+             * ============================================
+             */
+            $total = [
+                'Gestionnaire' => 'TOTAL GENERAL',
 
-        'NbrCredits' => $data->sum('NbrCredits'),
+                'NbrCredits' => $data->sum('NbrCredits'),
 
-        'TotalAccorde' => $data->sum('TotalAccorde'),
+                'TotalAccorde' => $data->sum('TotalAccorde'),
 
-        'EncoursTotal' => $data->sum('EncoursTotal'),
+                'EncoursTotal' => $data->sum('EncoursTotal'),
 
-        'EncoursSain' => $data->sum('EncoursSain'),
+                'EncoursSain' => $data->sum('EncoursSain'),
 
-        'PAR_1_30' => $data->sum('PAR_1_30'),
+                'PAR_1_30' => $data->sum('PAR_1_30'),
 
-        'PAR_31_60' => $data->sum('PAR_31_60'),
+                'PAR_31_60' => $data->sum('PAR_31_60'),
 
-        'PAR_61_90' => $data->sum('PAR_61_90'),
+                'PAR_61_90' => $data->sum('PAR_61_90'),
 
-        'PAR_91_180' => $data->sum('PAR_91_180'),
+                'PAR_91_180' => $data->sum('PAR_91_180'),
 
-        'PAR_PLUS_180' => $data->sum('PAR_PLUS_180'),
+                'PAR_PLUS_180' => $data->sum('PAR_PLUS_180'),
 
-        'PAR_SUP_1' => $data->sum('PAR_SUP_1'),
+                'PAR_SUP_1' => $data->sum('PAR_SUP_1'),
 
-        'PAR_SUP_30' => $data->sum('PAR_SUP_30'),
+                'PAR_SUP_30' => $data->sum('PAR_SUP_30'),
 
-        'PAR_SUP_60' => $data->sum('PAR_SUP_60'),
+                'PAR_SUP_60' => $data->sum('PAR_SUP_60'),
 
-        'PAR_SUP_90' => $data->sum('PAR_SUP_90'),
-    ];
+                'PAR_SUP_90' => $data->sum('PAR_SUP_90'),
+            ];
 
-    $total['TAUX_PAR_INTERNE'] = round(
-        ($total['PAR_SUP_1'] / max($total['EncoursTotal'], 0.0001)) * 100,
-        2
-    );
+            $total['TAUX_PAR_INTERNE'] = round(
+                ($total['PAR_SUP_1'] / max($total['EncoursTotal'], 0.0001)) * 100,
+                2
+            );
 
-    /**
-     * ============================================
-     * 7. POURCENTAGES GLOBAUX
-     * ============================================
-     */
-    $encoursGlobal = $total['EncoursTotal'];
+            /**
+             * ============================================
+             * 7. POURCENTAGES GLOBAUX
+             * ============================================
+             */
+            $encoursGlobal = $total['EncoursTotal'];
 
-    $parGlobalPercent = round(
-        ($total['PAR_SUP_1'] / max($encoursGlobal, 0.0001)) * 100,
-        2
-    );
+            $parGlobalPercent = round(
+                ($total['PAR_SUP_1'] / max($encoursGlobal, 0.0001)) * 100,
+                2
+            );
 
-    $globalPercentages = [
+            $globalPercentages = [
 
-        'Sain' =>
-        round(($total['EncoursSain'] / max($encoursGlobal, 0.0001)) * 100, 2),
+                'Sain' =>
+                round(($total['EncoursSain'] / max($encoursGlobal, 0.0001)) * 100, 2),
 
-        '1_30' =>
-        round(($total['PAR_1_30'] / max($encoursGlobal, 0.0001)) * 100, 2),
+                '1_30' =>
+                round(($total['PAR_1_30'] / max($encoursGlobal, 0.0001)) * 100, 2),
 
-        '31_60' =>
-        round(($total['PAR_31_60'] / max($encoursGlobal, 0.0001)) * 100, 2),
+                '31_60' =>
+                round(($total['PAR_31_60'] / max($encoursGlobal, 0.0001)) * 100, 2),
 
-        '61_90' =>
-        round(($total['PAR_61_90'] / max($encoursGlobal, 0.0001)) * 100, 2),
+                '61_90' =>
+                round(($total['PAR_61_90'] / max($encoursGlobal, 0.0001)) * 100, 2),
 
-        '91_180' =>
-        round(($total['PAR_91_180'] / max($encoursGlobal, 0.0001)) * 100, 2),
+                '91_180' =>
+                round(($total['PAR_91_180'] / max($encoursGlobal, 0.0001)) * 100, 2),
 
-        'Plus180' =>
-        round(($total['PAR_PLUS_180'] / max($encoursGlobal, 0.0001)) * 100, 2),
+                'Plus180' =>
+                round(($total['PAR_PLUS_180'] / max($encoursGlobal, 0.0001)) * 100, 2),
 
-        'PAR_SUP_1' =>
-        round(($total['PAR_SUP_1'] / max($encoursGlobal, 0.0001)) * 100, 2),
+                'PAR_SUP_1' =>
+                round(($total['PAR_SUP_1'] / max($encoursGlobal, 0.0001)) * 100, 2),
 
-        'PAR_SUP_30' =>
-        round(($total['PAR_SUP_30'] / max($encoursGlobal, 0.0001)) * 100, 2),
+                'PAR_SUP_30' =>
+                round(($total['PAR_SUP_30'] / max($encoursGlobal, 0.0001)) * 100, 2),
 
-        'PAR_SUP_60' =>
-        round(($total['PAR_SUP_60'] / max($encoursGlobal, 0.0001)) * 100, 2),
+                'PAR_SUP_60' =>
+                round(($total['PAR_SUP_60'] / max($encoursGlobal, 0.0001)) * 100, 2),
 
-        'PAR_SUP_90' =>
-        round(($total['PAR_SUP_90'] / max($encoursGlobal, 0.0001)) * 100, 2),
-    ];
+                'PAR_SUP_90' =>
+                round(($total['PAR_SUP_90'] / max($encoursGlobal, 0.0001)) * 100, 2),
+            ];
 
-    return response()->json([
-        'status' => 1,
-        'data' => $data->values(),
-        'total' => $total,
-        'par_global_percent' => $parGlobalPercent,
-        'global_percentages' => $globalPercentages,
-        'encours_global' => $encoursGlobal
-    ]);
-}
+            return response()->json([
+                'status' => 1,
+                'data' => $data->values(),
+                'total' => $total,
+                'par_global_percent' => $parGlobalPercent,
+                'global_percentages' => $globalPercentages,
+                'encours_global' => $encoursGlobal
+            ]);
+        }
         return response()->json(['status' => 0, 'msg' => 'Type de rapport non reconnu']);
     }
     //GET BALANCE HOME PAGE 
@@ -2114,6 +2149,7 @@ class ReportsController extends Controller
     {
         $date1 = $request->date_debut_balance;
         $date2 = $request->date_fin_balance;
+        $dateN_1 = date('Y-m-t', strtotime($date2 . ' -1 month')); // ex: 2026-04-30
         $devise = $request->devise;
         $agenceFilter = $request->agence_filter ?? 'current';
 
@@ -2153,6 +2189,18 @@ class ReportsController extends Controller
             ->first();
 
         // Sous-requête : soldes des comptes de niveau 5 par parent
+        // $subQuery = DB::table('transactions as t')
+        //     ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
+        //     ->where('c.niveau', 5)
+        //     ->where('c.est_classe', 0)
+        //     ->where('t.CodeMonnaie', $monnaieValue)
+        //     ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
+        //     ->select(
+        //         'c.compte_parent',
+        //         DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN t.$debitCol - t.$creditCol ELSE 0 END), 0) AS soldeDebut"),
+        //         DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN t.$debitCol - t.$creditCol ELSE 0 END), 0) AS soldeFin")
+        //     )
+        //     ->groupBy('c.compte_parent');
         $subQuery = DB::table('transactions as t')
             ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
             ->where('c.niveau', 5)
@@ -2161,7 +2209,7 @@ class ReportsController extends Controller
             ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
             ->select(
                 'c.compte_parent',
-                DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN t.$debitCol - t.$creditCol ELSE 0 END), 0) AS soldeDebut"),
+                DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$dateN_1' THEN t.$debitCol - t.$creditCol ELSE 0 END), 0) AS soldeDebut"),
                 DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN t.$debitCol - t.$creditCol ELSE 0 END), 0) AS soldeFin")
             )
             ->groupBy('c.compte_parent');
@@ -2391,6 +2439,7 @@ class ReportsController extends Controller
                 'NomCadre'       => $this->getNomCadre('13'),
                 'RefCadre'      => '13',
                 'nature_compte' => 'PASSIF',
+                'soldeDebut' => 0, // ← ajout
                 'soldeFin'      => $soldeResultat,
             ]);
         }
@@ -2428,6 +2477,16 @@ class ReportsController extends Controller
                 $actifData->push($ligneLiaison);
             }
         }
+
+        //EXCLU LE SOLDE NUL
+        $actifData = $actifData->filter(function ($item) {
+            return abs($item->soldeDebut) > 0.0001 || abs($item->soldeFin) > 0.0001;
+        })->values();
+
+        $passifData = $passifData->filter(function ($item) {
+            return abs($item->soldeDebut) > 0.0001 || abs($item->soldeFin) > 0.0001;
+        })->values();
+
 
         // Totaux
         $totalActif = $actifData->sum('soldeFin');
@@ -3227,8 +3286,8 @@ class ReportsController extends Controller
     {
         $dataSystem = TauxEtDateSystem::latest()->first();
 
-        $dataCDF = BilletageCDF::where("DateTransaction", $dataSystem->DateSystem)->where("NomUtilisateur", Auth::user()->name)->where("montantEntre", ">", 0)->orderBy("id", "desc")->limit(20)->get();
-        $dataUSD = BilletageUSD::where("DateTransaction", $dataSystem->DateSystem)->where("NomUtilisateur", Auth::user()->name)->where("montantEntre", ">", 0)->orderBy("id", "desc")->limit(20)->get();
+        $dataCDF = BilletageCDF::where("DateTransaction", $dataSystem->DateSystem)->where("NomUtilisateur", Auth::user()->name)->where("montantEntre", ">", 0)->whereNotNull("NumCompte")->orderBy("id", "desc")->limit(20)->get();
+        $dataUSD = BilletageUSD::where("DateTransaction", $dataSystem->DateSystem)->where("NomUtilisateur", Auth::user()->name)->where("montantEntre", ">", 0)->whereNotNull("NumCompte")->orderBy("id", "desc")->limit(20)->get();
         return response()->json(["status" => 1, "dataCDF" => $dataCDF, "dataUSD" => $dataUSD]);
     }
 

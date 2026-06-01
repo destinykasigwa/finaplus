@@ -46,7 +46,7 @@ const MontageCredit = () => {
     const [tot_general, settot_general] = useState();
     const [date_demande, setdate_demande] = useState();
     const [epargne_caution, setepargne_caution] = useState();
-    const [produit_credit, setproduit_credit] = useState();
+     const [produit_credit, setproduit_credit] = useState();
     
 
     //ATTRIBUTE TO UPDATE
@@ -109,77 +109,137 @@ const MontageCredit = () => {
             Reechelonner: false,
         });
 
-    //PERMET DE MODIFIER UN CREDIT
-    const upDateCredit = async (e) => {
+        // 1. Liste des crédits du membre (NOUVEAU)
+const [creditsList, setCreditsList] = useState([]);
+
+// 2. État pour afficher/masquer la liste (optionnel)
+const [showCreditsList, setShowCreditsList] = useState(false);
+
+   //PERMET DE MODIFIER UN CREDIT
+      const upDateCredit = async (e) => {
+          e.preventDefault();
+          const res = await axios.post(
+              "/eco/pages/montage-credit/get-credit-to-update",
+              {
+                  seachedAccount: Search_field,
+              },
+          );
+          if (res.data.status == 1) {
+              setAddNew(false);
+              getDataToDisplayOnFormLoad();
+              setFetchDataToUpdate(res.data.data);
+              console.log(res.data.data);
+              settype_credit_up(res.data.data.RefProduitCredit);
+              setrecouvreur_up(res.data.data.Recouvreur);
+              setmontant_demande_up(res.data.data.MontantDemande);
+              setdate_demande_up(res.data.data.DateDemande);
+              setfrequence_rembours_up(res.data.data.ModeRemboursement);
+              setnbr_echeance_up(res.data.data.NbrTranche);
+              setmonnaie_up(res.data.data.CodeMonnaie);
+              setduree_up(res.data.data.Duree);
+              setinterval_up(res.data.data.Interval);
+              setperiode_grace_up(res.data.data.Grace);
+              setNomCompte_up(res.data.data.NomCompte);
+              setcompte_epargne_up(res.data.data.NumCompteEpargne);
+              setcompte_credit_up(res.data.data.NumCompteCredit);
+              setobjet_credit_up(res.data.data.ObjeFinance);
+              setgestionnaire_up(res.data.data.Gestionnaire);
+              setsource_fond_up(res.data.data.SourceFinancement);
+              settaux_interet_up(res.data.data.TauxInteret);
+              settaux_retard_up(res.data.data.TauxInteretRetard);
+              //setechnce_differee_up(res.data.data.TauxInteretRetard)
+              setcycle_up(res.data.data.Cycle);
+              setsolde_cap_up(res.data.data.CapitalRestant);
+              setutilisateur_up(res.data.data.NomUtilisateur);
+              setagence_up(res.data.data.CodeAgence);
+              settot_interet_up(res.data.data.InteretDu);
+              settot_general_up(
+                  parseInt(
+                      res.data.data.CapitalRestant + res.data.data.InteretDu,
+                  ),
+              );
+              setepargne_caution_up(res.data.data.NumCompteEpargneGarantie);
+              setNumDossier_up(res.data.data.NumDossier);
+          } else {
+              Swal.fire({
+                  title: "Erreur",
+                  text: res.data.msg,
+                  icon: "error",
+                  timer: 8000,
+                  confirmButtonText: "Okay",
+              });
+          }
+      };
+      const getDataToDisplayOnFormLoad = async () => {
+          const res = await axios.get("/eco/page/montage-credit-data-to-dispaly");
+          if (res.data.status == 1) {
+              setFetchTypeCredit(res.data.type_credit);
+              setFetchObjetCredit(res.data.objet_credit);
+              setFetchAgentCredit(res.data.agent_credit);
+              setFetchUserName(res.data.userName);
+              setFetchFrequenceRembours(res.data.frequence_rembours);
+          }
+      };
+    const AddNewCredit = async (e) => {
         e.preventDefault();
-        const res = await axios.post(
-            "/eco/pages/montage-credit/get-credit-to-update",
-            {
-                seachedAccount: Search_field,
-            },
-        );
-        if (res.data.status == 1) {
-            setAddNew(false);
-            getDataToDisplayOnFormLoad();
+        try {
+            const res = await axios.post("/eco/page/montage-credit/get-seached-account", { seachedAccount: Search_field });
+            if (res.data.status === 1) {
+                setFetchData({ data: res.data.data, compteCredit: res.data.compteCredit, epargneCaution: res.data.EpargneCaution });
+                // Récupérer les crédits existants du membre
+                const creditsRes = await axios.post("/eco/page/montage-credit/get-credits-by-member", { numAdherant: res.data.data.NumAdherant });
+                if (creditsRes.data.status === 1) setCreditsList(creditsRes.data.credits);
+                setAddNew(true);
+                setGetNumDossier(res.data.data_numdossier);
+            } else {
+                Swal.fire({ title: "Erreur", text: res.data.msg, icon: "error" });
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    const upDateCreditManual = async (numDossier) => {
+        const res = await axios.post("/eco/page/montage-credit/get-credit-by-dossier", { numDossier });
+        if (res.data.status === 1) {
             setFetchDataToUpdate(res.data.data);
-            console.log(res.data.data);
-            settype_credit_up(res.data.data.RefProduitCredit);
-            setrecouvreur_up(res.data.data.Recouvreur);
-            setmontant_demande_up(res.data.data.MontantDemande);
-            setdate_demande_up(res.data.data.DateDemande);
-            setfrequence_rembours_up(res.data.data.ModeRemboursement);
-            setnbr_echeance_up(res.data.data.NbrTranche);
-            setmonnaie_up(res.data.data.CodeMonnaie);
-            setduree_up(res.data.data.Duree);
-            setinterval_up(res.data.data.Interval);
-            setperiode_grace_up(res.data.data.Grace);
-            setNomCompte_up(res.data.data.NomCompte);
-            setcompte_epargne_up(res.data.data.NumCompteEpargne);
-            setcompte_credit_up(res.data.data.NumCompteCredit);
-            setobjet_credit_up(res.data.data.ObjeFinance);
-            setgestionnaire_up(res.data.data.Gestionnaire);
-            setsource_fond_up(res.data.data.SourceFinancement);
-            settaux_interet_up(res.data.data.TauxInteret);
-            settaux_retard_up(res.data.data.TauxInteretRetard);
-            //setechnce_differee_up(res.data.data.TauxInteretRetard)
-            setcycle_up(res.data.data.Cycle);
-            setsolde_cap_up(res.data.data.CapitalRestant);
-            setutilisateur_up(res.data.data.NomUtilisateur);
-            setagence_up(res.data.data.CodeAgence);
-            settot_interet_up(res.data.data.InteretDu);
-            settot_general_up(
-                parseInt(
-                    res.data.data.CapitalRestant + res.data.data.InteretDu,
-                ),
-            );
-            setepargne_caution_up(res.data.data.NumCompteEpargneGarantie);
             setNumDossier_up(res.data.data.NumDossier);
+            setAddNew(false);
+             settype_credit_up(res.data.data.RefProduitCredit);
+              setrecouvreur_up(res.data.data.Recouvreur);
+              setmontant_demande_up(res.data.data.MontantDemande);
+              setdate_demande_up(res.data.data.DateDemande);
+              setfrequence_rembours_up(res.data.data.ModeRemboursement);
+              setnbr_echeance_up(res.data.data.NbrTranche);
+              setmonnaie_up(res.data.data.CodeMonnaie);
+              setduree_up(res.data.data.Duree);
+              setinterval_up(res.data.data.Interval);
+              setperiode_grace_up(res.data.data.Grace);
+              setNomCompte_up(res.data.data.NomCompte);
+              setcompte_epargne_up(res.data.data.NumCompteEpargne);
+              setcompte_credit_up(res.data.data.NumCompteCredit);
+              setobjet_credit_up(res.data.data.ObjeFinance);
+              setgestionnaire_up(res.data.data.Gestionnaire);
+              setsource_fond_up(res.data.data.SourceFinancement);
+              settaux_interet_up(res.data.data.TauxInteret);
+              settaux_retard_up(res.data.data.TauxInteretRetard);
+              //setechnce_differee_up(res.data.data.TauxInteretRetard)
+              setcycle_up(res.data.data.Cycle);
+              setsolde_cap_up(res.data.data.CapitalRestant);
+              setutilisateur_up(res.data.data.NomUtilisateur);
+              setagence_up(res.data.data.CodeAgence);
+              settot_interet_up(res.data.data.InteretDu);
+              settot_general_up(
+                  parseInt(
+                      res.data.data.CapitalRestant + res.data.data.InteretDu,
+                  ),
+              );
+              setepargne_caution_up(res.data.data.NumCompteEpargneGarantie);
+              setNumDossier_up(res.data.data.NumDossier);
         } else {
-            Swal.fire({
-                title: "Erreur",
-                text: res.data.msg,
-                icon: "error",
-                timer: 8000,
-                confirmButtonText: "Okay",
-            });
+            Swal.fire({ title: "Erreur", text: res.data.msg, icon: "error" });
         }
     };
-    const getDataToDisplayOnFormLoad = async () => {
-        const res = await axios.get("/eco/page/montage-credit-data-to-dispaly");
-        if (res.data.status == 1) {
-            setFetchTypeCredit(res.data.type_credit);
-            setFetchObjetCredit(res.data.objet_credit);
-            setFetchAgentCredit(res.data.agent_credit);
-            setFetchUserName(res.data.userName);
-            setFetchFrequenceRembours(res.data.frequence_rembours);
-        }
-    };
-
-    useEffect(() => {
-        getDataToDisplayOnFormLoad();
-    }, []);
-
-    const saveNewCredit = async (e) => {
+  const saveNewCredit = async (e) => {
         e.preventDefault();
         setloading(true);
         const res = await axios.post("/eco/page/montage-credit/save-new", {
@@ -618,7 +678,6 @@ const saveEcheancier = async (e) => {
                     timer: 8000,
                     confirmButtonText: "Okay",
                 });
-                setMontantRemboursementCapital("");
             } else {
                 setisLoadingRemb(false);
                 Swal.fire({
@@ -671,8 +730,6 @@ const saveEcheancier = async (e) => {
                     timer: 8000,
                     confirmButtonText: "Okay",
                 });
-              setMontantRemboursementInteret("");
-
             } else {
                 setisLoadingRemb(false);
                 Swal.fire({
@@ -766,314 +823,116 @@ const saveEcheancier = async (e) => {
         setMontantAccorde(nombreFormatte);
         setmontant_demande(nombreFormatte);
     };
+    useEffect(() => {
+        getDataToDisplayOnFormLoad();
+    }, []);
 
     return (
-        <div
-            className="container-fluid"
-            style={{ marginTop: "10px", padding: "0 15px" }}
-        >
+        <div className="container-fluid" style={{ marginTop: "10px", padding: "0 15px" }}>
             {isLoadingRemb && (
-                <div
-                    style={{
-                        position: "fixed",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        backgroundColor: "rgba(0, 0, 0, 0.7)",
-                        zIndex: 1050,
-                        backdropFilter: "blur(3px)",
-                    }}
-                >
+                <div className="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-75 z-3">
                     <div className="text-center bg-white p-4 rounded-4 shadow-lg">
-                        <Bars
-                            height="80"
-                            width="80"
-                            color="#20c997"
-                            ariaLabel="loading"
-                        />
+                        <Bars height="80" width="80" color="#20c997" ariaLabel="loading" />
                         <h5 className="mt-3 text-dark">Patientez...</h5>
                     </div>
                 </div>
             )}
 
-            {/* En-tête moderne */}
+            {/* En‑tête */}
             <div className="row mb-4">
                 <div className="col-12">
                     <div className="card border-0 shadow-sm rounded-3">
-                        <div
-                            className="card-body p-3"
-                            style={{
-                                background: "#138496",
-                                borderRadius: "12px",
-                            }}
-                        >
+                        <div className="card-body p-3" style={{ background: "#138496", borderRadius: "12px" }}>
                             <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
                                 <div className="d-flex align-items-center">
-                                    <div className="me-3">
-                                        <i
-                                            className="fas fa-folder-open"
-                                            style={{
-                                                fontSize: "28px",
-                                                color: "white",
-                                            }}
-                                        ></i>
-                                    </div>
-                                    <div>
-                                        <h5 className="text-white fw-bold mb-0">
-                                            Porte Feuille de Crédit
-                                        </h5>
-                                        <small className="text-white-50">
-                                            Gestion complète des crédits
-                                        </small>
-                                    </div>
+                                    <div className="me-3"><i className="fas fa-folder-open fs-1 text-white"></i></div>
+                                    <div><h5 className="text-white fw-bold mb-0">Porte Feuille de Crédit</h5><small className="text-white-50">Gestion complète des crédits</small></div>
                                 </div>
-                                <a
-                                    href="eco/pages/credit/rapport-credit"
-                                    className="btn"
-                                    style={{
-                                        background: "rgba(255,255,255,0.2)",
-                                        color: "white",
-                                        borderRadius: "8px",
-                                        padding: "8px 20px",
-                                        fontWeight: "bold",
-                                        fontSize: "14px",
-                                        transition: "all 0.3s ease",
-                                        textDecoration: "none",
-                                    }}
-                                    onMouseEnter={(e) =>
-                                        (e.currentTarget.style.background =
-                                            "rgba(255,255,255,0.3)")
-                                    }
-                                    onMouseLeave={(e) =>
-                                        (e.currentTarget.style.background =
-                                            "rgba(255,255,255,0.2)")
-                                    }
-                                >
-                                    <i className="fas fa-chart-bar me-2"></i>
-                                    Rapport crédit
-                                </a>
+                                <a href="eco/pages/credit/rapport-credit" className="btn btn-light bg-opacity-25 text-white">Rapport crédit</a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Section Recherche et État */}
+            {/* Recherche */}
             <div className="row g-3 mb-4">
                 <div className="col-md-7">
-    <div className="card border-0 shadow-sm rounded-3">
-        <div className="card-header bg-white border-0 pt-3">
-            <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                <i className="fas fa-search me-2"></i>Recherche de crédit
-            </h6>
-        </div>
-        <div className="card-body">
-            <form>
-                {/* Nouvelle ligne : sélection du produit de crédit */}
-                {/* <div className="row g-3 mb-3 align-items-end">
-                    <div className="col-md-6">
-                        <label
-                            htmlFor="produit_credit"
-                            className="form-label small fw-semibold mb-0"
-                            style={{ color: "#4682b4" }}
-                        >
-                            <i className="fas fa-tag me-1"></i> Produit de crédit
-                        </label>
-                        <select
-                            className="form-select form-select-sm modern-select"
-                            name="produit_credit"
-                            id="produit_credit_select"
-                            onChange={(e) => setproduit_credit(e.target.value)}
-                            value={produit_credit}
-                        >
-                            <option value="">Sélectionnez</option>
-                            <option value="Crédit aux MPME">Crédit aux MPME</option>
-                            <option value="Crédit à la consommation">Crédit à la consommation</option>
-                            <option value="Crédit à l'habitat">Crédit à l'habitat</option>
-                            <option value="Crédit Groupe Solidaire">Crédit Groupe Solidaire</option>
-                            <option value="Crédit Salaire">Crédit Salaire</option>
-                            <option value="Crédit Staff">Crédit Staff</option>
-                            <option value="Crédit Express">Crédit Express</option>
-                            <option value="Crédit Agro-Pastoral">Crédit Agro-Pastoral</option>
-                            <option value="Crédit MWANGAZA">Crédit MWANGAZA</option>
-                            <option value="Crédit JIKO BORA">Crédit JIKO BORA</option>
-                            <option value="Crédits TUFAIDIKE WOTE">Crédits TUFAIDIKE WOTE</option>
-                        </select>
-                    </div>
-                    <div className="col-md-6">
-                     
-                        <small className="text-muted">
-                            <i className="fas fa-info-circle me-1"></i>
-                            Un client ne peut avoir qu’un seul crédit par type.
-                        </small>
-                    </div>
-                </div> */}
-
-                {/* Ligne existante : recherche + boutons */}
-                <div className="d-flex flex-wrap align-items-end gap-3">
-                    <div style={{ flex: 1 }}>
-                        <label
-                            className="form-label small fw-semibold"
-                            style={{ color: "steelblue" }}
-                        >
-                            Numéro de compte
-                        </label>
-                        <input
-                            type="text"
-                            className="form-control form-control-sm modern-input"
-                            style={{ borderRadius: "8px" }}
-                            name="Search_field"
-                            id="Search_field"
-                            onChange={(e) => setSearch_field(e.target.value)}
-                            placeholder="Entrez le numéro de compte..."
-                        />
-                    </div>
-                    <div className="d-flex gap-2">
-                        <button
-                            className="btn btn-sm"
-                            style={{
-                                background: "#20c997",
-                                color: "white",
-                                borderRadius: "8px",
-                                padding: "8px 16px",
-                            }}
-                            onClick={AddNewCredit}
-                        >
-                            <i className="fas fa-pen me-1"></i> Nouveau
-                        </button>
-                        <button
-                            className="btn btn-sm"
-                            style={{
-                                background: "#007BFF",
-                                color: "white",
-                                borderRadius: "8px",
-                                padding: "8px 16px",
-                            }}
-                            onClick={upDateCredit}
-                        >
-                            <i className="fas fa-edit me-1"></i> Modifier
-                        </button>
+                    <div className="card border-0 shadow-sm rounded-3">
+                        <div className="card-header bg-white border-0 pt-3"><h6 className="fw-bold text-primary"><i className="fas fa-search me-2"></i>Recherche de crédit</h6></div>
+                        <div className="card-body">
+                            <div className="d-flex flex-wrap align-items-end gap-3">
+                                <div className="flex-grow-1">
+                                    <label className="form-label small fw-semibold text-secondary">Numéro de compte</label>
+                                    <input type="text" className="form-control form-control-sm" placeholder="Entrez le numéro de compte..." value={Search_field} onChange={e => setSearch_field(e.target.value)} />
+                                </div>
+                                <div className="d-flex gap-2">
+                                    <button className="btn btn-sm btn-success" onClick={AddNewCredit}><i className="fas fa-pen me-1"></i> Nouveau</button>
+                                    <button className="btn btn-sm btn-info text-white" onClick={upDateCredit}><i className="fas fa-edit me-1"></i> Modifier</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </form>
-        </div>
-    </div>
-</div>
-
                 <div className="col-md-5">
                     <div className="card border-0 shadow-sm rounded-3">
-                        <div className="card-header bg-white border-0 pt-3">
-                            <h6
-                                className="fw-bold"
-                                style={{ color: "steelblue" }}
-                            >
-                                <i className="fas fa-chart-line me-2"></i>État
-                                du crédit
-                            </h6>
+                        <div className="card-header bg-white border-0 pt-3"><h6 className="fw-bold text-primary"><i className="fas fa-chart-line me-2"></i>État du crédit</h6></div>
+                        <div className="card-body">
+                            <div className="d-flex flex-wrap gap-3 justify-content-around">
+                                <div className="form-check form-switch">
+                                    <input className="form-check-input" type="checkbox" disabled checked={fetchDataToUpdate?.Accorde == 1} />
+                                    <label className="form-check-label">Accordé</label>
+                                </div>
+                                <div className="form-check form-switch">
+                                    <input className="form-check-input" type="checkbox" disabled checked={fetchDataToUpdate?.Octroye == 1} />
+                                    <label className="form-check-label">Déboursé</label>
+                                </div>
+                                <div className="form-check form-switch">
+                                    <input className="form-check-input" type="checkbox" disabled checked={fetchDataToUpdate?.Reechelonne == 1} />
+                                    <label className="form-check-label">Rééchelonné</label>
+                                </div>
+                                <div className="form-check form-switch">
+                                    <input className="form-check-input" type="checkbox" disabled checked={fetchDataToUpdate?.Cloture == 1} />
+                                    <label className="form-check-label">Clôturé</label>
+                                </div>
+                            </div>
                         </div>
-                       <div className="card-body">
-    <div className="card-body">
-    <div className="d-flex flex-wrap gap-3 justify-content-around">
-        {/* Accordé */}
-        <div className="form-check form-switch">
-            <input
-                className={`form-check-input modern-input ${
-                    fetchDataToUpdate && fetchDataToUpdate.Accorde == 1
-                        ? "switch-success"
-                        : "switch-secondary"
-                }`}
-                type="checkbox"
-                id="accordedSwitch"
-                disabled
-                checked={fetchDataToUpdate && fetchDataToUpdate.Accorde == 1}
-            />
-            <label className="form-check-label" style={{ color: "steelblue" }}>
-                Accordé
-            </label>
-        </div>
-
-        {/* Déboursé */}
-        <div className="form-check form-switch">
-            <input
-                className={`form-check-input modern-input ${
-                    fetchDataToUpdate && fetchDataToUpdate.Octroye == 1
-                        ? "switch-info"
-                        : "switch-secondary"
-                }`}
-                type="checkbox"
-                id="debourseSwitch"
-                disabled
-                checked={fetchDataToUpdate && fetchDataToUpdate.Octroye == 1}
-            />
-            <label className="form-check-label" style={{ color: "steelblue" }}>
-                Déboursé
-            </label>
-        </div>
-          {/* Rééchelonné - NOUVEAU */}
-        <div className="form-check form-switch">
-            <input
-                className={`form-check-input modern-input ${
-                    fetchDataToUpdate && fetchDataToUpdate.Reechelonne == 1
-                        ? "switch-purple"
-                        : "switch-secondary"
-                }`}
-                type="checkbox"
-                id="reechelonneSwitch"
-                disabled
-                checked={fetchDataToUpdate && fetchDataToUpdate.Reechelonne == 1}
-            />
-            <label className="form-check-label" style={{ color: "steelblue" }}>
-                Rééchelonné
-            </label>
-        </div>
-
-        {/* Clôturé */}
-        <div className="form-check form-switch">
-            <input
-                className={`form-check-input modern-input ${
-                    fetchDataToUpdate && fetchDataToUpdate.Cloture == 1
-                        ? "switch-warning"
-                        : "switch-secondary"
-                }`}
-                type="checkbox"
-                id="clotureSwitch"
-                disabled
-                checked={fetchDataToUpdate && fetchDataToUpdate.Cloture == 1}
-            />
-            <label className="form-check-label" style={{ color: "steelblue" }}>
-                Clôturé
-            </label>
-        </div>
-
-      
-    </div>
-</div>
-</div>
                     </div>
                 </div>
             </div>
 
-            {/* Formulaire Nouveau Crédit / Modification */}
+            {/* Liste des crédits existants (si en mode nouveau) */}
+            {addNew && creditsList.length > 0 && (
+                <div className="card mb-4 border-0 shadow-sm">
+                    <div className="card-header bg-white"><h6 className="fw-bold">Crédits existants de ce membre</h6></div>
+                    <div className="card-body p-0">
+                        <div className="table-responsive">
+                            <table className="table table-sm mb-0">
+                                <thead className="table-light"><tr><th>N° Dossier</th><th>Montant</th><th>État</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    {creditsList.map(credit => (
+                                        <tr key={credit.NumDossier}>
+                                            <td>{credit.NumDossier}</td>
+                                            <td>{credit.MontantAccorde} {credit.CodeMonnaie}</td>
+                                            <td>{credit.Accorde == 1 ? 'Accordé' : 'Non accordé'} / {credit.Octroye == 1 ? 'Déboursé' : 'Non déboursé'}</td>
+                                            <td><button className="btn btn-sm btn-outline-primary" onClick={() => upDateCreditManual(credit.NumDossier)}><i className="fas fa-edit me-1"></i> Sélectionner</button></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Formulaire Nouveau Crédit ou Modification */}
             {addNew ? (
-                // Vue Nouveau Crédit
                 <div className="row g-3 mb-4">
                     <div className="col-md-4">
-                        <div className="card border-0 shadow-sm rounded-3 h-100">
-                            <div className="card-header bg-white border-0 pt-3">
-                                <h6
-                                    className="fw-bold"
-                                    style={{ color: "steelblue" }}
-                                >
-                                    <i className="fas fa-info-circle me-2"></i>
-                                    Informations générales
-                                </h6>
-                            </div>
-                            <div className="card-body p-3">
-                                <form>
+                        <div className="card border-0 shadow-sm h-100">
+                            <div className="card-header bg-white"><h6 className="fw-bold">Informations générales</h6></div>
+                            <div className="card-body">
+                                  <form>
                                     <table style={{ width: "100%" }}>
                                         <tbody>
                                             <tr>
@@ -1470,403 +1329,33 @@ const saveEcheancier = async (e) => {
                                         </tbody>
                                     </table>
                                 </form>
+                                <p>Contenu du formulaire nouveau crédit</p>
                             </div>
                         </div>
                     </div>
-
                     <div className="col-md-4">
-                        <div className="card border-0 shadow-sm rounded-3 h-100">
-                            <div className="card-header bg-white border-0 pt-3">
-                                <h6
-                                    className="fw-bold"
-                                    style={{ color: "steelblue" }}
-                                >
-                                    <i className="fas fa-chart-line me-2"></i>
-                                    Paramètres du crédit
-                                </h6>
-                            </div>
-                            <div className="card-body p-3">
-                                <form>
-                                    <table style={{ width: "100%" }}>
-                                        <tbody>
-                                            <tr>
-                                                <td colSpan="2">
-                                                    <hr className="my-2" />
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td
-                                                    style={{
-                                                        padding: "8px",
-                                                        width: "40%",
-                                                    }}
-                                                >
-                                                    <label
-                                                        style={{
-                                                            color: "steelblue",
-                                                            fontWeight: "500",
-                                                        }}
-                                                    >
-                                                        Nom compte
-                                                    </label>
-                                                </td>
-                                                <td style={{ padding: "8px" }}>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control form-control-sm bg-light modern-input"
-                                                        disabled
-                                                        value={
-                                                            fetchData.data &&
-                                                            fetchData.data
-                                                                .NomCompte
-                                                        }
-                                                    />
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style={{ padding: "8px" }}>
-                                                    <label
-                                                        style={{
-                                                            color: "steelblue",
-                                                            fontWeight: "500",
-                                                        }}
-                                                    >
-                                                        Cpte épargne
-                                                    </label>
-                                                </td>
-                                                <td style={{ padding: "8px" }}>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control form-control-sm bg-light modern-input"
-                                                        disabled
-                                                        value={
-                                                            fetchData.data &&
-                                                            fetchData.data
-                                                                .NumCompte
-                                                        }
-                                                    />
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style={{ padding: "8px" }}>
-                                                    <label
-                                                        style={{
-                                                            color: "steelblue",
-                                                            fontWeight: "500",
-                                                        }}
-                                                    >
-                                                        Cpte crédit
-                                                    </label>
-                                                </td>
-                                                <td style={{ padding: "8px" }}>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control form-control-sm bg-light modern-input"
-                                                        disabled
-                                                        value={
-                                                            fetchData.compteCredit &&
-                                                            fetchData.compteCredit
-                                                        }
-                                                    />
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style={{ padding: "8px" }}>
-                                                    <label
-                                                        style={{
-                                                            color: "steelblue",
-                                                            fontWeight: "500",
-                                                        }}
-                                                    >
-                                                        E. garantie
-                                                    </label>
-                                                </td>
-                                                <td style={{ padding: "8px" }}>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control form-control-sm bg-light modern-input"
-                                                        disabled
-                                                        value={
-                                                            fetchData.epargneCaution &&
-                                                            fetchData.epargneCaution
-                                                        }
-                                                    />
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style={{ padding: "8px" }}>
-                                                    <label
-                                                        style={{
-                                                            color: "steelblue",
-                                                            fontWeight: "500",
-                                                        }}
-                                                    >
-                                                        Objet crédit
-                                                    </label>
-                                                </td>
-                                                <td style={{ padding: "8px" }}>
-                                                    <select
-                                                        className={`form-select form-select-sm modern-select ${error.objet_credit ? "is-invalid" : ""}`}
-                                                        onChange={(e) =>
-                                                            setobjet_credit(
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    >
-                                                        <option value="">
-                                                            Sélectionnez
-                                                        </option>
-                                                        {fetchObjetCredit &&
-                                                            fetchObjetCredit.map(
-                                                                (res, idx) => (
-                                                                    <option
-                                                                        key={
-                                                                            idx
-                                                                        }
-                                                                        value={
-                                                                            res.objet
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            res.objet
-                                                                        }
-                                                                    </option>
-                                                                ),
-                                                            )}
-                                                    </select>
-                                                    {error.objet_credit && (
-                                                        <small className="text-danger">
-                                                            {error.objet_credit}
-                                                        </small>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style={{ padding: "8px" }}>
-                                                    <label
-                                                        style={{
-                                                            color: "steelblue",
-                                                            fontWeight: "500",
-                                                        }}
-                                                    >
-                                                        Gestionnaire
-                                                    </label>
-                                                </td>
-                                                <td style={{ padding: "8px" }}>
-                                                    <select
-                                                        className={`form-select form-select-sm modern-select ${error.gestionnaire ? "is-invalid" : ""}`}
-                                                        onChange={(e) =>
-                                                            setgestionnaire(
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    >
-                                                        <option value="">
-                                                            Sélectionnez
-                                                        </option>
-                                                        {fetchAgentCredit &&
-                                                            fetchAgentCredit.map(
-                                                                (res, idx) => (
-                                                                    <option
-                                                                        key={
-                                                                            idx
-                                                                        }
-                                                                        value={
-                                                                            res.name
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            res.name
-                                                                        }
-                                                                    </option>
-                                                                ),
-                                                            )}
-                                                    </select>
-                                                    {error.gestionnaire && (
-                                                        <small className="text-danger">
-                                                            {error.gestionnaire}
-                                                        </small>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style={{ padding: "8px" }}>
-                                                    <label
-                                                        style={{
-                                                            color: "steelblue",
-                                                            fontWeight: "500",
-                                                        }}
-                                                    >
-                                                        Source de fonds
-                                                    </label>
-                                                </td>
-                                                <td style={{ padding: "8px" }}>
-                                                    <input
-                                                        type="text"
-                                                        className={`form-control form-control-sm modern-input ${error.source_fond ? "is-invalid" : ""}`}
-                                                        onChange={(e) =>
-                                                            setsource_fond(
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    />
-                                                    {error.source_fond && (
-                                                        <small className="text-danger">
-                                                            {error.source_fond}
-                                                        </small>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td style={{ padding: "8px" }}>
-                                                    <label
-                                                        style={{
-                                                            color: "steelblue",
-                                                            fontWeight: "500",
-                                                        }}
-                                                    >
-                                                        Taux d'intérêt (%)
-                                                    </label>
-                                                </td>
-                                                <td style={{ padding: "8px" }}>
-                                                    <input
-                                                        type="text"
-                                                        className={`form-control form-control-sm modern-input ${error.taux_interet ? "is-invalid" : ""}`}
-                                                        onChange={(e) =>
-                                                            settaux_interet(
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                    />
-                                                    {error.taux_interet && (
-                                                        <small className="text-danger">
-                                                            {error.taux_interet}
-                                                        </small>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                            {/* <tr>
-                                                <td style={{ padding: "8px" }}>
-                                                    <label
-                                                        style={{
-                                                            color: "steelblue",
-                                                            fontWeight: "500",
-                                                        }}
-                                                    >
-                                                        Taux retard (%)
-                                                    </label>
-                                                </td>
-                                                <td style={{ padding: "8px" }}>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control form-control-sm"
-                                                        onChange={(e) =>
-                                                            settaux_retard(
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        disabled
-                                                    />
-                                                </td>
-                                            </tr> */}
-                                            {/* <tr>
-                                                <td style={{ padding: "8px" }}>
-                                                    <label
-                                                        style={{
-                                                            color: "steelblue",
-                                                            fontWeight: "500",
-                                                        }}
-                                                    >
-                                                        Échéances différées
-                                                    </label>
-                                                </td>
-                                                <td style={{ padding: "8px" }}>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control form-control-sm"
-                                                        onChange={(e) =>
-                                                            setechnce_differee(
-                                                                e.target.value,
-                                                            )
-                                                        }
-                                                        disabled
-                                                    />
-                                                </td>
-                                            </tr> */}
-                                            {/* <tr>
-                                                <td style={{ padding: "8px" }}>
-                                                    <label
-                                                        style={{
-                                                            color: "steelblue",
-                                                            fontWeight: "500",
-                                                        }}
-                                                    >
-                                                        Cycle
-                                                    </label>
-                                                </td>
-                                                <td style={{ padding: "8px" }}>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control form-control-sm bg-light"
-                                                        disabled
-                                                    />
-                                                </td>
-                                            </tr> */}
-                                        </tbody>
-                                    </table>
-                                </form>
+                        <div className="card border-0 shadow-sm h-100">
+                            <div className="card-header bg-white"><h6 className="fw-bold">Paramètres du crédit</h6></div>
+                            <div className="card-body">
+                                <p>Contenu du deuxième bloc</p>
                             </div>
                         </div>
                     </div>
-
                     <div className="col-md-4">
-                        <div className="card border-0 shadow-sm rounded-3 h-100">
-                            <div className="card-header bg-white border-0 pt-3">
-                                <h6
-                                    className="fw-bold"
-                                    style={{ color: "steelblue" }}
-                                >
-                                    <i className="fas fa-check-circle me-2"></i>
-                                    Validation
-                                </h6>
-                            </div>
+                        <div className="card border-0 shadow-sm h-100">
+                            <div className="card-header bg-white"><h6 className="fw-bold">Validation</h6></div>
                             <div className="card-body d-flex align-items-center justify-content-center">
-                                <button
-                                    onClick={saveNewCredit}
-                                    className="btn w-100 py-3 fw-bold"
-                                    style={{
-                                        background:
-                                            "linear-gradient(135deg, #20c997, #198764)",
-                                        color: "white",
-                                        borderRadius: "12px",
-                                        border: "none",
-                                        fontSize: "16px",
-                                        transition: "all 0.3s ease",
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.transform =
-                                            "translateY(-2px)";
-                                        e.currentTarget.style.boxShadow =
-                                            "0 6px 16px rgba(32,201,151,0.3)";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.transform =
-                                            "translateY(0)";
-                                        e.currentTarget.style.boxShadow =
-                                            "none";
-                                    }}
-                                >
-                                    <i
-                                        className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-save me-2"}`}
-                                    ></i>
-                                    Enregistrer le crédit
-                                </button>
+                                <button onClick={saveNewCredit} className="btn btn-success w-100 py-3">Enregistrer le crédit</button>
                             </div>
                         </div>
                     </div>
                 </div>
             ) : (
-                // Vue Modification Crédit
+                <>
+                    <div className="text-end mb-3">
+                        <button className="btn btn-sm btn-success" onClick={() => { setAddNew(true); setCreditsList([]); setFetchDataToUpdate(null); }}><i className="fas fa-plus me-1"></i> Nouveau crédit</button>
+                    </div>
+                   // Vue Modification Crédit
                 <div className="row g-3 mb-4">
                     <div className="col-md-4">
                         <div className="card border-0 shadow-sm rounded-3 h-100">
@@ -2721,9 +2210,10 @@ const saveEcheancier = async (e) => {
                         </div>
                     </div>
                 </div>
+                </>
             )}
 
-            {/* Onglets : Échéancier, Remboursement Manuel, Action */}
+           {/* Onglets : Échéancier, Remboursement Manuel, Action */}
             <div className="row mt-4">
                 <div className="col-12">
                     <div className="card border-0 shadow-sm rounded-3">
@@ -2790,10 +2280,10 @@ const saveEcheancier = async (e) => {
                                     className="tab-pane fade show active"
                                     id="echeancier"
                                     role="tabpanel"
-                                    >
+                                >
                                     <div className="row g-3">
-                                        <div className="col-md-4" >
-                                            <div className="card border-0 bg-light h-100">
+                                        <div className="col-md-4">
+                                            <div className="card border-0 bg-light">
                                                 <div className="card-body">
                                                     <form>
                                                         <table
@@ -3034,7 +2524,7 @@ const saveEcheancier = async (e) => {
                                             </div>
                                         </div>
                                         <div className="col-md-4">
-                                            <div className="card border-0 bg-light h-100">
+                                            <div className="card border-0 bg-light">
                                                 <div className="card-body">
                                                     <form>
                                                         <table
@@ -3343,7 +2833,6 @@ const saveEcheancier = async (e) => {
                                         <input
                                             type="text"
                                             className="form-control form-control-sm modern-input"
-                                            value={montantRemboursementCapital}
                                             onChange={(e) => setMontantRemboursementCapital(e.target.value)}
                                             placeholder="0,00"
                                         />
@@ -3410,7 +2899,6 @@ const saveEcheancier = async (e) => {
                                         <input
                                             type="text"
                                             className="form-control form-control-sm modern-input"
-                                            value={montantRemboursementInteret}
                                             onChange={(e) => setMontantRemboursementInteret(e.target.value)}
                                             placeholder="0,00"
                                         />

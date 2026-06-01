@@ -162,7 +162,7 @@ class GestionInteretsPostEcheance
     /**
      * Enregistre les écritures pour le paiement des intérêts post-échéance
      */
-    protected function enregistrerPaiementInterets($credit, $montantInteret)
+    public function enregistrerPaiementInterets($credit, $montantInteret)
     {
         if ($montantInteret <= 0) return;
 
@@ -276,6 +276,6 @@ class GestionInteretsPostEcheance
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-        return "AT00" . $id;
+        return "IR00" . $id;
     }
 }

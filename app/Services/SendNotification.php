@@ -502,87 +502,87 @@ class SendNotification
     }
 
 
-  public function sendNotificationOctroiCredit($NumCompte, $devise, $montant, $libelle)
-{
-    // Récupérer les informations du membre
-    $getMembreInfo = SMSBanking::where("NumAbrege", $NumCompte)
-        ->orWhere("NumCompte", $NumCompte)
-        ->first();
-    if (!$getMembreInfo) return;
-
-    // Récupérer le compte (nom, sexe) via NumCompte, NumAdherant ou Num_Manuel
-    $compte = Comptes::where("NumCompte", $NumCompte)
-        ->orWhere("NumAdherant", $NumCompte)
-        ->orWhere("Num_Manuel", $NumCompte)
-        ->first();
-    if (!$compte) return;
-
-    // Convertir le montant en float pour number_format
-    $montantFloat = (float)$montant;
-    $montantFormate = number_format($montantFloat, 0, ',', ' ');
-
-    // Récupérer le solde du compte après octroi (dans la bonne devise)
-    $solde = 0;
-    if ($devise == "CDF") {
-        $soldeMembre = Transactions::select(DB::raw("SUM(Creditfc)-SUM(Debitfc) as solde"))
-            ->where("NumCompte", $compte->NumCompte)
+    public function sendNotificationOctroiCredit($NumCompte, $devise, $montant, $libelle)
+    {
+        // Récupérer les informations du membre
+        $getMembreInfo = SMSBanking::where("NumAbrege", $NumCompte)
+            ->orWhere("NumCompte", $NumCompte)
             ->first();
-        $solde = $soldeMembre ? (float)$soldeMembre->solde : 0;
-    } else {
-        $soldeMembre = Transactions::select(DB::raw("SUM(Creditusd)-SUM(Debitusd) as solde"))
-            ->where("NumCompte", $compte->NumCompte)
+        if (!$getMembreInfo) return;
+
+        // Récupérer le compte (nom, sexe) via NumCompte, NumAdherant ou Num_Manuel
+        $compte = Comptes::where("NumCompte", $NumCompte)
+            ->orWhere("NumAdherant", $NumCompte)
+            ->orWhere("Num_Manuel", $NumCompte)
             ->first();
-        $solde = $soldeMembre ? (float)$soldeMembre->solde : 0;
-    }
-    $soldeFormate = number_format($solde, 0, ',', ' ');
+        if (!$compte) return;
 
-    // Construction du message court
-    $nomCourt = strtok($compte->NomCompte, ' ');
-    $civilite = '';
-    if ($compte->sexe == 'Homme') $civilite = 'M. ';
-    elseif ($compte->sexe == 'Femme') $civilite = 'Mme ';
+        // Convertir le montant en float pour number_format
+        $montantFloat = (float)$montant;
+        $montantFormate = number_format($montantFloat, 0, ',', ' ');
 
-    $message = $civilite . $nomCourt . ", votre credit de " . $montantFormate . " " . $devise . " a ete decaisse. Nouveau solde: " . $soldeFormate . " " . $devise;
+        // Récupérer le solde du compte après octroi (dans la bonne devise)
+        $solde = 0;
+        if ($devise == "CDF") {
+            $soldeMembre = Transactions::select(DB::raw("SUM(Creditfc)-SUM(Debitfc) as solde"))
+                ->where("NumCompte", $compte->NumCompte)
+                ->first();
+            $solde = $soldeMembre ? (float)$soldeMembre->solde : 0;
+        } else {
+            $soldeMembre = Transactions::select(DB::raw("SUM(Creditusd)-SUM(Debitusd) as solde"))
+                ->where("NumCompte", $compte->NumCompte)
+                ->first();
+            $solde = $soldeMembre ? (float)$soldeMembre->solde : 0;
+        }
+        $soldeFormate = number_format($solde, 0, ',', ' ');
 
-    // Raccourcir si > 160 caractères
-    if (strlen($message) > 160) {
-        $message = $civilite . $nomCourt . ", crédit décaissé: " . $montantFormate . " " . $devise . ". Solde: " . $soldeFormate . " " . $devise;
-    }
-    if (strlen($message) > 160) {
-        $message = "Crédit décaissé: " . $montantFormate . " " . $devise . ". Solde: " . $soldeFormate . " " . $devise;
-    }
-    if (strlen($message) > 160) {
-        $message = substr($message, 0, 157) . '...';
-    }
+        // Construction du message court
+        $nomCourt = strtok($compte->NomCompte, ' ');
+        $civilite = '';
+        if ($compte->sexe == 'Homme') $civilite = 'M. ';
+        elseif ($compte->sexe == 'Femme') $civilite = 'Mme ';
 
-    // Envoi Email
-    
-    $message = $civilite . $nomCourt . ", votre crédit de " . $montantFormate . " " . $devise . " a été décaissé. Nouveau solde: " . $soldeFormate . " " . $devise;
-    if ($getMembreInfo->Email && $getMembreInfo->ActivatedEmail == 1) {
-        Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($message));
-    }
+        $message = $civilite . $nomCourt . ", votre credit de " . $montantFormate . " " . $devise . " a ete decaisse. Nouveau solde: " . $soldeFormate . " " . $devise;
 
-    // Envoi SMS
-    if ($getMembreInfo->Telephone && $getMembreInfo->ActivatedSMS == 1) {
-        try {
-            
-            $message = $civilite . $nomCourt . ", votre credit de " . $montantFormate . " " . $devise . " a ete decaisse. Nouveau solde: " . $soldeFormate . " " . $devise;
-            $response = $this->africaTalking->sendSms($getMembreInfo->Telephone, $message);
-            $status = ($response['status'] == 'success') ? 1 : 0;
-            SendedSMS::create([
-                "numPhone" => $getMembreInfo->Telephone,
-                "messageStatus" => $status,
-                "paidStatus" => 0,
-                "dateEnvoie" => date("Y-m-d"),
-                "NumCompte" => $compte->NumCompte,
-                "CodeMonnaie" => ($devise == "CDF") ? 2 : 1,
-                "statut" => "octroi_credit"
-            ]);
-        } catch (\Throwable $th) {
-            Log::error("Erreur envoi SMS octroi crédit: " . $th->getMessage());
+        // Raccourcir si > 160 caractères
+        if (strlen($message) > 160) {
+            $message = $civilite . $nomCourt . ", crédit décaissé: " . $montantFormate . " " . $devise . ". Solde: " . $soldeFormate . " " . $devise;
+        }
+        if (strlen($message) > 160) {
+            $message = "Crédit décaissé: " . $montantFormate . " " . $devise . ". Solde: " . $soldeFormate . " " . $devise;
+        }
+        if (strlen($message) > 160) {
+            $message = substr($message, 0, 157) . '...';
+        }
+
+        // Envoi Email
+
+        $message = $civilite . $nomCourt . ", votre crédit de " . $montantFormate . " " . $devise . " a été décaissé. Nouveau solde: " . $soldeFormate . " " . $devise;
+        if ($getMembreInfo->Email && $getMembreInfo->ActivatedEmail == 1) {
+            Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($message));
+        }
+
+        // Envoi SMS
+        if ($getMembreInfo->Telephone && $getMembreInfo->ActivatedSMS == 1) {
+            try {
+
+                $message = $civilite . $nomCourt . ", votre credit de " . $montantFormate . " " . $devise . " a ete decaisse. Nouveau solde: " . $soldeFormate . " " . $devise;
+                $response = $this->africaTalking->sendSms($getMembreInfo->Telephone, $message);
+                $status = ($response['status'] == 'success') ? 1 : 0;
+                SendedSMS::create([
+                    "numPhone" => $getMembreInfo->Telephone,
+                    "messageStatus" => $status,
+                    "paidStatus" => 0,
+                    "dateEnvoie" => date("Y-m-d"),
+                    "NumCompte" => $compte->NumCompte,
+                    "CodeMonnaie" => ($devise == "CDF") ? 2 : 1,
+                    "statut" => "octroi_credit"
+                ]);
+            } catch (\Throwable $th) {
+                Log::error("Erreur envoi SMS octroi crédit: " . $th->getMessage());
+            }
         }
     }
-}
 
 
     //PERMET D'ENVOYER DES NOTIFICATION
@@ -594,7 +594,12 @@ class SendNotification
             if ($getMembreInfo) {
                 if ($getMembreInfo->Email != null and $getMembreInfo->ActivatedEmail == 1) {
                     if ($devise == "CDF") {
-                        $getMembreInfo2 = Comptes::where("CodeMonnaie", "=", 2)->where("NumAdherant", "=", $NumCompte)->orWhere("NumCompte", $NumCompte)->first();
+                        $getMembreInfo2 = Comptes::where('CodeMonnaie', 2)
+                            ->where(function ($query) use ($NumCompte) {
+                                $query->where('NumAdherant', $NumCompte)
+                                    ->orWhere('NumCompte', $NumCompte);
+                            })
+                            ->first();
                         //RECUPERE LE SOLDE DU MEMBRE EN FC 
                         $compteCDF = $getMembreInfo2->NumCompte;
                         $soldeMembreCDF = Transactions::select(
@@ -614,7 +619,12 @@ class SendNotification
                         Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                         // return view('emails.test');
                     } else if ($devise == "USD") {
-                        $getMembreInfo2 = Comptes::where("CodeMonnaie", "=", 1)->where("NumAdherant", "=", $NumCompte)->orWhere("NumCompte", $NumCompte)->first();
+                        $getMembreInfo2 = Comptes::where('CodeMonnaie', 1)
+                            ->where(function ($query) use ($NumCompte) {
+                                $query->where('NumAdherant', $NumCompte)
+                                    ->orWhere('NumCompte', $NumCompte);
+                            })
+                            ->first();
 
                         $NumCompteUSD = $getMembreInfo2->NumCompte;
 
@@ -645,8 +655,12 @@ class SendNotification
 
                     if ($devise == "CDF") {
                         try {
-                            $getMembreInfo2 = Comptes::where("CodeMonnaie", "=", 2)->where("NumAdherant", "=", $NumCompte)->orWhere("NumCompte", $NumCompte)->first();
-                            //RECUPERE LE SOLDE DU MEMBRE EN USD
+                            $getMembreInfo2 = Comptes::where('CodeMonnaie', 2)
+                                ->where(function ($query) use ($NumCompte) {
+                                    $query->where('NumAdherant', $NumCompte)
+                                        ->orWhere('NumCompte', $NumCompte);
+                                })
+                                ->first();
                             $NumCompteCDF = $getMembreInfo2->NumCompte;
                             $soldeMembreCDF = Transactions::select(
                                 DB::raw("SUM(Creditfc)-SUM(Debitfc) as soldeMembreCDF"),
@@ -694,7 +708,12 @@ class SendNotification
                         }
                     } else if ($devise == "USD") {
                         try {
-                            $getMembreInfo2 = Comptes::where("CodeMonnaie", "=", 1)->where("NumAdherant", "=", $NumCompte)->orWhere("NumCompte", $NumCompte)->first();
+                            $getMembreInfo2 = Comptes::where('CodeMonnaie', 1)
+                                ->where(function ($query) use ($NumCompte) {
+                                    $query->where('NumAdherant', $NumCompte)
+                                        ->orWhere('NumCompte', $NumCompte);
+                                })
+                                ->first();
                             //RECUPERE LE SOLDE DU MEMBRE EN USD
                             $NumCompteUSD = $getMembreInfo2->NumCompte;
                             $soldeMembreUSD = Transactions::select(
@@ -752,7 +771,12 @@ class SendNotification
             if ($getMembreInfo) {
                 if ($getMembreInfo->Email != null and $getMembreInfo->ActivatedEmail == 1) {
                     if ($devise == "CDF") {
-                        $getMembreInfo2 = Comptes::where("CodeMonnaie", "=", 2)->where("NumAdherant", "=", $NumCompte)->orWhere("NumCompte", $NumCompte)->first();
+                        $getMembreInfo2 = Comptes::where('CodeMonnaie', 2)
+                            ->where(function ($query) use ($NumCompte) {
+                                $query->where('NumAdherant', $NumCompte)
+                                    ->orWhere('NumCompte', $NumCompte);
+                            })
+                            ->first();
                         //RECUPERE LE SOLDE DU MEMBRE EN FC 
                         $compteCDF = $getMembreInfo2->NumCompte;
                         $soldeMembreCDF = Transactions::select(
@@ -772,7 +796,12 @@ class SendNotification
                         Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                         // return view('emails.test');
                     } else if ($devise == "USD") {
-                        $getMembreInfo2 = Comptes::where("CodeMonnaie", "=", 1)->where("NumAdherant", "=", $NumCompte)->orWhere("NumCompte", $NumCompte)->first();
+                        $getMembreInfo2 = Comptes::where('CodeMonnaie', 1)
+                            ->where(function ($query) use ($NumCompte) {
+                                $query->where('NumAdherant', $NumCompte)
+                                    ->orWhere('NumCompte', $NumCompte);
+                            })
+                            ->first();
 
                         $NumCompteUSD = $getMembreInfo2->NumCompte;
 
@@ -789,7 +818,7 @@ class SendNotification
                                 : "Bonjour ");
 
                         $data .= $getMembreInfo2->NomCompte . " Votre compte USD-" . $NumCompte .
-                            " est debité de " . $montant . " capital ordinaire du credit" . $isPartielOrComplete . " Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
+                            " est debité de " . $montant . " capital ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " .  number_format($soldeMembreUSD->soldeMembreUSD) . " USD";
 
                         Mail::to($getMembreInfo->Email)->send(new TransactionsEmail($data));
                     }
@@ -798,7 +827,12 @@ class SendNotification
 
                     if ($devise == "CDF") {
                         try {
-                            $getMembreInfo2 = Comptes::where("CodeMonnaie", "=", 2)->where("NumAdherant", "=", $NumCompte)->orWhere("NumCompte", $NumCompte)->first();
+                            $getMembreInfo2 = Comptes::where('CodeMonnaie', 2)
+                                ->where(function ($query) use ($NumCompte) {
+                                    $query->where('NumAdherant', $NumCompte)
+                                        ->orWhere('NumCompte', $NumCompte);
+                                })
+                                ->first();
                             //RECUPERE LE SOLDE DU MEMBRE EN USD
                             $NumCompteCDF = $getMembreInfo2->NumCompte;
                             $soldeMembreCDF = Transactions::select(
@@ -808,7 +842,7 @@ class SendNotification
                                 ->first();
 
                             $message = $getMembreInfo2->NomCompte . ", Votre compte CDF-" . $NumCompte .
-                                " est debite de " . $montant . " capital ordinaire du credit" . $isPartielOrComplete . " Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
+                                " est debite de " . $montant . " capital ordinaire du credit " . $isPartielOrComplete . " Votre nouveau solde est de " .  number_format($soldeMembreCDF->soldeMembreCDF) . " CDF";
 
                             $receiver_number = $getMembreInfo->Telephone;
                             $response = $this->africaTalking->sendSms($receiver_number, $message);

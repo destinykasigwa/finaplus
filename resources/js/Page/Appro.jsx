@@ -4,6 +4,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import RecuApproCDF from "./Modals/RecuApproCDF";
 import RecuApproUSD from "./Modals/RecuApproUSD";
+import { useFormattedNumber } from "../hooks/useFormattedNumber";
 // import { useNavigate } from "react-router-dom";
 
 const Appro = () => {
@@ -35,6 +36,7 @@ const Appro = () => {
     const [fetchDailyOperationCDF, setFetchDailyOperationCDF] = useState();
     const [fetchDailyOperationUSD, setFetchDailyOperationUSD] = useState();
     const [selectedData, setSelectedData] = useState(null);
+    const { formattedValue, handleChange, numberValue } = useFormattedNumber();
     useEffect(() => {
         getAllCaissier();
         GetUserInformation();
@@ -45,7 +47,7 @@ const Appro = () => {
         const res = await axios.get("/eco/page/appro/get-all-caissiers");
         if (res.data.status == 1) {
             setFetchData(res.data.data);
-            setgetChefcaisse(res.data.chefcaisse);
+            setgetChefcaisse(res.data.user_role);
             // console.log(fetchData[0].NomCompte);
         }
     };
@@ -55,7 +57,7 @@ const Appro = () => {
         setloading(true);
         const res = await axios.post("/eco/page/save-appro", {
             devise,
-            Montant,
+            Montant:numberValue,
             CaissierId,
             vightMille,
             dixMille,
@@ -183,7 +185,7 @@ const Appro = () => {
         <>
             {fetchData !== undefined &&
             getchefcaisse &&
-            getchefcaisse.isChefCaisse == 1 ? (
+            getchefcaisse == "ChefCaisse" || getchefcaisse == "SuperAdmin"  ? (
                 <div className="container-fluid py-4">
     {/* ========== EN-TÊTE MODERNE ========== */}
     <div className="row mb-4">
@@ -244,13 +246,20 @@ const Appro = () => {
                     </div>
                     <div>
                         <label className="label-modern">Montant</label>
-                        <input
+                        {/* <input
                             type="text"
                             className="form-control modern-input"
                             placeholder="0,00"
                             value={Montant}
                             onChange={(e) => setMontant(e.target.value)}
-                        />
+                        /> */}
+                         <input
+        type="text"
+        className="form-control modern-input"
+        placeholder="0,00"
+        value={formattedValue}
+        onChange={handleChange}
+    />
                     </div>
                 </div>
             </div>
@@ -407,8 +416,8 @@ const Appro = () => {
                                   (parseInt(cinqCentFr) || 0) * 500 +
                                   (parseInt(deuxCentFranc) || 0) * 200 +
                                   (parseInt(centFranc) || 0) * 100 +
-                                  (parseInt(cinquanteFanc) || 0) * 50) !== parseInt(Montant) ||
-                            !Montant ||
+                                  (parseInt(cinquanteFanc) || 0) * 50) !== parseInt(numberValue) ||
+                            !numberValue ||
                             !CaissierId
                         }
                     >

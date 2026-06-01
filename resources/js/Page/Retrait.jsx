@@ -147,6 +147,7 @@ const RetraitEspece = () => {
         if (res.data.status == 1) {
             setFetchBilletageCDF(res.data.billetageCDF[0]);
             setFetchBilletageUSD(res.data.billetageUSD[0]);
+            console.log(res.dat);
             setFetchInfo(true);
         }
     };

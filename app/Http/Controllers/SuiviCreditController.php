@@ -64,31 +64,25 @@ class SuiviCreditController extends Controller
             return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée"]);
         }
         $codeAgenceCourante = $currentAgence['code_agence'];
-        if (isset($request->seachedAccount)) {
-            //dd($request->seachedAccount);
-            $data = Portefeuille::where(function ($query) use ($request) {
-                $query->where("portefeuilles.numAdherant", $request->seachedAccount)
-                    ->orWhere("portefeuilles.NumCompteEpargne", $request->seachedAccount);
-            })
-                ->join("type_credits", "portefeuilles.RefTypeCredit", "=", "type_credits.id")
-                ->where("portefeuilles.Cloture", 0)
-                ->where("portefeuilles.CodeAgence", $codeAgenceCourante)
-                ->first();
-            if ($data) {
-                $data = Portefeuille::where(function ($query) use ($request) {
-                    $query->where("portefeuilles.numAdherant", $request->seachedAccount)
-                        ->orWhere("portefeuilles.NumCompteEpargne", $request->seachedAccount);
-                })
-                    ->join("type_credits", "portefeuilles.RefTypeCredit", "=", "type_credits.id")
-                    ->where("portefeuilles.Cloture", 0)
-                    ->first();
-                return response()->json(["status" => 1, "data" => $data]);
-            } else {
-                return response()->json(["status" => 0, "msg" => "Aucune information trouvée !"]);
-            }
-        } else {
-            return response()->json(["status" => 0, "msg" => "Aucune information trouvée"]);
-        }
+      if (isset($request->seachedAccount)) {
+    $data = Portefeuille::where(function ($query) use ($request) {
+            $query->where("portefeuilles.numAdherant", $request->seachedAccount)
+                ->orWhere("portefeuilles.NumCompteEpargne", $request->seachedAccount)
+                ->orWhere("portefeuilles.NumDossier", $request->seachedAccount);
+        })
+        ->join("type_credits", "portefeuilles.RefTypeCredit", "=", "type_credits.id")
+        ->where("portefeuilles.CodeAgence", $codeAgenceCourante)
+        ->orderBy('portefeuilles.id', 'desc') // Dernier enregistrement
+        ->first();
+    
+    if ($data) {
+        return response()->json(["status" => 1, "data" => $data]);
+    }
+    
+    return response()->json(["status" => 0, "msg" => "Aucune information trouvée !"]);
+}
+
+return response()->json(["status" => 0, "msg" => "Aucune information trouvée"]);
     }
     //GET TYPE CREDIT HOME PAGE
 
@@ -1404,7 +1398,7 @@ class SuiviCreditController extends Controller
             if ($creditExist->Accorde == 1) {
                 Portefeuille::where("NumDossier", "=", $request->NumDossier)->update([
                     "Octroye" => 1,
-                    "OctroyePar"=>Auth::user()->name,
+                    "OctroyePar" => Auth::user()->name,
                 ]);
                 //VERIE SI LE CREDIT NE PAS ENCORE DEBOURSER
                 if ($creditExist->Octroye == 1) {
@@ -1957,5 +1951,21 @@ class SuiviCreditController extends Controller
             'NomUtilisateur' => auth()->user()->name,
             'Libelle' => "Radiation du crédit dossier {$portefeuille->NumDossier} (hors bilan)",
         ]);
+    }
+
+
+
+    public function getCreditsByMember(Request $request)
+    {
+        $credits = Portefeuille::where('numAdherant', $request->numAdherant)
+            ->where('Cloture', 0)
+            ->get(['NumDossier', 'MontantAccorde', 'CodeMonnaie', 'Accorde', 'Octroye']);
+        return response()->json(['status' => 1, 'credits' => $credits]);
+    }
+
+    public function getCreditByDossier(Request $request)
+    {
+        $credit = Portefeuille::where('NumDossier', $request->numDossier)->first();
+        return response()->json(['status' => 1, 'data' => $credit]);
     }
 }

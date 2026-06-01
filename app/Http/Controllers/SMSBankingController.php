@@ -165,7 +165,7 @@ class SMSBankingController extends Controller
         if (isset($item)) {
             $NameUser = SMSBanking::where("id", "=", $item)->first()->NomCompte;
             SMSBanking::where("id", "=", $item)->delete();
-            return response()->json(["success" => 1, "msg" => "Vous avez supprimer l'utilisateur " . $NameUser . " sur SMS Banking"]);
+            return response()->json(["success" => 1, "msg" => "Vous avez supprimé l'utilisateur " . $NameUser . " sur SMS Banking"]);
         }
     }
 

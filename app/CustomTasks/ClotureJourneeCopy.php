@@ -40,6 +40,8 @@ class ClotureJourneeCopy
     // protected $montantRemboursementManuel;
     protected $remboursAnticipe;
     protected $numDossier;
+    protected $gestionPostEcheance;
+    protected $gestionPenalites;
 
     // protected $compteProvisionCDF1A30Jr;
     // protected $compteProvisionCDF31A60Jr;
@@ -65,27 +67,13 @@ class ClotureJourneeCopy
         $this->dateSystem = date("Y-m-d");
         $this->tauxDuJour = $latestTauxEtDateSystem ? $latestTauxEtDateSystem->TauxEnFc : null;
         $this->accountsConfig = $porteFeuilleConfig;
-
-        // $this->compteDotationAuProvisionCDF = "6901000000202";
-        // $this->compteDotationAuProvisionUSD = "6900000000201";
-        // $this->compteRepriseDeProvisionCDF = "7901000000202";
-        // $this->compteRepriseDeProvisionUSD = "7900000000201";
-
-        // $this->compteCreanceLitigeuseUSD = "3900000000201";
-        // $this->compteCreanceLitigeuseCDF = "3901000000202";
-        // $this->compteCreditAuxMembreCDF = "3210000000202";
-        // $this->compteCreditAuxMembreUSD = "3210000000201";
-        // $this->compteProvisionCDF = "3801000000202";
-        // $this->compteProvisionUSD = "3800000000201";
-        // $this->montantRemboursementManuel = $request->montantRemboursementManuel;
         $this->remboursAnticipe = $request->remboursAnticipe;
         $this->numDossier = $request->numDossier;
         $this->sendNotification = app(SendNotification::class);
-        // $this->compteProvisionCDF1A30Jr = "3800";
-        // $this->compteProvisionCDF31A60Jr = "3801";
-        // $this->compteProvisionCDF61A90Jr = "3802";
-        // $this->compteProvisionCDF91A180Jr = "3803";
-        // $this->compteProvisionCDF180Et180Jr = "3804";
+        $this->gestionPostEcheance = new GestionInteretsPostEcheance($this->dateSystem, $this->tauxDuJour);
+        // 🔥 Ajout : instanciation de la classe de pénalités
+        $delaiAvantPenalite = 0; // À configurer selon votre politique (peut venir d'une config)
+        $this->gestionPenalites = new GestionInteretsRetard($this->dateSystem, $this->tauxDuJour, $delaiAvantPenalite);
     }
 
     /**
@@ -133,11 +121,11 @@ class ClotureJourneeCopy
             //     ['last_cloture_date' => $this->dateSystem, 'updated_at' => now()]
             // );
 
-            // dd(date('d/m/Y H:i:s'));
             $this->traiterRemboursementsAEcheance();
             $this->traiterRemboursementsEnRetard();
-            $gestionPostEcheance = new GestionInteretsPostEcheance($this->dateSystem, $this->tauxDuJour);
-            $gestionPostEcheance->execute();
+
+            $this->gestionPenalites->execute();      // 👈 pénalités en premier
+            $this->gestionPostEcheance->execute();   // 👈 intérêts post-échéance ensuite
             DB::commit();
 
             Log::info("Exécution de la clôture terminée avec succès");
@@ -3466,6 +3454,7 @@ class ClotureJourneeCopy
 
             // Générer une seule écriture comptable pour le total remboursé
             $libelle = "Remboursement manuel capital de " . number_format($totalRembourse, 2) . " - Dossier " . $numDossier;
+
             $numTransaction = $this->insertInTransactionCapital(
                 $totalRembourse,
                 $portefeuille->CodeMonnaie,
@@ -3551,79 +3540,227 @@ class ClotureJourneeCopy
      * @return array
      * @throws \Exception
      */
+    // public function remboursementManuelInteret($montant, $numDossier, $anticipe = false)
+    // {
+
+
+    //     DB::beginTransaction();
+    //     try {
+
+    //         $portefeuille = Portefeuille::where('NumDossier', $numDossier)->lockForUpdate()->first();
+    //         if (!$portefeuille) throw new \Exception("Dossier introuvable.");
+    //         if ($portefeuille->Cloture == 1) throw new \Exception("Crédit déjà clôturé.");
+
+    //         // Vérification du solde réel
+    //         $codeMonnaie = ($portefeuille->CodeMonnaie == 'USD') ? 1 : 2;
+    //         $soldeReel = $this->checkSoldeMembrePASSIF($codeMonnaie, $portefeuille->NumCompteEpargne);
+    //         if ($soldeReel < $montant) {
+    //             throw new \Exception("Solde insuffisant. Votre solde est de " . number_format($soldeReel, 2) . " " . $portefeuille->CodeMonnaie);
+    //         }
+
+
+
+    //         // Récupérer les échéances non encore totalement remboursées en intérêts
+    //         $echeances = Echeancier::where('NumDossier', $numDossier)
+    //             ->where('Interet', '>', 0)
+    //             ->where("echeanciers.Reechelonne", "=", 0)
+    //             ->whereRaw('Interet - COALESCE((
+    //             SELECT SUM(InteretPaye) FROM remboursementcredits 
+    //             WHERE RefEcheance = echeanciers.ReferenceEch
+    //         ), 0) > 0')
+    //             ->orderBy('DateTranch', 'asc');
+
+    //         if (!$anticipe) {
+    //             $echeances->where('DateTranch', '<=', $this->dateSystem);
+    //         }
+    //         $echeances = $echeances->get();
+
+    //         if ($echeances->isEmpty()) {
+    //             throw new \Exception("Aucun intérêt dû à rembourser.");
+    //         }
+
+    //         $montantRestant = $montant;
+    //         $totalRembourse = 0;
+    //         $echeancesModifiees = [];
+
+    //         foreach ($echeances as $echeance) {
+    //             if ($montantRestant <= 0) break;
+    //             $interetDejaPaye = Remboursementcredit::where('RefEcheance', $echeance->ReferenceEch)->value('InteretPaye') ?? 0;
+    //             $interetRestant = $echeance->Interet - $interetDejaPaye;
+    //             $aRembourser = min($montantRestant, $interetRestant);
+    //             if ($aRembourser <= 0) continue;
+
+    //             $remb = Remboursementcredit::firstOrNew(['RefEcheance' => $echeance->ReferenceEch]);
+    //             $remb->RefEcheance = $echeance->ReferenceEch;
+    //             $remb->CodeAgence = $portefeuille->CodeAgence;
+    //             $remb->NumCompte = $portefeuille->NumCompteEpargne;
+    //             $remb->NumCompteCredit = $portefeuille->NumCompteCredit;
+    //             $remb->NumDossie = $numDossier;
+    //             $remb->RefTypCredit = $portefeuille->RefTypeCredit;
+    //             $remb->NomCompte = $portefeuille->NomCompte;
+    //             $remb->DateTranche = $echeance->DateTranch;
+    //             $remb->InteretAmmorti = $echeance->Interet;
+    //             $remb->InteretPaye = ($remb->InteretPaye ?? 0) + $aRembourser;
+    //             $remb->CapitalAmmortie = $echeance->CapAmmorti;
+    //             $remb->CapitalPaye = $remb->CapitalPaye ?? 0;
+    //             $remb->CodeGuichet = $portefeuille->CodeAgence;
+    //             $remb->NumAdherent = $portefeuille->numAdherant;
+    //             $remb->save();
+
+    //             $montantRestant -= $aRembourser;
+    //             $totalRembourse += $aRembourser;
+    //             $echeancesModifiees[] = $echeance->ReferenceEch;
+
+    //             // Si l'échéance est totalement soldée (capital + intérêts), on la ferme
+    //             if ($remb->CapitalPaye >= $echeance->CapAmmorti && $remb->InteretPaye >= $echeance->Interet) {
+    //                 Echeancier::where('ReferenceEch', $echeance->ReferenceEch)
+    //                     ->update(['statutPayement' => 1, 'posted' => 1, 'RetardPayement' => 0]);
+    //             }
+    //         }
+
+    //         if ($totalRembourse <= 0) {
+    //             throw new \Exception("Aucun intérêt remboursé.");
+    //         }
+
+    //         // Générer une seule écriture comptable pour le total remboursé
+    //         $libelle = "Remboursement manuel intérêts de " . number_format($totalRembourse, 2) . " - Dossier " . $numDossier;
+    //         $numTransaction = $this->insertInTransactionInteret(
+    //             $totalRembourse,
+    //             $portefeuille->CodeMonnaie,
+    //             $this->dateSystem,
+    //             $portefeuille->CodeAgence,
+    //             $portefeuille->NumCompteEpargne,
+    //             $portefeuille->CompteInteret,
+    //             $this->tauxDuJour,
+    //             $portefeuille->numAdherant,
+    //             $numDossier,
+    //             $libelle,
+    //             'SYSTEM',
+    //             null
+    //         );
+
+    //         // Mettre à jour le numéro de transaction dans les remboursementcredits
+    //         foreach ($echeancesModifiees as $refEch) {
+    //             Remboursementcredit::where('RefEcheance', $refEch)
+    //                 ->whereNull('NumTransaction')
+    //                 ->update(['NumTransaction' => $numTransaction]);
+    //         }
+
+    //         // Recalculer les retards et provisions (au cas où)
+    //         $this->recalculerRetardEtProvisions($numDossier);
+
+    //         DB::commit();
+    //         return [
+    //             'success' => true,
+    //             'montant_rembourse' => $totalRembourse,
+    //             'num_transaction' => $numTransaction
+    //         ];
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         throw $e;
+    //     }
+    // }
+
+    // Remboursement manuel des intérêts (avec prise en compte des intérêts post-échéance)
     public function remboursementManuelInteret($montant, $numDossier, $anticipe = false)
     {
-
-
         DB::beginTransaction();
         try {
-
             $portefeuille = Portefeuille::where('NumDossier', $numDossier)->lockForUpdate()->first();
             if (!$portefeuille) throw new \Exception("Dossier introuvable.");
             if ($portefeuille->Cloture == 1) throw new \Exception("Crédit déjà clôturé.");
 
-            // Vérification du solde réel
             $codeMonnaie = ($portefeuille->CodeMonnaie == 'USD') ? 1 : 2;
             $soldeReel = $this->checkSoldeMembrePASSIF($codeMonnaie, $portefeuille->NumCompteEpargne);
             if ($soldeReel < $montant) {
                 throw new \Exception("Solde insuffisant. Votre solde est de " . number_format($soldeReel, 2) . " " . $portefeuille->CodeMonnaie);
             }
 
-            // Récupérer les échéances non encore totalement remboursées en intérêts
-            $echeances = Echeancier::where('NumDossier', $numDossier)
-                ->where('Interet', '>', 0)
-                ->where("echeanciers.Reechelonne", "=", 0)
-                ->whereRaw('Interet - COALESCE((
-                SELECT SUM(InteretPaye) FROM remboursementcredits 
-                WHERE RefEcheance = echeanciers.ReferenceEch
-            ), 0) > 0')
-                ->orderBy('DateTranch', 'asc');
-
-            if (!$anticipe) {
-                $echeances->where('DateTranch', '<=', $this->dateSystem);
-            }
-            $echeances = $echeances->get();
-
-            if ($echeances->isEmpty()) {
-                throw new \Exception("Aucun intérêt dû à rembourser.");
-            }
-
             $montantRestant = $montant;
             $totalRembourse = 0;
             $echeancesModifiees = [];
 
-            foreach ($echeances as $echeance) {
-                if ($montantRestant <= 0) break;
-                $interetDejaPaye = Remboursementcredit::where('RefEcheance', $echeance->ReferenceEch)->value('InteretPaye') ?? 0;
-                $interetRestant = $echeance->Interet - $interetDejaPaye;
-                $aRembourser = min($montantRestant, $interetRestant);
-                if ($aRembourser <= 0) continue;
+            // 1. PRIORITÉ : Intérêts post-échéance
+            $interetPostEcheance = DB::table('interets_courus_suivi')
+                ->where('NumDossier', $numDossier)
+                ->value('InteretCouruNonPaye') ?? 0;
 
-                $remb = Remboursementcredit::firstOrNew(['RefEcheance' => $echeance->ReferenceEch]);
-                $remb->RefEcheance = $echeance->ReferenceEch;
-                $remb->CodeAgence = $portefeuille->CodeAgence;
-                $remb->NumCompte = $portefeuille->NumCompteEpargne;
-                $remb->NumCompteCredit = $portefeuille->NumCompteCredit;
-                $remb->NumDossie = $numDossier;
-                $remb->RefTypCredit = $portefeuille->RefTypeCredit;
-                $remb->NomCompte = $portefeuille->NomCompte;
-                $remb->DateTranche = $echeance->DateTranch;
-                $remb->InteretAmmorti = $echeance->Interet;
-                $remb->InteretPaye = ($remb->InteretPaye ?? 0) + $aRembourser;
-                $remb->CapitalAmmortie = $echeance->CapAmmorti;
-                $remb->CapitalPaye = $remb->CapitalPaye ?? 0;
-                $remb->CodeGuichet = $portefeuille->CodeAgence;
-                $remb->NumAdherent = $portefeuille->numAdherant;
-                $remb->save();
+            if ($montantRestant > 0 && $interetPostEcheance > 0) {
+                $aRembourser = min($montantRestant, $interetPostEcheance);
 
+                $credit = (object) [
+                    'NumDossier' => $numDossier,
+                    'CodeMonnaie' => $portefeuille->CodeMonnaie,
+                    'CodeAgence' => $portefeuille->CodeAgence,
+                    'NumCompteEpargne' => $portefeuille->NumCompteEpargne,
+                    'numAdherant' => $portefeuille->numAdherant,
+                ];
+
+                $this->gestionPostEcheance->enregistrerPaiementInterets($credit, $aRembourser);
+
+                DB::table('interets_courus_suivi')
+                    ->where('NumDossier', $numDossier)
+                    ->update([
+                        'InteretCouruNonPaye' => DB::raw("InteretCouruNonPaye - $aRembourser"),
+                        'updated_at' => now()
+                    ]);
                 $montantRestant -= $aRembourser;
                 $totalRembourse += $aRembourser;
-                $echeancesModifiees[] = $echeance->ReferenceEch;
+            }
 
-                // Si l'échéance est totalement soldée (capital + intérêts), on la ferme
-                if ($remb->CapitalPaye >= $echeance->CapAmmorti && $remb->InteretPaye >= $echeance->Interet) {
-                    Echeancier::where('ReferenceEch', $echeance->ReferenceEch)
-                        ->update(['statutPayement' => 1, 'posted' => 1, 'RetardPayement' => 0]);
+            // 2. Intérêts planifiés (échéancier)
+            if ($montantRestant > 0) {
+                $echeances = Echeancier::where('NumDossier', $numDossier)
+                    ->where('Interet', '>', 0)
+                    ->where("echeanciers.Reechelonne", "=", 0)
+                    ->whereRaw('Interet - COALESCE((
+                    SELECT SUM(InteretPaye) FROM remboursementcredits 
+                    WHERE RefEcheance = echeanciers.ReferenceEch
+                ), 0) > 0')
+                    ->orderBy('DateTranch', 'asc');
+
+                if (!$anticipe) {
+                    $echeances->where('DateTranch', '<=', $this->dateSystem);
+                }
+                $echeances = $echeances->get();
+
+                if ($echeances->isEmpty() && $totalRembourse == 0) {
+                    throw new \Exception("Aucun intérêt dû à rembourser.");
+                }
+
+                foreach ($echeances as $echeance) {
+                    if ($montantRestant <= 0) break;
+                    $interetDejaPaye = Remboursementcredit::where('RefEcheance', $echeance->ReferenceEch)->value('InteretPaye') ?? 0;
+                    $interetRestant = $echeance->Interet - $interetDejaPaye;
+                    $aRembourser = min($montantRestant, $interetRestant);
+                    if ($aRembourser <= 0) continue;
+
+                    // Mise à jour de remboursementcredits (détail par échéance)
+                    $remb = Remboursementcredit::firstOrNew(['RefEcheance' => $echeance->ReferenceEch]);
+                    $remb->RefEcheance = $echeance->ReferenceEch;
+                    $remb->CodeAgence = $portefeuille->CodeAgence;
+                    $remb->NumCompte = $portefeuille->NumCompteEpargne;
+                    $remb->NumCompteCredit = $portefeuille->NumCompteCredit;
+                    $remb->NumDossie = $numDossier;
+                    $remb->RefTypCredit = $portefeuille->RefTypeCredit;
+                    $remb->NomCompte = $portefeuille->NomCompte;
+                    $remb->DateTranche = $echeance->DateTranch;
+                    $remb->InteretAmmorti = $echeance->Interet;
+                    $remb->InteretPaye = ($remb->InteretPaye ?? 0) + $aRembourser;
+                    $remb->CapitalAmmortie = $echeance->CapAmmorti;
+                    $remb->CapitalPaye = $remb->CapitalPaye ?? 0;
+                    $remb->CodeGuichet = $portefeuille->CodeAgence;
+                    $remb->NumAdherent = $portefeuille->numAdherant;
+                    $remb->save();
+
+                    $montantRestant -= $aRembourser;
+                    $totalRembourse += $aRembourser;
+                    $echeancesModifiees[] = $echeance->ReferenceEch;
+
+                    if ($remb->CapitalPaye >= $echeance->CapAmmorti && $remb->InteretPaye >= $echeance->Interet) {
+                        Echeancier::where('ReferenceEch', $echeance->ReferenceEch)
+                            ->update(['statutPayement' => 1, 'posted' => 1, 'RetardPayement' => 0]);
+                    }
                 }
             }
 
@@ -3631,7 +3768,7 @@ class ClotureJourneeCopy
                 throw new \Exception("Aucun intérêt remboursé.");
             }
 
-            // Générer une seule écriture comptable pour le total remboursé
+            // 3. ÉCRITURE COMPTABLE UNIQUE pour le total des intérêts planifiés
             $libelle = "Remboursement manuel intérêts de " . number_format($totalRembourse, 2) . " - Dossier " . $numDossier;
             $numTransaction = $this->insertInTransactionInteret(
                 $totalRembourse,
@@ -3645,17 +3782,15 @@ class ClotureJourneeCopy
                 $numDossier,
                 $libelle,
                 'SYSTEM',
-                null
+                null  // RefEcheance = null (pas lié à une échéance spécifique)
             );
 
-            // Mettre à jour le numéro de transaction dans les remboursementcredits
+            // Mettre à jour les remboursementcredits avec ce numéro de transaction
             foreach ($echeancesModifiees as $refEch) {
                 Remboursementcredit::where('RefEcheance', $refEch)
-                    ->whereNull('NumTransaction')
                     ->update(['NumTransaction' => $numTransaction]);
             }
 
-            // Recalculer les retards et provisions (au cas où)
             $this->recalculerRetardEtProvisions($numDossier);
 
             DB::commit();
@@ -3719,11 +3854,6 @@ class ClotureJourneeCopy
 
 
 
-
-
-
-
-
     //CREATE ACCOUNT LOGIC
     public function createAccountLogic(
         $refCompteMembre,
@@ -3731,6 +3861,7 @@ class ClotureJourneeCopy
         $CodeAgence,
         $NomCompte,
         $NumCompteCreditCustomer
+        // $typeCredit = null  // nouveau paramètre, ex: "Crédit Express à CT"
     ) {
         if ($codeMonnaie == "USD") {
             $devise = 1; //USD
@@ -3741,6 +3872,15 @@ class ClotureJourneeCopy
         //info("info! " . $SoldeCreditRestant);
 
         //CREATE ACCOUNT LOGIQUE
+
+
+        // Déterminer la nature du crédit (CT ou MT) à partir du libellé
+        // $refCadreCredit = "32"; // par défaut CT
+        // if ($typeCredit && preg_match('/\bMT\b/i', $typeCredit)) {
+        //     $refCadreCredit = "31"; // Moyen terme
+        // } elseif ($typeCredit && preg_match('/\bCT\b/i', $typeCredit)) {
+        //     $refCadreCredit = "32"; // Court terme (défaut)
+        // }
 
         $compteCreanceLitigieuseCDF = "";
         $compteProvisionCDF = "";
@@ -4042,6 +4182,15 @@ class ClotureJourneeCopy
             throw new \Exception("Aucune transaction trouvée avec ce numéro : $referenceTransaction");
         }
 
+
+        // 🔥 Détection d'un remboursement manuel global
+        if ($transaction->RefEcheance === null && strpos($referenceTransaction, 'AT') === 0) {
+            throw new \Exception(
+                "Ce type de remboursement (manuel global) ne peut pas être annulé automatiquement. " .
+                    "Veuillez contacter l'administrateur pour procéder à l'annulation manuelle."
+            );
+        }
+
         // 2. Vérifier qu'elle est liée à une échéance
         $refEcheance = $transaction->RefEcheance;
         if (!$refEcheance) {
@@ -4283,12 +4432,44 @@ class ClotureJourneeCopy
     protected function recalculerRetardEtProvisions($numDossier)
     {
         $jours = $this->calculerJoursRetard($numDossier);
+        Log::info("DEBUG - Dossier: $numDossier, Jours: $jours, provision1: " . ($jourRetard->provision1 ?? 'null'));
+
+
         $jourRetard = JourRetard::firstOrNew(['NumDossier' => $numDossier]);
         $jourRetard->DateRetard = $this->dateSystem;
         $jourRetard->NbrJrRetard = $jours; // optionnel, pour compatibilité
         $jourRetard->save();
-
         if ($jours <= 0) {
+            Log::info("DEBUG - ENTRÉE bloc crédit sain");
+            // 🔥 Le crédit est redevenu sain : on annule toutes les provisions
+            if ($jourRetard->provision1 || $jourRetard->provision2 || $jourRetard->provision3 || $jourRetard->provision4 || $jourRetard->provision5) {
+                // Calculer le solde actuel du compte 38 (provision)
+                $compteProvision = $jourRetard->CompteProvision;
+                if ($compteProvision) {
+                    $devise = (Portefeuille::where('NumDossier', $numDossier)->value('CodeMonnaie') == 'USD') ? 1 : 2;
+                    $soldeProvision = $this->checkSoldeMembrePASSIF($devise, $compteProvision);
+                    Log::info("DEBUG - Compte provision: $compteProvision, Solde: $soldeProvision");
+                    if ($soldeProvision > 0) {
+                        Log::info("DEBUG - Appel reprise provision pour montant: $soldeProvision");
+                        // Appeler la reprise totale de provision (sans débit client)
+                        $this->insertInTransactionRepriseProvision(
+                            $soldeProvision,
+                            Portefeuille::where('NumDossier', $numDossier)->value('CodeMonnaie'),
+                            $this->dateSystem,
+                            $jourRetard->CodeAgence,
+                            $this->tauxDuJour,
+                            'complet',
+                            $jourRetard->NumcompteEpargne,
+                            0,
+                            $this->dateSystem,
+                            Portefeuille::where('NumDossier', $numDossier)->value('MontantAccorde'),
+                            $numDossier,
+                            'SYSTEM',
+                            null
+                        );
+                    }
+                }
+            }
             // Plus de retard : on nettoie les flags
             $jourRetard->provision1 = 0;
             $jourRetard->provision2 = 0;

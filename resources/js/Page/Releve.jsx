@@ -16,13 +16,10 @@ const Releve = () => {
     const [fetchData2, setfetchData2] = useState();
     const [searched_account, setsearched_account] = useState();
     const [searched_account_by_name, setsearched_account_by_name] = useState();
-    const [dateDebut, setDateDebut] = useState();
-    const [dateFin, setDateFin] = useState();
     const [getSelectedAccount, setGetSelectedAccount] = useState();
     const [getReleveData, setGetReleveData] = useState([]);
     const [getSoldeReport, setGetSoldeReport] = useState(0);
-    const [getdefaultDateDebut, setGetdefaultDateDebut] = useState();
-    const [getdefaultDateFin, setGetdefaultDateFin] = useState();
+
     const [getDevise, setGetDevise] = useState();
     const [getSoldeInfo, setGetSoldeInfo] = useState();
     const [getOtherInfo, setGetOtherInfo] = useState();
@@ -34,6 +31,22 @@ const Releve = () => {
         e.preventDefault();
         setloading(true);
     };
+
+    // Fonction pour le premier jour de l'année
+    const getFirstDayOfYear = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    return `${year}-01-01`;
+};
+    // Fonction pour la date du jour
+    const getToday = () => {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    };
+
+     // États avec les valeurs par défaut
+    const [dateDebut, setDateDebut] = useState(getFirstDayOfYear());
+    const [dateFin, setDateFin] = useState(getToday());
 
     // useEffect(() => {}, []);
     const getSeachedData = async (e) => {
@@ -80,6 +93,8 @@ const Releve = () => {
         }
     };
 
+  
+
     const getAccountInfo = async (event) => {
         if (event.detail == 2) {
             setloadingData(true);
@@ -94,10 +109,6 @@ const Releve = () => {
                 setfetchData2(res.data.data);
                 console.log(fetchData2);
                 setGetSelectedAccount(event.target.innerHTML);
-                setGetdefaultDateDebut(res.data.defaultDateDebut);
-                setGetdefaultDateFin(res.data.defaultDateFin);
-                setDateDebut(getdefaultDateDebut);
-                setDateFin(getdefaultDateFin);
             } else {
                 setloadingData(false);
                 Swal.fire({
@@ -117,8 +128,8 @@ const Releve = () => {
         setloading(true);
         const res = await axios.post("/eco/page/affichage-releve", {
             NumCompte: getSelectedAccount,
-            DateDebut: dateDebut ? dateDebut : getdefaultDateDebut,
-            DateFin: dateFin ? dateFin : getdefaultDateFin,
+            DateDebut: dateDebut,
+            DateFin: dateFin,
             agence_filter: agenceFilter,
         });
         if (res.data.status == 1) {
@@ -399,7 +410,7 @@ const Releve = () => {
                     {/* Section Recherche */}
                     <div className="row g-3 mb-4">
                         <div className="col-md-6">
-                            <div className="card border-0 shadow-sm rounded-3">
+                            <div className="card border-0 shadow-sm rounded-3 h-100">
                                 <div className="card-header bg-white border-0 pt-3">
                                     <h6
                                         className="fw-bold"
@@ -409,7 +420,8 @@ const Releve = () => {
                                         Recherche de compte
                                     </h6>
                                 </div>
-                                <div className="card-body">
+                                <div className="card-body" style={{ height: "150px", display: "flex", flexDirection: "column" }}>
+    
                                     <form>
                                         <table style={{ width: "100%" }}>
                                             <tbody>
@@ -535,7 +547,7 @@ const Releve = () => {
                         </div>
 
                         <div className="col-md-6">
-                            <div className="card border-0 shadow-sm rounded-3">
+                            <div className="card border-0 shadow-sm rounded-3 h-100">
                                 <div className="card-header bg-white border-0 pt-3">
                                     <h6
                                         className="fw-bold"
@@ -545,7 +557,7 @@ const Releve = () => {
                                         Liste des comptes
                                     </h6>
                                 </div>
-                                <div className="card-body p-0">
+                                <div className="card-body p-0" style={{ height: "150px", overflowY: "auto" }}>
                                     <div
                                         style={{
                                             maxHeight: "280px",
@@ -673,10 +685,7 @@ const Releve = () => {
                                             <input
                                                 type="date"
                                                 className="form-control modern-input"
-                                                value={
-                                                    dateDebut ||
-                                                    getdefaultDateDebut
-                                                }
+                                                value={dateDebut}
                                                 onChange={(e) =>
                                                     setDateDebut(e.target.value)
                                                 }
@@ -690,9 +699,7 @@ const Releve = () => {
                                             <input
                                                 type="date"
                                                 className="form-control modern-input"
-                                                value={
-                                                    dateFin || getdefaultDateFin
-                                                }
+                                                value={dateFin}
                                                 onChange={(e) =>
                                                     setDateFin(e.target.value)
                                                 }
@@ -755,7 +762,7 @@ const Releve = () => {
                                             <button
                                                 className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
                                                 onClick={AfficherReleve}
-                                                disabled={loading}
+                                                disabled={!getSelectedAccount || loading}
                                             >
                                                 {loading ? (
                                                     <span
@@ -797,7 +804,7 @@ const Releve = () => {
                                                     padding: "0 15px 8px",
                                                 }}
                                             >
-                                                RELEVÉ DE COMPTE 
+                                                RELEVÉ DE COMPTE
                                             </h4>
                                         </div>
 
@@ -1100,7 +1107,7 @@ const Releve = () => {
                                                                         Number(
                                                                             getSoldeInfo?.TotalCredit ||
                                                                                 0,
-                                                                        )-
+                                                                        ) -
                                                                         Number(
                                                                             getSoldeInfo?.TotalDebit ||
                                                                                 0,
@@ -1170,13 +1177,11 @@ const Releve = () => {
                                                                 }
                                                             >
                                                                 {dateParser(
-                                                                    dateDebut ||
-                                                                        getdefaultDateDebut,
+                                                                    dateDebut
                                                                 )}{" "}
                                                                 à{" "}
                                                                 {dateParser(
-                                                                    dateFin ||
-                                                                        getdefaultDateFin,
+                                                                    dateFin
                                                                 )}
                                                             </td>
                                                         </tr>
@@ -1687,7 +1692,7 @@ const Releve = () => {
                                                                         Number(
                                                                             getSoldeInfo?.TotalCredit ||
                                                                                 0,
-                                                                        )-
+                                                                        ) -
                                                                         Number(
                                                                             getSoldeInfo?.TotalDebit ||
                                                                                 0,

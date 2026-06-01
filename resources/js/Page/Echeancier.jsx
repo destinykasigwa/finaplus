@@ -21,6 +21,7 @@ const Echeancier = () => {
     const [fetchTotCapRetardUSD, setfetchTotCapRetardUSD] = useState();
     const [fetchBalanceAgee, setfetchBalanceAgee] = useState();
     const [searched_num_dossier, setsearched_num_dossier] = useState();
+    
 
     const [accountName, setAccountName] = useState();
     const [fetchCapitalRestant, setfetchCapitalRestant] = useState();
@@ -49,6 +50,7 @@ const Echeancier = () => {
     const [parGlobalPercent, setParGlobalPercent] = useState(0);
     const [globalPercentages, setGlobalPercentages] = useState(null);
     const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
+    const [totalPenalites, setTotalPenalites] = useState(0);
 
     useEffect(() => {
         const today = new Date();
@@ -124,6 +126,7 @@ const Echeancier = () => {
                 setfetchCapitalRembourse(res.data.capitalRembourse);
                 setfetchInteretRembourse(res.data.interetRembourse);
                 setfetchInteretRestant(res.data.interetRestant);
+                setTotalPenalites(res.data.totalPenalites || 0); // 👈 Ajout
             } else if (radioValue === "balance_agee") {
                 setfetchBalanceAgee(res.data.data_balance_agee);
                 setfetchSoldeEncourCDF(res.data.soldeEncourCDF);
@@ -589,7 +592,7 @@ const Echeancier = () => {
                                                 },
                                                 {
                                                     value: "tableau_ammortiss",
-                                                    label: "Tableau amort.",
+                                                    label: "Tableau d'ammortissement.",
                                                     icon: "fa-table",
                                                 },
                                                 {
@@ -599,7 +602,7 @@ const Echeancier = () => {
                                                 },
                                                 {
                                                     value: "par",
-                                                    label: "PAR",
+                                                    label: "PAR par Gestionnaire",
                                                     icon: "fa-chart-pie",
                                                 },
                                             ].map((opt) => (
@@ -1560,6 +1563,23 @@ const Echeancier = () => {
                                                                     )}
                                                                 </td>
                                                             </tr>
+                                                            {/* 🔥 Nouvelle ligne : Pénalités */}
+                                                            <tr>
+                                                                <td
+                                                                    className="fw-bold"
+                                                                    style={{
+                                                                        color: "#dc3545",
+                                                                    }}
+                                                                >
+                                                                    Intérêts de retard :
+                                                                </td>
+                                                                <td className="text-danger fw-bold">
+                                                                    {numberFormat(
+                                                                        totalPenalites ||
+                                                                            0,
+                                                                    )}
+                                                                </td>
+                                                            </tr>
                                                             <tr>
                                                                 <td className="fw-bold">
                                                                     Capital en
@@ -1604,6 +1624,7 @@ const Echeancier = () => {
                                                     <th colSpan="3">
                                                         REMBOURS. EN RETARD
                                                     </th>
+
                                                     <th rowSpan="2">
                                                         TOT. EN RETARD
                                                     </th>
@@ -1695,7 +1716,18 @@ const Echeancier = () => {
                                                                 epargneRestant;
 
                                                             return (
-                                                               <tr key={index} style={res.Reechelonne == 1 ? { backgroundColor: "orange" } : {}}>
+                                                                <tr
+                                                                    key={index}
+                                                                    style={
+                                                                        res.Reechelonne ==
+                                                                        1
+                                                                            ? {
+                                                                                  backgroundColor:
+                                                                                      "orange",
+                                                                              }
+                                                                            : {}
+                                                                    }
+                                                                >
                                                                     <td>
                                                                         {
                                                                             compteur++

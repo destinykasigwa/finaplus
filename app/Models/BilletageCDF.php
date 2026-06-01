@@ -14,6 +14,7 @@ class BilletageCDF extends Model
         "NomMembre",
         "NumAbrege",
         "Beneficiaire",
+        "Telephone",
         "Motif",
         "Devise",
         "vightMilleFranc",

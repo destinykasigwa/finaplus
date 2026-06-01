@@ -14,6 +14,7 @@ class BilletageUSD extends Model
         "NomMembre",
         "NumAbrege",
         "Beneficiaire",
+        "Telephone",
         "Motif",
         "Devise",
         "centDollars",

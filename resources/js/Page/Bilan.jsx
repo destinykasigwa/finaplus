@@ -78,8 +78,20 @@ const Bilan = () => {
 
             if (res.data.status == 1) {
                 // NOUVELLE STRUCTURE : les données sont dans actif et passif
-                const actifData = res.data.actif || [];
-                const passifData = res.data.passif || [];
+                // NOUVELLE STRUCTURE : les données sont dans actif et passif
+                const actifRaw = res.data.actif || [];
+                const passifRaw = res.data.passif || [];
+
+                const actifData = actifRaw.map((item) => ({
+                    ...item,
+                    soldeN1: item.soldeDebut ?? 0,
+                    soldeN: item.soldeFin ?? 0,
+                }));
+                const passifData = passifRaw.map((item) => ({
+                    ...item,
+                    soldeN1: item.soldeDebut ?? 0,
+                    soldeN: item.soldeFin ?? 0,
+                }));
 
                 console.log("=== BILAN GÉNÉRÉ ===");
                 console.log("ACTIF (", actifData.length, "comptes)");

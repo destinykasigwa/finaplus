@@ -741,9 +741,9 @@ svg {
                                                                             Intitulé
                                                                             :
                                                                         </strong>{" "}
-                                                                        {getShortenedName(
-                                                                            data.NomMembre,
-                                                                        )}
+                                                                        {
+                                                                            data.NomMembre
+                                                                        }
                                                                     </div>
                                                                     <div
                                                                         className="separator"
@@ -1876,9 +1876,9 @@ svg {
                                                                                         "11px",
                                                                                 }}
                                                                             >
-                                                                                {getShortenedName(
-                                                                                    data.NomMembre,
-                                                                                )}
+                                                                                {
+                                                                                    data.NomMembre
+                                                                                }
                                                                             </td>
                                                                         </tr>
                                                                         <tr
@@ -1915,6 +1915,39 @@ svg {
                                                                                 )}
                                                                             </td>
                                                                         </tr>
+                                                                         <tr
+                                                                            style={{
+                                                                                lineHeight:
+                                                                                    "1.2",
+                                                                            }}
+                                                                        >
+                                                                            <td
+                                                                                style={{
+                                                                                    border: "none",
+                                                                                    padding:
+                                                                                        "2px 0",
+                                                                                    fontSize:
+                                                                                        "11px",
+                                                                                }}
+                                                                            >
+                                                                                <strong>
+                                                                                    Téléphone
+                                                                                    :
+                                                                                </strong>
+                                                                            </td>
+                                                                            <td
+                                                                                style={{
+                                                                                    border: "none",
+                                                                                    padding:
+                                                                                        "2px 0",
+                                                                                    fontSize:
+                                                                                        "11px",
+                                                                                }}
+                                                                            >
+                                                                                {data.Telephone}
+                                                                            </td>
+                                                                        </tr>
+                                                                         
                                                                         <tr
                                                                             style={{
                                                                                 lineHeight:
