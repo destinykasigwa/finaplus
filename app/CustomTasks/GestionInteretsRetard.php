@@ -30,8 +30,8 @@ class GestionInteretsRetard
         $this->dateSystem = $dateSystem;
         $this->tauxDuJour = $tauxDuJour;
         
-        // Taux de pénalité : 0.01% par jour = 0.0001 en décimal
-        $this->tauxPenaliteJournalier = 0.0001;
+        // Taux de pénalité : 0.1% par jour = 0.1 en décimal
+        $this->tauxPenaliteJournalier = 0.001;
         
         // Délai de grâce avant application des pénalités
         $this->delaiAvantPenalite = $delaiAvantPenalite;

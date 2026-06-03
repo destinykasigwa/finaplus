@@ -73,7 +73,7 @@
             margin-bottom: 32px;
             font-size: 16px;
             color: #1f2d3d;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
         /* Infos de contact */
@@ -100,7 +100,8 @@
             content: "馃摓";
         }
 
-        .address-block, .contacts-block {
+        .address-block,
+        .contacts-block {
             background: #f8f9fa;
             padding: 16px 20px;
             border-radius: 16px;
@@ -144,7 +145,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             background-color: white;
         }
 
@@ -168,12 +169,16 @@
             .content {
                 padding: 24px 20px;
             }
-            .address-block, .contacts-block {
+
+            .address-block,
+            .contacts-block {
                 padding: 14px 16px;
             }
+
             .logo {
                 max-width: 140px;
             }
+
             .social-links img {
                 width: 36px;
                 height: 36px;
@@ -184,6 +189,7 @@
         table {
             width: 100%;
         }
+
         .fallback-table {
             width: 100%;
             border-collapse: collapse;
@@ -192,12 +198,18 @@
 </head>
 
 <body>
+    <?php
+    use Illuminate\Support\Facades\DB;
+    $dataInfo = DB::select('select * from company_models')[0]; ?>
     <div class="email-container">
         <!-- Header avec le nouveau logo -->
         <div class="header">
-            <img src="https://ihdemunis.org/images/logo_clean2_white__2_-removebg-preview.png" alt="IHDEMUNIS ASBL Logo" class="logo">
-            <h1>IHDEMUNIS ASBL</h1>
-            <p>Initiative Humanitaire pour les Demunis</p>
+            <img style="
+                     width: 35%;
+                     height: 90px;"
+                src="{{ asset('uploads/images/logo/' . $dataInfo->company_logo) }}" class="logo"/>
+            <h3>«{{ $dataInfo->sigle }}»</h3>
+            <p>{{ $dataInfo->denomination }}</p>
         </div>
 
         <!-- Contenu principal -->
@@ -212,31 +224,35 @@
             <div class="info-section">
                 <div class="address-block">
                     <div class="info-title">Adresse</div>
-                    61 Av. de la Conférence, Q. Kyeshero, ville de Goma<br>
-                    Commune de Goma (derrière l'hôpital CBCA Ndosho)
+                     {{ $dataInfo->ville }} {{ $dataInfo->pays }} <br>
+                     {{$dataInfo->adresse }}
                 </div>
 
                 <div class="contacts-block">
                     <div class="info-title contacts">Contacts</div>
-                     Site web : <a href="https://www.ihdemunis.org">www.ihdemunis.org</a><br>
-                     Tél : <a href="tel:+243999743253">+243 999 743 253</a><br>
-                    Courriel : <a href="mailto:initiativedemunis2012@gmail.com">initiativedemunis2012@gmail.com</a>
+                    {{-- Site web : <a href="https://www.ihdemunis.org">www.ihdemunis.org</a><br> --}}
+                    Tél : <a href="">{{ $dataInfo->tel }}</a><br>
+                    Courriel : <a href="{{ $dataInfo->email }}"> {{ $dataInfo->email }}</a>
                 </div>
             </div>
 
             <!-- R茅seaux sociaux (liens 脿 personnaliser) -->
             <div class="social-links">
-                <a href="#" aria-label="Facebook"><img src="https://ihdemunis.org/images/facebook.png" alt="Facebook"></a>
-                <a href="#" aria-label="LinkedIn"><img src="https://ihdemunis.org/images/linkedin.png" alt="LinkedIn"></a>
-                <a href="#" aria-label="Twitter"><img src="https://ihdemunis.org/images/twitter_1.png" alt="Twitter"></a>
+                <a href="#" aria-label="Facebook"><img src="https://ihdemunis.org/images/facebook.png"
+                        alt="Facebook"></a>
+                <a href="#" aria-label="LinkedIn"><img src="https://ihdemunis.org/images/linkedin.png"
+                        alt="LinkedIn"></a>
+                <a href="#" aria-label="Twitter"><img src="https://ihdemunis.org/images/twitter_1.png"
+                        alt="Twitter"></a>
             </div>
         </div>
 
         <!-- Pied de page automatique -->
         <div class="footer-note">
-            <p>Ce message vous a envoyé automatiquement depuis l'application <strong>EpargnePro</strong>.<br>
-            Merci de ne pas répondre à cet email.</p>
-            <p style="margin-top: 8px; font-size: 11px;">&copy; {{ date('Y') }} IHDEMUNIS ASBL - Tous droits réservés.</p>
+            <p>Ce message vous a envoyé automatiquement depuis l'application <strong>FinaPlus</strong>.<br>
+                Merci de ne pas répondre à cet email.</p>
+            <p style="margin-top: 8px; font-size: 11px;">&copy; {{ date('Y') }} {{$dataInfo->sigle }} ASBL - Tous droits
+                réservés.</p>
         </div>
     </div>
 </body>

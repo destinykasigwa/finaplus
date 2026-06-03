@@ -4,28 +4,65 @@ import axios from "axios";
 export const EnteteBordereau = () => {
     const [data, setData] = useState(null);
     const [agenceNom, setAgenceNom] = useState("");
+    const [logoBase64, setLogoBase64] = useState("");
 
     const getData = async () => {
         try {
             const res = await axios.get("/eco/page/header-report");
             if (res.data.status === 1) {
                 setData(res.data.data);
+                if (res.data.data.company_logo) {
+                    // Récupérer l'image via l'API et la convertir en Base64
+                    await loadLogoAsBase64(res.data.data.company_logo);
+                }
             }
         } catch (error) {
             console.error("Erreur chargement en-tête", error);
         }
     };
 
+    const loadLogoAsBase64 = async (logoFilename) => {
+        try {
+            // Essayez différents chemins
+            const pathsToTry = [
+                `/uploads/images/logo/${logoFilename}`,
+                `/storage/uploads/images/logo/${logoFilename}`,
+                `/storage/logo/${logoFilename}`,
+                `/images/logo/${logoFilename}`,
+            ];
+
+            for (const path of pathsToTry) {
+                try {
+                    const response = await fetch(path);
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            setLogoBase64(reader.result);
+                            console.log("Logo chargé en Base64 depuis:", path);
+                        };
+                        reader.readAsDataURL(blob);
+                        break;
+                    }
+                } catch (err) {
+                    console.log(`Chemin échoué: ${path}`);
+                }
+            }
+        } catch (error) {
+            console.error("Erreur chargement logo en Base64:", error);
+        }
+    };
+
     useEffect(() => {
         getData();
-        // Récupérer l'agence courante (via API)
-        axios.get("/eco/agence/courante")
-            .then(res => {
+        axios
+            .get("/eco/agence/courante")
+            .then((res) => {
                 if (res.data.status === 1) {
                     setAgenceNom(res.data.nom_agence);
                 }
             })
-            .catch(err => console.error("Erreur chargement agence", err));
+            .catch((err) => console.error("Erreur chargement agence", err));
     }, []);
 
     if (!data) {
@@ -36,27 +73,13 @@ export const EnteteBordereau = () => {
         <>
             <div className="entete-rapport">
                 <div className="entete-logo">
-                    <img
-                        src={`https://app.ihdemunis.org/uploads/images/logo/1696413083.jpg`}
-                        alt="Logo"
-                    />
-                    {/* <img
-                        src={`https://app.nuru.clindrc.com/uploads/images/logo/1736022909.PNG`}
-                        alt="Logo"
-                    /> */}
-
-                     {/* <img
-                        src={`https://app.pmb.clindrc.com/uploads/images/logo/1778013225.png`}
-                        alt="Logo"
-                    /> */}
-
-                     {/* <img
-                        src={`https://app.clindrc.com/uploads/images/logo/1778254051.png`}
-                        alt="Logo"
-                    /> */}
-
-                    
-                    
+                    {logoBase64 && (
+                        <img
+                            src={logoBase64}
+                            alt="Logo"
+                            style={{ width: "auto", height: "80px" }}
+                        />
+                    )}
                 </div>
                 <div className="entete-infos">
                     <div className="entete-denomination">
@@ -66,7 +89,9 @@ export const EnteteBordereau = () => {
                         {data.sigle} - AGENCE DE {agenceNom || "..."}
                     </div>
                     <div className="entete-coordonnees">
-                        <span>{data.ville}, {data.pays}</span>
+                        <span>
+                            {data.ville}, {data.pays}
+                        </span>
                         <span>{data.tel}</span>
                         <span>{data.email}</span>
                     </div>
@@ -74,7 +99,18 @@ export const EnteteBordereau = () => {
             </div>
 
             <style>{`
-                /* Styles par défaut pour l'écran (inchangés) */
+                /* Vos styles existants */
+                @media print {
+                    .entete-logo img {
+                        display: block !important;
+                        height: 20px !important;
+                        width: auto !important;
+                        max-width: 60px !important;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                }
+                    /* Styles par défaut pour l'écran (inchangés) */
                 .entete-rapport {
                     display: flex;
                     align-items: center;
@@ -107,126 +143,126 @@ export const EnteteBordereau = () => {
                     font-size: 0.85rem;
                 }
 
-                /* STYLES ULTRA COMPACTS POUR L'IMPRESSION A5 */
-               @media print {
-    .entete-rapport {
-        all: unset;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;      /* centrage horizontal */
-        justify-content: flex-start !important;
-        gap: 2px !important;
-        padding: 2px 0 !important;
-        margin: 0 0 2px 0 !important;
-        border: none !important;
-        box-shadow: none !important;
-        background: transparent !important;
-        width: 100% !important;
-    }
-    .entete-logo {
-        display: block !important;
-        text-align: center !important;
-        margin: 0 auto !important;            /* centrage supplémentaire */
-        margin-bottom: 2px !important;
-    }
-    .entete-logo img {
-        height: 30px !important;              /* taille visible */
-        width: auto !important;
-        max-width: 80px !important;
-        display: block !important;
-        margin: 0 auto !important;            /* centrage de l’image */
-    }
-    .entete-infos {
-        text-align: center !important;
-        line-height: 1.2 !important;
-        width: 100% !important;
-    }
-    .entete-denomination {
-        font-size: 8pt !important;
-        font-weight: bold !important;
-        margin: 0 !important;
-    }
-    .entete-sigle {
-        font-size: 7pt !important;
-        margin: 0 !important;
-        color: #0f766e !important;
-    }
-    .entete-coordonnees {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: center !important;
-        gap: 4px !important;
-        font-size: 5pt !important;
-        margin-top: 1px !important;
-    }
-    .entete-coordonnees span {
-        margin: 0 !important;
-    }
-    /* Si vous aviez des icônes FontAwesome, on les cache */
-    .entete-coordonnees i {
-        display: none !important;
-    }
-}
+                        /* STYLES ULTRA COMPACTS POUR L'IMPRESSION A5 */
+                    @media print {
+            .entete-rapport {
+                all: unset;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;      /* centrage horizontal */
+                justify-content: flex-start !important;
+                gap: 2px !important;
+                padding: 2px 0 !important;
+                margin: 0 0 2px 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                width: 100% !important;
+            }
+            .entete-logo {
+                display: block !important;
+                text-align: center !important;
+                margin: 0 auto !important;            /* centrage supplémentaire */
+                margin-bottom: 2px !important;
+            }
+            .entete-logo img {
+                height: 30px !important;              /* taille visible */
+                width: auto !important;
+                max-width: 80px !important;
+                display: block !important;
+                margin: 0 auto !important;            /* centrage de l’image */
+            }
+            .entete-infos {
+                text-align: center !important;
+                line-height: 1.2 !important;
+                width: 100% !important;
+            }
+            .entete-denomination {
+                font-size: 8pt !important;
+                font-weight: bold !important;
+                margin: 0 !important;
+            }
+            .entete-sigle {
+                font-size: 7pt !important;
+                margin: 0 !important;
+                color: #0f766e !important;
+            }
+            .entete-coordonnees {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+                gap: 4px !important;
+                font-size: 5pt !important;
+                margin-top: 1px !important;
+            }
+            .entete-coordonnees span {
+                margin: 0 !important;
+            }
+            /* Si vous aviez des icônes FontAwesome, on les cache */
+            .entete-coordonnees i {
+                display: none !important;
+            }
+        }
 
 
-@media print {
-    .entete-rapport {
-        all: unset;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-        gap: 1px !important;           /* espace réduit entre logo et texte */
-        padding: 1px 0 !important;     /* moins de padding vertical */
-        margin: 0 0 1px 0 !important;  /* marge basse minimale */
-        border: none !important;
-        box-shadow: none !important;
-        background: transparent !important;
-        width: 100% !important;
-    }
-    .entete-logo {
-        display: block !important;
-        text-align: center !important;
-        margin: 0 auto !important;
-        margin-bottom: 1px !important;  /* espace sous le logo réduit */
-    }
-    .entete-logo img {
-        height: 20px !important;        /* logo plus petit (20px au lieu de 30) */
-        width: auto !important;
-        max-width: 60px !important;
-        display: block !important;
-        margin: 0 auto !important;
-    }
-    .entete-infos {
-        text-align: center !important;
-        line-height: 1.1 !important;    /* interligne plus serré */
-        width: 100% !important;
-    }
-    .entete-denomination {
-        font-size: 7pt !important;      /* légèrement réduit */
-        font-weight: bold !important;
-        margin: 0 !important;
-    }
-    .entete-sigle {
-        font-size: 6pt !important;
-        margin: 0 !important;
-        color: #0f766e !important;
-    }
-    .entete-coordonnees {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        justify-content: center !important;
-        gap: 3px !important;
-        font-size: 5pt !important;
-        margin-top: 0 !important;       /* supprimer la marge haute */
-    }
-    .entete-coordonnees span {
-        margin: 0 !important;
-    }
-    .entete-coordonnees i {
-        display: none !important;
-    }
-}
+        @media print {
+            .entete-rapport {
+                all: unset;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                gap: 1px !important;           /* espace réduit entre logo et texte */
+                padding: 1px 0 !important;     /* moins de padding vertical */
+                margin: 0 0 1px 0 !important;  /* marge basse minimale */
+                border: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                width: 100% !important;
+            }
+            .entete-logo {
+                display: block !important;
+                text-align: center !important;
+                margin: 0 auto !important;
+                margin-bottom: 1px !important;  /* espace sous le logo réduit */
+            }
+            .entete-logo img {
+                height: 20px !important;        /* logo plus petit (20px au lieu de 30) */
+                width: auto !important;
+                max-width: 60px !important;
+                display: block !important;
+                margin: 0 auto !important;
+            }
+            .entete-infos {
+                text-align: center !important;
+                line-height: 1.1 !important;    /* interligne plus serré */
+                width: 100% !important;
+            }
+            .entete-denomination {
+                font-size: 7pt !important;      /* légèrement réduit */
+                font-weight: bold !important;
+                margin: 0 !important;
+            }
+            .entete-sigle {
+                font-size: 6pt !important;
+                margin: 0 !important;
+                color: #0f766e !important;
+            }
+            .entete-coordonnees {
+                display: flex !important;
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+                gap: 3px !important;
+                font-size: 5pt !important;
+                margin-top: 0 !important;       /* supprimer la marge haute */
+            }
+            .entete-coordonnees span {
+                margin: 0 !important;
+            }
+            .entete-coordonnees i {
+                display: none !important;
+            }
+        }
             `}</style>
         </>
     );

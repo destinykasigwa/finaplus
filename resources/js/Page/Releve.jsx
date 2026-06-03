@@ -571,7 +571,7 @@ const Releve = () => {
                                                         (res, index) => (
                                                             <tr
                                                                 key={index}
-                                                                className="clickable-row"
+                                                                   className={`clickable-row ${getSelectedAccount === res.NumCompte ? 'table-primary' : ''}`}
                                                                 style={{
                                                                     cursor: "pointer",
                                                                 }}
@@ -657,6 +657,21 @@ const Releve = () => {
                                         )}
                                     </div>
                                 </div>
+
+                                 {/* 🔥 Affichage du compte sélectionné */}
+        {getSelectedAccount && (
+            <div className="card-footer bg-light py-2">
+                <div className="d-flex align-items-center justify-content-between">
+                    <small className="text-muted">
+                        <i className="fas fa-check-circle text-success me-1"></i>
+                        Compte sélectionné :
+                    </small>
+                    <span className="badge bg-primary fs-6">
+                        {getSelectedAccount}
+                    </span>
+                </div>
+            </div>
+        )}
                             </div>
                         </div>
                     </div>

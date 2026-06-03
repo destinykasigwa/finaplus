@@ -28,7 +28,6 @@ class Kernel extends ConsoleKernel
         })->everyMinute();  // Vous pouvez changer l'heure ici selon vos besoins
 
 
-
         $schedule->command('immo:amortir')->monthlyOn(1, '00:00');
     }
     /**

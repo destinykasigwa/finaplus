@@ -41,6 +41,7 @@ const Suspens = () => {
     const [loading, setloading] = useState(false);
     const [error, setError] = useState([]);
     const [fetchData2, setfetchData2] = useState();
+    const [getNumCompte, setGetNumCompte] = useState();
     //GET SEACHED DATA
 
      useEffect(() => {
@@ -161,6 +162,7 @@ const Suspens = () => {
             );
             if (res.data.status == 1) {
                 setfetchData2(res.data.data);
+                 setGetNumCompte(res.data.data.NumCompte);
                 console.log(fetchData2);
             } else {
                 Swal.fire({
@@ -303,7 +305,7 @@ const Suspens = () => {
                                                                             event,
                                                                         )
                                                                     }
-                                        className="account-row"
+                                        className={`clickable-row ${getNumCompte === res.NumCompte ? 'table-primary' : ''}`}
                                     >
                                         <td className="fw-semibold" style={{ color: "teal" }}>{res.NumCompte}</td>
                                         <td>

@@ -1404,8 +1404,8 @@ class ReportsController extends Controller
                 return response()->json([
                     "status" => 1,
                     "data_balance_agee" => $dataBalanceAgee,
-                    "soldeEncour" . ($devise === 'USD' ? 'USD' : 'CDF') => $soldeEncours,
-                    "totRetard" . ($devise === 'USD' ? 'USD' : 'CDF') => $PAR
+                    "soldeEncour" . ($devise === 'USD' ? 'USD' : 'CDF') => (float) $soldeEncours,
+                    "totRetard" . ($devise === 'USD' ? 'USD' : 'CDF') => (float) $PAR, // 👈 aussi convertir
                 ]);
             } else {
                 return response()->json([
@@ -1415,130 +1415,7 @@ class ReportsController extends Controller
             }
         }
 
-        // else if ($request->radioValue == "par") {
-        //     $date = $request->date_par ?? now()->toDateString();
-        //     $devise = $request->devise_par;
-        //     $gestionnaire = $request->gestionnaire_par;
-
-        //     // Sous‑requête : total payé par échéance
-        //     $subRemboursement = DB::table('remboursementcredits')
-        //         ->selectRaw('RefEcheance, SUM(CapitalPaye) as total_paye')
-        //         ->groupBy('RefEcheance');
-
-        //     $subRemboursementGlobal = DB::table('remboursementcredits')
-        //         ->selectRaw('NumDossie as NumDossier, SUM(CapitalPaye) as total_rembourse')
-        //         ->groupBy('NumDossie');
-
-        //     $query = DB::table('echeanciers as e')
-        //         ->join('portefeuilles as p', 'e.NumDossier', '=', 'p.NumDossier')
-        //         ->leftJoinSub($subRemboursement, 'r', fn($join) => $join->on('e.ReferenceEch', '=', 'r.RefEcheance'))
-        //         ->leftJoinSub($subRemboursementGlobal, 'rg', fn($join) => $join->on('p.NumDossier', '=', 'rg.NumDossier'))
-        //         ->where(fn($q) => $q->where('p.Cloture', '!=', 1)->orWhereNull('p.Cloture'))
-        //         ->where(fn($q) => $q->where('p.Accorde', '=', 1)->orWhereNull('p.Accorde'))
-        //         ->where(fn($q) => $q->where('p.Octroye', '=', 1)->orWhereNull('p.Octroye'))
-        //         ->when($codeAgence, function ($q) use ($codeAgence) {
-        //             return $q->where('p.CodeAgence', $codeAgence);
-        //         })
-        //         ->selectRaw("
-        //         p.Gestionnaire,
-        //         COUNT(DISTINCT p.NumDossier) AS NbrCredits,
-        //         SUM(p.MontantAccorde) AS TotalAccorde,
-        //         SUM(p.MontantAccorde) - SUM(COALESCE(rg.total_rembourse,0)) AS EncoursReel,
-        //         SUM(e.CapAmmorti - COALESCE(r.total_paye,0)) AS EncoursTotal,
-        //         SUM(CASE WHEN DATEDIFF('$date', e.DateTranch) <= 0
-        //             THEN (e.CapAmmorti - COALESCE(r.total_paye,0)) ELSE 0 END) AS EncoursSain,
-        //         SUM(CASE WHEN DATEDIFF('$date', e.DateTranch) BETWEEN 1 AND 30
-        //             THEN (e.CapAmmorti - COALESCE(r.total_paye,0)) ELSE 0 END) AS PAR_1_30,
-        //         SUM(CASE WHEN DATEDIFF('$date', e.DateTranch) BETWEEN 31 AND 60
-        //             THEN (e.CapAmmorti - COALESCE(r.total_paye,0)) ELSE 0 END) AS PAR_31_60,
-        //         SUM(CASE WHEN DATEDIFF('$date', e.DateTranch) BETWEEN 61 AND 90
-        //             THEN (e.CapAmmorti - COALESCE(r.total_paye,0)) ELSE 0 END) AS PAR_61_90,
-        //         SUM(CASE WHEN DATEDIFF('$date', e.DateTranch) BETWEEN 91 AND 180
-        //             THEN (e.CapAmmorti - COALESCE(r.total_paye,0)) ELSE 0 END) AS PAR_91_180,
-        //         SUM(CASE WHEN DATEDIFF('$date', e.DateTranch) > 180
-        //             THEN (e.CapAmmorti - COALESCE(r.total_paye,0)) ELSE 0 END) AS PAR_PLUS_180
-        //            ")
-        //         ->groupBy('p.Gestionnaire');
-
-        //     if (!empty($devise)) {
-        //         $query->where('p.CodeMonnaie', $devise);
-        //     }
-        //     if (!empty($gestionnaire) && $gestionnaire !== 'Tous') {
-        //         $query->where('p.Gestionnaire', $gestionnaire);
-        //     }
-
-        //     $parData = $query->get()->keyBy('Gestionnaire');
-
-        //     $portefeuilleQuery = DB::table('portefeuilles')
-        //         ->selectRaw("Gestionnaire, COUNT(DISTINCT NumDossier) AS NbrCredits, SUM(MontantAccorde) AS TotalAccorde")
-        //         ->groupBy('Gestionnaire')
-        //         ->when($codeAgence, function ($q) use ($codeAgence) {
-        //             return $q->where('CodeAgence', $codeAgence);
-        //         });
-        //     if (!empty($devise)) $portefeuilleQuery->where('CodeMonnaie', $devise);
-        //     if (!empty($gestionnaire) && $gestionnaire !== 'Tous') $portefeuilleQuery->where('Gestionnaire', $gestionnaire);
-        //     $portefeuilleData = $portefeuilleQuery->get()->keyBy('Gestionnaire');
-
-        //     $data = $parData->map(function ($row, $gestionnaire) use ($portefeuilleData) {
-        //         $p = $portefeuilleData[$gestionnaire] ?? null;
-        //         $row->NbrCredits = $p->NbrCredits ?? 0;
-        //         $row->TotalAccorde = $p->TotalAccorde ?? 0;
-        //         $row->PAR_SUP_1 = $row->PAR_1_30 + $row->PAR_31_60 + $row->PAR_61_90 + $row->PAR_91_180 + $row->PAR_PLUS_180;
-        //         $row->PAR_SUP_30 = $row->PAR_31_60 + $row->PAR_61_90 + $row->PAR_91_180 + $row->PAR_PLUS_180;
-        //         $row->PAR_SUP_60 = $row->PAR_61_90 + $row->PAR_91_180 + $row->PAR_PLUS_180;
-        //         $row->PAR_SUP_90 = $row->PAR_91_180 + $row->PAR_PLUS_180;
-        //         $encours = max($row->EncoursTotal, 0.0001);
-        //         $row->TAUX_PAR_INTERNE = round(($row->PAR_SUP_1 / $encours) * 100, 2);
-        //         return $row;
-        //     });
-        //     $total = [
-        //         'Gestionnaire'   => 'TOTAL GENERAL',
-        //         'NbrCredits'     => $data->sum('NbrCredits'),
-        //         'TotalAccorde'   => $data->sum('TotalAccorde'),
-        //         'EncoursReel'    => $data->sum('EncoursReel'),
-        //         'EncoursTotal'   => $data->sum('EncoursTotal'),
-        //         'EncoursSain'    => $data->sum('EncoursSain'),
-        //         'PAR_1_30'       => $data->sum('PAR_1_30'),
-        //         'PAR_31_60'      => $data->sum('PAR_31_60'),
-        //         'PAR_61_90'      => $data->sum('PAR_61_90'),
-        //         'PAR_91_180'     => $data->sum('PAR_91_180'),
-        //         'PAR_PLUS_180'   => $data->sum('PAR_PLUS_180'),
-        //         'PAR_SUP_1'      => $data->sum('PAR_SUP_1'),
-        //         'PAR_SUP_30'     => $data->sum('PAR_SUP_30'),
-        //         'PAR_SUP_60'     => $data->sum('PAR_SUP_60'),
-        //         'PAR_SUP_90'     => $data->sum('PAR_SUP_90'),
-        //     ];
-        //     $total['TAUX_PAR_INTERNE'] = round(($total['PAR_SUP_1'] / max($total['EncoursTotal'], 0.0001)) * 100, 2);
-
-        //     // $encoursGlobal = DB::table('portefeuilles')
-        //     //     ->when($devise, fn($q) => $q->where('CodeMonnaie', $devise))
-        //     //     ->when($codeAgence, fn($q) => $q->where('CodeAgence', $codeAgence))
-        //     //     ->sum('MontantAccorde');
-        //     $encoursGlobal = $total['EncoursTotal'];
-        //     $parGlobal = $data->sum('PAR_SUP_1');
-        //     $parGlobalPercent = round(($parGlobal / max($encoursGlobal, 0.0001)) * 100, 2);
-
-        //     $globalPercentages = [
-        //         'Sain'      => $encoursGlobal > 0 ? round(($total['EncoursSain'] / $encoursGlobal) * 100, 2) : 0,
-        //         '1_30'      => $encoursGlobal > 0 ? round(($total['PAR_1_30'] / $encoursGlobal) * 100, 2) : 0,
-        //         '31_60'     => $encoursGlobal > 0 ? round(($total['PAR_31_60'] / $encoursGlobal) * 100, 2) : 0,
-        //         '61_90'     => $encoursGlobal > 0 ? round(($total['PAR_61_90'] / $encoursGlobal) * 100, 2) : 0,
-        //         '91_180'    => $encoursGlobal > 0 ? round(($total['PAR_91_180'] / $encoursGlobal) * 100, 2) : 0,
-        //         'Plus180'   => $encoursGlobal > 0 ? round(($total['PAR_PLUS_180'] / $encoursGlobal) * 100, 2) : 0,
-        //         'PAR_SUP_1' => $encoursGlobal > 0 ? round(($total['PAR_SUP_1'] / $encoursGlobal) * 100, 2) : 0,
-        //         'PAR_SUP_30' => $encoursGlobal > 0 ? round(($total['PAR_SUP_30'] / $encoursGlobal) * 100, 2) : 0,
-        //         'PAR_SUP_60' => $encoursGlobal > 0 ? round(($total['PAR_SUP_60'] / $encoursGlobal) * 100, 2) : 0,
-        //         'PAR_SUP_90' => $encoursGlobal > 0 ? round(($total['PAR_SUP_90'] / $encoursGlobal) * 100, 2) : 0,
-        //     ];
-        //     return response()->json([
-        //         'status' => 1,
-        //         'data'   => $data->values(),
-        //         'total'  => $total,
-        //         'par_global_percent' => $parGlobalPercent,
-        //         'global_percentages' => $globalPercentages,
-        //         'encours_global' => $encoursGlobal
-        //     ]);
-        // }
+       
         else if ($request->radioValue == "par") {
 
             $date = $request->date_par ?? now()->toDateString();

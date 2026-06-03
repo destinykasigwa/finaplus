@@ -5,8 +5,12 @@
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#138496">
     <title>FinaPlus</title>
     <link rel="icon" href="{{ asset('images/bigtontine.png') }}">
+
     <base href="/">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
         integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
@@ -345,246 +349,260 @@
             background-color: #198764;
             border-color: #198764;
         }
+
+        .sidebar-mini.sidebar-open .main-sidebar {
+            transform: translateX(0) !important;
+        }
+
+
+
+        /* .sidebar-mini .main-sidebar {
+    transform: translateX(0);
+} */
     </style>
 </head>
 
-<body>
-    <!-- Navbar principale -->
-    <nav class="main-header navbar navbar-expand">
-        <div class="container-fluid">
-            <!-- Left navbar links -->
-            <ul class="navbar-nav d-flex w-100">
-                <li class="nav-item">
-                    <a class="nav-link" data-widget="pushmenu" href="#" role="button">
-                        <i class="fas fa-bars"></i>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="eco/home" class="nav-link">
-                        <i class="fas fa-home me-1"></i>
-                        <span class="d-none d-md-inline">Accueil</span>
-                    </a>
-                </li>
-                <!-- ========== SÉLECTEUR D'AGENCE MODERNE ========== -->
-                @php
-                    $userAgences = session('user_agences', []);
-                    $currentAgence = session('current_agence');
-                @endphp
-
-                @if (count($userAgences) > 1)
-                    <li class="nav-item dropdown ms-auto">
-                        <a class="nav-link dropdown-toggle " href="#" id="agenceDropdown" data-toggle="dropdown"
-                            aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-building me-1"></i>
-                            @if ($currentAgence)
-                                AGENCE DE
-                                {{ $currentAgence['nom_agence'] ?? '' }}-{{ $currentAgence['code_agence'] ?? '' }}
-                            @else
-                                Agence
-                            @endif
+<body class="hold-transition sidebar-mini layout-fixed">
+    <div class="wrapper">
+        <!-- Navbar principale -->
+        <nav class="main-header navbar navbar-expand">
+            <div class="container-fluid">
+                <!-- Left navbar links -->
+                <ul class="navbar-nav d-flex w-100">
+                    <li class="nav-item">
+                        <a class="nav-link" data-widget="pushmenu" href="#" role="button">
+                            <i class="fas fa-bars"></i>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-modern p-3" aria-labelledby="agenceDropdown"
-                            style="min-width: 280px;">
-                            <div class="form-group mb-2">
-                                <label class="small text-muted mb-1">Sélectionnez votre agence</label>
-                                <select id="agenceSelect" class="form-control form-control-sm">
-                                    @foreach ($userAgences as $agence)
-                                        <option value="{{ $agence['id'] }}" data-code="{{ $agence['code_agence'] }}"
-                                            data-nom="{{ $agence['nom_agence'] }}"
-                                            @if ($currentAgence && $currentAgence['id'] == $agence['id']) selected @endif>
-                                            {{ $agence['code_agence'] }} - {{ $agence['nom_agence'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                    </li>
+                    <li class="nav-item">
+                        <a href="eco/home" class="nav-link">
+                            <i class="fas fa-home me-1"></i>
+                            <span class="d-none d-md-inline">Accueil</span>
+                        </a>
+                    </li>
+                    <!-- ========== SÉLECTEUR D'AGENCE MODERNE ========== -->
+                    @php
+                        $userAgences = session('user_agences', []);
+                        $currentAgence = session('current_agence');
+                    @endphp
+
+                    @if (count($userAgences) > 1)
+                        <li class="nav-item dropdown ms-auto">
+                            <a class="nav-link dropdown-toggle " href="#" id="agenceDropdown"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-building me-1"></i>
+                                @if ($currentAgence)
+                                    AGENCE DE
+                                    {{ $currentAgence['nom_agence'] ?? '' }}-{{ $currentAgence['code_agence'] ?? '' }}
+                                @else
+                                    Agence
+                                @endif
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-modern p-3" aria-labelledby="agenceDropdown"
+                                style="min-width: 280px;">
+                                <div class="form-group mb-2">
+                                    <label class="small text-muted mb-1">Sélectionnez votre agence</label>
+                                    <select id="agenceSelect" class="form-control form-control-sm">
+                                        @foreach ($userAgences as $agence)
+                                            <option value="{{ $agence['id'] }}"
+                                                data-code="{{ $agence['code_agence'] }}"
+                                                data-nom="{{ $agence['nom_agence'] }}"
+                                                @if ($currentAgence && $currentAgence['id'] == $agence['id']) selected @endif>
+                                                {{ $agence['code_agence'] }} - {{ $agence['nom_agence'] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <button id="btnConnectAgence" class="btn btn-teal btn-sm w-100">
+                                    <i class="fas fa-plug me-1"></i> Se connecter
+                                </button>
                             </div>
-                            <button id="btnConnectAgence" class="btn btn-teal btn-sm w-100">
-                                <i class="fas fa-plug me-1"></i> Se connecter
-                            </button>
+                        </li>
+                    @elseif(count($userAgences) == 1)
+                        <li class="nav-item ms-auto">
+                            <span class="nav-link text-white-50">
+                                <i class="fas fa-building me-1"></i> AGENCE DE {{ $userAgences[0]['nom_agence'] }}
+                                -{{ $userAgences[0]['code_agence'] }}
+                            </span>
+                        </li>
+                    @endif
+                </ul>
+
+                <!-- Right navbar links -->
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <span class="d-none d-md-inline">{{ auth()->user()->name ?? 'Utilisateur' }}</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-modern"
+                            aria-labelledby="userDropdown">
+                            <h6 class="dropdown-header text-center">
+                                <i class="fas fa-user-circle me-2"></i>
+                                {{ auth()->user()->name ?? 'Utilisateur' }}
+                            </h6>
+                            {{-- <div class="dropdown-divider"></div> --}}
+                            @if (!auth()->user())
+                                <a href="{{ route('auth.login') }}" class="dropdown-item">
+                                    <i class="fas fa-sign-in-alt me-2"></i>
+                                    Connexion
+                                </a>
+                            @endif
+                            <a style="cursor: pointer" class="dropdown-item"
+                                onclick="document.getElementById('logout-form').submit()">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                Déconnexion
+                            </a>
+                            <form action="{{ route('auth/logout') }}" method="POST" id="logout-form">@csrf</form>
                         </div>
                     </li>
-                @elseif(count($userAgences) == 1)
-                    <li class="nav-item ms-auto">
-                        <span class="nav-link text-white-50">
-                            <i class="fas fa-building me-1"></i> AGENCE DE {{ $userAgences[0]['nom_agence'] }}
-                            -{{ $userAgences[0]['code_agence'] }}
-                        </span>
-                    </li>
-                @endif
-            </ul>
+                </ul>
+            </div>
+        </nav>
 
-            <!-- Right navbar links -->
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-toggle="dropdown"
-                        aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-user-circle me-1"></i>
-                        <span class="d-none d-md-inline">{{ auth()->user()->name ?? 'Utilisateur' }}</span>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end dropdown-menu-modern" aria-labelledby="userDropdown">
-                        <h6 class="dropdown-header text-center">
-                            <i class="fas fa-user-circle me-2"></i>
-                            {{ auth()->user()->name ?? 'Utilisateur' }}
-                        </h6>
-                        {{-- <div class="dropdown-divider"></div> --}}
-                        @if (!auth()->user())
-                            <a href="{{ route('auth.login') }}" class="dropdown-item">
-                                <i class="fas fa-sign-in-alt me-2"></i>
-                                Connexion
-                            </a>
-                        @endif
-                        <a style="cursor: pointer" class="dropdown-item"
-                            onclick="document.getElementById('logout-form').submit()">
-                            <i class="fas fa-sign-out-alt me-2"></i>
-                            Déconnexion
-                        </a>
-                        <form action="{{ route('auth/logout') }}" method="POST" id="logout-form">@csrf</form>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </nav>
-
-    <!-- Navigation secondaire avec menu centré -->
-    <nav class="navbar navbar-expand-lg navbar-modern sticky-top">
-        <div class="container-fluid">
-            <!-- Logo à gauche -->
-            <div class="brand-wrapper">
+        <!-- Navigation secondaire avec menu centré -->
+        <nav class="navbar navbar-expand-lg navbar-modern sticky-top">
+            <div class="container-fluid">
+                <!-- Logo à gauche -->
+                {{-- <div class="brand-wrapper">
                 <div class="brand-icon">
                     <i class="fas fa-chart-line"></i>
                 </div>
                 <a class="navbar-brand" href="eco/home">
                     <strong>FinaPlus</strong>
                 </a>
-            </div>
+            </div> --}}
 
-            <button class="navbar-toggler navbar-toggler-modern" type="button" data-toggle="collapse"
-                data-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false"
-                aria-label="Toggle navigation">
-                <i class="fas fa-bars"></i> Menu
-            </button>
+                <button class="navbar-toggler navbar-toggler-modern" type="button" data-toggle="collapse"
+                    data-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i> Menu
+                </button>
 
-            <div class="collapse navbar-collapse" id="mainNavigation">
-                <!-- Menu centré avec mx-auto -->
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                <div class="collapse navbar-collapse" id="mainNavigation">
+                    <!-- Menu centré avec mx-auto -->
+                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
 
-                    @if ($isCaissier)
-                        <li class="nav-item active"><a href="/" class="nav-link"><i class="fas fa-home"></i>
-                                Home</a></li>
+                        @if ($isCaissier)
+                            <li class="nav-item active"><a href="/" class="nav-link"><i
+                                        class="fas fa-home"></i>
+                                    Home</a></li>
+                            <li class="nav-item dropdown">
+
+                                <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-money-bill-wave me-1"></i> Caisse
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
+                                    <a class="dropdown-item" href="{{ route('eco.pages.depot-espece') }}">
+                                        <i class="fas fa-plus-circle me-2"></i>Dépôt
+                                    </a>
+                                    <a class="dropdown-item" href="{{ route('eco.pages.retrait-espece') }}">
+                                        <i class="fas fa-minus-circle me-2"></i>Retrait
+                                    </a>
+                                    <a class="dropdown-item" href="{{ route('eco.pages.visa') }}">
+                                        <i class="fas fa-check-circle me-2"></i>Positionnement
+                                    </a>
+                                    <a class="dropdown-item" href="{{ route('eco.pages.appro') }}">
+                                        <i class="fas fa-charging-station me-2"></i>Appro
+                                    </a>
+                                    <a class="dropdown-item" href="{{ route('eco.pages.delestage') }}">
+                                        <i class="fas fa-exchange-alt me-2"></i>Délestage
+                                    </a>
+
+                                </div>
+                            </li>
+                        @endif
+
+                        @if ($isChefCaisse)
+                            <li class="nav-item dropdown">
+
+                                <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-money-bill-wave me-1"></i> Tresor
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
+
+                                    <a class="dropdown-item" href="{{ route('eco.pages.appro') }}">
+                                        <i class="fas fa-charging-station me-2"></i>Appro
+                                    </a>
+
+
+                                    <a class="dropdown-item" href="{{ route('eco.pages.entreeT') }}">
+                                        <i class="fas fa-door-open me-2"></i>Entrée T
+                                    </a>
+
+                                </div>
+                            </li>
+                        @endif
+
+                        @if ($isAgentCredit)
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="creditDropdown"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-credit-card me-1"></i> Crédit
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="creditDropdown">
+                                    <a class="dropdown-item" href="{{ route('eco.pages.montage-credit') }}">
+                                        <i class="fas fa-chart-line me-2"></i>Montage crédit
+                                    </a>
+                                    <a class="dropdown-item" href="{{ route('eco.pages.rapport-credit') }}">
+                                        <i class="fas fa-calendar-alt me-2"></i>Rapport crédit
+                                    </a>
+                                </div>
+                            </li>
+                        @endif
+
+                        @if ($isAgentClientele)
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="clienteleDropdown"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-users me-1"></i> Clientèle
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="clienteleDropdown">
+                                    <a class="dropdown-item" href="{{ route('eco.pages.adhesion-membre') }}">
+                                        <i class="fas fa-user-plus me-2"></i>Adhésion membre
+                                    </a>
+                                    <a class="dropdown-item" href="{{ route('eco.pages.releve') }}">
+                                        <i class="fas fa-receipt me-2"></i>Relevé de compte
+                                    </a>
+                                    <a class="dropdown-item" href="{{ route('eco.pages.sommaire-compte') }}">
+                                        <i class="fas fa-chart-pie me-2"></i>Sommaire de compte
+                                    </a>
+                                </div>
+                            </li>
+                        @endif
+
+                        <li class="nav-item">
+                            <a href="{{ route('eco.pages.releve') }}" class="nav-link">
+                                <i class="fas fa-file-alt me-1"></i> Relevé
+                            </a>
+                        </li>
+
+
+
                         <li class="nav-item dropdown">
 
                             <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-money-bill-wave me-1"></i> Caisse
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
-                                <a class="dropdown-item" href="{{ route('eco.pages.depot-espece') }}">
-                                    <i class="fas fa-plus-circle me-2"></i>Dépôt
-                                </a>
-                                <a class="dropdown-item" href="{{ route('eco.pages.retrait-espece') }}">
-                                    <i class="fas fa-minus-circle me-2"></i>Retrait
-                                </a>
-                                <a class="dropdown-item" href="{{ route('eco.pages.visa') }}">
-                                    <i class="fas fa-check-circle me-2"></i>Positionnement
-                                </a>
-                                <a class="dropdown-item" href="{{ route('eco.pages.appro') }}">
-                                    <i class="fas fa-charging-station me-2"></i>Appro
-                                </a>
-                                <a class="dropdown-item" href="{{ route('eco.pages.delestage') }}">
-                                    <i class="fas fa-exchange-alt me-2"></i>Délestage
-                                </a>
-
-                            </div>
-                        </li>
-                    @endif
-
-                    @if ($isChefCaisse)
-                        <li class="nav-item dropdown">
-
-                            <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-money-bill-wave me-1"></i> Tresor
+                                <i class="fas fa-money-bill-wave me-1"></i> Immo
                             </a>
                             <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
 
-                                <a class="dropdown-item" href="{{ route('eco.pages.appro') }}">
-                                    <i class="fas fa-charging-station me-2"></i>Appro
+                                <a class="dropdown-item" href="{{ route('eco.pages.enregistrement-imo') }}">
+                                    <i class="fas fa-plus-circle me-2"></i> Ajouter
                                 </a>
 
-
-                                <a class="dropdown-item" href="{{ route('eco.pages.entreeT') }}">
-                                    <i class="fas fa-door-open me-2"></i>Entrée T
+                                <a class="dropdown-item" href="{{ route('eco.pages.rapport-immo') }}">
+                                    <i class="fas fa-chart-line me-2"></i>Tableau d'ammortissement
                                 </a>
 
                             </div>
                         </li>
-                    @endif
-
-                    @if ($isAgentCredit)
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="creditDropdown"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-credit-card me-1"></i> Crédit
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="creditDropdown">
-                                <a class="dropdown-item" href="{{ route('eco.pages.montage-credit') }}">
-                                    <i class="fas fa-chart-line me-2"></i>Montage crédit
-                                </a>
-                                <a class="dropdown-item" href="{{ route('eco.pages.rapport-credit') }}">
-                                    <i class="fas fa-calendar-alt me-2"></i>Rapport crédit
-                                </a>
-                            </div>
-                        </li>
-                    @endif
-
-                    @if ($isAgentClientele)
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="clienteleDropdown"
-                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-users me-1"></i> Clientèle
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="clienteleDropdown">
-                                <a class="dropdown-item" href="{{ route('eco.pages.adhesion-membre') }}">
-                                    <i class="fas fa-user-plus me-2"></i>Adhésion membre
-                                </a>
-                                <a class="dropdown-item" href="{{ route('eco.pages.releve') }}">
-                                    <i class="fas fa-receipt me-2"></i>Relevé de compte
-                                </a>
-                                <a class="dropdown-item" href="{{ route('eco.pages.sommaire-compte') }}">
-                                    <i class="fas fa-chart-pie me-2"></i>Sommaire de compte
-                                </a>
-                            </div>
-                        </li>
-                    @endif
-
-                    <li class="nav-item">
-                        <a href="{{ route('eco.pages.releve') }}" class="nav-link">
-                            <i class="fas fa-file-alt me-1"></i> Relevé
-                        </a>
-                    </li>
 
 
-
-                    <li class="nav-item dropdown">
-
-                        <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
-                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-money-bill-wave me-1"></i> Immo
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
-
-                            <a class="dropdown-item" href="{{ route('eco.pages.enregistrement-imo') }}">
-                                <i class="fas fa-plus-circle me-2"></i> Ajouter
-                            </a>
-
-                            <a class="dropdown-item" href="{{ route('eco.pages.rapport-immo') }}">
-                                <i class="fas fa-chart-line me-2"></i>Tableau d'ammortissement
-                            </a>
-
-                        </div>
-                    </li>
-
-
-                    {{-- <li class="nav-item dropdown">
+                        {{-- <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="rapportDropdown"
                             data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-chart-bar me-1"></i> Rapport
@@ -624,152 +642,152 @@
                         </div>
                     </li> --}}
 
-                    <!-- Menu Rapport avec sous-catégories (modernisé) -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="rapportDropdown"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-chart-bar me-1"></i> Rapport
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="rapportDropdown">
-                            <h6 class="dropdown-header">Rapports financiers</h6>
-                            <a class="dropdown-item" href="{{ route('eco.pages.balance') }}">
-                                <i class="fas fa-balance-scale me-2"></i>Balance
+                        <!-- Menu Rapport avec sous-catégories (modernisé) -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="rapportDropdown"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-chart-bar me-1"></i> Rapport
                             </a>
-                            <a class="dropdown-item" href="{{ route('eco.pages.bilan') }}">
-                                <i class="fas fa-chart-line me-2"></i>Bilan
-                            </a>
-                            <a class="dropdown-item" href="{{ route('eco.pages.grandlivre') }}">
-                                <i class="fas fa-book me-2"></i>Grand Livre
-                            </a>
-                            <a class="dropdown-item" href="{{ route('eco.pages.tfr') }}">
-                                <i class="fas fa-file-invoice me-2"></i>TFR
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <h6 class="dropdown-header">Rapports de crédit</h6>
-                            <a class="dropdown-item" href="{{ route('eco.pages.rapport-credit') }}">
-                                <i class="fas fa-credit-card me-2"></i>Rapport crédit
-                            </a>
-                            <a class="dropdown-item" href="{{ route('eco.pages.remboursement-attendu') }}">
-                                <i class="fas fa-hourglass-half me-2"></i>Remboursement attendu
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <h6 class="dropdown-header">Suivi clientèle</h6>
-                            <a class="dropdown-item" href="{{ route('eco.pages.releve') }}">
-                                <i class="fas fa-receipt me-2"></i>Relevé
-                            </a>
-                            <a class="dropdown-item" href="{{ route('eco.pages.sommaire-compte') }}">
-                                <i class="fas fa-chart-pie me-2"></i>Sommaire de compte
-                            </a>
-                            <a class="dropdown-item" href="{{ route('eco.pages.journal') }}">
-                                <i class="fas fa-book me-2"></i>Journal
-                            </a>
-                            <a class="dropdown-item" href="{{ route('eco.pages.repertoire') }}">
-                                <i class="fas fa-address-book me-2"></i>Répertoire C
-                            </a>
-                        </div>
-                    </li>
+                            <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="rapportDropdown">
+                                <h6 class="dropdown-header">Rapports financiers</h6>
+                                <a class="dropdown-item" href="{{ route('eco.pages.balance') }}">
+                                    <i class="fas fa-balance-scale me-2"></i>Balance
+                                </a>
+                                <a class="dropdown-item" href="{{ route('eco.pages.bilan') }}">
+                                    <i class="fas fa-chart-line me-2"></i>Bilan
+                                </a>
+                                <a class="dropdown-item" href="{{ route('eco.pages.grandlivre') }}">
+                                    <i class="fas fa-book me-2"></i>Grand Livre
+                                </a>
+                                <a class="dropdown-item" href="{{ route('eco.pages.tfr') }}">
+                                    <i class="fas fa-file-invoice me-2"></i>TFR
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Rapports de crédit</h6>
+                                <a class="dropdown-item" href="{{ route('eco.pages.rapport-credit') }}">
+                                    <i class="fas fa-credit-card me-2"></i>Rapport crédit
+                                </a>
+                                <a class="dropdown-item" href="{{ route('eco.pages.remboursement-attendu') }}">
+                                    <i class="fas fa-hourglass-half me-2"></i>Remboursement attendu
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Suivi clientèle</h6>
+                                <a class="dropdown-item" href="{{ route('eco.pages.releve') }}">
+                                    <i class="fas fa-receipt me-2"></i>Relevé
+                                </a>
+                                <a class="dropdown-item" href="{{ route('eco.pages.sommaire-compte') }}">
+                                    <i class="fas fa-chart-pie me-2"></i>Sommaire de compte
+                                </a>
+                                <a class="dropdown-item" href="{{ route('eco.pages.journal') }}">
+                                    <i class="fas fa-book me-2"></i>Journal
+                                </a>
+                                <a class="dropdown-item" href="{{ route('eco.pages.repertoire') }}">
+                                    <i class="fas fa-address-book me-2"></i>Répertoire C
+                                </a>
+                            </div>
+                        </li>
 
 
-                    <li class="nav-item dropdown">
+                        <li class="nav-item dropdown">
 
-                        <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
-                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle" href="#" id="caisseDropdown"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 
-                            <i class="fas fa-ellipsis-h me-1"></i> PLUS
-
-                        </a>
-
-                        <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
-                            <h6 class="dropdown-header">Paiement</h6>
-                            <a class="dropdown-item" href="{{ route('eco.pages.paiment-batch') }}">
-
-                                <i class="fas fa-plus-circle me-2"></i>
-                                Ajouter un paiement
+                                <i class="fas fa-ellipsis-h me-1"></i> PLUS
 
                             </a>
 
-                            <a class="dropdown-item" href="{{ route('eco.pages.gestion-batch') }}">
+                            <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
+                                <h6 class="dropdown-header">Paiement</h6>
+                                <a class="dropdown-item" href="{{ route('eco.pages.paiment-batch') }}">
 
-                                <i class="fas fa-chart-line me-2"></i>
-                                Gestion batch
+                                    <i class="fas fa-plus-circle me-2"></i>
+                                    Ajouter un paiement
 
-                            </a>
+                                </a>
 
-                            <div class="dropdown-divider"></div>
-                            <h6 class="dropdown-header">Notifications</h6>
+                                <a class="dropdown-item" href="{{ route('eco.pages.gestion-batch') }}">
 
-                            <a class="dropdown-item" href="{{ route('eco.pages.sms-banking') }}">
-                                <i class="fas fa-sms me-1"></i> SMS Banking
-                            </a>
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    Gestion batch
 
-                            <div class="dropdown-divider"></div>
-                            <h6 class="dropdown-header">Crédits</h6>
+                                </a>
 
-                            <a class="dropdown-item" href="{{ route('eco.pages.radiation-credit') }}">
-                                <i class="fas fa-sms me-1"></i> Radiation crédits
-                            </a>
-                        </div>
-                    </li>
-                </ul>
+                                <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Notifications</h6>
+
+                                <a class="dropdown-item" href="{{ route('eco.pages.sms-banking') }}">
+                                    <i class="fas fa-sms me-1"></i> SMS Banking
+                                </a>
+
+                                <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Crédits</h6>
+
+                                <a class="dropdown-item" href="{{ route('eco.pages.radiation-credit') }}">
+                                    <i class="fas fa-sms me-1"></i> Radiation crédits
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <div class="d-flex flex-column min-vh-100">
-        <main class="flex-grow-1" style="flex: 1;">
-            <!-- Contenu principal de la page -->
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    const btnConnect = document.getElementById('btnConnectAgence');
-                    if (btnConnect) {
-                        btnConnect.addEventListener('click', function() {
-                            const select = document.getElementById('agenceSelect');
-                            const selectedOption = select.options[select.selectedIndex];
-                            const agenceId = select.value;
-                            const agenceCode = selectedOption.getAttribute('data-code');
-                            const agenceNom = selectedOption.getAttribute('data-nom');
+        <div class="d-flex flex-column min-vh-100">
+            <main class="flex-grow-1" style="flex: 1;">
+                <!-- Contenu principal de la page -->
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const btnConnect = document.getElementById('btnConnectAgence');
+                        if (btnConnect) {
+                            btnConnect.addEventListener('click', function() {
+                                const select = document.getElementById('agenceSelect');
+                                const selectedOption = select.options[select.selectedIndex];
+                                const agenceId = select.value;
+                                const agenceCode = selectedOption.getAttribute('data-code');
+                                const agenceNom = selectedOption.getAttribute('data-nom');
 
-                            // Requête AJAX pour changer l'agence active en session
-                            fetch('{{ route('eco.agence.change') }}', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                    },
-                                    body: JSON.stringify({
-                                        agence_id: agenceId,
-                                        agence_code: agenceCode,
-                                        agence_nom: agenceNom
+                                // Requête AJAX pour changer l'agence active en session
+                                fetch('{{ route('eco.agence.change') }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        },
+                                        body: JSON.stringify({
+                                            agence_id: agenceId,
+                                            agence_code: agenceCode,
+                                            agence_nom: agenceNom
+                                        })
                                     })
-                                })
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.status === 1) {
-                                        // Recharger la page pour appliquer le changement d'agence
-                                        window.location.reload();
-                                    } else {
-                                        alert('Erreur : ' + (data.msg || 'Impossible de changer d\'agence'));
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Erreur:', error);
-                                    alert('Une erreur est survenue');
-                                });
-                        });
-                    }
-                });
-
-
-                // Empêcher la fermeture du dropdown agence quand on clique sur le select ou le bouton
-                document.addEventListener('DOMContentLoaded', function() {
-                    var agenceDropdown = document.getElementById('agenceDropdown');
-                    if (agenceDropdown) {
-                        var dropdownMenu = agenceDropdown.nextElementSibling;
-                        if (dropdownMenu) {
-                            dropdownMenu.addEventListener('click', function(event) {
-                                event.stopPropagation(); // Empêche la fermeture du dropdown
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.status === 1) {
+                                            // Recharger la page pour appliquer le changement d'agence
+                                            window.location.reload();
+                                        } else {
+                                            alert('Erreur : ' + (data.msg || 'Impossible de changer d\'agence'));
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Erreur:', error);
+                                        alert('Une erreur est survenue');
+                                    });
                             });
                         }
-                    }
-                });
-            </script>
+                    });
+
+
+                    // Empêcher la fermeture du dropdown agence quand on clique sur le select ou le bouton
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var agenceDropdown = document.getElementById('agenceDropdown');
+                        if (agenceDropdown) {
+                            var dropdownMenu = agenceDropdown.nextElementSibling;
+                            if (dropdownMenu) {
+                                dropdownMenu.addEventListener('click', function(event) {
+                                    event.stopPropagation(); // Empêche la fermeture du dropdown
+                                });
+                            }
+                        }
+                    });
+                </script>

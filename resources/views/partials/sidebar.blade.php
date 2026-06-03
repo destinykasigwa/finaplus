@@ -1,5 +1,7 @@
 <!-- Main Sidebar Container -->
-<aside class="main-sidebar sidebar-dark-primary elevation-4" style="background: #000;position:fixed">
+
+<aside class="main-sidebar sidebar-dark-primary elevation-4" style="background: #000;">
+    
     <div class="sidebar">
         <!-- Logo et branding -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex align-items-center justify-content-center border-bottom border-secondary">

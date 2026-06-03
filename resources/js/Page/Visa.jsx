@@ -83,6 +83,7 @@ const Visa = () => {
     const [fetchSolde, setFetchSolde] = useState();
     const [recentOperations, setRecentOperations] = useState([]);
     const [loadingRecent, setLoadingRecent] = useState(true);
+    const [getNumCompte, setGetNumCompte] = useState();
     const getSeachedData = async (e) => {
         e.preventDefault();
         setloadingData(true);
@@ -176,6 +177,8 @@ const Visa = () => {
             setBenecifiaire("");
             setother_benecifiaire("");
             fetchRecentVisa();
+            
+
         } else if (res.data.status == 0) {
             setloading(false);
             setIsLoadingBar(false);
@@ -205,6 +208,7 @@ const Visa = () => {
                 setloadingData(false);
                 setfetchData2(res.data.data);
                 setFetchSolde(res.data.soldeCompte);
+                setGetNumCompte(res.data.NumCompte);
                 console.log(fetchData2);
             } else {
                 Swal.fire({
@@ -309,197 +313,88 @@ const Visa = () => {
                     )}
 
                     {/* Section 1: Recherche et informations compte */}
-                    <div className="row g-3 mb-4">
-                        {/* Recherche compte */}
+                    <div className="row g-4 mb-4">
+                        {/* Carte 1: Recherche Compte */}
                         <div className="col-md-4">
-                            <div className="card border-0 shadow-sm rounded-3 h-100">
+                            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
                                 <div className="card-header bg-white border-0 pt-3 pb-0">
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-search me-2"></i>
+                                    <h6 className="section-title">
+                                        <i
+                                            className="fas fa-search me-2"
+                                            style={{ color: "#6366f1" }}
+                                        ></i>
                                         Recherche Compte
                                     </h6>
                                 </div>
-                                <div className="card-body">
-                                    <div className="mb-3">
-                                        <div className="input-group">
-                                            <input
-                                                id="compte_to_search"
-                                                name="compte_to_search"
-                                                type="text"
-                                                className="form-control"
-                                                placeholder="Numéro de compte..."
-                                                style={{
-                                                    borderRadius:
-                                                        "10px 0 0 10px",
-                                                }}
-                                                onChange={(e) => {
-                                                    setsearched_account(
-                                                        e.target.value,
-                                                    );
-                                                }}
-                                            />
-                                            <button
-                                                className="btn"
-                                                style={{
-                                                    borderRadius:
-                                                        "0 10px 10px 0",
-                                                    background: "#17a2b8",
-                                                    color: "white",
-                                                    border: "none",
-                                                }}
-                                                onClick={getSeachedData}
-                                            >
-                                                <i className="fas fa-search me-1"></i>
-                                                Rechercher
-                                            </button>
+                                <div className="card-body pt-2">
+                                    <div className="input-group mb-4">
+                                        <input
+                                            id="compte_to_search"
+                                            type="text"
+                                            className="form-control modern-input"
+                                            placeholder="Numéro de compte..."
+                                            style={{
+                                                borderRadius: "12px 0 0 12px",
+                                                borderRight: "none",
+                                            }}
+                                            onChange={(e) =>
+                                                setsearched_account(
+                                                    e.target.value,
+                                                )
+                                            }
+                                        />
+                                        <button
+                                            className="btn gradient-btn"
+                                            style={{
+                                                borderRadius: "0 12px 12px 0",
+                                                padding: "0 20px",
+                                            }}
+                                            onClick={getSeachedData}
+                                        >
+                                            <i className="fas fa-search me-1"></i>{" "}
+                                            Rechercher
+                                        </button>
+                                    </div>
+
+                                    <div className="border-top pt-3">
+                                        <div className="d-flex justify-content-between mb-3">
+                                            <span className="text-muted small fw-semibold">
+                                                Intitulé
+                                            </span>
+                                            <span className="fw-semibold text-dark">
+                                                {fetchData2?.NomCompte || "—"}
+                                            </span>
+                                        </div>
+                                        <div className="d-flex justify-content-between mb-3">
+                                            <span className="text-muted small fw-semibold">
+                                                N° Compte
+                                            </span>
+                                            <span className="fw-semibold text-dark">
+                                                {fetchData2?.NumCompte || "—"}
+                                            </span>
+                                        </div>
+                                        <div className="d-flex justify-content-between">
+                                            <span className="text-muted small fw-semibold">
+                                                Code Agence
+                                            </span>
+                                            <span className="fw-semibold text-dark">
+                                                {fetchData2?.CodeAgence || "—"}
+                                            </span>
                                         </div>
                                     </div>
-                                    <hr className="my-3" />
-
-                                    <form>
-                                        <table style={{ width: "100%" }}>
-                                            <tbody>
-                                                <tr>
-                                                    <td
-                                                        style={{
-                                                            padding: "5px",
-                                                            width: "40%",
-                                                        }}
-                                                    >
-                                                        <label
-                                                            style={{
-                                                                color: "steelblue",
-                                                                fontWeight:
-                                                                    "500",
-                                                            }}
-                                                        >
-                                                            Intitulé de compte
-                                                        </label>
-                                                    </td>
-                                                    <td
-                                                        style={{
-                                                            padding: "5px",
-                                                        }}
-                                                    >
-                                                        <input
-                                                            id="intituleCompte"
-                                                            name="intituleCompte"
-                                                            type="text"
-                                                            className="form-control"
-                                                            style={{
-                                                                borderRadius:
-                                                                    "8px",
-                                                                backgroundColor:
-                                                                    "#f8f9fa",
-                                                            }}
-                                                            value={
-                                                                fetchData2 &&
-                                                                fetchData2.NomCompte
-                                                            }
-                                                            disabled
-                                                        />
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td
-                                                        style={{
-                                                            padding: "5px",
-                                                        }}
-                                                    >
-                                                        <label
-                                                            style={{
-                                                                color: "steelblue",
-                                                                fontWeight:
-                                                                    "500",
-                                                            }}
-                                                        >
-                                                            Numéro de compte
-                                                        </label>
-                                                    </td>
-                                                    <td
-                                                        style={{
-                                                            padding: "5px",
-                                                        }}
-                                                    >
-                                                        <input
-                                                            id="NumCompte"
-                                                            name="NumCompte"
-                                                            type="text"
-                                                            className="form-control"
-                                                            style={{
-                                                                borderRadius:
-                                                                    "8px",
-                                                                backgroundColor:
-                                                                    "#f8f9fa",
-                                                            }}
-                                                            disabled
-                                                            value={
-                                                                fetchData2 &&
-                                                                fetchData2.NumCompte
-                                                            }
-                                                        />
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td
-                                                        style={{
-                                                            padding: "5px",
-                                                        }}
-                                                    >
-                                                        <label
-                                                            style={{
-                                                                color: "steelblue",
-                                                                fontWeight:
-                                                                    "500",
-                                                            }}
-                                                        >
-                                                            Code Agence
-                                                        </label>
-                                                    </td>
-                                                    <td
-                                                        style={{
-                                                            padding: "5px",
-                                                        }}
-                                                    >
-                                                        <input
-                                                            id="CodeAgence"
-                                                            name="CodeAgence"
-                                                            type="text"
-                                                            className="form-control"
-                                                            style={{
-                                                                borderRadius:
-                                                                    "8px",
-                                                                backgroundColor:
-                                                                    "#f8f9fa",
-                                                                width: "100px",
-                                                            }}
-                                                            value={
-                                                                fetchData2 &&
-                                                                fetchData2.CodeAgence
-                                                            }
-                                                            disabled
-                                                        />
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </form>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Liste des comptes */}
+                        {/* Carte 2: Liste des comptes */}
                         <div className="col-md-4">
-                            <div className="card border-0 shadow-sm rounded-3 h-100">
+                            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
                                 <div className="card-header bg-white border-0 pt-3 pb-0">
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-list me-2"></i>
+                                    <h6 className="section-title">
+                                        <i
+                                            className="fas fa-list me-2"
+                                            style={{ color: "#6366f1" }}
+                                        ></i>
                                         Liste des comptes
                                     </h6>
                                 </div>
@@ -509,76 +404,104 @@ const Visa = () => {
                                             maxHeight: "320px",
                                             overflowY: "auto",
                                         }}
+                                        className="custom-scroll"
                                     >
                                         <table className="table table-hover mb-0">
                                             <tbody>
-                                                {fetchData &&
-                                                    fetchData.map(
-                                                        (res, index) => {
-                                                            return (
-                                                                <tr
-                                                                    key={index}
-                                                                    className="clickable-row"
-                                                                    style={{
-                                                                        cursor: "pointer",
-                                                                    }}
-                                                                    onClick={(
-                                                                        event,
-                                                                    ) =>
-                                                                        getAccountInfo(
-                                                                            event,
-                                                                        )
-                                                                    }
+                                                {fetchData?.map(
+                                                    (res, index) => (
+                                                        <tr
+                                                            key={index}
+                                                            className={`clickable-row ${getNumCompte === res.NumCompte ? "table-active" : ""}`}
+                                                            style={{
+                                                                cursor: "pointer",
+                                                                transition:
+                                                                    "all 0.2s",
+                                                            }}
+                                                            onClick={(event) =>
+                                                                getAccountInfo(
+                                                                    event,
+                                                                )
+                                                            }
+                                                        >
+                                                            <td className="py-3 px-3 fw-semibold">
+                                                                {res.NumCompte}
+                                                            </td>
+                                                            <td className="py-3 px-3">
+                                                                <span
+                                                                    className={`badge ${res.CodeMonnaie == 1 ? "bg-info" : "bg-success"} px-3 py-2 rounded-pill`}
                                                                 >
-                                                                    <td className="py-2 px-3 fw-semibold">
-                                                                        {
-                                                                            res.NumCompte
-                                                                        }
-                                                                    </td>
-                                                                    <td className="py-2 px-3">
-                                                                        <span
-                                                                            className={`badge ${res.CodeMonnaie == 1 ? "bg-info" : "bg-success"}`}
-                                                                        >
-                                                                            {res.CodeMonnaie ==
-                                                                            1
-                                                                                ? "USD"
-                                                                                : "CDF"}
-                                                                        </span>
-                                                                    </td>
-                                                                </tr>
-                                                            );
-                                                        },
-                                                    )}
+                                                                    {res.CodeMonnaie ==
+                                                                    1
+                                                                        ? "USD"
+                                                                        : "CDF"}
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    ),
+                                                )}
+                                                {(!fetchData ||
+                                                    fetchData.length === 0) && (
+                                                    <tr>
+                                                        <td
+                                                            colSpan="2"
+                                                            className="text-center py-5 text-muted"
+                                                        >
+                                                            <i className="fas fa-inbox fa-2x mb-2 opacity-50 d-block"></i>
+                                                            Aucun compte trouvé
+                                                        </td>
+                                                    </tr>
+                                                )}
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
+                                {getNumCompte && (
+                                    <div className="card-footer bg-white border-top py-3">
+                                        <div className="d-flex align-items-center justify-content-between">
+                                            <div>
+                                                <i className="fas fa-check-circle text-success me-1"></i>
+                                                <small className="text-muted">
+                                                    Compte sélectionné
+                                                </small>
+                                            </div>
+                                            <span className="badge bg-primary px-3 py-2 rounded-pill fs-6">
+                                                {getNumCompte}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Solde compte */}
-                        {fetchSolde && (
+                        {/* Carte 3: Solde du compte */}
+                        {fetchSolde && fetchData2 && (
                             <div className="col-md-4">
                                 <div
-                                    className="card border-0 shadow-sm rounded-3 h-100"
+                                    className="card border-0 shadow-sm rounded-4 h-100 dashboard-card"
                                     style={{
                                         background:
-                                            "linear-gradient(135deg, #17a2b8 0%, #138496 100%)",
+                                            "linear-gradient(135deg, #17a2b8 0%, #0f7c8c 100%)",
                                     }}
                                 >
-                                    <div className="card-body text-center">
-                                        <i className="fas fa-chart-line fa-2x mb-2 opacity-75 text-white"></i>
-                                        <h6 className="text-white-50 mb-2">
-                                            Solde du compte
+                                    <div className="card-body text-center d-flex flex-column justify-content-center">
+                                        <i className="fas fa-wallet fa-2x mb-3 opacity-75 text-white"></i>
+                                        <h6 className="text-white-50 mb-2 text-uppercase tracking-wide">
+                                            Solde disponible
                                         </h6>
                                         <h2 className="fw-bold mb-0 text-white">
-                                            {fetchData2 &&
-                                            fetchData2.CodeMonnaie == 1
+                                            {fetchData2?.CodeMonnaie == 1
                                                 ? "USD "
                                                 : "CDF "}
-                                            {fetchSolde.soldeMembre?.toFixed(
-                                                2,
-                                            ) || "0.00"}
+                                            <span className="display-6">
+                                                {fetchSolde.soldeMembre?.toLocaleString(
+                                                    "fr-FR",
+                                                    {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                    },
+                                                ) || "0,00"}
+                                            </span>
                                         </h2>
                                     </div>
                                 </div>
@@ -597,449 +520,231 @@ const Visa = () => {
                             Informations de visa
                         </span>
                     </div>
-
                     {/* Section Formulaire de visa */}
-                    <div className="row g-3">
-                        {/* Informations du visa */}
+                    <div className="row g-4">
+                        {/* Carte 1: Informations du visa */}
                         <div className="col-md-5">
-                            <div className="card border-0 shadow-sm rounded-3">
-                                <div className="card-header bg-white border-0 pt-3">
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-info-circle me-2"></i>
-                                        Informations
+                            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                                <div className="card-header bg-white border-0 pt-3 pb-0">
+                                    <h6 className="section-title">
+                                        <i
+                                            className="fas fa-info-circle me-2"
+                                            style={{ color: "#6366f1" }}
+                                        ></i>
+                                        Informations du visa
                                     </h6>
                                 </div>
-                                <div className="card-body">
-                                    <form>
-                                        <fieldset>
-                                            <table style={{ width: "100%" }}>
-                                                <tbody>
-                                                    <tr>
-                                                        <td
-                                                            style={{
-                                                                padding: "8px",
-                                                                width: "35%",
-                                                            }}
-                                                        >
-                                                            <label
-                                                                style={{
-                                                                    color: "steelblue",
-                                                                    fontWeight:
-                                                                        "500",
-                                                                }}
-                                                            >
-                                                                Devise
-                                                            </label>
-                                                        </td>
-                                                        <td
-                                                            style={{
-                                                                padding: "8px",
-                                                            }}
-                                                        >
-                                                            <select
-                                                                id="devise"
-                                                                name="devise"
-                                                                className="form-control"
-                                                                style={{
-                                                                    borderRadius:
-                                                                        "8px",
-                                                                    backgroundColor:
-                                                                        "#f8f9fa",
-                                                                }}
-                                                                disabled
-                                                            >
-                                                                <option
-                                                                    value={
-                                                                        fetchData2 &&
-                                                                        fetchData2.CodeMonnaie ==
-                                                                            1
-                                                                            ? "USD"
-                                                                            : "CDF"
-                                                                    }
-                                                                >
-                                                                    {fetchData2 &&
-                                                                    fetchData2.CodeMonnaie ==
-                                                                        1
-                                                                        ? "USD"
-                                                                        : "CDF"}
-                                                                </option>
-                                                            </select>
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td
-                                                            style={{
-                                                                padding: "8px",
-                                                            }}
-                                                        >
-                                                            <label
-                                                                style={{
-                                                                    color: "steelblue",
-                                                                    fontWeight:
-                                                                        "500",
-                                                                }}
-                                                            >
-                                                                Montant
-                                                            </label>
-                                                        </td>
-                                                        <td
-                                                            style={{
-                                                                padding: "8px",
-                                                            }}
-                                                        >
-                                                            <input
-                                                                id="Montant"
-                                                                name="Montant"
-                                                                type="text"
-                                                                className={`form-control ${error.Montant ? "is-invalid" : ""}`}
-                                                                style={{
-                                                                    borderRadius:
-                                                                        "8px",
-                                                                    fontWeight:
-                                                                        "bold",
-                                                                    fontSize:
-                                                                        "18px",
-                                                                }}
-                                                                onChange={(e) =>
-                                                                    setMontant(
-                                                                        e.target
-                                                                            .value,
-                                                                    )
-                                                                }
-                                                                value={Montant}
-                                                                placeholder="0,00"
-                                                            />
-                                                            {error.Montant && (
-                                                                <small className="text-danger d-block mt-1">
-                                                                    {
-                                                                        error.Montant
-                                                                    }
-                                                                </small>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td
-                                                            style={{
-                                                                padding: "8px",
-                                                            }}
-                                                        >
-                                                            <label
-                                                                style={{
-                                                                    color: "steelblue",
-                                                                    fontWeight:
-                                                                        "500",
-                                                                }}
-                                                            >
-                                                                Type document
-                                                            </label>
-                                                        </td>
-                                                        <td
-                                                            style={{
-                                                                padding: "8px",
-                                                            }}
-                                                        >
-                                                            <select
-                                                                id="typeDocument"
-                                                                name="typeDocument"
-                                                                className={`form-control ${error.typeDocument ? "is-invalid" : ""}`}
-                                                                style={{
-                                                                    borderRadius:
-                                                                        "8px",
-                                                                }}
-                                                                onChange={(
-                                                                    e,
-                                                                ) => {
-                                                                    setTypeDocument(
-                                                                        e.target
-                                                                            .value,
-                                                                    );
-                                                                }}
-                                                            >
-                                                                <option value="">
-                                                                    Sélectionnez
-                                                                </option>
-                                                                <option value="Visa de retrait">
-                                                                    Visa de
-                                                                    retrait
-                                                                </option>
-                                                                <option value="Bon de depense">
-                                                                    Bon de
-                                                                    dépense
-                                                                </option>
-                                                            </select>
-                                                            {error.typeDocument && (
-                                                                <small className="text-danger d-block mt-1">
-                                                                    {
-                                                                        error.typeDocument
-                                                                    }
-                                                                </small>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td
-                                                            style={{
-                                                                padding: "8px",
-                                                            }}
-                                                        >
-                                                            <label
-                                                                style={{
-                                                                    color: "steelblue",
-                                                                    fontWeight:
-                                                                        "500",
-                                                                }}
-                                                            >
-                                                                Num document
-                                                            </label>
-                                                        </td>
-                                                        <td
-                                                            style={{
-                                                                padding: "8px",
-                                                            }}
-                                                        >
-                                                            <input
-                                                                type="text"
-                                                                id="numDocument"
-                                                                name="numDocument"
-                                                                className="form-control"
-                                                                style={{
-                                                                    borderRadius:
-                                                                        "8px",
-                                                                    backgroundColor:
-                                                                        "#f8f9fa",
-                                                                }}
-                                                                disabled
-                                                                value={
-                                                                    fetchnumDocument
-                                                                        ? "DC00" +
-                                                                          fetchnumDocument
-                                                                        : ""
-                                                                }
-                                                            />
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td
-                                                            style={{
-                                                                padding: "8px",
-                                                            }}
-                                                        >
-                                                            <label
-                                                                style={{
-                                                                    color: "steelblue",
-                                                                    fontWeight:
-                                                                        "500",
-                                                                }}
-                                                            >
-                                                                Bénéficiaire
-                                                            </label>
-                                                        </td>
-                                                        <td
-                                                            style={{
-                                                                padding: "8px",
-                                                            }}
-                                                        >
-                                                            <select
-                                                                id="benecifiaire"
-                                                                name="benecifiaire"
-                                                                className="form-control"
-                                                                style={{
-                                                                    borderRadius:
-                                                                        "8px",
-                                                                }}
-                                                                onChange={(
-                                                                    e,
-                                                                ) => {
-                                                                    setBenecifiaire(
-                                                                        e.target
-                                                                            .value,
-                                                                    );
-                                                                }}
-                                                            >
-                                                                <option value="">
-                                                                    Sélectionnez
-                                                                </option>
-                                                                {fetchMandataire &&
-                                                                    fetchMandataire.map(
-                                                                        (
-                                                                            res,
-                                                                            idx,
-                                                                        ) => (
-                                                                            <option
-                                                                                key={
-                                                                                    idx
-                                                                                }
-                                                                                value={
-                                                                                    res.mendataireName
-                                                                                }
-                                                                            >
-                                                                                {
-                                                                                    res.mendataireName
-                                                                                }
-                                                                            </option>
-                                                                        ),
-                                                                    )}
-                                                                <option value="autre">
-                                                                    Autre
-                                                                </option>
-                                                            </select>
-                                                        </td>
-                                                    </tr>
-                                                    {benecifiaire ==
-                                                        "autre" && (
-                                                        <tr>
-                                                            <td
-                                                                style={{
-                                                                    padding:
-                                                                        "8px",
-                                                                }}
-                                                            >
-                                                                <label
-                                                                    style={{
-                                                                        color: "green",
-                                                                        fontWeight:
-                                                                            "500",
-                                                                    }}
-                                                                >
-                                                                    Nom
-                                                                    bénéficiaire
-                                                                </label>
-                                                            </td>
-                                                            <td
-                                                                style={{
-                                                                    padding:
-                                                                        "8px",
-                                                                }}
-                                                            >
-                                                                <input
-                                                                    type="text"
-                                                                    id="other_benecifiaire"
-                                                                    name="other_benecifiaire"
-                                                                    className="form-control"
-                                                                    style={{
-                                                                        borderRadius:
-                                                                            "8px",
-                                                                        border: "2px solid green",
-                                                                    }}
-                                                                    placeholder="Nom du bénéficiaire"
-                                                                    onChange={(
-                                                                        e,
-                                                                    ) => {
-                                                                        setother_benecifiaire(
-                                                                            e
-                                                                                .target
-                                                                                .value,
-                                                                        ).toUpperCase();
-                                                                    }}
-                                                                />
-                                                            </td>
-                                                        </tr>
-                                                    )}
-                                                    <tr>
-                                                        <td
-                                                            style={{
-                                                                padding: "8px",
-                                                            }}
-                                                        >
-                                                            <label
-                                                                style={{
-                                                                    color: "steelblue",
-                                                                    fontWeight:
-                                                                        "500",
-                                                                }}
-                                                            >
-                                                                Téléphone
-                                                            </label>
-                                                        </td>
-                                                        <td
-                                                            style={{
-                                                                padding: "8px",
-                                                            }}
-                                                        >
-                                                            <input
-                                                                type="text"
-                                                                id="telephone"
-                                                                name="telephone"
-                                                                className="form-control"
-                                                                style={{
-                                                                    borderRadius:
-                                                                        "8px",
-                                                                }}
-                                                                onChange={(
-                                                                    e,
-                                                                ) => {
-                                                                    setTelephone(
-                                                                        e.target
-                                                                            .value,
-                                                                    );
-                                                                }}
-                                                                value={
-                                                                    telephone
-                                                                }
-                                                                placeholder="Numéro de téléphone"
-                                                            />
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </fieldset>
-                                    </form>
+                                <div className="card-body pt-2">
+                                    <div className="mb-3">
+                                        <label className="label-modern">
+                                            Devise
+                                        </label>
+                                        <div className="input-group">
+                                            <span className="input-group-text bg-light border-0 rounded-3">
+                                                <i className="fas fa-dollar-sign text-muted"></i>
+                                            </span>
+                                            <select
+                                                id="devise"
+                                                name="devise"
+                                                className="modern-select bg-white"
+                                                disabled
+                                            >
+                                                <option
+                                                    value={
+                                                        fetchData2?.CodeMonnaie ==
+                                                        1
+                                                            ? "USD"
+                                                            : "CDF"
+                                                    }
+                                                >
+                                                    {fetchData2?.CodeMonnaie ==
+                                                    1
+                                                        ? "USD"
+                                                        : "CDF"}
+                                                </option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <label className="label-modern">
+                                            Montant{" "}
+                                            <span className="text-danger">
+                                                *
+                                            </span>
+                                        </label>
+                                        <div className="input-group">
+                                            <span className="input-group-text bg-light border-0 rounded-3">
+                                                <i className="fas fa-money-bill-wave text-success"></i>
+                                            </span>
+                                            <input
+                                                id="Montant"
+                                                name="Montant"
+                                                type="text"
+                                                className={`form-control modern-input fw-bold fs-4 text-success  ${error.Montant ? "is-invalid" : ""}`}
+                                                onChange={(e) =>
+                                                    setMontant(e.target.value)
+                                                }
+                                                value={Montant}
+                                                placeholder="0,00"
+                                            />
+                                        </div>
+                                        {error.Montant && (
+                                            <small className="text-danger d-block mt-1">
+                                                {error.Montant}
+                                            </small>
+                                        )}
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <label className="label-modern">
+                                            Type document{" "}
+                                            <span className="text-danger">
+                                                *
+                                            </span>
+                                        </label>
+                                        <select
+                                            id="typeDocument"
+                                            name="typeDocument"
+                                            className={`form-select modern-input ${error.typeDocument ? "is-invalid" : ""}`}
+                                            onChange={(e) =>
+                                                setTypeDocument(e.target.value)
+                                            }
+                                        >
+                                            <option value="">
+                                                Sélectionnez
+                                            </option>
+                                            <option value="Visa de retrait">
+                                                Visa de retrait
+                                            </option>
+                                            <option value="Bon de depense">
+                                                Bon de dépense
+                                            </option>
+                                        </select>
+                                        {error.typeDocument && (
+                                            <small className="text-danger d-block mt-1">
+                                                {error.typeDocument}
+                                            </small>
+                                        )}
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <label className="label-modern">
+                                            Numéro document
+                                        </label>
+                                        <input
+                                            type="text"
+                                            id="numDocument"
+                                            name="numDocument"
+                                            className="form-control modern-input bg-light"
+                                            disabled
+                                            value={
+                                                fetchnumDocument
+                                                    ? "DC00" + fetchnumDocument
+                                                    : ""
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <label className="label-modern">
+                                            Bénéficiaire{" "}
+                                            <span className="text-danger">
+                                                *
+                                            </span>
+                                        </label>
+                                        <select
+                                            id="benecifiaire"
+                                            name="benecifiaire"
+                                            className="form-select modern-input"
+                                            onChange={(e) =>
+                                                setBenecifiaire(e.target.value)
+                                            }
+                                        >
+                                            <option value="">
+                                                Sélectionnez
+                                            </option>
+                                            {fetchMandataire?.map(
+                                                (res, idx) => (
+                                                    <option
+                                                        key={idx}
+                                                        value={
+                                                            res.mendataireName
+                                                        }
+                                                    >
+                                                        {res.mendataireName}
+                                                    </option>
+                                                ),
+                                            )}
+                                            <option value="autre">Autre</option>
+                                        </select>
+                                    </div>
+
+                                    {benecifiaire == "autre" && (
+                                        <div className="mb-3">
+                                            <label className="label-modern text-success">
+                                                Nom bénéficiaire
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="other_benecifiaire"
+                                                name="other_benecifiaire"
+                                                className="form-control modern-input border-success"
+                                                placeholder="Nom du bénéficiaire"
+                                                onChange={(e) =>
+                                                    setother_benecifiaire(
+                                                        e.target.value,
+                                                    ).toUpperCase()
+                                                }
+                                            />
+                                        </div>
+                                    )}
+
+                                    <div className="mb-3">
+                                        <label className="label-modern">
+                                            Téléphone
+                                        </label>
+                                        <input
+                                            type="tel"
+                                            id="telephone"
+                                            name="telephone"
+                                            className="form-control modern-input"
+                                            onChange={(e) =>
+                                                setTelephone(e.target.value)
+                                            }
+                                            value={telephone}
+                                            placeholder="Numéro de téléphone"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Bouton de validation */}
+                        {/* Carte 2: Validation */}
                         <div className="col-md-3">
-                            <div className="card border-0 shadow-sm rounded-3 h-100">
-                                <div className="card-header bg-white border-0 pt-3">
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-check-circle me-2"></i>
+                            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                                <div className="card-header bg-white border-0 pt-3 pb-0">
+                                    <h6 className="section-title">
+                                        <i
+                                            className="fas fa-check-circle me-2"
+                                            style={{ color: "#6366f1" }}
+                                        ></i>
                                         Validation
                                     </h6>
                                 </div>
-                                <div className="card-body d-flex align-items-center justify-content-center">
+                                <div className="card-body d-flex flex-column justify-content-center">
                                     <button
-                                        className="btn w-100 py-3 fw-bold"
+                                        className="btn gradient-btn w-100 py-3 fw-bold"
                                         id="validerbtn"
-                                        style={{
-                                            background:
-                                                "linear-gradient(135deg, #17a2b8, #138496)",
-                                            border: "none",
-                                            borderRadius: "12px",
-                                            fontSize: "16px",
-                                            color: "white",
-                                            transition: "all 0.3s ease",
-                                        }}
                                         onClick={saveOperation}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.transform =
-                                                "translateY(-2px)";
-                                            e.currentTarget.style.boxShadow =
-                                                "0 6px 16px rgba(23,162,184,0.4)";
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.transform =
-                                                "translateY(0)";
-                                            e.currentTarget.style.boxShadow =
-                                                "none";
-                                        }}
                                         disabled={!Montant || !typeDocument}
                                     >
                                         <i
-                                            className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-check me-2"}`}
+                                            className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-check-circle me-2"}`}
                                         ></i>
                                         Valider le visa
                                     </button>
-                                </div>
-                                <div className="card-footer bg-white border-0 pb-3">
-                                    <small className="text-muted d-block text-center">
+                                    <small className="text-muted d-block text-center mt-3">
                                         <i className="fas fa-info-circle me-1"></i>
                                         Assurez-vous que toutes les informations
                                         sont correctes
@@ -1047,25 +752,26 @@ const Visa = () => {
                                 </div>
                             </div>
                         </div>
-                        {/* Signature et photo */}
+
+                        {/* Carte 3: Signature et photo */}
                         <div className="col-md-4">
-                            <div className="card border-0 shadow-sm rounded-3 h-100">
-                                <div className="card-header bg-white border-0 pt-3">
-                                    <h6
-                                        className="fw-bold"
-                                        style={{ color: "steelblue" }}
-                                    >
-                                        <i className="fas fa-signature me-2"></i>
-                                        Signature
+                            <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                                <div className="card-header bg-white border-0 pt-3 pb-0">
+                                    <h6 className="section-title">
+                                        <i
+                                            className="fas fa-signature me-2"
+                                            style={{ color: "#6366f1" }}
+                                        ></i>
+                                        Signature du titulaire
                                     </h6>
                                 </div>
-                                <div className="card-body">
+                                <div className="card-body d-flex flex-column justify-content-center">
                                     {signature_file ? (
                                         <div className="text-center">
                                             <div
-                                                className="border rounded-3 p-3"
+                                                className="border rounded-4 p-3 bg-light"
                                                 style={{
-                                                    backgroundColor: "#f8f9fa",
+                                                    transition: "all 0.2s",
                                                 }}
                                             >
                                                 <iframe
@@ -1074,24 +780,25 @@ const Visa = () => {
                                                         width: "100%",
                                                         height: "250px",
                                                         border: "none",
-                                                        borderRadius: "8px",
+                                                        borderRadius: "12px",
                                                     }}
                                                     title="Signature du membre"
                                                 ></iframe>
-                                                <small className="text-muted d-block mt-2">
-                                                    <i className="fas fa-check-circle text-success me-1"></i>
-                                                    Signature du titulaire du
-                                                    compte
-                                                </small>
+                                                <div className="mt-3">
+                                                    <span className="badge bg-success rounded-pill px-3 py-2">
+                                                        <i className="fas fa-check-circle me-1"></i>{" "}
+                                                        Signature validée
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     ) : (
                                         <div className="text-center py-5 text-muted">
                                             <i className="fas fa-signature fa-4x mb-3 opacity-50"></i>
-                                            <p className="mb-0">
+                                            <p className="mb-0 fw-semibold">
                                                 Aucune signature disponible
                                             </p>
-                                            <small>
+                                            <small className="text-muted">
                                                 Veuillez sélectionner un compte
                                             </small>
                                         </div>
@@ -1179,6 +886,139 @@ const Visa = () => {
                     </div>
                 </div>
             </div>
+
+            <style>
+                {`
+                .dashboard-card {
+                        transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    }
+                    .dashboard-card:hover {
+                        transform: translateY(-4px);
+                        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+                    }
+
+                    .section-title {
+                        font-size: 0.95rem;
+                        font-weight: 600;
+                        color: #1e293b;
+                        letter-spacing: -0.2px;
+                    }
+
+                    .modern-input {
+                        border: 1px solid #e2e8f0;
+                        border-radius: 12px;
+                        padding: 0.6rem 0.75rem;
+                        transition: all 0.2s;
+                    }
+                    .modern-input:focus {
+                        border-color: #6366f1;
+                        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+                        outline: none;
+                    }
+
+                    .gradient-btn {
+                        background: linear-gradient(105deg, #17a2b8, #0f7c8c);
+                        border: none;
+                        color: white;
+                        font-weight: 500;
+                        transition: all 0.25s;
+                    }
+                    .gradient-btn:hover {
+                        transform: scale(1.02);
+                        background: linear-gradient(105deg, #0f7c8c, #0d6a78);
+                    }
+
+                    .custom-scroll::-webkit-scrollbar {
+                        width: 6px;
+                    }
+                    .custom-scroll::-webkit-scrollbar-track {
+                        background: #f1f1f1;
+                        border-radius: 10px;
+                    }
+                    .custom-scroll::-webkit-scrollbar-thumb {
+                        background: #c1c1c1;
+                        border-radius: 10px;
+                    }
+                    .custom-scroll::-webkit-scrollbar-thumb:hover {
+                        background: #a8a8a8;
+                    }
+
+                    .clickable-row {
+                        transition: background 0.15s ease;
+                    }
+                    .clickable-row:hover {
+                        background-color: #f8f9fa;
+                    }
+                    .table-active {
+                        background-color: #e6f7f5 !important;
+                        border-left: 3px solid #17a2b8;
+                    }
+
+                    .tracking-wide {
+                        letter-spacing: 0.5px;
+                    }
+
+                    .label-modern {
+                        font-size: 0.7rem;
+                        font-weight: 600;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        color: #64748b;
+                        margin-bottom: 0.3rem;
+                        display: block;
+                    }
+
+                    .modern-input {
+                        border: 1px solid #e2e8f0;
+                        border-radius: 12px;
+                        padding: 0.6rem 0.75rem;
+                        transition: all 0.2s;
+                    }
+                    .modern-input:focus {
+                        border-color: #6366f1;
+                        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+                        outline: none;
+                    }
+
+                    .modern-input.bg-light {
+                        background-color: #f8f9fa;
+                    }
+
+                    .gradient-btn {
+                        background: linear-gradient(105deg, #17a2b8, #0f7c8c);
+                        border: none;
+                        border-radius: 14px;
+                        font-weight: 600;
+                        letter-spacing: 0.3px;
+                        transition: all 0.25s;
+                        color: white;
+                    }
+                    .gradient-btn:hover:not(:disabled) {
+                        transform: scale(1.02);
+                        background: linear-gradient(105deg, #0f7c8c, #0d6a78);
+                        box-shadow: 0 8px 20px rgba(23, 162, 184, 0.3);
+                    }
+                    .gradient-btn:disabled {
+                        opacity: 0.6;
+                        cursor: not-allowed;
+                    }
+
+                    .dashboard-card {
+                        transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    }
+                    .dashboard-card:hover {
+                        transform: translateY(-4px);
+                        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+                    }
+
+                    .section-title {
+                        font-size: 0.95rem;
+                        font-weight: 600;
+                        color: #1e293b;
+                        letter-spacing: -0.2px;
+                    }
+                `}
+            </style>
         </>
     );
 };

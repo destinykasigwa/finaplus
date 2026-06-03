@@ -851,7 +851,7 @@ class TransactionsController extends Controller
         if ($validator->fails()) {
             return response()->json(['validate_error' => $validator->messages()]);
         }
-
+   
         try {
             if ($request->devise == "CDF") {
                 // --- Récupération des comptes (inchangé) ---
@@ -1093,6 +1093,7 @@ class TransactionsController extends Controller
                         "NomMembre" => $dataCompte->NomCompte,
                         "NumAbrege" => $request->NumAbrege,
                         "Beneficiaire" => $request->DeposantName,
+                        "Telephone" => $request->DeposantPhone,
                         "Motif" => $request->motifDepot,
                         "Devise" => $request->devise,
                         "vightMilleFranc" => $request->vightMille,
@@ -1298,6 +1299,7 @@ class TransactionsController extends Controller
                         "NomMembre" => $dataCompte->NomCompte,
                         "NumAbrege" => $request->NumAbrege,
                         "Beneficiaire" => $request->DeposantName,
+                        "Telephone" => $request->DeposantPhone,
                         "Motif" => $request->motifDepot,
                         "Devise" => $request->devise,
                         "centDollars" => $request->hundred,
@@ -1648,7 +1650,6 @@ class TransactionsController extends Controller
                         if ($solde < $montant) {
                             return response()->json(['status' => 0, 'msg' => "Votre solde est inférieur au montant à retirer votre solde actuel " .  $solde . " votre compte doit être approvisionné"]);
                         }
-
                         // Gestion de la commission (inchangée)
                         if (isset($request->Commission) && $request->Commission > 0) {
                             CompteurTransaction::create(['fakevalue' => "0000"]);
@@ -1668,8 +1669,8 @@ class TransactionsController extends Controller
                                 "NumCompte" => $compteCommissionCDF,
                                 "NumComptecp" => $dataCompte->NumCompte,
                                 "Credit"  => $request->Commission,
-                                "Creditusd"  => $request->Commission,
-                                "Creditfc" => $request->Montant / $dataSystem->TauxEnFc,
+                                "Creditusd"  =>$request->Montant / $dataSystem->TauxEnFc,
+                                "Creditfc" => $request->Commission,
                                 "NomUtilisateur" => Auth::user()->name,
                                 "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $dataCompte->NumCompte . " par le caissier " . Auth::user()->name,
                                 "refCompteMembre" => $compteCommissionCDF
@@ -1687,8 +1688,8 @@ class TransactionsController extends Controller
                                 "NumCompte" => $dataCompte->NumCompte,
                                 "NumComptecp" =>  $compteCommissionCDF,
                                 "Debit"  => $request->Commission,
-                                "Debitusd"  => $request->Commission,
-                                "Debitfc" => $request->Montant / $dataSystem->TauxEnFc,
+                                "Debitusd"  => $request->Commissiont / $dataSystem->TauxEnFc,
+                                "Debitfc" => $request->Commission,
                                 "NomUtilisateur" => Auth::user()->name,
                                 "Libelle" => "PRISE COMMISSION",
                             ]);
@@ -1967,7 +1968,7 @@ class TransactionsController extends Controller
                                 "NumComptecp" => $dataCompte->NumCompte,
                                 "Credit"  => $request->Commission,
                                 "Creditusd"  => $request->Commission,
-                                "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
+                                "Creditfc" => $request->Commission * $dataSystem->TauxEnFc,
                                 "NomUtilisateur" => Auth::user()->name,
                                 "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $dataCompte->NumCompte . " par le caissier " . Auth::user()->name,
                                 "refCompteMembre" => $compteCommissionUSD
@@ -1986,7 +1987,7 @@ class TransactionsController extends Controller
                                 "NumComptecp" =>  $compteCommissionUSD,
                                 "Debit"  => $request->Commission,
                                 "Debitusd"  => $request->Commission,
-                                "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+                                "Debitfc" => $request->Commission * $dataSystem->TauxEnFc,
                                 "NomUtilisateur" => Auth::user()->name,
                                 "Libelle" => "PRISE COMMISSION",
                             ]);

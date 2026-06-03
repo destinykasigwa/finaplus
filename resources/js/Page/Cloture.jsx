@@ -337,7 +337,7 @@ setPrelevementDateFin(formatLocalDate(lastDay));   // 2026-04-25
                     text: response.data.message,
                     icon: "success",
                     confirmButtonText: "OK",
-                    timer: 3000,
+                    timer: 8000,
                     timerProgressBar: true,
                 });
                 // Option : réinitialiser les cases après succès

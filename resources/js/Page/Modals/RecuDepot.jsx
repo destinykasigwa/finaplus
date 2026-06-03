@@ -767,6 +767,22 @@ svg {
                                                                             data.Motif
                                                                         }
                                                                     </div>
+                                                                     <div
+                                                                        className="line"
+                                                                        style={{
+                                                                            fontSize:
+                                                                                "11px",
+                                                                            margin: "2px 0",
+                                                                        }}
+                                                                    >
+                                                                        <strong>
+                                                                           Télephone
+                                                                            :
+                                                                        </strong>{" "}
+                                                                        {
+                                                                            data.Telephone
+                                                                        }
+                                                                    </div>
                                                                     <div
                                                                         className="line"
                                                                         style={{

@@ -83,7 +83,7 @@ const Debiter = () => {
         if (e) e.preventDefault();
         if (!compteADebiter) return;
         const res = await axios.post("/eco/page/debiter/get-data", { compte_a_debiter: compteADebiter });
-        if (res.data.status === 1) {
+        if (res.data.status == 1) {
             setFetchDataDebit(res.data.dataDebit);
             setSoldeDebit(res.data.soldeCompteDebit);
         } else {
@@ -95,7 +95,7 @@ const Debiter = () => {
         if (e) e.preventDefault();
         if (!compteACrediter) return;
         const res = await axios.post("/eco/page/crediter/get-data", { compte_a_crediter: compteACrediter });
-        if (res.data.status === 1) {
+        if (res.data.status == 1) {
             setFetchDataCredit(res.data.dataCredit);
             setSoldeCredit(res.data.soldeCompteCredit);
         } else {
@@ -112,7 +112,7 @@ const Debiter = () => {
     const handleSeachOperation = async (ref) => {
         if (!ref) return;
         const res = await axios.get("/eco/page/debiteur/extourne-operation/reference/" + ref);
-        if (res.data.status === 1) {
+        if (res.data.status == 1) {
             setFetchSearchedOperation(res.data.data);
         } else {
             Swal.fire({ title: "Erreur", text: res.data.msg, icon: "error" });
@@ -127,7 +127,7 @@ const Debiter = () => {
             searched_account_by_name: searchByName,
         });
         setChargement(false);
-        if (res.data.status === 1) {
+        if (res.data.status == 1) {
             setFetchDataByName(res.data.data);
         } else {
             Swal.fire({ title: "Erreur", text: res.data.msg, icon: "error" });
@@ -146,11 +146,11 @@ const Debiter = () => {
         const res = await axios.get("/eco/page/debiteur/extourne-operation/" + reference);
         setChargement(false);
         Swal.fire({
-            title: res.data.status === 1 ? "Succès" : "Erreur",
+            title: res.data.status == 1 ? "Succès" : "Erreur",
             text: res.data.msg,
-            icon: res.data.status === 1 ? "success" : "error",
+            icon: res.data.status == 1 ? "success" : "error",
         });
-        if (res.data.status === 1) getDayOperation();
+        if (res.data.status == 1) getDayOperation();
     };
     
     const saveOperation = async (e) => {
@@ -177,7 +177,7 @@ const Debiter = () => {
         
         const confirmation = await Swal.fire({
             title: "Confirmation",
-            text: `Valider l'opération de ${montant} ${fetchDataDebit.CodeMonnaie === 1 ? "USD" : "CDF"} ?`,
+            text: `Valider l'opération de ${montant} ${fetchDataDebit.CodeMonnaie == 1 ? "USD" : "CDF"} ?`,
             icon: "question",
             showCancelButton: true,
         });
@@ -194,7 +194,7 @@ const Debiter = () => {
                 Libelle: libelle,
                 isVirement: false, // ou selon besoin
             });
-            if (res.data.status === 1) {
+            if (res.data.status == 1) {
                 Swal.fire({ title: "Succès", text: res.data.msg, icon: "success", timer: 3000 });
                 // Réinitialiser après succès ?
                 const reset = await Swal.fire({
@@ -383,7 +383,7 @@ const Debiter = () => {
                                 {soldeDebit && (
                                     <div className="mt-2 p-2 rounded bg-light">
                                         <small>Solde</small>
-                                        <h5 className="text-danger">{numberWithSpaces(soldeDebit.soldeCompte)} {fetchDataDebit.CodeMonnaie === 1 ? "USD" : "CDF"}</h5>
+                                        <h5 className="text-danger">{numberWithSpaces(soldeDebit.soldeCompte)} {fetchDataDebit.CodeMonnaie == 1 ? "USD" : "CDF"}</h5>
                                     </div>
                                 )}
                             </div>
@@ -404,7 +404,7 @@ const Debiter = () => {
                                 {soldeCredit && (
                                     <div className="mt-2 p-2 rounded bg-light">
                                         <small>Solde</small>
-                                        <h5 className="text-success">{numberWithSpaces(soldeCredit.soldeCompte)} {fetchDataCredit.CodeMonnaie === 1 ? "USD" : "CDF"}</h5>
+                                        <h5 className="text-success">{numberWithSpaces(soldeCredit.soldeCompte)} {fetchDataCredit.CodeMonnaie == 1 ? "USD" : "CDF"}</h5>
                                     </div>
                                 )}
                             </div>
@@ -436,7 +436,7 @@ const Debiter = () => {
                                                 <tr key={idx} onClick={() => handleAccountClick(acc.NumCompte, acc)} style={{ cursor: "pointer" }}>
                                                     <td className="fw-semibold">{acc.NumCompte}</td>
                                                     <td>{acc.NomCompte}</td>
-                                                    <td><span className={`badge ${acc.CodeMonnaie === 1 ? "bg-info" : "bg-success"}`}>{acc.CodeMonnaie === 1 ? "USD" : "CDF"}</span></td>
+                                                    <td><span className={`badge ${acc.CodeMonnaie == 1 ? "bg-info" : "bg-success"}`}>{acc.CodeMonnaie == 1 ? "USD" : "CDF"}</span></td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -527,12 +527,12 @@ const Debiter = () => {
                                                 <td className="fw-semibold">{op.NumTransaction}</td>
                                                 <td>{op.NumCompte}</td>
                                                 <td className="fw-bold">
-                                                    {op.CodeMonnaie === 1
+                                                    {op.CodeMonnaie == 1
                                                         ? (parseInt(op.Creditusd) > 0 ? parseInt(op.Creditusd) : parseInt(op.Debitusd))
                                                         : (parseInt(op.Creditfc) > 0 ? parseInt(op.Creditfc) : parseInt(op.Debitfc))
                                                     }
                                                 </td>
-                                                <td><span className={`badge ${op.CodeMonnaie === 1 ? "bg-info" : "bg-success"}`}>{op.CodeMonnaie === 1 ? "USD" : "CDF"}</span></td>
+                                                <td><span className={`badge ${op.CodeMonnaie == 1 ? "bg-info" : "bg-success"}`}>{op.CodeMonnaie == 1 ? "USD" : "CDF"}</span></td>
                                                 <td><span className={`badge ${op.TypeTransaction === "Crédit" ? "bg-success" : "bg-danger"}`}>{op.TypeTransaction}</span></td>
                                                 <td>{op.Libelle}</td>
                                                 <td><button className="btn btn-sm btn-warning" onClick={() => extourneOperation(op.NumTransaction)}><i className="fas fa-exchange-alt"></i></button></td>
@@ -546,7 +546,7 @@ const Debiter = () => {
                                 <div className="d-flex justify-content-center mt-3">
                                     <nav>
                                         <ul className="pagination pagination-sm">
-                                            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
+                                            <li className={`page-item ${currentPage == 1 ? "disabled" : ""}`}>
                                                 <button className="page-link" onClick={() => setCurrentPage(prev => Math.max(prev-1,1))}>Précédent</button>
                                             </li>
                                             {[...Array(totalPages)].map((_, i) => (

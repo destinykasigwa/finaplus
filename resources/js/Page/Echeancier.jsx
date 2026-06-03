@@ -508,6 +508,13 @@ const Echeancier = () => {
         return isNaN(parsed) ? 0 : parsed;
     };
 
+  // Gère l'arrondi et les décimales
+const safeToFixed = (value, decimals = 2) => {
+    if (value === null || value === undefined) return 0;
+    const num = typeof value === 'number' ? value : parseFloat(value);
+    return isNaN(num) ? 0 : num;
+};
+
     return (
         <>
             <div
@@ -1490,9 +1497,7 @@ const Echeancier = () => {
                                                                     Restant :
                                                                 </td>
                                                                 <td>
-                                                                    {fetchInteretRestant?.intereRestant?.toFixed(
-                                                                        2,
-                                                                    )}
+                                                                    {numberFormat(safeToFixed(fetchInteretRestant?.intereRestant))}
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -1502,8 +1507,8 @@ const Echeancier = () => {
                                                                 </td>
                                                                 <td>
                                                                     {numberFormat(
-                                                                        fetchInteretRetard?.sommeInteretRetard,
-                                                                    )}
+                                                                        safeToFixed(fetchInteretRetard?.sommeInteretRetard,
+                                                                    ))}
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -2411,23 +2416,17 @@ const Echeancier = () => {
                                                             </td>
                                                             <td className="text-end">
                                                                 {numberWithSpaces(
-                                                                    item.TotalAccorde?.toFixed(
-                                                                        2,
-                                                                    ),
+                                                                   safeToFixed(item.TotalAccorde),
                                                                 )}
                                                             </td>
                                                             <td className="text-end fw-bold">
                                                                 {numberWithSpaces(
-                                                                    item.EncoursTotal?.toFixed(
-                                                                        2,
-                                                                    ),
-                                                                )}
+                                                                    safeToFixed(item.EncoursTotal,
+                                                                ))}
                                                             </td>
                                                             <td className="text-end">
                                                                 {numberWithSpaces(
-                                                                    item.EncoursSain?.toFixed(
-                                                                        2,
-                                                                    ),
+                                                                   safeToFixed(item.EncoursSain)
                                                                 )}
                                                             </td>
                                                             <td className="text-end">
