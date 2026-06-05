@@ -728,10 +728,10 @@
                                 </a>
 
                                  <div class="dropdown-divider"></div>
-                                <h6 class="dropdown-header">Change de monnaie</h6>
+                                <h6 class="dropdown-header">Opérations de change</h6>
                                 
-                                 <a class="nav-link" href="{{ route('eco.pages.currency-exchange') }}">
-        <i class="fas fa-exchange-alt me-1"></i> Change de devises
+                                 <a class="dropdown-item" href="{{ route('eco.pages.currency-exchange') }}">
+        <i class="fas fa-exchange-alt me-1"></i> Change de monnaie
     </a>
                             </div>
                         </li>

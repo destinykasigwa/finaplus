@@ -1777,13 +1777,11 @@ const Releve = () => {
                                                                 }
                                                             >
                                                                 {dateParser(
-                                                                    dateDebut ||
-                                                                        getdefaultDateDebut,
+                                                                    dateDebut 
                                                                 )}{" "}
                                                                 à{" "}
                                                                 {dateParser(
-                                                                    dateFin ||
-                                                                        getdefaultDateFin,
+                                                                    dateFin 
                                                                 )}
                                                             </td>
                                                         </tr>

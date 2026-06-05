@@ -12,7 +12,7 @@ import { EnteteRapport } from "./HeaderReport";
 
 const Journal = () => {
     const [loading, setloading] = useState(false);
-    const [devise, setDevise] = useState("CDF");
+    const [devise, setDevise] = useState();
 const [getData, setGetData] = useState();
     const [getDataCDF, setGetdataCDF] = useState();
     const [getDataUSD, setGetdataUSD] = useState();
