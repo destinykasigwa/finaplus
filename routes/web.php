@@ -20,6 +20,7 @@ use App\Http\Controllers\SMSBankingController;
 use App\Http\Controllers\SuiviCreditController;
 use App\Http\Controllers\UtilisateurController;
 use App\Http\Controllers\ComptesParamController;
+use App\Http\Controllers\CurrencyExchangeController;
 use App\Http\Controllers\ImmobilisationController;
 use App\Http\Controllers\TransactionsController;
 use App\Http\Middleware\Authenticate;
@@ -196,6 +197,8 @@ Route::middleware(['web'])->group(function () {
 
     Route::post('eco/page/adhesion/edit-signature', [AdhesionController::class, 'updateMembreSignature']);
 
+  
+   Route::post('/eco/page/adhesion/edit-photo', [AdhesionController::class, 'updateMembrePhoto'])->name('update.membre.photo');
 
     //CREATE NEW ACCOUNT 
     Route::post('eco/page/adhesion/creation-compte', [AdhesionController::class, 'createAccount']);
@@ -719,6 +722,50 @@ Route::get('/eco/pages/radiation-credit', [SuiviCreditController::class, 'getRad
 
  Route::post('/eco/page/montage-credit/get-credits-by-member', [SuiviCreditController::class, 'getCreditsByMember']);
   Route::post('/eco/page/montage-credit/get-credit-by-dossier', [SuiviCreditController::class, 'getCreditByDossier']);
+
+
+
+
+
+
+
+
+
+
+
+
+  // Middleware d'authentification
+Route::middleware(['auth'])->prefix('eco/exchange')->group(function () {
+
+    // Taux de change
+    Route::get('/rates', [CurrencyExchangeController::class, 'getRates']);
+    Route::post('/rates', [CurrencyExchangeController::class, 'storeRate']);
+    Route::get('/reference-rate', [CurrencyExchangeController::class, 'getReferenceRate']);
+
+    // Comptes de change (par agence)
+    Route::get('/accounts', [CurrencyExchangeController::class, 'getExchangeAccounts']);
+    Route::post('/accounts', [CurrencyExchangeController::class, 'updateExchangeAccounts']);
+
+    // Opérations
+    Route::post('/search-client', [CurrencyExchangeController::class, 'searchClient']);
+    Route::post('/client-accounts', [CurrencyExchangeController::class, 'getClientAccounts']);
+    Route::post('/balance', [CurrencyExchangeController::class, 'getAccountBalance']);
+    Route::post('/execute', [CurrencyExchangeController::class, 'executeExchange']);
+    Route::post('/cancel', [CurrencyExchangeController::class, 'cancelExchange']);
+
+    // Historique et rapports
+    Route::get('/transactions', [CurrencyExchangeController::class, 'getTransactions']);
+    Route::get('/daily-report', [CurrencyExchangeController::class, 'getDailyReport']);
+});
+
+// Vue Blade pour le module
+Route::view('/eco/change-devises', 'eco.pages.currency-exchange')->name('eco.pages.currency-exchange');
+
+
+Route::get('/eco/exchange/marges', [CurrencyExchangeController::class, 'getMarges']);
+Route::post('/eco/exchange/marges', [CurrencyExchangeController::class, 'updateMarge']);
+  
+
 
 });
 

@@ -56,6 +56,7 @@ import RapportImmobilisations from "./Page/RapportImmobilisations";
 import BatchPaiement from "./Page/BatchPaiement";
 import GestionBatchs from "./Page/GestionBatchs";
 import CreditsRadies from "./Page/CreditsRadies";
+import CurrencyExchange from "./Page/CurrencyExchange";
 
 if (document.getElementById("app")) {
     ReactDOM.createRoot(document.getElementById("app")).render(
@@ -350,6 +351,15 @@ if (document.getElementById("radiationCredit")) {
     ReactDOM.createRoot(document.getElementById("radiationCredit")).render(
         <BrowserRouter>
             <CreditsRadies />
+        </BrowserRouter>
+    );
+}
+
+
+if (document.getElementById("currencyExchange")) {
+    ReactDOM.createRoot(document.getElementById("currencyExchange")).render(
+        <BrowserRouter>
+            <CurrencyExchange />
         </BrowserRouter>
     );
 }

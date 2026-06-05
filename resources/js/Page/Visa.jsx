@@ -76,6 +76,7 @@ const Visa = () => {
     // const [numDocument, setnumDocument] = useState();
     const [telephone, setTelephone] = useState();
     const [signature_file, setsignature_file] = useState();
+     const [photo_file, setphoto_file] = useState();
     const [fetchnumDocument, setFetchnumDocument] = useState();
     const [fetchMandataire, setFetchMandataire] = useState();
     const [loadingData, setloadingData] = useState(false);
@@ -96,6 +97,11 @@ const Visa = () => {
             setsignature_file(
                 res.data.membreSignature
                     ? res.data.membreSignature.signature_image_file
+                    : null,
+            );
+            setphoto_file(
+                res.data.membreSignature
+                    ? res.data.membreSignature.photo_file
                     : null,
             );
             setFetchnumDocument(res.data.numDocument);
@@ -754,7 +760,7 @@ const Visa = () => {
                         </div>
 
                         {/* Carte 3: Signature et photo */}
-                        <div className="col-md-4">
+                        {/* <div className="col-md-4">
                             <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
                                 <div className="card-header bg-white border-0 pt-3 pb-0">
                                     <h6 className="section-title">
@@ -805,7 +811,114 @@ const Visa = () => {
                                     )}
                                 </div>
                             </div>
+                        </div> */}
+                        {/* Carte 3: Signature et photo */}
+{/* Carte 3: Signature et photo avec scrollbar personnalisée */}
+<div className="col-md-4">
+    <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+        <div className="card-header bg-white border-0 pt-3 pb-0">
+            <h6 className="section-title">
+                <i className="fas fa-id-card me-2" style={{ color: "#6366f1" }}></i>
+                Photo et signature du titulaire
+            </h6>
+        </div>
+        <div className="card-body d-flex flex-column gap-3">
+            {/* Section Photo */}
+            <div>
+                <div className="d-flex align-items-center gap-2 mb-1">
+                    <i className="fas fa-camera" style={{ color: "#138496", fontSize: "12px" }}></i>
+                    <span className="fw-semibold small text-secondary" style={{ fontSize: "11px" }}>Photo du membre</span>
+                </div>
+                {photo_file ? (
+                    <div className="text-center">
+                        <div className="border rounded-3 p-2 bg-light">
+                            <div 
+                                className="scrollable-image"
+                                style={{
+                                    width: "100%",
+                                    height: "150px",
+                                    overflow: "auto",
+                                    borderRadius: "8px",
+                                }}
+                            >
+                                <img
+                                    src={`uploads/membres/photos/files/${photo_file}`}
+                                    alt="Photo du membre"
+                                    style={{
+                                        width: "100%",
+                                        minHeight: "150px",
+                                        objectFit: "contain",
+                                    }}
+                                    onError={(e) => {
+                                        e.target.src = "/images/default-avatar.png";
+                                    }}
+                                />
+                            </div>
+                            <div className="mt-2">
+                                <span className="badge bg-success rounded-pill px-2 py-1" style={{ fontSize: "10px" }}>
+                                    <i className="fas fa-check-circle me-1"></i> Photo validée
+                                </span>
+                            </div>
                         </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-2 text-muted border rounded-3 bg-light">
+                        <i className="fas fa-user-circle fa-2x mb-1 opacity-50"></i>
+                        <p className="mb-0 small fw-semibold" style={{ fontSize: "11px" }}>Aucune photo disponible</p>
+                        <small className="text-muted" style={{ fontSize: "10px" }}>Veuillez sélectionner un compte</small>
+                    </div>
+                )}
+            </div>
+
+            {/* Séparateur léger */}
+            <hr className="my-1" style={{ borderColor: "#eef2f6" }} />
+
+            {/* Section Signature */}
+            <div>
+                <div className="d-flex align-items-center gap-2 mb-1">
+                    <i className="fas fa-signature" style={{ color: "#138496", fontSize: "12px" }}></i>
+                    <span className="fw-semibold small text-secondary" style={{ fontSize: "11px" }}>Signature du membre</span>
+                </div>
+                {signature_file ? (
+                    <div className="text-center">
+                        <div className="border rounded-3 p-2 bg-light">
+                            <div 
+                                className="scrollable-signature"
+                                style={{
+                                    width: "100%",
+                                    height: "120px",
+                                    overflow: "auto",
+                                    borderRadius: "8px",
+                                }}
+                            >
+                                <iframe
+                                    src={`uploads/membres/signatures/files/${signature_file}`}
+                                    style={{
+                                        width: "100%",
+                                        height: "700px",
+                                        border: "none",
+                                    }}
+                                    title="Signature du membre"
+                                ></iframe>
+                            </div>
+                            <div className="mt-2">
+                                <span className="badge bg-success rounded-pill px-2 py-1" style={{ fontSize: "10px" }}>
+                                    <i className="fas fa-check-circle me-1"></i> Signature validée
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-2 text-muted border rounded-3 bg-light">
+                        <i className="fas fa-signature fa-2x mb-1 opacity-50"></i>
+                        <p className="mb-0 small fw-semibold" style={{ fontSize: "11px" }}>Aucune signature disponible</p>
+                        <small className="text-muted" style={{ fontSize: "10px" }}>Veuillez sélectionner un compte</small>
+                    </div>
+                )}
+            </div>
+        </div>
+    </div>
+</div>
                     </div>
                 </div>
             )}
@@ -1017,6 +1130,8 @@ const Visa = () => {
                         color: #1e293b;
                         letter-spacing: -0.2px;
                     }
+
+                    
                 `}
             </style>
         </>

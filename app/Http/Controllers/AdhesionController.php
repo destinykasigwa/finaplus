@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\AdhesionMembre;
 use App\Models\Agences;
 use App\Models\CompteurCompte;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Validator;
@@ -437,6 +438,107 @@ class AdhesionController extends Controller
             return response()->json(["status" => 0, "msg" => "Veuillez renseigner un numéro de compte"]);
         }
     }
+
+
+//PERMET DE METTRE A JOUR LA PHOTO DU CLIENT
+// public function updateMembrePhoto(Request $request)
+// {
+//     if (isset($request->compte_to_search)) {
+//         if ($request->hasFile('photo_file')) {
+//             $file = $request->file('photo_file');
+//             $extension = $file->getClientOriginalExtension();
+//             $filename = time() . '.' . $extension;
+//             $file->move('uploads/membres/photos/files', $filename);
+//             $uploaded_file = $filename;
+            
+//             $checkrow = AdhesionMembre::where('compte_abrege', $request->compte_to_search)->first();
+//             if ($checkrow) {
+//                 // Supprimer l'ancienne photo si elle existe
+//                 if ($checkrow->photo_file && file_exists('uploads/membres/photos/files/' . $checkrow->photo_file)) {
+//                     unlink('uploads/membres/photos/files/' . $checkrow->photo_file);
+//                 }
+                
+//                 AdhesionMembre::where('compte_abrege', $request->compte_to_search)->update([
+//                     "photo_file" => $uploaded_file,
+//                 ]);
+//                 return response()->json(["status" => 1, "msg" => "Photo mise à jour réussie."]);
+//             } else {
+//                 return response()->json(["status" => 0, "msg" => "Compte non trouvé."]);
+//             }
+//         } else {
+//             return response()->json(["status" => 0, "msg" => "Vous n'avez pas sélectionné de fichier."]);
+//         }
+//     } else {
+//         return response()->json(["status" => 0, "msg" => "Veuillez renseigner un numéro de compte"]);
+//     }
+// }
+
+//PERMET DE METTRE A JOUR LA PHOTO DU CLIENT (PAR FICHIER OU CAPTURE)
+public function updateMembrePhoto(Request $request)
+{
+    if (!isset($request->compte_to_search) || empty($request->compte_to_search)) {
+        return response()->json(["status" => 0, "msg" => "Veuillez renseigner un numéro de compte"]);
+    }
+    
+    if (!$request->hasFile('photo_file')) {
+        return response()->json(["status" => 0, "msg" => "Vous n'avez pas sélectionné de fichier."]);
+    }
+    
+    $file = $request->file('photo_file');
+    
+    // Vérifier le type de fichier
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+    $extension = strtolower($file->getClientOriginalExtension());
+    
+    if (!in_array($extension, $allowedExtensions)) {
+        return response()->json(["status" => 0, "msg" => "Format non supporté. Utilisez JPG, PNG ou GIF."]);
+    }
+    
+    // Vérifier la taille (max 2MB)
+    if ($file->getSize() > 2 * 1024 * 1024) {
+        return response()->json(["status" => 0, "msg" => "Le fichier est trop volumineux. Maximum 2MB."]);
+    }
+    
+    try {
+        // Générer un nom unique
+        $filename = time() . '_' . preg_replace('/[^A-Za-z0-9]/', '', $request->compte_to_search) . '.' . $extension;
+        
+        // Déplacer le fichier
+        $file->move('uploads/membres/photos/files', $filename);
+        
+        $checkrow = AdhesionMembre::where('compte_abrege', $request->compte_to_search)->first();
+        
+        if ($checkrow) {
+            // Supprimer l'ancienne photo si elle existe
+            if ($checkrow->photo_file && file_exists('uploads/membres/photos/files/' . $checkrow->photo_file)) {
+                unlink('uploads/membres/photos/files/' . $checkrow->photo_file);
+            }
+            
+            // Mettre à jour la base de données
+            AdhesionMembre::where('compte_abrege', $request->compte_to_search)->update([
+                "photo_file" => $filename,
+            ]);
+            
+            return response()->json([
+                "status" => 1, 
+                "msg" => "Photo mise à jour réussie.",
+                "file" => $filename
+            ]);
+        } else {
+            // Supprimer le fichier uploadé si le compte n'existe pas
+            if (file_exists('uploads/membres/photos/files/' . $filename)) {
+                unlink('uploads/membres/photos/files/' . $filename);
+            }
+            return response()->json(["status" => 0, "msg" => "Compte non trouvé."]);
+        }
+        
+    } catch (Exception $e) {
+        return response()->json([
+            "status" => 0, 
+            "msg" => "Erreur lors de l'upload: " . $e->getMessage()
+        ]);
+    }
+}
 
     //CREATE NEW ACCOUNT FOR CONSTOMER 
 

@@ -726,6 +726,13 @@
                                 <a class="dropdown-item" href="{{ route('eco.pages.radiation-credit') }}">
                                     <i class="fas fa-sms me-1"></i> Radiation crédits
                                 </a>
+
+                                 <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Change de monnaie</h6>
+                                
+                                 <a class="nav-link" href="{{ route('eco.pages.currency-exchange') }}">
+        <i class="fas fa-exchange-alt me-1"></i> Change de devises
+    </a>
                             </div>
                         </li>
                     </ul>

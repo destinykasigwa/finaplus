@@ -1417,11 +1417,16 @@ class ReportsController extends Controller
 
        
         else if ($request->radioValue == "par") {
-
+            
             $date = $request->date_par ?? now()->toDateString();
             $devise = $request->devise_par;
             $gestionnaire = $request->gestionnaire_par;
-
+            if(!$devise){
+               return response()->json([
+                    "status" => 0,
+                    "msg" => "Veuillez sélectionner la devise"
+                ]); 
+            }
             /**
              * ============================================
              * 1. TOTAL REMBOURSÉ PAR DOSSIER

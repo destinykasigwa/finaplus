@@ -1,5 +1,5 @@
 import styles from "../styles/RegisterForm.module.css";
-import { useState,useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
@@ -78,7 +78,20 @@ const Adhesion = () => {
     const [fetchMandataire, setFetchMandataire] = useState();
 
     const [agencesList, setAgencesList] = useState([]);
-const [loadingAgences, setLoadingAgences] = useState(true);
+    const [loadingAgences, setLoadingAgences] = useState(true);
+
+    // États pour la photo et signature
+    const [uploadMode, setUploadMode] = useState("signature"); // 'signature', 'photo_upload', 'camera'
+    const [cameraActive, setCameraActive] = useState(false);
+    const [capturedPhoto, setCapturedPhoto] = useState(null);
+    const [capturedPhotoFile, setCapturedPhotoFile] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [photo_file, setPhotoFile] = useState(null); // Récupéré depuis getSeachedData
+    // États pour la gestion de la caméra
+    const [cameraFacing, setCameraFacing] = useState("environment"); // 'user' ou 'environment'
+    const videoRef = useRef(null);
+    const canvasRef = useRef(null);
+    let stream = null;
 
     //ENREGISTRE LES DONNEES POUR LE NOUVEAU MEMBRE CREE
     const handleSubmitAdhesion = async (e) => {
@@ -111,7 +124,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
             adhesion.quartier = "";
             adhesion.type_de_gestion = "";
             adhesion.critere = "";
-            adhesion.suiteAdresse="";
+            adhesion.suiteAdresse = "";
             Swal.fire({
                 title: "Succès",
                 text: res.data.msg,
@@ -185,6 +198,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
             setcritere(res.data.data.critere);
             // setFetchDataToUpdate(res.data.data);
             setsignature_file(res.data.data.signature_image_file);
+            setPhotoFile(res.data.data.photo_file); // Ajout pour la photo
         } else if (res.data.status == 0) {
             setIsloading2(false);
             Swal.fire({
@@ -314,26 +328,28 @@ const [loadingAgences, setLoadingAgences] = useState(true);
         }
     };
 
-
     useEffect(() => {
-    const fetchAgences = async () => {
-        try {
-            const res = await axios.get('/eco/pages/user-agences');
-            if (res.data.status === 1) {
-                setAgencesList(res.data.data);
-                // Si une seule agence, on la pré‑sélectionne
-                if (res.data.data.length === 1) {
-                    setAdhesion(prev => ({ ...prev, agence_id: res.data.data[0].id }));
+        const fetchAgences = async () => {
+            try {
+                const res = await axios.get("/eco/pages/user-agences");
+                if (res.data.status === 1) {
+                    setAgencesList(res.data.data);
+                    // Si une seule agence, on la pré‑sélectionne
+                    if (res.data.data.length === 1) {
+                        setAdhesion((prev) => ({
+                            ...prev,
+                            agence_id: res.data.data[0].id,
+                        }));
+                    }
                 }
+            } catch (error) {
+                console.error("Erreur chargement agences", error);
+            } finally {
+                setLoadingAgences(false);
             }
-        } catch (error) {
-            console.error("Erreur chargement agences", error);
-        } finally {
-            setLoadingAgences(false);
-        }
-    };
-    fetchAgences();
-}, []);
+        };
+        fetchAgences();
+    }, []);
 
     const AjouterMandataire = async (e) => {
         e.preventDefault();
@@ -408,6 +424,320 @@ const [loadingAgences, setLoadingAgences] = useState(true);
             }
         });
     };
+
+    // Démarrer la caméra
+    // const startCamera = async () => {
+    //     try {
+    //         // Demander l'accès à la caméra
+    //         const mediaStream = await navigator.mediaDevices.getUserMedia({
+    //             video: {
+    //                 width: { ideal: 1280 },
+    //                 height: { ideal: 720 },
+    //             },
+    //         });
+    //         stream = mediaStream;
+    //         if (videoRef.current) {
+    //             videoRef.current.srcObject = stream;
+    //             videoRef.current.play();
+    //             setCameraActive(true);
+    //         }
+    //     } catch (err) {
+    //         console.error("Erreur d'accès à la caméra:", err);
+    //         Swal.fire({
+    //             title: "Erreur",
+    //             text: "Impossible d'accéder à la caméra. Vérifiez les permissions.",
+    //             icon: "error",
+    //             confirmButtonText: "Ok",
+    //         });
+    //     }
+    // };
+    // Démarrer la caméra avec choix de l'appareil
+    const startCamera = async () => {
+        try {
+            const mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: { exact: cameraFacing }, // Utilise la caméra sélectionnée
+                },
+            });
+            stream = mediaStream;
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                videoRef.current.play();
+                setCameraActive(true);
+            }
+        } catch (err) {
+            console.error("Erreur d'accès à la caméra:", err);
+            // Fallback: essaie sans spécifier facingMode
+            try {
+                const fallbackStream =
+                    await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                    });
+                stream = fallbackStream;
+                if (videoRef.current) {
+                    videoRef.current.srcObject = fallbackStream;
+                    videoRef.current.play();
+                    setCameraActive(true);
+                }
+            } catch (fallbackErr) {
+                Swal.fire({
+                    title: "Erreur",
+                    text: "Impossible d'accéder à la caméra. Vérifiez les permissions.",
+                    icon: "error",
+                    confirmButtonText: "Ok",
+                });
+            }
+        }
+    };
+
+    // Changer de caméra (avant/arrière)
+    const switchCamera = async () => {
+        if (!cameraActive) return;
+
+        // Arrêter la caméra actuelle
+        if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            stream = null;
+        }
+
+        // Changer de direction
+        const newFacing =
+            cameraFacing === "environment" ? "user" : "environment";
+        setCameraFacing(newFacing);
+
+        // Redémarrer avec la nouvelle caméra
+        try {
+            const mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: { exact: newFacing },
+                },
+            });
+            stream = mediaStream;
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+                videoRef.current.play();
+            }
+        } catch (err) {
+            console.error("Erreur changement caméra:", err);
+            // Fallback: essaie avec n'importe quelle caméra
+            try {
+                const fallbackStream =
+                    await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                    });
+                stream = fallbackStream;
+                if (videoRef.current) {
+                    videoRef.current.srcObject = fallbackStream;
+                    videoRef.current.play();
+                }
+            } catch (fallbackErr) {
+                Swal.fire({
+                    title: "Erreur",
+                    text: "Impossible de changer de caméra",
+                    icon: "error",
+                    confirmButtonText: "Ok",
+                });
+            }
+        }
+    };
+
+    // Arrêter la caméra
+    const stopCamera = () => {
+        if (stream) {
+            stream.getTracks().forEach((track) => {
+                track.stop();
+            });
+            stream = null;
+        }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
+        setCameraActive(false);
+    };
+
+    // Capturer la photo
+    const capturePhoto = () => {
+        if (videoRef.current && canvasRef.current) {
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+            const context = canvas.getContext("2d");
+
+            // Définir les dimensions du canvas
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Dessiner l'image de la vidéo sur le canvas
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Convertir en base64 pour l'aperçu
+            const photoDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+            setCapturedPhoto(photoDataUrl);
+
+            // Convertir en fichier pour l'upload
+            canvas.toBlob(
+                (blob) => {
+                    if (blob) {
+                        const file = new File(
+                            [blob],
+                            `photo_${Date.now()}.jpg`,
+                            { type: "image/jpeg" },
+                        );
+                        setCapturedPhotoFile(file);
+                        console.log(
+                            "Photo capturée:",
+                            file.name,
+                            file.size,
+                            "bytes",
+                        );
+                    }
+                },
+                "image/jpeg",
+                0.9,
+            );
+
+            // Arrêter la caméra après capture
+            stopCamera();
+        }
+    };
+
+    // Upload photo depuis ordinateur
+    const handlePhotoUpload = (e) => {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith("image/")) {
+            // Vérifier la taille (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                Swal.fire({
+                    title: "Erreur",
+                    text: "Le fichier est trop volumineux. Maximum 2MB.",
+                    icon: "error",
+                    confirmButtonText: "Ok",
+                });
+                return;
+            }
+
+            setCapturedPhotoFile(file);
+
+            // Créer un aperçu
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setCapturedPhoto(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            Swal.fire({
+                title: "Erreur",
+                text: "Veuillez sélectionner une image valide (JPG, PNG, GIF)",
+                icon: "error",
+                confirmButtonText: "Ok",
+            });
+        }
+    };
+
+    // Drag and drop pour upload photo
+    const handleDrop = (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith("image/")) {
+            if (file.size > 2 * 1024 * 1024) {
+                Swal.fire({
+                    title: "Erreur",
+                    text: "Le fichier est trop volumineux. Maximum 2MB.",
+                    icon: "error",
+                    confirmButtonText: "Ok",
+                });
+                return;
+            }
+
+            setCapturedPhotoFile(file);
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setCapturedPhoto(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // Sauvegarder la photo
+    const updateMembrePhoto = async () => {
+        if (!capturedPhotoFile) {
+            Swal.fire({
+                title: "Attention",
+                text: "Aucune photo sélectionnée",
+                icon: "warning",
+                confirmButtonText: "Ok",
+            });
+            return;
+        }
+
+        if (!compte_to_search) {
+            Swal.fire({
+                title: "Attention",
+                text: "Veuillez d'abord rechercher un compte",
+                icon: "warning",
+                confirmButtonText: "Ok",
+            });
+            return;
+        }
+
+        setIsUploading(true);
+
+        try {
+            const formData = new FormData();
+            formData.append("photo_file", capturedPhotoFile);
+            formData.append("compte_to_search", compte_to_search);
+
+            const url = "/eco/page/adhesion/edit-photo";
+            const response = await axios.post(url, formData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+
+            if (response.data.status == 1) {
+                Swal.fire({
+                    title: "Succès",
+                    text: response.data.msg,
+                    icon: "success",
+                    confirmButtonText: "OK!",
+                });
+                setCapturedPhoto(null);
+                setCapturedPhotoFile(null);
+                // Rafraîchir les données
+                if (compte_to_search) {
+                    const fakeEvent = { preventDefault: () => {} };
+                    await getSeachedData(fakeEvent);
+                }
+            } else {
+                Swal.fire({
+                    title: "Erreur",
+                    text: response.data.msg,
+                    icon: "error",
+                    confirmButtonText: "OK!",
+                });
+            }
+        } catch (error) {
+            console.error("Erreur upload photo:", error);
+            Swal.fire({
+                title: "Erreur",
+                text: "Une erreur est survenue lors de l'upload",
+                icon: "error",
+                confirmButtonText: "OK!",
+            });
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    // Nettoyage de la caméra au démontage
+    useEffect(() => {
+        return () => {
+            if (stream) {
+                stream.getTracks().forEach((track) => {
+                    track.stop();
+                });
+            }
+        };
+    }, []);
     return (
         <div
             className="container-fluid"
@@ -539,32 +869,89 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                                             </td>
                                                         </tr>
                                                         <tr>
-    <td style={{ padding: "6px", width: "40%" }}>
-        <label style={{ color: "steelblue", fontWeight: "500" }}>
-            Agence
-        </label>
-    </td>
-    <td style={{ padding: "6px" }}>
-        {loadingAgences ? (
-            <span className="spinner-border spinner-border-sm text-muted"></span>
-        ) : (
-            <select
-                className="modern-select"
-                style={{ borderRadius: "8px" }}
-                value={adhesion.code_agence || ""}
-                onChange={(e) => setAdhesion(prev => ({ ...prev, code_agence: e.target.value }))}
-                disabled={agencesList.length <= 1}
-            >
-                {agencesList.map(agence => (
-                    <option key={agence.id} value={agence.code_agence}>
-                        {agence.code_agence} - {agence.nom_agence}
-                    </option>
-                ))}
-            </select>
-        )}
-        {/* {error.code_agence && <small className="text-danger">{error.code_agence}</small>} */}
-    </td>
-</tr>
+                                                            <td
+                                                                style={{
+                                                                    padding:
+                                                                        "6px",
+                                                                    width: "40%",
+                                                                }}
+                                                            >
+                                                                <label
+                                                                    style={{
+                                                                        color: "steelblue",
+                                                                        fontWeight:
+                                                                            "500",
+                                                                    }}
+                                                                >
+                                                                    Agence
+                                                                </label>
+                                                            </td>
+                                                            <td
+                                                                style={{
+                                                                    padding:
+                                                                        "6px",
+                                                                }}
+                                                            >
+                                                                {loadingAgences ? (
+                                                                    <span className="spinner-border spinner-border-sm text-muted"></span>
+                                                                ) : (
+                                                                    <select
+                                                                        className="modern-select"
+                                                                        style={{
+                                                                            borderRadius:
+                                                                                "8px",
+                                                                        }}
+                                                                        value={
+                                                                            adhesion.code_agence ||
+                                                                            ""
+                                                                        }
+                                                                        onChange={(
+                                                                            e,
+                                                                        ) =>
+                                                                            setAdhesion(
+                                                                                (
+                                                                                    prev,
+                                                                                ) => ({
+                                                                                    ...prev,
+                                                                                    code_agence:
+                                                                                        e
+                                                                                            .target
+                                                                                            .value,
+                                                                                }),
+                                                                            )
+                                                                        }
+                                                                        disabled={
+                                                                            agencesList.length <=
+                                                                            1
+                                                                        }
+                                                                    >
+                                                                        {agencesList.map(
+                                                                            (
+                                                                                agence,
+                                                                            ) => (
+                                                                                <option
+                                                                                    key={
+                                                                                        agence.id
+                                                                                    }
+                                                                                    value={
+                                                                                        agence.code_agence
+                                                                                    }
+                                                                                >
+                                                                                    {
+                                                                                        agence.code_agence
+                                                                                    }{" "}
+                                                                                    -{" "}
+                                                                                    {
+                                                                                        agence.nom_agence
+                                                                                    }
+                                                                                </option>
+                                                                            ),
+                                                                        )}
+                                                                    </select>
+                                                                )}
+                                                                {/* {error.code_agence && <small className="text-danger">{error.code_agence}</small>} */}
+                                                            </td>
+                                                        </tr>
                                                         <tr>
                                                             <td
                                                                 style={{
@@ -2057,102 +2444,8 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                             </form>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="col-md-7">
-                                    <div className="card border-0 shadow-sm">
-                                        <div className="card-header bg-white border-0 pt-3">
-                                            <h6
-                                                className="fw-bold"
-                                                style={{ color: "steelblue" }}
-                                            >
-                                                <i className="fas fa-camera me-2"></i>
-                                                Photo et signature
-                                            </h6>
-                                        </div>
-                                        <div className="card-body">
-                                            {signature_file && (
-                                                <div className="mb-3">
-                                                    <label
-                                                        className="fw-bold"
-                                                        style={{
-                                                            color: "steelblue",
-                                                        }}
-                                                    >
-                                                        Signature actuelle
-                                                    </label>
-                                                    <iframe
-                                                        src={`uploads/membres/signatures/files/${signature_file}`}
-                                                        style={{
-                                                            width: "100%",
-                                                            height: "200px",
-                                                            border: "none",
-                                                            borderRadius: "8px",
-                                                        }}
-                                                        title="Signature"
-                                                    ></iframe>
-                                                </div>
-                                            )}
-                                            <div className="mb-3">
-                                                <label
-                                                    className="fw-bold"
-                                                    style={{
-                                                        color: "steelblue",
-                                                    }}
-                                                >
-                                                    Nouvelle signature
-                                                </label>
-                                                <div
-                                                    className="drop-container p-4 text-center border-2 border-dashed rounded-3"
-                                                    style={{
-                                                        border: "2px dashed #138496",
-                                                        background: "#f8f9fa",
-                                                    }}
-                                                >
-                                                    <i
-                                                        className="fas fa-cloud-upload-alt fa-2x mb-2"
-                                                        style={{
-                                                            color: "#138496",
-                                                        }}
-                                                    ></i>
-                                                    <p className="mb-2">
-                                                        Déposez votre fichier
-                                                        ici ou
-                                                    </p>
-                                                    <input
-                                                        type="file"
-                                                        className="form-control"
-                                                        accept="pdf/*,image/*"
-                                                        onChange={(e) =>
-                                                            setsignature_image_file(
-                                                                e.target
-                                                                    .files[0],
-                                                            )
-                                                        }
-                                                    />
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={updateMembreSignature}
-                                                className="btn w-100 py-2"
-                                                style={{
-                                                    background: "#138496",
-                                                    color: "white",
-                                                    borderRadius: "8px",
-                                                }}
-                                            >
-                                                <i className="fas fa-upload me-2"></i>
-                                                Mettre à jour
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Section IDENTITE, ADRESSE et AUTRES pour modification (structure similaire avec les setters correspondants) */}
-                            <div className="row g-3 mt-3">
-                                <div className="col-md-4">
-                                    <div className="card border-0 shadow-sm">
+                                    <div className="card border-0 shadow-sm ">
                                         <div className="card-header bg-white border-0 pt-3">
                                             <h6
                                                 className="fw-bold"
@@ -2164,7 +2457,7 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                         <div
                                             className="card-body"
                                             style={{
-                                                maxHeight: "500px",
+                                                maxHeight: "575px",
                                                 overflowY: "auto",
                                             }}
                                         >
@@ -2426,6 +2719,726 @@ const [loadingAgences, setLoadingAgences] = useState(true);
                                         </div>
                                     </div>
                                 </div>
+
+                                <div className="col-md-7">
+                                    <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+                                        <div
+                                            className="card-header bg-white border-0 py-3 px-4"
+                                            style={{
+                                                borderBottom:
+                                                    "1px solid #eef2f6",
+                                            }}
+                                        >
+                                            <div className="d-flex align-items-center gap-2">
+                                                <div
+                                                    className="rounded p-2"
+                                                    style={{
+                                                        background:
+                                                            "rgba(19,132,150,0.1)",
+                                                    }}
+                                                >
+                                                    <i className="fas fa-camera text-info"></i>
+                                                </div>
+                                                <h6
+                                                    className="fw-bold mb-0"
+                                                    style={{ color: "#1a2c3e" }}
+                                                >
+                                                    Photo et signature
+                                                </h6>
+                                            </div>
+                                        </div>
+                                        <div className="card-body p-4">
+                                            {/* Tabs pour alterner entre les 3 options */}
+                                            <ul
+                                                className="nav nav-pills mb-4"
+                                                style={{
+                                                    gap: "0.5rem",
+                                                    flexWrap: "wrap",
+                                                }}
+                                            >
+                                                <li className="nav-item">
+                                                    <button
+                                                        className={`btn ${uploadMode === "signature" ? "btn-modern" : "btn-modern-secondary"}`}
+                                                        onClick={() =>
+                                                            setUploadMode(
+                                                                "signature",
+                                                            )
+                                                        }
+                                                        style={{
+                                                            fontSize:
+                                                                "0.875rem",
+                                                        }}
+                                                    >
+                                                        <i className="fas fa-signature me-2"></i>
+                                                        Signature
+                                                    </button>
+                                                </li>
+                                                <li className="nav-item">
+                                                    <button
+                                                        className={`btn ${uploadMode === "photo_upload" ? "btn-modern" : "btn-modern-secondary"}`}
+                                                        onClick={() =>
+                                                            setUploadMode(
+                                                                "photo_upload",
+                                                            )
+                                                        }
+                                                        style={{
+                                                            fontSize:
+                                                                "0.875rem",
+                                                        }}
+                                                    >
+                                                        <i className="fas fa-upload me-2"></i>
+                                                        Upload photo
+                                                    </button>
+                                                </li>
+                                                <li className="nav-item">
+                                                    <button
+                                                        className={`btn ${uploadMode === "camera" ? "btn-modern" : "btn-modern-secondary"}`}
+                                                        onClick={() =>
+                                                            setUploadMode(
+                                                                "camera",
+                                                            )
+                                                        }
+                                                        style={{
+                                                            fontSize:
+                                                                "0.875rem",
+                                                        }}
+                                                    >
+                                                        <i className="fas fa-camera me-2"></i>
+                                                        Capture photo
+                                                    </button>
+                                                </li>
+                                            </ul>
+
+                                            {/* MODE 1: SIGNATURE */}
+                                            {uploadMode === "signature" && (
+                                                <>
+                                                    {signature_file && (
+                                                        <div className="mb-4">
+                                                            <label className="form-label fw-semibold small text-secondary">
+                                                                <i className="fas fa-file-signature me-1"></i>
+                                                                Signature
+                                                                actuelle
+                                                            </label>
+                                                            <div className="border rounded-3 p-2 bg-light">
+                                                                <iframe
+                                                                    src={`/uploads/membres/signatures/files/${signature_file}`}
+                                                                    style={{
+                                                                        width: "100%",
+                                                                        height: "150px",
+                                                                        border: "none",
+                                                                        borderRadius:
+                                                                            "8px",
+                                                                    }}
+                                                                    title="Signature"
+                                                                ></iframe>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="mb-4">
+                                                        <label className="form-label fw-semibold small text-secondary">
+                                                            <i className="fas fa-upload me-1"></i>
+                                                            Nouvelle signature
+                                                        </label>
+                                                        <div
+                                                            className="drop-zone p-4 text-center rounded-3"
+                                                            style={{
+                                                                border: "2px dashed #138496",
+                                                                background:
+                                                                    "#f8f9fa",
+                                                                cursor: "pointer",
+                                                                transition:
+                                                                    "all 0.3s",
+                                                            }}
+                                                            onDragOver={(e) =>
+                                                                e.preventDefault()
+                                                            }
+                                                            onDrop={(e) => {
+                                                                e.preventDefault();
+                                                                const file =
+                                                                    e
+                                                                        .dataTransfer
+                                                                        .files[0];
+                                                                if (
+                                                                    file &&
+                                                                    (file.type.startsWith(
+                                                                        "image/",
+                                                                    ) ||
+                                                                        file.type ===
+                                                                            "application/pdf")
+                                                                ) {
+                                                                    setsignature_image_file(
+                                                                        file,
+                                                                    );
+                                                                }
+                                                            }}
+                                                        >
+                                                            <i
+                                                                className="fas fa-cloud-upload-alt fa-3x mb-3"
+                                                                style={{
+                                                                    color: "#138496",
+                                                                }}
+                                                            ></i>
+                                                            <p className="mb-2 text-muted">
+                                                                Déposez votre
+                                                                fichier ici ou
+                                                            </p>
+                                                            <input
+                                                                type="file"
+                                                                className="form-control modern-input"
+                                                                accept="pdf/*,image/*"
+                                                                onChange={(e) =>
+                                                                    setsignature_image_file(
+                                                                        e.target
+                                                                            .files[0],
+                                                                    )
+                                                                }
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={
+                                                            updateMembreSignature
+                                                        }
+                                                        className="btn btn-modern w-100 py-3"
+                                                    >
+                                                        <i className="fas fa-upload me-2"></i>
+                                                        Mettre à jour la
+                                                        signature
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {/* MODE 2: UPLOAD PHOTO */}
+                                            {uploadMode === "photo_upload" && (
+                                                <>
+                                                    {photo_file && (
+                                                        <div className="mb-4">
+                                                            <label className="form-label fw-semibold small text-secondary">
+                                                                <i className="fas fa-image me-1"></i>
+                                                                Photo actuelle
+                                                            </label>
+                                                            <div className="border rounded-3 p-2 bg-light text-center">
+                                                                <img
+                                                                    src={`/uploads/membres/photos/files/${photo_file}`}
+                                                                    alt="Photo du membre"
+                                                                    style={{
+                                                                        maxWidth:
+                                                                            "100%",
+                                                                        maxHeight:
+                                                                            "150px",
+                                                                        objectFit:
+                                                                            "cover",
+                                                                        borderRadius:
+                                                                            "8px",
+                                                                    }}
+                                                                    onError={(
+                                                                        e,
+                                                                    ) => {
+                                                                        e.target.src =
+                                                                            "/images/default-avatar.png";
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="mb-4">
+                                                        <label className="form-label fw-semibold small text-secondary">
+                                                            <i className="fas fa-upload me-1"></i>
+                                                            Nouvelle photo
+                                                        </label>
+                                                        <div
+                                                            className="drop-zone p-4 text-center rounded-3"
+                                                            style={{
+                                                                border: "2px dashed #138496",
+                                                                background:
+                                                                    "#f8f9fa",
+                                                                cursor: "pointer",
+                                                                transition:
+                                                                    "all 0.3s",
+                                                            }}
+                                                            onDragOver={(e) =>
+                                                                e.preventDefault()
+                                                            }
+                                                            onDrop={handleDrop}
+                                                            onClick={() =>
+                                                                document
+                                                                    .getElementById(
+                                                                        "photoInput",
+                                                                    )
+                                                                    .click()
+                                                            }
+                                                        >
+                                                            <i
+                                                                className="fas fa-cloud-upload-alt fa-3x mb-3"
+                                                                style={{
+                                                                    color: "#138496",
+                                                                }}
+                                                            ></i>
+                                                            <p className="mb-2 text-muted">
+                                                                Déposez votre
+                                                                image ici ou
+                                                                cliquez pour
+                                                                sélectionner
+                                                            </p>
+                                                            <input
+                                                                id="photoInput"
+                                                                type="file"
+                                                                className="form-control modern-input"
+                                                                // accept="image/*"
+                                                                accept="image/jpeg, image/jpg, image/png, image/gif, image/webp, .jpeg, .jpg, .png, .gif, .webp"
+                                                                style={{
+                                                                    display:
+                                                                        "none",
+                                                                }}
+                                                                onChange={
+                                                                    handlePhotoUpload
+                                                                }
+                                                            />
+                                                            <small className="text-muted">
+                                                                Formats acceptés
+                                                                : JPG, PNG, GIF.
+                                                                Taille max : 2MB
+                                                            </small>
+                                                        </div>
+                                                    </div>
+
+                                                    {capturedPhoto && (
+                                                        <div className="mb-4">
+                                                            <label className="form-label fw-semibold small text-secondary">
+                                                                <i className="fas fa-eye me-1"></i>
+                                                                Aperçu
+                                                            </label>
+                                                            <div className="border rounded-3 p-2 bg-light text-center">
+                                                                <img
+                                                                    src={
+                                                                        capturedPhoto
+                                                                    }
+                                                                    alt="Aperçu"
+                                                                    style={{
+                                                                        maxWidth:
+                                                                            "100%",
+                                                                        maxHeight:
+                                                                            "150px",
+                                                                        objectFit:
+                                                                            "cover",
+                                                                        borderRadius:
+                                                                            "8px",
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="d-flex gap-2 mt-3">
+                                                                <button
+                                                                    className="btn btn-modern-secondary flex-grow-1"
+                                                                    onClick={() => {
+                                                                        setCapturedPhoto(
+                                                                            null,
+                                                                        );
+                                                                        setCapturedPhotoFile(
+                                                                            null,
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    <i className="fas fa-times me-2"></i>
+                                                                    Annuler
+                                                                </button>
+                                                                <button
+                                                                    className="btn btn-modern flex-grow-1"
+                                                                    onClick={
+                                                                        updateMembrePhoto
+                                                                    }
+                                                                    disabled={
+                                                                        isUploading
+                                                                    }
+                                                                >
+                                                                    {isUploading ? (
+                                                                        <>
+                                                                            <span className="spinner-border spinner-border-sm me-2"></span>
+                                                                            Enregistrement...
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <i className="fas fa-save me-2"></i>
+                                                                            Enregistrer
+                                                                        </>
+                                                                    )}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+
+                                            {/* MODE 3: CAPTURE PHOTO VIA WEBCAM */}
+                                            {/* {uploadMode === "camera" && (
+                                                <>
+                                                    {photo_file && (
+                                                        <div className="mb-4">
+                                                            <label className="form-label fw-semibold small text-secondary">
+                                                                <i className="fas fa-image me-1"></i>
+                                                                Photo actuelle
+                                                            </label>
+                                                            <div className="border rounded-3 p-2 bg-light text-center">
+                                                                <img
+                                                                    src={`/uploads/membres/photos/files/${photo_file}`}
+                                                                    alt="Photo du membre"
+                                                                    style={{
+                                                                        maxWidth:
+                                                                            "100%",
+                                                                        maxHeight:
+                                                                            "150px",
+                                                                        objectFit:
+                                                                            "cover",
+                                                                        borderRadius:
+                                                                            "8px",
+                                                                    }}
+                                                                    onError={(
+                                                                        e,
+                                                                    ) => {
+                                                                        e.target.src =
+                                                                            "/images/default-avatar.png";
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    <div className="mb-4">
+                                                        <label className="form-label fw-semibold small text-secondary">
+                                                            <i className="fas fa-video me-1"></i>
+                                                            Capture photo
+                                                        </label>
+                                                        <div
+                                                            className="position-relative rounded-3 overflow-hidden"
+                                                            style={{
+                                                                background:
+                                                                    "#000",
+                                                                aspectRatio:
+                                                                    "4/3",
+                                                            }}
+                                                        >
+                                                            <video
+                                                                ref={videoRef}
+                                                                autoPlay
+                                                                playsInline
+                                                                style={{
+                                                                    width: "100%",
+                                                                    height: "100%",
+                                                                    objectFit:
+                                                                        "cover",
+                                                                }}
+                                                            />
+                                                            <canvas
+                                                                ref={canvasRef}
+                                                                style={{
+                                                                    display:
+                                                                        "none",
+                                                                }}
+                                                            />
+                                                            {!cameraActive &&
+                                                                !capturedPhoto && (
+                                                                    <div className="position-absolute top-50 start-50 translate-middle text-center">
+                                                                        <button
+                                                                            className="btn btn-modern"
+                                                                            onClick={
+                                                                                startCamera
+                                                                            }
+                                                                        >
+                                                                            <i className="fas fa-play me-2"></i>
+                                                                            Démarrer
+                                                                            la
+                                                                            caméra
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                        </div>
+                                                    </div>
+
+                                                    {cameraActive && (
+                                                        <div className="d-flex gap-3 mb-4">
+                                                            <button
+                                                                className="btn btn-modern flex-grow-1"
+                                                                onClick={
+                                                                    capturePhoto
+                                                                }
+                                                            >
+                                                                <i className="fas fa-camera me-2"></i>
+                                                                Prendre la photo
+                                                            </button>
+                                                            <button
+                                                                className="btn btn-modern-secondary flex-grow-1"
+                                                                onClick={
+                                                                    stopCamera
+                                                                }
+                                                            >
+                                                                <i className="fas fa-stop me-2"></i>
+                                                                Arrêter
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {capturedPhoto && (
+                                                        <div className="mb-4">
+                                                            <label className="form-label fw-semibold small text-secondary">
+                                                                <i className="fas fa-eye me-1"></i>
+                                                                Aperçu
+                                                            </label>
+                                                            <div className="border rounded-3 p-2 bg-light text-center">
+                                                                <img
+                                                                    src={
+                                                                        capturedPhoto
+                                                                    }
+                                                                    alt="Aperçu"
+                                                                    style={{
+                                                                        maxWidth:
+                                                                            "100%",
+                                                                        maxHeight:
+                                                                            "150px",
+                                                                        objectFit:
+                                                                            "cover",
+                                                                        borderRadius:
+                                                                            "8px",
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="d-flex gap-2 mt-3">
+                                                                <button
+                                                                    className="btn btn-modern-secondary flex-grow-1"
+                                                                    onClick={() => {
+                                                                        setCapturedPhoto(
+                                                                            null,
+                                                                        );
+                                                                        setCapturedPhotoFile(
+                                                                            null,
+                                                                        );
+                                                                        startCamera();
+                                                                    }}
+                                                                >
+                                                                    <i className="fas fa-redo me-2"></i>
+                                                                    Reprendre
+                                                                </button>
+                                                                <button
+                                                                    className="btn btn-modern flex-grow-1"
+                                                                    onClick={
+                                                                        updateMembrePhoto
+                                                                    }
+                                                                    disabled={
+                                                                        isUploading
+                                                                    }
+                                                                >
+                                                                    {isUploading ? (
+                                                                        <>
+                                                                            <span className="spinner-border spinner-border-sm me-2"></span>
+                                                                            Enregistrement...
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <i className="fas fa-save me-2"></i>
+                                                                            Enregistrer
+                                                                        </>
+                                                                    )}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )} */}
+                                            {/* Mode Capture Photo via Webcam */}
+                                            {uploadMode === "camera" && (
+                                                <>
+                                                    {/* Photo actuelle */}
+                                                    {photo_file && (
+                                                        <div className="mb-4">
+                                                            <label className="form-label fw-semibold small text-secondary">
+                                                                <i className="fas fa-image me-1"></i>
+                                                                Photo actuelle
+                                                            </label>
+                                                            <div className="border rounded-3 p-2 bg-light text-center">
+                                                                <img
+                                                                    src={`/uploads/membres/photos/files/${photo_file}`}
+                                                                    alt="Photo du membre"
+                                                                    style={{
+                                                                        maxWidth:
+                                                                            "100%",
+                                                                        maxHeight:
+                                                                            "150px",
+                                                                        objectFit:
+                                                                            "cover",
+                                                                        borderRadius:
+                                                                            "8px",
+                                                                    }}
+                                                                    onError={(
+                                                                        e,
+                                                                    ) => {
+                                                                        e.target.src =
+                                                                            "/images/default-avatar.png";
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Webcam */}
+                                                    <div className="mb-4">
+                                                        <label className="form-label fw-semibold small text-secondary">
+                                                            <i className="fas fa-video me-1"></i>
+                                                            Capture photo
+                                                        </label>
+                                                        <div
+                                                            className="position-relative rounded-3 overflow-hidden"
+                                                            style={{
+                                                                background:
+                                                                    "#000",
+                                                                aspectRatio:
+                                                                    "4/3",
+                                                            }}
+                                                        >
+                                                            <video
+                                                                ref={videoRef}
+                                                                autoPlay
+                                                                playsInline
+                                                                style={{
+                                                                    width: "100%",
+                                                                    height: "100%",
+                                                                    objectFit:
+                                                                        "cover",
+                                                                }}
+                                                            />
+                                                            <canvas
+                                                                ref={canvasRef}
+                                                                style={{
+                                                                    display:
+                                                                        "none",
+                                                                }}
+                                                            />
+                                                            {!cameraActive &&
+                                                                !capturedPhoto && (
+                                                                    <div className="position-absolute top-50 start-50 translate-middle text-center">
+                                                                        <button
+                                                                            className="btn btn-modern"
+                                                                            onClick={
+                                                                                startCamera
+                                                                            }
+                                                                        >
+                                                                            <i className="fas fa-play me-2"></i>
+                                                                            Démarrer
+                                                                            la
+                                                                            caméra
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Contrôles photo - AJOUTEZ LE BOUTON CHANGER CAMERA ICI */}
+                                                    {cameraActive && (
+                                                        <div className="d-flex gap-3 mb-4">
+                                                            <button
+                                                                className="btn btn-modern flex-grow-1"
+                                                                onClick={
+                                                                    capturePhoto
+                                                                }
+                                                            >
+                                                                <i className="fas fa-camera me-2"></i>
+                                                                Prendre
+                                                            </button>
+                                                            <button
+                                                                className="btn btn-modern-secondary flex-grow-1"
+                                                                onClick={
+                                                                    switchCamera
+                                                                }
+                                                            >
+                                                                <i className="fas fa-sync-alt me-2"></i>
+                                                                Changer
+                                                            </button>
+                                                            <button
+                                                                className="btn btn-modern-secondary flex-grow-1"
+                                                                onClick={
+                                                                    stopCamera
+                                                                }
+                                                            >
+                                                                <i className="fas fa-stop me-2"></i>
+                                                                Arrêter
+                                                            </button>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Aperçu de la photo capturée */}
+                                                    {capturedPhoto && (
+                                                        <div className="mb-4">
+                                                            <label className="form-label fw-semibold small text-secondary">
+                                                                <i className="fas fa-eye me-1"></i>
+                                                                Aperçu
+                                                            </label>
+                                                            <div className="border rounded-3 p-2 bg-light text-center">
+                                                                <img
+                                                                    src={
+                                                                        capturedPhoto
+                                                                    }
+                                                                    alt="Aperçu"
+                                                                    style={{
+                                                                        maxWidth:
+                                                                            "100%",
+                                                                        maxHeight:
+                                                                            "150px",
+                                                                        objectFit:
+                                                                            "cover",
+                                                                        borderRadius:
+                                                                            "8px",
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="d-flex gap-2 mt-3">
+                                                                <button
+                                                                    className="btn btn-modern-secondary flex-grow-1"
+                                                                    onClick={() => {
+                                                                        setCapturedPhoto(
+                                                                            null,
+                                                                        );
+                                                                        setCapturedPhotoFile(
+                                                                            null,
+                                                                        );
+                                                                        startCamera();
+                                                                    }}
+                                                                >
+                                                                    <i className="fas fa-redo me-2"></i>
+                                                                    Reprendre
+                                                                </button>
+                                                                <button
+                                                                    className="btn btn-modern flex-grow-1"
+                                                                    onClick={
+                                                                        updateMembrePhoto
+                                                                    }
+                                                                    disabled={
+                                                                        isUploading
+                                                                    }
+                                                                >
+                                                                    {isUploading ? (
+                                                                        <>
+                                                                            <span className="spinner-border spinner-border-sm me-2"></span>
+                                                                            Enregistrement...
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <i className="fas fa-save me-2"></i>
+                                                                            Enregistrer
+                                                                        </>
+                                                                    )}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Section IDENTITE, ADRESSE et AUTRES pour modification (structure similaire avec les setters correspondants) */}
+                            <div className="row g-3 mt-3">
                                 <div className="col-md-4">
                                     <div className="card border-0 shadow-sm">
                                         <div className="card-header bg-white border-0 pt-3">
@@ -3348,6 +4361,48 @@ const [loadingAgences, setLoadingAgences] = useState(true);
     border-bottom-color: #138496;
     background: #eef9fc;
   }
+}
+
+/* Boutons modernes */
+.btn-modern {
+    background: linear-gradient(135deg, #138496 0%, #0f6e7a 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-modern:hover {
+    background: linear-gradient(135deg, #0f6e7a 0%, #0c5a64 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(19,132,150,0.3);
+    color: white;
+}
+
+.btn-modern-secondary {
+    background: #f1f5f9;
+    color: #138496;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.btn-modern-secondary:hover {
+    background: #eef9fc;
+    border-color: #138496;
+}
+
+/* Drop zone */
+.drop-zone:hover {
+    border-color: #0d6e7a !important;
+    background: #f0f9fa !important;
+}
+
+/* Nav pills */
+.nav-pills .btn {
+    border-radius: 10px;
 }
         `}
             </style>

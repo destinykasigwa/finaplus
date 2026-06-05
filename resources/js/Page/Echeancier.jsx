@@ -34,7 +34,7 @@ const Echeancier = () => {
     const [selectedDate, setSelectedDate] = useState(
         new Date().toISOString().split("T")[0],
     );
-    const [devise, setdevise] = useState();
+    const [devise, setdevise] = useState("CDF");
     const [fetchAgentCredit, setFetchAgentCredit] = useState();
     const [agent_credit_name, setagent_credit_name] = useState();
 
@@ -763,7 +763,7 @@ const safeToFixed = (value, decimals = 2) => {
                                                     setdevise(e.target.value)
                                                 }
                                             >
-                                                <option value="">Toutes</option>
+                                                {/* <option value="">Toutes</option> */}
                                                 <option value="CDF">CDF</option>
                                                 <option value="USD">USD</option>
                                             </select>
@@ -827,7 +827,7 @@ const safeToFixed = (value, decimals = 2) => {
                                                     setdevise(e.target.value)
                                                 }
                                             >
-                                                <option value="">Toutes</option>
+                                                {/* <option value="">Toutes</option> */}
                                                 <option value="CDF">CDF</option>
                                                 <option value="USD">USD</option>
                                             </select>

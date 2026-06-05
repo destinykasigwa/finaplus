@@ -40,6 +40,7 @@ class AdhesionMembre extends Model
         "type_de_gestion",
         "critere",
         "signature_image_file",
+        "photo_file",
         "suiteAdresse"
 
     ];

@@ -5514,3 +5514,890 @@ export const EnteteBordereau = () => {
         </>
     );
 };
+
+
+
+
+
+
+
+
+
+
+
+
+// ADHESION PAGE
+
+// <div className="container-fluid px-3 px-md-4 py-3 py-md-4" style={{ background: "#f5f7fb", minHeight: "100vh" }}>
+//     {/* En-tête moderne */}
+//     <div className="row mb-4">
+//         <div className="col-12">
+//             <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
+//                 <div className="d-flex align-items-center gap-3">
+//                     <div className="rounded-3 p-3" style={{ background: "linear-gradient(135deg, #138496 0%, #0d6e7a 100%)", boxShadow: "0 8px 20px rgba(19,132,150,0.2)" }}>
+//                         <i className="fas fa-user-plus fa-2x text-white"></i>
+//                     </div>
+//                     <div>
+//                         <h1 className="h3 fw-bold mb-0" style={{ color: "#1a2c3e" }}>Adhésion des membres</h1>
+//                         <p className="text-muted mb-0 small">Gestion complète des adhésions et comptes membres</p>
+//                     </div>
+//                 </div>
+//                 <div className="d-flex gap-2">
+//                     <div className="badge bg-light text-dark px-3 py-2 rounded-pill">
+//                         <i className="fas fa-chart-line me-1 text-info"></i>
+//                         <span className="small">Nouvelle adhésion</span>
+//                     </div>
+//                 </div>
+//             </div>
+//         </div>
+//     </div>
+
+//     {/* Onglets modernisés */}
+//     <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
+//         <div className="card-header bg-white p-0 border-0">
+//             <ul className="nav nav-tabs tabs-modern px-4 pt-3" id="adhesionTabs" role="tablist">
+//                 <li className="nav-item">
+//                     <a className="nav-link active" id="info-base-tab" data-toggle="pill" href="#info-base" role="tab">
+//                         <i className="fas fa-info-circle me-2"></i>
+//                         Informations de base
+//                     </a>
+//                 </li>
+//                 <li className="nav-item">
+//                     <a className="nav-link" id="photo-signature-tab" data-toggle="pill" href="#photo-signature" role="tab">
+//                         <i className="fas fa-camera me-2"></i>Photo et signature
+//                     </a>
+//                 </li>
+//                 <li className="nav-item">
+//                     <a className="nav-link" id="mandataire-tab" data-toggle="pill" href="#mandataire" role="tab">
+//                         <i className="fas fa-users me-2"></i>Informations mandataires
+//                     </a>
+//                 </li>
+//                 <li className="nav-item">
+//                     <a className="nav-link" id="creation-compte-tab" data-toggle="pill" href="#creation-compte" role="tab">
+//                         <i className="fas fa-credit-card me-2"></i>Création comptes
+//                     </a>
+//                 </li>
+//             </ul>
+//         </div>
+
+//         <div className="card-body p-4">
+//             <div className="tab-content">
+//                 {/* Onglet 1: Informations de base */}
+//                 <div className="tab-pane fade show active" id="info-base" role="tabpanel">
+//                     {/* Nouveau membre - Version moderne */}
+//                     <div className="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+//                         <div className="card-header bg-white border-0 py-3 px-4" style={{ borderBottom: "1px solid #eef2f6" }}>
+//                             <div className="d-flex align-items-center gap-2">
+//                                 <div className="rounded p-2" style={{ background: "rgba(19,132,150,0.1)" }}>
+//                                     <i className="fas fa-user-plus text-info"></i>
+//                                 </div>
+//                                 <h6 className="fw-bold mb-0" style={{ color: "#1a2c3e" }}>Nouveau membre</h6>
+//                             </div>
+//                         </div>
+//                         <div className="card-body p-4">
+//                             <div className="row g-4">
+//                                 <div className="col-md-5">
+//                                     <div className="d-flex flex-column gap-3">
+//                                         {/* Agence */}
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary mb-2">
+//                                                 <i className="fas fa-building me-1 text-info"></i>Agence
+//                                             </label>
+//                                             {loadingAgences ? (
+//                                                 <div className="d-flex justify-content-center py-2">
+//                                                     <div className="spinner-border spinner-border-sm text-info"></div>
+//                                                 </div>
+//                                             ) : (
+//                                                 <select
+//                                                     className="form-select modern-input"
+//                                                     value={adhesion.code_agence || ""}
+//                                                     onChange={(e) => setAdhesion(prev => ({ ...prev, code_agence: e.target.value }))}
+//                                                     disabled={agencesList.length <= 1}
+//                                                 >
+//                                                     {agencesList.map(agence => (
+//                                                         <option key={agence.id} value={agence.code_agence}>
+//                                                             {agence.code_agence} - {agence.nom_agence}
+//                                                         </option>
+//                                                     ))}
+//                                                 </select>
+//                                             )}
+//                                         </div>
+
+//                                         {/* Code monnaie */}
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary mb-2">
+//                                                 <i className="fas fa-coins me-1 text-info"></i>Code monnaie
+//                                             </label>
+//                                             <select className="form-select modern-input bg-light" disabled>
+//                                                 <option value="CDF">CDF - Franc Congolais</option>
+//                                                 <option value="USD">USD - Dollar US</option>
+//                                             </select>
+//                                         </div>
+
+//                                         {/* Type épargne */}
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary mb-2">
+//                                                 <i className="fas fa-piggy-bank me-1 text-info"></i>Type épargne
+//                                             </label>
+//                                             <select
+//                                                 className={`form-select modern-input ${error.type_epargne ? "is-invalid" : ""}`}
+//                                                 onChange={(e) => setAdhesion(p => ({ ...p, type_epargne: e.target.value }))}
+//                                             >
+//                                                 <option value="">Sélectionnez</option>
+//                                                 <option value="Epargne à vie">Epargne à vie</option>
+//                                             </select>
+//                                             {error.type_epargne && <small className="text-danger d-block mt-1">{error.type_epargne}</small>}
+//                                         </div>
+
+//                                         {/* Type client */}
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary mb-2">
+//                                                 <i className="fas fa-user-tag me-1 text-info"></i>Type client
+//                                             </label>
+//                                             <select
+//                                                 className={`form-select modern-input ${error.type_client ? "is-invalid" : ""}`}
+//                                                 onChange={(e) => setAdhesion(p => ({ ...p, type_client: e.target.value }))}
+//                                             >
+//                                                 <option value="">Sélectionnez</option>
+//                                                 <option value="Personne pysique">Personne physique</option>
+//                                                 <option value="Personne morale">Personne morale</option>
+//                                             </select>
+//                                             {error.type_client && <small className="text-danger d-block mt-1">{error.type_client}</small>}
+//                                         </div>
+
+//                                         {/* Nom compte */}
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary mb-2">
+//                                                 <i className="fas fa-credit-card me-1 text-info"></i>Nom compte
+//                                             </label>
+//                                             <input
+//                                                 type="text"
+//                                                 className={`form-control modern-input ${error.intitule_compte ? "is-invalid" : ""}`}
+//                                                 onChange={(e) => setAdhesion(p => ({ ...p, intitule_compte: e.target.value }))}
+//                                                 value={adhesion.intitule_compte}
+//                                                 placeholder="Ex: Compte épargne principal"
+//                                             />
+//                                             {error.intitule_compte && <small className="text-danger d-block mt-1">{error.intitule_compte}</small>}
+//                                         </div>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+//                     </div>
+
+//                     {/* Section IDENTITE, ADRESSE, AUTRES - Version moderne avec grille */}
+//                     <div className="row g-4">
+//                         {/* IDENTITÉ */}
+//                         <div className="col-md-4">
+//                             <div className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+//                                 <div className="card-header bg-white border-0 py-3 px-4" style={{ borderBottom: "1px solid #eef2f6" }}>
+//                                     <div className="d-flex align-items-center gap-2">
+//                                         <div className="rounded p-2" style={{ background: "rgba(19,132,150,0.1)" }}>
+//                                             <i className="fas fa-id-card text-info"></i>
+//                                         </div>
+//                                         <h6 className="fw-bold mb-0" style={{ color: "#1a2c3e" }}>Identité</h6>
+//                                     </div>
+//                                 </div>
+//                                 <div className="card-body p-4" style={{ maxHeight: "600px", overflowY: "auto" }}>
+//                                     <div className="d-flex flex-column gap-3">
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Lieu de naissance</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, lieu_naissance: e.target.value }))} value={adhesion.lieu_naissance} placeholder="Entrez le lieu de naissance" />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Date de naissance</label>
+//                                             <input type="date" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, date_naissance: e.target.value }))} value={adhesion.date_naissance} />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Nom du père</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, nom_pere: e.target.value }))} value={adhesion.nom_pere} placeholder="Nom complet du père" />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Nom de la mère</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, nom_mere: e.target.value }))} value={adhesion.nom_mere} placeholder="Nom complet de la mère" />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Profession</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, profession: e.target.value }))} value={adhesion.profession} placeholder="Profession actuelle" />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Lieu de travail</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, lieu_travail: e.target.value }))} value={adhesion.lieu_travail} placeholder="Adresse du travail" />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Email</label>
+//                                             <input type="email" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, email: e.target.value }))} value={adhesion.email} placeholder="exemple@email.com" />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Téléphone</label>
+//                                             <input type="tel" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, telephone: e.target.value }))} value={adhesion.telephone} placeholder="+243 XXX XXX XXX" />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Numéro pièce</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, num_piece: e.target.value }))} value={adhesion.num_piece} placeholder="Numéro de la pièce d'identité" />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Délivrée à</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, lieu_devivraison_piece: e.target.value }))} value={adhesion.lieu_devivraison_piece} placeholder="Lieu de délivrance" />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">État civil</label>
+//                                             <select className="form-select modern-input" onChange={(e) => setAdhesion(p => ({ ...p, etat_civile: e.target.value }))} value={adhesion.etat_civile}>
+//                                                 <option value="">Sélectionnez</option>
+//                                                 <option value="Marié(e)">Marié(e)</option>
+//                                                 <option value="Célibateur">Célibataire</option>
+//                                                 <option value="Veuf(ve)">Veuf(ve)</option>
+//                                             </select>
+//                                         </div>
+//                                         {adhesion.etat_civile === "Marié(e)" && (
+//                                             <div className="info-item">
+//                                                 <label className="form-label fw-semibold small text-secondary">Nom du conjoint(e)</label>
+//                                                 <input type="text" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, nom_condjoint: e.target.value }))} value={adhesion.nom_condjoint} placeholder="Nom du/de la conjoint(e)" />
+//                                             </div>
+//                                         )}
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Civilité</label>
+//                                             <select className="form-select modern-input" onChange={(e) => setAdhesion(p => ({ ...p, civilite: e.target.value }))}>
+//                                                 <option value="">Sélectionnez</option>
+//                                                 <option value="Monsieur">Monsieur</option>
+//                                                 <option value="Madame">Madame</option>
+//                                                 <option value="Mademoiselle">Mademoiselle</option>
+//                                             </select>
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Sexe</label>
+//                                             <select className="form-select modern-input" onChange={(e) => setAdhesion(p => ({ ...p, sexe: e.target.value }))}>
+//                                                 <option value="">Sélectionnez</option>
+//                                                 <option value="Homme">Homme</option>
+//                                                 <option value="Femme">Femme</option>
+//                                             </select>
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Type pièce</label>
+//                                             <select className="form-select modern-input" onChange={(e) => setAdhesion(p => ({ ...p, type_piece: e.target.value }))}>
+//                                                 <option value="">Sélectionnez</option>
+//                                                 <option value="Carte d'électeur">Carte d'électeur</option>
+//                                                 <option value="pass port">Passeport</option>
+//                                             </select>
+//                                         </div>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+
+//                         {/* ADRESSE */}
+//                         <div className="col-md-4">
+//                             <div className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+//                                 <div className="card-header bg-white border-0 py-3 px-4" style={{ borderBottom: "1px solid #eef2f6" }}>
+//                                     <div className="d-flex align-items-center gap-2">
+//                                         <div className="rounded p-2" style={{ background: "rgba(19,132,150,0.1)" }}>
+//                                             <i className="fas fa-map-marker-alt text-info"></i>
+//                                         </div>
+//                                         <h6 className="fw-bold mb-0" style={{ color: "#1a2c3e" }}>Adresse</h6>
+//                                     </div>
+//                                 </div>
+//                                 <div className="card-body p-4">
+//                                     <div className="d-flex flex-column gap-3">
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Province</label>
+//                                             <select className="form-select modern-input" onChange={(e) => setAdhesion(p => ({ ...p, province: e.target.value }))}>
+//                                                 <option value="">Sélectionnez</option>
+//                                                 {["Kinshasa", "Haut-katanga", "Nord-Kivu", "Sud-Kivu", "Lualaba", "Equateur", "Kasai", "Kasai-Central", "Maniema", "Ituri", "Kasai-Oiental", "Congo-Central", "Kwango", "Kwilu", "Lomami", "Mai-Ndombe", "Mongala", "Nord-Ubangi", "Sud-Ubangi", "Tanganyika", "Tshopo", "Tshapa"].map(prov => <option key={prov} value={prov}>{prov}</option>)}
+//                                             </select>
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Territoire / Ville</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, territoire_ou_ville: e.target.value }))} placeholder="Territoire ou ville" />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Secteur / Commune</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, commune: e.target.value }))} placeholder="Secteur ou commune" />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Quartier</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setAdhesion(p => ({ ...p, quartier: e.target.value }))} placeholder="Quartier / Avenue" />
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Adresse complète</label>
+//                                             <textarea className="form-control modern-input" rows="3" onChange={(e) => setAdhesion(p => ({ ...p, suiteAdresse: e.target.value }))} placeholder="Informations complémentaires d'adresse"></textarea>
+//                                         </div>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+
+//                         {/* AUTRES INFORMATIONS */}
+//                         <div className="col-md-4">
+//                             <div className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+//                                 <div className="card-header bg-white border-0 py-3 px-4" style={{ borderBottom: "1px solid #eef2f6" }}>
+//                                     <div className="d-flex align-items-center gap-2">
+//                                         <div className="rounded p-2" style={{ background: "rgba(19,132,150,0.1)" }}>
+//                                             <i className="fas fa-chart-line text-info"></i>
+//                                         </div>
+//                                         <h6 className="fw-bold mb-0" style={{ color: "#1a2c3e" }}>Autres informations</h6>
+//                                     </div>
+//                                 </div>
+//                                 <div className="card-body p-4">
+//                                     <div className="d-flex flex-column gap-3">
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Type de gestion</label>
+//                                             <select className="form-select modern-input" onChange={(e) => setAdhesion(p => ({ ...p, type_de_gestion: e.target.value }))}>
+//                                                 <option value="">Sélectionnez</option>
+//                                                 <option value="Individuel">Individuel</option>
+//                                                 <option value="Collectif">Collectif</option>
+//                                             </select>
+//                                         </div>
+//                                         <div className="info-item">
+//                                             <label className="form-label fw-semibold small text-secondary">Critère</label>
+//                                             <select className={`form-select modern-input ${error.critere ? "is-invalid" : ""}`} onChange={(e) => setAdhesion(p => ({ ...p, critere: e.target.value }))}>
+//                                                 <option value="">Sélectionnez</option>
+//                                                 <option value="A">A</option>
+//                                                 <option value="B">B</option>
+//                                                 <option value="C">C</option>
+//                                                 <option value="D">D</option>
+//                                                 <option value="Autre">Autre</option>
+//                                             </select>
+//                                             {error.critere && <small className="text-danger d-block mt-1">{error.critere}</small>}
+//                                         </div>
+//                                         <div className="mt-4 pt-3">
+//                                             <button onClick={handleSubmitAdhesion} className="btn btn-modern w-100 py-3">
+//                                                 <i className={`${isLoading1 ? "spinner-border spinner-border-sm me-2" : "fas fa-save me-2"}`}></i>
+//                                                 Enregistrer l'adhésion
+//                                             </button>
+//                                         </div>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+//                     </div>
+//                 </div>
+
+//                 {/* Onglet 2: Photo et signature */}
+//                 <div className="tab-pane fade" id="photo-signature" role="tabpanel">
+//                     {/* Le contenu reste inchangé mais avec les nouvelles classes CSS modernes */}
+//                     <div className="row g-4">
+//                         <div className="col-md-5">
+//                             <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+//                                 <div className="card-header bg-white border-0 py-3 px-4" style={{ borderBottom: "1px solid #eef2f6" }}>
+//                                     <div className="d-flex align-items-center gap-2">
+//                                         <div className="rounded p-2" style={{ background: "rgba(19,132,150,0.1)" }}>
+//                                             <i className="fas fa-edit text-info"></i>
+//                                         </div>
+//                                         <h6 className="fw-bold mb-0" style={{ color: "#1a2c3e" }}>Modification compte</h6>
+//                                     </div>
+//                                 </div>
+//                                 <div className="card-body p-4">
+//                                     <div className="d-flex flex-column gap-3">
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary">Compte abrégé</label>
+//                                             <div className="d-flex gap-2">
+//                                                 <input type="text" className="form-control modern-input" style={{ flex: 1 }} onChange={(e) => setcompte_to_search(e.target.value)} placeholder="Code abrégé" />
+//                                                 <button className="btn btn-modern-secondary px-4" onClick={getSeachedData}>
+//                                                     <i className="fas fa-search"></i>
+//                                                 </button>
+//                                             </div>
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary">Code monnaie</label>
+//                                             <select className="form-select modern-input bg-light" value={code_monnaie} disabled>
+//                                                 <option value="CDF">CDF</option>
+//                                                 <option value="USD">USD</option>
+//                                             </select>
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary">Type épargne</label>
+//                                             <select className="form-select modern-input" onChange={(e) => settype_epargne(e.target.value)} value={type_epargne}>
+//                                                 <option value={type_epargne}>{type_epargne}</option>
+//                                                 <option value="Epargne à vie">Epargne à vie</option>
+//                                             </select>
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary">Type client</label>
+//                                             <select className="form-select modern-input" onChange={(e) => settype_client(e.target.value)} value={type_client}>
+//                                                 <option value={type_client}>{type_client}</option>
+//                                                 <option value="Personne pysique">Personne physique</option>
+//                                                 <option value="Personne morale">Personne morale</option>
+//                                             </select>
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary">Intitulé de compte</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setintitule_compte(e.target.value)} value={intitule_compte} />
+//                                         </div>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+
+//                         <div className="col-md-7">
+//                             <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+//                                 <div className="card-header bg-white border-0 py-3 px-4" style={{ borderBottom: "1px solid #eef2f6" }}>
+//                                     <div className="d-flex align-items-center gap-2">
+//                                         <div className="rounded p-2" style={{ background: "rgba(19,132,150,0.1)" }}>
+//                                             <i className="fas fa-camera text-info"></i>
+//                                         </div>
+//                                         <h6 className="fw-bold mb-0" style={{ color: "#1a2c3e" }}>Photo et signature</h6>
+//                                     </div>
+//                                 </div>
+//                                 <div className="card-body p-4">
+//                                     {signature_file && (
+//                                         <div className="mb-4">
+//                                             <label className="form-label fw-semibold small text-secondary">Signature actuelle</label>
+//                                             <div className="border rounded-3 p-2 bg-light">
+//                                                 <iframe src={`uploads/membres/signatures/files/${signature_file}`} style={{ width: "100%", height: "200px", border: "none", borderRadius: "8px" }} title="Signature"></iframe>
+//                                             </div>
+//                                         </div>
+//                                     )}
+//                                     <div>
+//                                         <label className="form-label fw-semibold small text-secondary">Nouvelle signature</label>
+//                                         <div className="drop-zone p-5 text-center rounded-3" style={{ border: "2px dashed #138496", background: "#f8f9fa", cursor: "pointer", transition: "all 0.3s" }}>
+//                                             <i className="fas fa-cloud-upload-alt fa-3x mb-3" style={{ color: "#138496" }}></i>
+//                                             <p className="mb-2 text-muted">Déposez votre fichier ici ou</p>
+//                                             <input type="file" className="form-control modern-input" accept="pdf/*,image/*" onChange={(e) => setsignature_image_file(e.target.files[0])} />
+//                                         </div>
+//                                     </div>
+//                                     <button onClick={updateMembreSignature} className="btn btn-modern w-100 mt-4 py-3">
+//                                         <i className="fas fa-upload me-2"></i>Mettre à jour
+//                                     </button>
+//                                 </div>
+//                             </div>
+//                         </div>
+//                     </div>
+
+//                     {/* Section IDENTITE, ADRESSE et AUTRES pour modification - avec design moderne */}
+//                     <div className="row g-4 mt-4">
+//                         {/* IDENTITÉ - Modification */}
+//                         <div className="col-md-4">
+//                             <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+//                                 <div className="card-header bg-white border-0 py-3 px-4" style={{ borderBottom: "1px solid #eef2f6" }}>
+//                                     <h6 className="fw-bold mb-0" style={{ color: "#1a2c3e" }}><i className="fas fa-id-card me-2 text-info"></i>Identité</h6>
+//                                 </div>
+//                                 <div className="card-body p-4" style={{ maxHeight: "500px", overflowY: "auto" }}>
+//                                     <div className="d-flex flex-column gap-3">
+//                                         {[
+//                                             { label: "Lieu de naissance", field: lieu_naissance, setter: setlieu_naissance },
+//                                             { label: "Date de naissance", field: date_naissance, setter: setdate_naissance, type: "date" },
+//                                             { label: "Nom du père", field: nom_pere, setter: setnom_pere },
+//                                             { label: "Nom de la mère", field: nom_mere, setter: setnom_mere },
+//                                             { label: "Profession", field: profession, setter: setprofession },
+//                                             { label: "Lieu de travail", field: lieu_travail, setter: setlieu_travail },
+//                                             { label: "Email", field: email, setter: setemail, type: "email" },
+//                                             { label: "Téléphone", field: telephone, setter: settelephone, type: "tel" },
+//                                             { label: "Num pièce", field: num_piece, setter: setnum_piece },
+//                                             { label: "Délivrée à", field: lieu_devivraison_piece, setter: setlieu_devivraison_piece },
+//                                         ].map((item, idx) => (
+//                                             <div key={idx}>
+//                                                 <label className="form-label small fw-semibold text-secondary">{item.label}</label>
+//                                                 <input type={item.type || "text"} className="form-control modern-input" value={item.field} onChange={(e) => item.setter(e.target.value)} />
+//                                             </div>
+//                                         ))}
+//                                         <div>
+//                                             <label className="form-label small fw-semibold text-secondary">État civil</label>
+//                                             <select className="form-select modern-input" onChange={(e) => setetat_civile(e.target.value)} value={etat_civile}>
+//                                                 <option value="">Sélectionnez</option>
+//                                                 <option value="Marié(e)">Marié(e)</option>
+//                                                 <option value="Célibateur">Célibataire</option>
+//                                                 <option value="Veuf(ve)">Veuf(ve)</option>
+//                                             </select>
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label small fw-semibold text-secondary">Civilité</label>
+//                                             <select className="form-select modern-input" onChange={(e) => setcivilite(e.target.value)} value={civilite}>
+//                                                 <option value="">Sélectionnez</option>
+//                                                 <option value="Monsieur">Monsieur</option>
+//                                                 <option value="Madame">Madame</option>
+//                                                 <option value="Mademoiselle">Mademoiselle</option>
+//                                             </select>
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label small fw-semibold text-secondary">Sexe</label>
+//                                             <select className="form-select modern-input" onChange={(e) => setsexe(e.target.value)} value={sexe}>
+//                                                 <option value="">Sélectionnez</option>
+//                                                 <option value="Homme">Homme</option>
+//                                                 <option value="Femme">Femme</option>
+//                                             </select>
+//                                         </div>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+
+//                         {/* ADRESSE - Modification */}
+//                         <div className="col-md-4">
+//                             <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+//                                 <div className="card-header bg-white border-0 py-3 px-4" style={{ borderBottom: "1px solid #eef2f6" }}>
+//                                     <h6 className="fw-bold mb-0" style={{ color: "#1a2c3e" }}><i className="fas fa-map-marker-alt me-2 text-info"></i>Adresse</h6>
+//                                 </div>
+//                                 <div className="card-body p-4">
+//                                     <div className="d-flex flex-column gap-3">
+//                                         <div>
+//                                             <label className="form-label small fw-semibold text-secondary">Province</label>
+//                                             <select className="form-select modern-input" onChange={(e) => setprovince(e.target.value)} value={province}>
+//                                                 <option value={province}>{province}</option>
+//                                                 {["Kinshasa", "Haut-katanga", "Nord-Kivu", "Sud-Kivu", "Lualaba", "Equateur", "Kasai", "Kasai-Central", "Maniema", "Ituri", "Kasai-Oiental", "Congo-Central", "Kwango", "Kwilu", "Lomami", "Mai-Ndombe", "Mongala", "Nord-Ubangi", "Sud-Ubangi", "Tanganyika", "Tshopo", "Tshapa"].map(p => <option key={p} value={p}>{p}</option>)}
+//                                             </select>
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label small fw-semibold text-secondary">Territoire / Ville</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setterritoire_ou_ville(e.target.value)} value={territoire_ou_ville} />
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label small fw-semibold text-secondary">Secteur / Commune</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setcommune(e.target.value)} value={commune} />
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label small fw-semibold text-secondary">Quartier</label>
+//                                             <input type="text" className="form-control modern-input" onChange={(e) => setquartier(e.target.value)} value={quartier} />
+//                                         </div>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+
+//                         {/* AUTRES INFORMATIONS - Modification */}
+//                         <div className="col-md-4">
+//                             <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+//                                 <div className="card-header bg-white border-0 py-3 px-4" style={{ borderBottom: "1px solid #eef2f6" }}>
+//                                     <h6 className="fw-bold mb-0" style={{ color: "#1a2c3e" }}><i className="fas fa-chart-line me-2 text-info"></i>Autres informations</h6>
+//                                 </div>
+//                                 <div className="card-body p-4">
+//                                     <div className="d-flex flex-column gap-3">
+//                                         <div>
+//                                             <label className="form-label small fw-semibold text-secondary">Type de gestion</label>
+//                                             <select className="form-select modern-input" onChange={(e) => settype_de_gestion(e.target.value)} value={type_de_gestion}>
+//                                                 <option value={type_de_gestion}>{type_de_gestion}</option>
+//                                                 <option value="Individuel">Individuel</option>
+//                                                 <option value="Collectif">Collectif</option>
+//                                             </select>
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label small fw-semibold text-secondary">Critère</label>
+//                                             <select className="form-select modern-input" onChange={(e) => setcritere(e.target.value)} value={critere}>
+//                                                 <option value={critere}>{critere}</option>
+//                                                 <option value="A">A</option>
+//                                                 <option value="B">B</option>
+//                                                 <option value="C">C</option>
+//                                                 <option value="D">D</option>
+//                                                 <option value="Autre">Autre</option>
+//                                             </select>
+//                                         </div>
+//                                         <div className="mt-3">
+//                                             <button onClick={handleSubmitAdhesionUpdate} className="btn btn-modern w-100 py-3">
+//                                                 <i className={`${isLoading2 ? "spinner-border spinner-border-sm me-2" : "fas fa-save me-2"}`}></i>
+//                                                 Enregistrer les modifications
+//                                             </button>
+//                                         </div>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+//                     </div>
+//                 </div>
+
+//                 {/* Onglet 3: Mandataires */}
+//                 <div className="tab-pane fade" id="mandataire" role="tabpanel">
+//                     <div className="row g-4">
+//                         <div className="col-md-6">
+//                             <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+//                                 <div className="card-header bg-white border-0 py-3 px-4" style={{ borderBottom: "1px solid #eef2f6" }}>
+//                                     <div className="d-flex align-items-center gap-2">
+//                                         <div className="rounded p-2" style={{ background: "rgba(19,132,150,0.1)" }}>
+//                                             <i className="fas fa-user-plus text-info"></i>
+//                                         </div>
+//                                         <h6 className="fw-bold mb-0" style={{ color: "#1a2c3e" }}>Nouveau mandataire</h6>
+//                                     </div>
+//                                 </div>
+//                                 <div className="card-body p-4">
+//                                     <div className="d-flex flex-column gap-3">
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary">Compte abrégé</label>
+//                                             <div className="d-flex gap-2">
+//                                                 <input type="text" className="form-control modern-input" style={{ flex: 1 }} onChange={(e) => setcompte_to_search(e.target.value)} placeholder="Code abrégé" />
+//                                                 <button className="btn btn-modern-secondary px-4" onClick={getSeachedData}>
+//                                                     <i className="fas fa-search"></i>
+//                                                 </button>
+//                                             </div>
+//                                             {intitule_compte && (
+//                                                 <div className="mt-2 p-2 rounded" style={{ background: "#e8f5e9", borderLeft: "3px solid #138496" }}>
+//                                                     <i className="fas fa-check-circle text-success me-2"></i>
+//                                                     <small className="text-secondary">{intitule_compte}</small>
+//                                                 </div>
+//                                             )}
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary">Nom mandataire</label>
+//                                             <input type="text" className="form-control modern-input" value={mandataireName} onChange={(e) => setmandataireName(e.target.value)} placeholder="Nom complet du mandataire" />
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary">Téléphone</label>
+//                                             <input type="tel" className="form-control modern-input" value={mandatairePhone} onChange={(e) => setmandatairePhone(e.target.value)} placeholder="+243 XXX XXX XXX" />
+//                                         </div>
+//                                         <button onClick={AjouterMandataire} className="btn btn-modern w-100 py-3 mt-2">
+//                                             <i className="fas fa-plus-circle me-2"></i>Ajouter mandataire
+//                                         </button>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+
+//                         {fetchMandataire && fetchMandataire.length > 0 && (
+//                             <div className="col-md-6">
+//                                 <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+//                                     <div className="card-header bg-white border-0 py-3 px-4" style={{ borderBottom: "1px solid #eef2f6" }}>
+//                                         <div className="d-flex align-items-center gap-2">
+//                                             <div className="rounded p-2" style={{ background: "rgba(19,132,150,0.1)" }}>
+//                                                 <i className="fas fa-list text-info"></i>
+//                                             </div>
+//                                             <h6 className="fw-bold mb-0" style={{ color: "#1a2c3e" }}>Liste des mandataires ({fetchMandataire.length})</h6>
+//                                         </div>
+//                                     </div>
+//                                     <div className="card-body p-0">
+//                                         <div className="table-responsive">
+//                                             <table className="table table-modern mb-0">
+//                                                 <thead>
+//                                                     <tr>
+//                                                         <th>Nom mandataire</th>
+//                                                         <th>Téléphone</th>
+//                                                         <th style={{ width: "100px" }}>Action</th>
+//                                                     </tr>
+//                                                 </thead>
+//                                                 <tbody>
+//                                                     {fetchMandataire.map((res, index) => (
+//                                                         <tr key={index}>
+//                                                             <td className="fw-semibold">{res.mendataireName}</td>
+//                                                             <td>{res.telephoneM}</td>
+//                                                             <td>
+//                                                                 <button onClick={() => DeleteMandataire(res.id)} className="btn btn-sm btn-danger-modern">
+//                                                                     <i className="fas fa-trash-alt"></i>
+//                                                                 </button>
+//                                                             </td>
+//                                                         </tr>
+//                                                     ))}
+//                                                 </tbody>
+//                                             </table>
+//                                         </div>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         )}
+//                     </div>
+//                 </div>
+
+//                 {/* Onglet 4: Création comptes */}
+//                 <div className="tab-pane fade" id="creation-compte" role="tabpanel">
+//                     <div className="row">
+//                         <div className="col-md-6">
+//                             <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+//                                 <div className="card-header bg-white border-0 py-3 px-4" style={{ borderBottom: "1px solid #eef2f6" }}>
+//                                     <div className="d-flex align-items-center gap-2">
+//                                         <div className="rounded p-2" style={{ background: "rgba(19,132,150,0.1)" }}>
+//                                             <i className="fas fa-credit-card text-info"></i>
+//                                         </div>
+//                                         <h6 className="fw-bold mb-0" style={{ color: "#1a2c3e" }}>Création compte</h6>
+//                                     </div>
+//                                 </div>
+//                                 <div className="card-body p-4">
+//                                     <div className="d-flex flex-column gap-3">
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary">Compte abrégé</label>
+//                                             <div className="d-flex gap-2">
+//                                                 <input type="text" className="form-control modern-input" style={{ flex: 1 }} onChange={(e) => setcompte_to_search(e.target.value)} placeholder="Code abrégé" />
+//                                                 <button className="btn btn-modern-secondary px-4" onClick={getSeachedData}>
+//                                                     <i className="fas fa-search"></i>
+//                                                 </button>
+//                                             </div>
+//                                             {intitule_compte && (
+//                                                 <div className="mt-2 p-2 rounded" style={{ background: "#e8f5e9", borderLeft: "3px solid #138496" }}>
+//                                                     <i className="fas fa-check-circle text-success me-2"></i>
+//                                                     <small className="text-secondary">{intitule_compte}</small>
+//                                                 </div>
+//                                             )}
+//                                         </div>
+//                                         <div>
+//                                             <label className="form-label fw-semibold small text-secondary">Compte à créer</label>
+//                                             <select className="form-select modern-input" name="devise_compte" id="devise_compte" onChange={(e) => setdevise_compte(e.target.value)}>
+//                                                 <option value="CDF">Compte en CDF</option>
+//                                                 <option value="USD">Compte en USD</option>
+//                                             </select>
+//                                         </div>
+//                                         <button onClick={createAccount} className="btn btn-modern w-100 py-3 mt-2">
+//                                             <i className="fas fa-plus-circle me-2"></i>Créer le compte
+//                                         </button>
+//                                     </div>
+//                                 </div>
+//                             </div>
+//                         </div>
+//                     </div>
+//                 </div>
+//             </div>
+//         </div>
+//     </div>
+
+//     {/* STYLES MODERNES */}
+//     <style>
+//         {`
+//         /* Onglets modernes */
+//         .tabs-modern {
+//             display: flex;
+//             gap: 0.5rem;
+//             background: transparent;
+//             border-bottom: none;
+//             flex-wrap: wrap;
+//         }
+
+//         .tabs-modern .nav-link {
+//             display: flex;
+//             align-items: center;
+//             gap: 0.5rem;
+//             padding: 0.625rem 1.25rem;
+//             font-weight: 600;
+//             font-size: 0.875rem;
+//             color: #5f7d9c;
+//             background: transparent;
+//             border: none;
+//             border-radius: 12px;
+//             transition: all 0.2s ease;
+//             cursor: pointer;
+//         }
+
+//         .tabs-modern .nav-link i {
+//             font-size: 0.875rem;
+//         }
+
+//         .tabs-modern .nav-link:hover {
+//             color: #138496;
+//             background: #eef9fc;
+//         }
+
+//         .tabs-modern .nav-link.active {
+//             color: #138496;
+//             background: #eef9fc;
+//             box-shadow: 0 2px 8px rgba(19,132,150,0.1);
+//         }
+
+//         /* Inputs modernes */
+//         .modern-input {
+//             border: 1px solid #e2e8f0;
+//             border-radius: 12px;
+//             padding: 0.625rem 1rem;
+//             font-size: 0.875rem;
+//             transition: all 0.2s ease;
+//         }
+
+//         .modern-input:focus {
+//             border-color: #138496;
+//             box-shadow: 0 0 0 3px rgba(19,132,150,0.1);
+//             outline: none;
+//         }
+
+//         /* Bouton moderne principal */
+//         .btn-modern {
+//             background: linear-gradient(135deg, #138496 0%, #0f6e7a 100%);
+//             color: white;
+//             border: none;
+//             border-radius: 12px;
+//             padding: 0.75rem 1.5rem;
+//             font-weight: 600;
+//             transition: all 0.2s ease;
+//         }
+
+//         .btn-modern:hover {
+//             background: linear-gradient(135deg, #0f6e7a 0%, #0c5a64 100%);
+//             transform: translateY(-1px);
+//             box-shadow: 0 4px 12px rgba(19,132,150,0.3);
+//             color: white;
+//         }
+
+//         /* Bouton secondaire moderne */
+//         .btn-modern-secondary {
+//             background: #f1f5f9;
+//             color: #138496;
+//             border: 1px solid #e2e8f0;
+//             border-radius: 12px;
+//             transition: all 0.2s ease;
+//         }
+
+//         .btn-modern-secondary:hover {
+//             background: #eef9fc;
+//             border-color: #138496;
+//         }
+
+//         /* Bouton danger moderne */
+//         .btn-danger-modern {
+//             background: #fee2e2;
+//             color: #dc2626;
+//             border: none;
+//             border-radius: 8px;
+//             padding: 0.375rem 0.75rem;
+//             font-size: 0.75rem;
+//             transition: all 0.2s ease;
+//         }
+
+//         .btn-danger-modern:hover {
+//             background: #fecaca;
+//             transform: scale(1.05);
+//         }
+
+//         /* Table moderne */
+//         .table-modern {
+//             width: 100%;
+//         }
+
+//         .table-modern thead th {
+//             background: #f8fafc;
+//             color: #1e293b;
+//             font-weight: 600;
+//             font-size: 0.75rem;
+//             text-transform: uppercase;
+//             letter-spacing: 0.5px;
+//             padding: 1rem;
+//             border-bottom: 1px solid #e2e8f0;
+//         }
+
+//         .table-modern tbody td {
+//             padding: 1rem;
+//             font-size: 0.875rem;
+//             border-bottom: 1px solid #f1f5f9;
+//         }
+
+//         .table-modern tbody tr:hover {
+//             background: #f8fafc;
+//         }
+
+//         /* Drop zone */
+//         .drop-zone:hover {
+//             border-color: #0d6e7a !important;
+//             background: #f0f9fa !important;
+//         }
+
+//         /* Scrollbar personnalisée */
+//         ::-webkit-scrollbar {
+//             width: 6px;
+//         }
+
+//         ::-webkit-scrollbar-track {
+//             background: #f1f5f9;
+//             border-radius: 10px;
+//         }
+
+//         ::-webkit-scrollbar-thumb {
+//             background: #cbd5e1;
+//             border-radius: 10px;
+//         }
+
+//         ::-webkit-scrollbar-thumb:hover {
+//             background: #94a3b8;
+//         }
+
+//         /* Responsive */
+//         @media (max-width: 768px) {
+//             .tabs-modern {
+//                 flex-direction: column;
+//             }
+            
+//             .tabs-modern .nav-link {
+//                 justify-content: center;
+//             }
+//         }
+//         `}
+//     </style>
+// </div>

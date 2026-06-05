@@ -227,131 +227,68 @@ class ComptesParamController extends Controller
     }
 
     //PERMET D'AJOUTER UN NOUVEAU COMPTE DE COMPTABILITE
-    // public function saveNewAccount(Request $request)
-    // {
-    //     // $validator = Validator::make($request->all(), [
-    //     //     'RefTypeCompte' => 'required|digits:4',
-    //     // ]);
+   public function saveNewAccount(Request $request)
+{
+    try {
+        DB::beginTransaction();
 
-    //     // if ($validator->fails()) {
-    //     //     return response()->json(['status' => 0, 'msg' => 'La RefTypeCompte doit être de 4 chiffres.']);
-    //     // }
-    //     $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
-    //     if (isset($request->IntituleCompteNew) and isset($request->RefSousGroupe) and isset($request->RefCadre) and isset($request->RefTypeCompte) and isset($request->RefGroupe)) {
-    //         //VERIFIE SI LE COMPTE N'EXISTE PAS ENCORE
-    //         $checkCompteExist = Comptes::where("RefSousGroupe", "=", $request->RefSousGroupe)->first();
-    //         if (!$checkCompteExist) {
-    //             //CREE LA REFERENCE CADRE 
-    //             // DB::select('INSERT INTO cadrecomptes RéfCadre,NomCadre,RéfTypeCompte VALUES("' . $request->RefCadre . '","' . $request->IntituleCompteNew . '","' . $request->RefTypeCompte . '")');
+        $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
+        $currentAgence = session('current_agence');
+        $codeAgence = $currentAgence['code_agence'] ?? null;
 
-    //             //CREE LE COMPTE EN USD
-    //             Comptes::create([
-    //                 "NumCompte" => $request->RefSousGroupe . "201",
-    //                 "NomCompte" => $request->IntituleCompteNew,
-    //                 "RefTypeCompte" => $request->RefTypeCompte,
-    //                 "RefCadre" => $request->RefCadre,
-    //                 "RefGroupe" => $request->RefGroupe,
-    //                 "RefSousGroupe" => $request->RefSousGroupe,
-    //                 "CodeMonnaie" => 1,
-    //                 "DateOuverture" => $date,
-    //                 "NumAdherant" => $request->RefSousGroupe . "201",
-    //                 "nature_compte"=> $request->nature_compte,
-    //             ]);
-
-    //             //CREE LE COMPTE EN cdf
-    //             Comptes::create([
-    //                 "NumCompte" => $request->RefSousGroupe . "202",
-    //                 "NomCompte" => $request->IntituleCompteNew,
-    //                 "RefTypeCompte" => $request->RefTypeCompte,
-    //                 "RefCadre" => $request->RefCadre,
-    //                 "RefGroupe" => $request->RefGroupe,
-    //                 "RefSousGroupe" => $request->RefSousGroupe,
-    //                 "CodeMonnaie" => 2,
-    //                 "DateOuverture" => $date,
-    //                 "NumAdherant" => $request->RefSousGroupe . "201",
-    //                  "nature_compte"=> $request->nature_compte,
-    //             ]);
-    //             // //CDF
-    //             // Transactions::create([
-    //             //     "DateTransaction" => $date,
-    //             //     "CodeMonnaie" => 2,
-    //             //     "NumCompte" => $request->RefSousGroupe . "202",
-    //             //     "Debit"  => 0,
-    //             //     "Debit$"  => 0,
-    //             //     "Debitfc" => 0,
-    //             // ]);
-
-    //             // //USD
-    //             // Transactions::create([
-    //             //     "DateTransaction" => $date,
-    //             //     "CodeMonnaie" => 1,
-    //             //     "NumCompte" => $request->RefSousGroupe . "201",
-    //             //     "Debit"  => 0,
-    //             //     "Debit$"  => 0,
-    //             //     "Debitfc" => 0,
-    //             // ]);
-    //         } else {
-    //             return response()->json(["status" => 0, "msg" => "Ce compte est déjà crée merci..."]);
-    //         }
-
-    //         return response()->json(["status" => 1, "msg" => "Le compte " . $request->RefSousGroupe . "202" . " CDF " . " et " . "" . $request->RefSousGroupe . "201" . " USD bien ajoutés merci..."]);
-    //     } else {
-    //         return response()->json(["status" => 0, "msg" => "Les veuillez completer tous le champs..."]);
-    //     }
-    // }
-
-    public function saveNewAccount(Request $request)
-    {
-
-        try {
-            DB::beginTransaction();
-
-            $date = TauxEtDateSystem::orderBy('id', 'desc')->first()->DateSystem;
-
-            if (
-                !isset($request->IntituleCompteNew) || !isset($request->RefSousGroupe) ||
-                !isset($request->RefCadre) || !isset($request->RefTypeCompte) || !isset($request->RefGroupe)
-            ) {
-                return response()->json([
-                    "status" => 0,
-                    "msg" => "Veuillez compléter tous les champs obligatoires."
-                ]);
-            }
-
-            // Vérifier si le compte existe déjà
-            $checkCompteExist = Comptes::where("RefSousGroupe", $request->RefTypeCompte)
-                ->where("CodeMonnaie", 2)
-                ->first();
-
-            if ($checkCompteExist) {
-                return response()->json([
-                    "status" => 0,
-                    "msg" => "Ce compte existe déjà."
-                ]);
-            }
-
-            // Création des comptes de regroupement (hiérarchie)
-            $this->creerHierarchieComptes($request, $date);
-
-            // Création des comptes individuels
-            $this->creerComptesIndividuels($request, $date);
-
-            DB::commit();
-            $currentAgence = session('current_agence');
-            $codeAgence = $currentAgence['code_agence'] ?? null;
-            return response()->json([
-                "status" => 1,
-                "msg" => "Comptes créés avec succès. Comptes individuels: " . $request->RefSousGroupe . $codeAgence . "2 (CDF) et " . $request->RefSousGroupe . $codeAgence . "1 (USD)"
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
+        if (
+            !isset($request->IntituleCompteNew) || !isset($request->RefSousGroupe) ||
+            !isset($request->RefCadre) || !isset($request->RefTypeCompte) || !isset($request->RefGroupe)
+        ) {
             return response()->json([
                 "status" => 0,
-                "msg" => "Erreur lors de la création: " . $e->getMessage()
+                "msg" => "Veuillez compléter tous les champs obligatoires."
             ]);
         }
-    }
 
+        if (!$codeAgence) {
+            return response()->json([
+                "status" => 0, 
+                "msg" => "Aucune agence courante définie"
+            ]);
+        }
+
+        // Vérifier si le compte existe déjà (CDF ou USD)
+        $numCompteCDF = $request->RefSousGroupe . $codeAgence . "2";
+        $numCompteUSD = $request->RefSousGroupe . $codeAgence . "1";
+        
+        $checkCompteExist = Comptes::where("NumCompte", $numCompteCDF)
+            ->orWhere("NumCompte", $numCompteUSD)
+            ->first();
+
+        if ($checkCompteExist) {
+            return response()->json([
+                "status" => 0,
+                "msg" => "Ce compte existe déjà. Compte trouvé: " . $checkCompteExist->NumCompte
+            ]);
+        }
+
+        // Création des comptes de regroupement (hiérarchie)
+        $this->creerHierarchieComptes($request, $date);
+
+        // Création des comptes individuels
+        $this->creerComptesIndividuels($request, $date);
+
+        DB::commit();
+        
+        return response()->json([
+            "status" => 1,
+            "msg" => "Comptes créés avec succès. Comptes individuels: " . $numCompteCDF . " (CDF) et " . $numCompteUSD . " (USD)"
+        ]);
+        
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            "status" => 0,
+            "msg" => "Erreur lors de la création: " . $e->getMessage()
+        ]);
+    }
+}
 
  // ============================================
     // FONCTIONS PRIVÉES UTILITAIRES

@@ -72,7 +72,7 @@ class ClotureJourneeCopy
         $this->sendNotification = app(SendNotification::class);
         $this->gestionPostEcheance = new GestionInteretsPostEcheance($this->dateSystem, $this->tauxDuJour);
         // 🔥 Ajout : instanciation de la classe de pénalités
-        $delaiAvantPenalite = 0; // À configurer selon votre politique (peut venir d'une config)
+        $delaiAvantPenalite = 30; // À configurer selon votre politique (peut venir d'une config)
         $this->gestionPenalites = new GestionInteretsRetard($this->dateSystem, $this->tauxDuJour, $delaiAvantPenalite);
     }
 
