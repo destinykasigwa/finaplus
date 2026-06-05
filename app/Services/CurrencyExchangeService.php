@@ -63,6 +63,17 @@ class CurrencyExchangeService
         return $solde ?? 0;
     }
 
+    //  public function getSoldeComptePositionEchange($numCompte, $codeMonnaie)
+    // {
+    //     $debitCol = ($codeMonnaie == 1) ? 'Debitusd' : 'Debitfc';
+    //     $creditCol = ($codeMonnaie == 1) ? 'Creditusd' : 'Creditfc';
+    //     $solde = Transactions::where('NumCompte', $numCompte)
+    //         ->where('CodeMonnaie', $codeMonnaie)
+    //         ->select(DB::raw("SUM($debitCol) - SUM($creditCol) as solde"))
+    //         ->value('solde');
+    //     return $solde ?? 0;
+    // }
+
     public function executeExchange($data)
     {
         $clientId = $data['client_id'];
@@ -295,11 +306,22 @@ class CurrencyExchangeService
     $this->createEcriture($numTransaction, $dataSystem, 2, $targetCompte->CodeAgence, $targetCompte->NumCompte, $this->comptePositionCDF, 'C', $amountTarget, "Change USD->CDF: $motif (Ref: $reference)", $userId, $taux, 'Debitfc', 'Creditfc');
 
     // 5. Gain/Perte
-    if ($gainLoss != 0) {
+    // if ($gainLoss != 0) {
+    //     $compteResultat = ($gainLoss > 0) ? $this->compteGainChange : $this->comptePerteChange;
+    //     $type = ($gainLoss > 0) ? 'C' : 'D';
+    //     $montantAbs = abs($gainLoss);
+    //     $this->createEcriture($numTransaction, $dataSystem, 2, $sourceCompte->CodeAgence, $compteResultat, null, $type, $montantAbs, "Gain/Perte change USD->CDF (Ref: $reference)", $userId, $taux, 'Debitfc', 'Creditfc');
+    // }
+     if ($gainLoss != 0) {
+        
         $compteResultat = ($gainLoss > 0) ? $this->compteGainChange : $this->comptePerteChange;
-        $type = ($gainLoss > 0) ? 'C' : 'D';
+        $typeResultat = ($gainLoss > 0) ? 'C' : 'D'; // Crédit pour gain, Débit pour perte
         $montantAbs = abs($gainLoss);
-        $this->createEcriture($numTransaction, $dataSystem, 2, $sourceCompte->CodeAgence, $compteResultat, null, $type, $montantAbs, "Gain/Perte change USD->CDF (Ref: $reference)", $userId, $taux, 'Debitfc', 'Creditfc');
+        // Écriture de résultat
+        $this->createEcriture($numTransaction, $dataSystem, 1, $sourceCompte->CodeAgence, $compteResultat, null, $typeResultat, $montantAbs, "Gain/Perte change USD->CDF (Ref: $reference)", $userId, $taux, 'Debitusd', 'Creditusd');
+        // Ajustement du compte position CDF pour équilibrer
+        $typePosition = ($gainLoss > 0) ? 'D' : 'C'; // Débit pour gain, Crédit pour perte
+        $this->createEcriture($numTransaction, $dataSystem, 1, $sourceCompte->CodeAgence, $this->comptePositionUSD, null, $typePosition, $montantAbs, "Ajustement gain/perte position USD (Ref: $reference)", $userId, $taux, 'Debitusd', 'Creditusd');
     }
 }
 
@@ -322,6 +344,7 @@ class CurrencyExchangeService
 
     // 5. Gain/Perte – on ajuste le compte position CDF et on constate le résultat
     if ($gainLoss != 0) {
+        
         $compteResultat = ($gainLoss > 0) ? $this->compteGainChange : $this->comptePerteChange;
         $typeResultat = ($gainLoss > 0) ? 'C' : 'D'; // Crédit pour gain, Débit pour perte
         $montantAbs = abs($gainLoss);

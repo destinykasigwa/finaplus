@@ -13,7 +13,7 @@ import { EnteteRapport } from "./HeaderReport";
 const Journal = () => {
     const [loading, setloading] = useState(false);
     const [devise, setDevise] = useState("CDF");
-
+const [getData, setGetData] = useState();
     const [getDataCDF, setGetdataCDF] = useState();
     const [getDataUSD, setGetdataUSD] = useState();
     const [getdefaultDateDebut, setGetdefaultDateDebut] = useState();
@@ -21,6 +21,7 @@ const Journal = () => {
     const [dateDebut, setDateDebut] = useState();
     const [dateFin, setDateFin] = useState();
     const [getTypeJournal, setGetTypeJournal] = useState();
+     const [typeJournal, setTypeJournal] = useState();
     // const [checkboxValue, setCheckboxValue] = useState(false);
     const [radioValue, setRadioValue] = useState("");
     const [radioValue2, setRadioValue2] = useState("");
@@ -37,7 +38,7 @@ const Journal = () => {
     const [getAllUsers, setgetAllUsers] = useState();
     const [UserName, setUserName] = useState();
     const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
-    const [getTot, setGetTot] = useState({
+    const [tot, setTot] = useState({
         totCDF: "",
         totUSD: "",
     });
@@ -99,8 +100,9 @@ const [currentAgence, setCurrentAgence] = useState(null);
             DateDebut: dateDebut ? dateDebut : getdefaultDateDebut,
             DateFin: dateFin ? dateFin : getdefaultDateFin,
             // TypeAgence: radioValue,
-            // TypeJournal: radioValue2,
+            TypeJournal: typeJournal,
             AutresCriteres: checkboxValues,
+            Currency:devise,
             // AgenceFrom: AgenceFrom,
             UserName: UserName,
             // MonnaieDonnee: MonnaieDonnee,
@@ -109,12 +111,13 @@ const [currentAgence, setCurrentAgence] = useState(null);
         });
         if (res.data.status == 1) {
             setloading(false);
-            setGetdataCDF(res.data.dataCDF);
-            setGetdataUSD(res.data.dataUSD);
-            setGetTot({
-                totCDF: res.data.totCDF,
-                totUSD: res.data.totUSD,
-            });
+            setGetData(res.data.data);
+        setTot({
+            totalDebit: res.data.totalDebit,
+            totalCredit: res.data.totalCredit
+        });
+
+        console.log(res.data.data);
             //console.log(getTot.totCDF.TotalDebitfc);
         } else {
             setloading(false);
@@ -369,11 +372,11 @@ const [currentAgence, setCurrentAgence] = useState(null);
                                     className="fas fa-user me-2"
                                     style={{ color: "#6366f1" }}
                                 ></i>
-                                Utilisateur
+                                Utilisateur & Dévise
                             </h6>
                         </div>
                         <div className="card-body pt-2">
-                            <label className="label-modern">Agent</label>
+                            {/* <label className="label-modern">Agent</label> */}
                             <select
                                 className="modern-select w-100 mb-3"
                                 value={UserName}
@@ -386,22 +389,18 @@ const [currentAgence, setCurrentAgence] = useState(null);
                                     </option>
                                 ))}
                             </select>
-                            <div className="form-check">
-                                <input
-                                    type="checkbox"
-                                    className="form-check-input"
-                                    id="TransSuspen"
-                                    name="SuspensTransactions"
-                                    checked={checkboxValues.SuspensTransactions}
-                                    onChange={handleCheckboxChange}
-                                />
-                                <label
-                                    className="form-check-label"
-                                    htmlFor="TransSuspen"
-                                >
-                                    Transactions en suspens
-                                </label>
-                            </div>
+                       
+    <select
+        className="modern-select w-100"
+        value={devise}
+        onChange={(e) => setDevise(e.target.value)}
+    >
+        <option value="ALL">Toutes</option>
+        <option value="CDF">CDF</option>
+        <option value="USD">USD</option>
+       
+    </select> 
+                          
                         </div>
                     </div>
                 </div>
@@ -415,12 +414,12 @@ const [currentAgence, setCurrentAgence] = useState(null);
                                     className="fas fa-building me-2"
                                     style={{ color: "#6366f1" }}
                                 ></i>
-                                Agence
+                                Agence & Type journal
                             </h6>
                         </div>
                         <div className="card-body pt-2">
                             <select
-    className="modern-select w-100"
+    className="modern-select w-100 mb-3"
     value={agenceFilter}
     onChange={(e) => setAgenceFilter(e.target.value)}
     disabled={!userAgences || userAgences.length <= 1}
@@ -439,6 +438,23 @@ const [currentAgence, setCurrentAgence] = useState(null);
         </>
     )}
 </select>
+
+
+    <select
+        className="modern-select w-100"
+        value={typeJournal}
+        onChange={(e) => setTypeJournal(e.target.value)}
+    >
+        <option value="ALL">Tous les journaux</option>
+        <option value="CHANGE">Journal des opérations de change</option>
+        <option value="REMBOURSEMENT">Journal des remboursements</option>
+        <option value="TRANSFERT">Journal des transferts</option>
+        <option value="CREDIT">Journal des crédits</option>
+        <option value="SUSPENS">Journal des Suspens</option>
+    </select>
+
+
+
                         </div>
                     </div>
                 </div>
@@ -477,483 +493,140 @@ const [currentAgence, setCurrentAgence] = useState(null);
                 </div>
             </div>
 
-            {/* Tableau des résultats */}
-            {(getDataCDF && getDataCDF.length > 0) ||
-            (getDataUSD && getDataUSD.length > 0) ? (
-                <div className="card border-0 shadow-sm rounded-3 mb-4">
-                    <div className="card-body p-4">
-                        <div id="content-to-download-journal">
-                            {/* En-tête du rapport */}
-                            <div className="text-center mb-3">
-                                <EnteteRapport />
-                            </div>
+          {/* Tableau des résultats */}
+{getData && getData.length > 0 ? (
+    <div className="card border-0 shadow-sm rounded-3 mb-4">
+        <div className="card-body p-4">
 
-                            <div className="text-center mb-4">
-                                <h4
-                                    style={{
-                                        background: "#1a2632",
-                                        padding: "12px",
-                                        color: "#fff",
-                                        borderRadius: "8px",
-                                        display: "inline-block",
-                                        borderLeft: "5px solid #20c997",
-                                    }}
-                                >
-                                    <i className="fas fa-book-open me-2"></i>
-                                    JOURNAL DES OPÉRATIONS {getAgenceNom()}
-                                    <br />
-                                    <small style={{ fontSize: "14px" }}>
-                                        Du{" "}
-                                        {dateDebut
-                                            ? dateParser(dateDebut)
-                                            : dateParser(getdefaultDateDebut)}
-                                        au{" "}
-                                        {dateFin
-                                            ? dateParser(dateFin)
-                                            : dateParser(getdefaultDateFin)}
-                                    </small>
-                                </h4>
-                            </div>
+            <div id="content-to-download-journal">
 
-                            {/* Filtres actifs (inchangé) */}
-                            <div className="row g-2 mb-3">
-                                {radioValue === "givenAgence" && AgenceFrom && (
-                                    <div className="col-auto">
-                                        <span className="badge bg-info">
-                                            Agence: {AgenceFrom}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {checkboxValues.SuspensTransactions && (
-                                    <div className="col-auto">
-                                        <span className="badge bg-warning">
-                                            Opérations En suspens
-                                        </span>
-                                    </div>
-                                )}
-                                {checkboxValues.givenCurrency &&
-                                    MonnaieDonnee && (
-                                        <div className="col-auto">
-                                            <span className="badge bg-secondary">
-                                                Devise: {MonnaieDonnee}
-                                            </span>
-                                        </div>
-                                    )}
-                                {checkboxValues.GivenJournal &&
-                                    JournalDonne && (
-                                        <div className="col-auto">
-                                            <span className="badge bg-dark">
-                                                Journal: {JournalDonne}
-                                            </span>
-                                        </div>
-                                    )}
-                            </div>
-
-                            {/* Tableau des résultats */}
-                            {(getDataCDF && getDataCDF.length > 0) ||
-                            (getDataUSD && getDataUSD.length > 0) ? (
-                                <div className="border-0 shadow-sm rounded-3 mb-4">
-                                    <div className="card-body p-4">
-                                        <div>
-                                            {/* En-tête (inchangé) */}
-                                            {/* <div className="text-center mb-3"><EnteteRapport /></div>
-                <div className="text-center mb-4"><h4 style={{ background: "#1a2632", padding: "12px", color: "#fff", borderRadius: "8px", display: "inline-block", borderLeft: "5px solid #20c997" }}>
-                    <i className="fas fa-book-open me-2"></i>JOURNAL DES OPÉRATIONS AGENCE DE {" "} 
-                                                    {currentAgence?.nom_agence ||
-                                                        "Non définie"}
-                                                    
-                    <br /><small style={{ fontSize: "14px" }}>Du {dateDebut ? dateParser(dateDebut) : dateParser(getdefaultDateDebut)} au {dateFin ? dateParser(dateFin) : dateParser(getdefaultDateFin)}</small>
-                </h4></div> */}
-
-                                            {/* Éventuels badges de filtre (inchangés) */}
-                                            {UserName && (
-                                                <div className="col-auto">
-                                                    <h2>
-                                                        {" "}
-                                                        <span className="badge bg-success">
-                                                            Utilisateur:{" "}
-                                                            {UserName}
-                                                        </span>
-                                                    </h2>
-                                                </div>
-                                            )}
-
-                                            <div className="table-responsive">
-                                                <table
-                                                    className="table table-bordered table-striped table-sm"
-                                                    style={{ fontSize: "13px" }}
-                                                >
-                                                    <thead
-                                                        style={{
-                                                            backgroundColor:
-                                                                "#1a2632",
-                                                            color: "white",
-                                                        }}
-                                                    >
-                                                        <tr>
-                                                            <th>Date</th>
-                                                            <th>Réf. Op</th>
-                                                            <th>
-                                                                Compte débit
-                                                            </th>
-                                                            <th>
-                                                                Compte crédit
-                                                            </th>
-                                                            <th>Libellé</th>
-                                                            <th className="text-end">
-                                                                Débit
-                                                            </th>
-                                                            <th className="text-end">
-                                                                Crédit
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {/* SECTION CDF */}
-                                                        {getDataCDF &&
-                                                            getDataCDF.length >
-                                                                0 && (
-                                                                <>
-                                                                    <tr
-                                                                        style={{
-                                                                            backgroundColor:
-                                                                                "#e6f2f9",
-                                                                        }}
-                                                                    >
-                                                                        <td
-                                                                            colSpan="7"
-                                                                            className="fw-bold fs-5"
-                                                                            style={{
-                                                                                color: "steelblue",
-                                                                            }}
-                                                                        >
-                                                                            <i className="fas fa-chart-line me-2"></i>
-                                                                            CDF
-                                                                        </td>
-                                                                    </tr>
-                                                                    {getDataCDF.map(
-                                                                        (
-                                                                            res,
-                                                                            idx,
-                                                                        ) => {
-                                                                            // Détection de déséquilibre ou contrepartie manquante
-                                                                            const isDesequilibre =
-                                                                                res.MontantDebit !==
-                                                                                    res.MontantCredit ||
-                                                                                !res.CompteDebit ||
-                                                                                !res.CompteCredit;
-                                                                            const rowStyle =
-                                                                                isDesequilibre
-                                                                                    ? {
-                                                                                          backgroundColor:
-                                                                                              "#f8d7da",
-                                                                                      }
-                                                                                    : {};
-                                                                            return (
-                                                                                <tr
-                                                                                    key={`cdf-${idx}`}
-                                                                                    style={
-                                                                                        rowStyle
-                                                                                    }
-                                                                                >
-                                                                                    <td>
-                                                                                        {dateParser(
-                                                                                            res.DateTransaction,
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td className="fw-semibold">
-                                                                                        {
-                                                                                            res.NumTransaction
-                                                                                        }
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {
-                                                                                            res.CompteDebit
-                                                                                        }
-                                                                                        <br />
-                                                                                        <small className="text-muted">
-                                                                                            {
-                                                                                                res.NomCompteDebit
-                                                                                            }
-                                                                                        </small>
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {
-                                                                                            res.CompteCredit
-                                                                                        }
-                                                                                        <br />
-                                                                                        <small className="text-muted">
-                                                                                            {
-                                                                                                res.NomCompteCredit
-                                                                                            }
-                                                                                        </small>
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {
-                                                                                            res.Libelle
-                                                                                        }
-                                                                                    </td>
-                                                                                    <td className="text-end text-danger fw-bold">
-                                                                                        {numberWithSpaces(
-                                                                                            res.MontantDebit?.toFixed(
-                                                                                                2,
-                                                                                            ),
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td className="text-end text-success fw-bold">
-                                                                                        {numberWithSpaces(
-                                                                                            res.MontantCredit?.toFixed(
-                                                                                                2,
-                                                                                            ),
-                                                                                        )}
-                                                                                    </td>
-                                                                                </tr>
-                                                                            );
-                                                                        },
-                                                                    )}
-                                                                    <tr
-                                                                        style={{
-                                                                            backgroundColor:
-                                                                                "#20c997",
-                                                                            color: "white",
-                                                                            fontWeight:
-                                                                                "bold",
-                                                                        }}
-                                                                    >
-                                                                        <td
-                                                                            colSpan="5"
-                                                                            className="text-end fw-bold"
-                                                                        >
-                                                                            TOTAL
-                                                                            CDF
-                                                                            :
-                                                                        </td>
-                                                                        <td className="text-end">
-                                                                            {numberWithSpaces(
-                                                                                getTot?.totCDF?.TotalDebit?.toFixed(
-                                                                                    2,
-                                                                                ),
-                                                                            )}
-                                                                        </td>
-                                                                        <td className="text-end">
-                                                                            {numberWithSpaces(
-                                                                                getTot?.totCDF?.TotalCredit?.toFixed(
-                                                                                    2,
-                                                                                ),
-                                                                            )}
-                                                                        </td>
-                                                                    </tr>
-                                                                </>
-                                                            )}
-
-                                                        {/* SECTION USD – même logique */}
-                                                        {getDataUSD &&
-                                                            getDataUSD.length >
-                                                                0 && (
-                                                                <>
-                                                                    <tr
-                                                                        style={{
-                                                                            backgroundColor:
-                                                                                "#e6f2f9",
-                                                                        }}
-                                                                    >
-                                                                        <td
-                                                                            colSpan="7"
-                                                                            className="fw-bold fs-5"
-                                                                            style={{
-                                                                                color: "steelblue",
-                                                                            }}
-                                                                        >
-                                                                            <i className="fas fa-dollar-sign me-2"></i>
-                                                                            USD
-                                                                        </td>
-                                                                    </tr>
-                                                                    {getDataUSD.map(
-                                                                        (
-                                                                            res,
-                                                                            idx,
-                                                                        ) => {
-                                                                            const isDesequilibre =
-                                                                                res.MontantDebit !==
-                                                                                    res.MontantCredit ||
-                                                                                !res.CompteDebit ||
-                                                                                !res.CompteCredit;
-                                                                            const rowStyle =
-                                                                                isDesequilibre
-                                                                                    ? {
-                                                                                          backgroundColor:
-                                                                                              "#f8d7da",
-                                                                                      }
-                                                                                    : {};
-                                                                            return (
-                                                                                <tr
-                                                                                    key={`usd-${idx}`}
-                                                                                    style={
-                                                                                        rowStyle
-                                                                                    }
-                                                                                >
-                                                                                    <td>
-                                                                                        {dateParser(
-                                                                                            res.DateTransaction,
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td className="fw-semibold">
-                                                                                        {
-                                                                                            res.NumTransaction
-                                                                                        }
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {
-                                                                                            res.CompteDebit
-                                                                                        }
-                                                                                        <br />
-                                                                                        <small className="text-muted">
-                                                                                            {
-                                                                                                res.NomCompteDebit
-                                                                                            }
-                                                                                        </small>
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {
-                                                                                            res.CompteCredit
-                                                                                        }
-                                                                                        <br />
-                                                                                        <small className="text-muted">
-                                                                                            {
-                                                                                                res.NomCompteCredit
-                                                                                            }
-                                                                                        </small>
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {
-                                                                                            res.Libelle
-                                                                                        }
-                                                                                    </td>
-                                                                                    <td className="text-end text-danger fw-bold">
-                                                                                        {numberWithSpaces(
-                                                                                            res.MontantDebit?.toFixed(
-                                                                                                2,
-                                                                                            ),
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td className="text-end text-success fw-bold">
-                                                                                        {numberWithSpaces(
-                                                                                            res.MontantCredit?.toFixed(
-                                                                                                2,
-                                                                                            ),
-                                                                                        )}
-                                                                                    </td>
-                                                                                </tr>
-                                                                            );
-                                                                        },
-                                                                    )}
-                                                                    <tr
-                                                                        style={{
-                                                                            backgroundColor:
-                                                                                "#20c997",
-                                                                            color: "white",
-                                                                            fontWeight:
-                                                                                "bold",
-                                                                        }}
-                                                                    >
-                                                                        <td
-                                                                            colSpan="5"
-                                                                            className="text-end fw-bold"
-                                                                        >
-                                                                            TOTAL
-                                                                            USD
-                                                                            :
-                                                                        </td>
-                                                                        <td className="text-end">
-                                                                            {numberWithSpaces(
-                                                                                getTot?.totUSD?.TotalDebit?.toFixed(
-                                                                                    2,
-                                                                                ),
-                                                                            )}
-                                                                        </td>
-                                                                        <td className="text-end">
-                                                                            {numberWithSpaces(
-                                                                                getTot?.totUSD?.TotalCredit?.toFixed(
-                                                                                    2,
-                                                                                ),
-                                                                            )}
-                                                                        </td>
-                                                                    </tr>
-                                                                </>
-                                                            )}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {/* Boutons d'export */}
-                                    {/* <div className="d-flex justify-content-end gap-2 mt-4">
-                <button onClick={() => exportTableData("content-to-download-journal")} className="btn" style={{ background: "#28a745", color: "white", borderRadius: "8px" }}>
-                    <i className="fas fa-file-excel me-2"></i>Exporter en Excel
-                </button>
-                <button onClick={exportToPDF} className="btn" style={{ background: "#dc3545", color: "white", borderRadius: "8px" }}>
-                    <i className="fas fa-file-pdf me-2"></i>Exporter en PDF
-                </button>
-            </div> */}
-                                </div>
-                            ) : (
-                                (getDataCDF || getDataUSD) && (
-                                    <div className="text-center py-5">
-                                        <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
-                                        <p className="text-muted">
-                                            Aucune opération trouvée pour les
-                                            critères sélectionnés.
-                                        </p>
-                                    </div>
-                                )
-                            )}
-                        </div>
-
-                        {/* Boutons d'export */}
-                        <div className="d-flex justify-content-end gap-2 mt-4">
-                            <button
-                                onClick={() =>
-                                    exportTableData(
-                                        "content-to-download-journal",
-                                    )
-                                }
-                                className="btn"
-                                style={{
-                                    background: "#28a745",
-                                    color: "white",
-                                    borderRadius: "8px",
-                                }}
-                            >
-                                <i className="fas fa-file-excel me-2"></i>
-                                Exporter en Excel
-                            </button>
-                            <button
-                                onClick={exportToPDF}
-                                className="btn"
-                                style={{
-                                    background: "#dc3545",
-                                    color: "white",
-                                    borderRadius: "8px",
-                                }}
-                            >
-                                <i className="fas fa-file-pdf me-2"></i>Exporter
-                                en PDF
-                            </button>
-                        </div>
-                    </div>
+                {/* HEADER */}
+                <div className="text-center mb-3">
+                    <EnteteRapport />
                 </div>
-            ) : (
-                (getDataCDF || getDataUSD) && (
-                    <div className="text-center py-5">
-                        <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
-                        <p className="text-muted">
-                            Aucune opération trouvée pour les critères
-                            sélectionnés.
-                        </p>
-                    </div>
-                )
-            )}
+
+                <div className="text-center mb-4">
+                    <h4 style={{
+                        background: "#1a2632",
+                        padding: "12px",
+                        color: "#fff",
+                        borderRadius: "8px",
+                        display: "inline-block",
+                        borderLeft: "5px solid #20c997",
+                    }}>
+                        JOURNAL DES OPÉRATIONS {getAgenceNom()}
+                        <br />
+                        <small style={{ fontSize: "14px" }}>
+                            Du {dateParser(dateDebut || getdefaultDateDebut)}
+                            au {dateParser(dateFin || getdefaultDateFin)}
+                        </small>
+                    </h4>
+                </div>
+
+                {/* TABLE */}
+                <div className="table-responsive">
+                    <table className="table table-bordered table-striped table-sm">
+
+                        <thead style={{ backgroundColor: "#1a2632", color: "white" }}>
+                            <tr>
+                                <th>Date</th>
+                                <th>Réf</th>
+                                <th>Type journal</th>
+                                <th>Compte</th>
+                                <th>Libellé</th>
+                                <th className="text-end">Débit</th>
+                                <th className="text-end">Crédit</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {getData.map((op, idx) => (
+                                <>
+
+                                    {/* HEADER OPERATION */}
+                                    <tr key={idx} style={{
+    backgroundColor: op.isBalanced ? "#e6f2f9" : "#f8d7da",
+    color: op.isBalanced ? "inherit" : "#721c24",
+    fontWeight: "bold"
+}}>
+                                        <td colSpan="7" className="fw-bold" style={{ border:"0px" }}>
+                                            {op.NumTransaction} — {op.TypeJournal} — {dateParser(op.DateTransaction)}
+                                        </td>
+                                    </tr>
+
+                                    {/* LIGNES */}
+                                    {op.lignes.map((l, i) => (
+                                        <tr key={i}>
+                                            <td style={{ border:"0px" }}></td>
+                                            <td style={{ border:"0px" }}></td>
+                                            <td style={{ border:"0px" }}>{op.TypeJournal}</td>
+                                            <td style={{ border:"0px" }}>
+                                                {l.Compte}
+                                                <br />
+                                                <small className="text-muted">{l.NomCompte}</small>
+                                            </td>
+                                            <td>{op.Libelle}</td>
+                                            <td className="text-end text-danger" style={{ border:"0px" }}>
+                                                {numberWithSpaces(l.Debit)}
+                                            </td>
+                                            <td className="text-end text-success" style={{ border:"0px" }}>
+                                                {numberWithSpaces(l.Credit)}
+                                            </td>
+                                        </tr>
+                                    ))}
+
+                                </>
+                            ))}
+
+                            {/* TOTAL */}
+                            <tr style={{ backgroundColor: "#20c997", color: "white" }}>
+                                <td colSpan="5" className="text-end fw-bold">
+                                    TOTAL
+                                </td>
+                                <td className="text-end">
+                                    {numberWithSpaces(tot?.totalDebit?.toFixed(2))}
+                                </td>
+                                <td className="text-end">
+                                    {numberWithSpaces(tot?.totalCredit?.toFixed(2))}
+                                </td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            {/* EXPORT */}
+            <div className="d-flex justify-content-end gap-2 mt-4">
+                <button
+                    onClick={() => exportTableData("content-to-download-journal")}
+                    className="btn"
+                    style={{ background: "#28a745", color: "white", borderRadius: "8px" }}
+                >
+                    Exporter en Excel
+                </button>
+
+                <button
+                    onClick={exportToPDF}
+                    className="btn"
+                    style={{ background: "#dc3545", color: "white", borderRadius: "8px" }}
+                >
+                    Exporter en PDF
+                </button>
+            </div>
+
+        </div>
+    </div>
+) : (
+    <div className="text-center py-5">
+        <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
+        <p className="text-muted">
+            Aucune opération trouvée pour les critères sélectionnés.
+        </p>
+    </div>
+)}
 
             <div style={{ height: "30px" }}></div>
 
