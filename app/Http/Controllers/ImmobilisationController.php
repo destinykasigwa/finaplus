@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\JournalType;
 use App\Models\Agences;
 use App\Models\Immobilisation;
 use App\Models\TypeImmobilisation;
@@ -292,6 +293,7 @@ class ImmobilisationController extends Controller
         // 1. Débit du compte de charge (681)
         $dataCharge = [
             'NumTransaction' => $numTransaction,
+            "RefJournal" => JournalType::AMMORTISSEMENT,
             'DateTransaction' => $dataSystem->DateSystem,
             'DateSaisie' => now(),
             'Taux' => $taux,
@@ -319,6 +321,7 @@ class ImmobilisationController extends Controller
         // 2. Crédit du compte d'amortissement cumulé (28)
         $dataAmort = [
             'NumTransaction' => $numTransaction,
+            "RefJournal" => JournalType::AMMORTISSEMENT,
             'DateTransaction' => $dataSystem->DateSystem,
             'DateSaisie' => now(),
             'Taux' => $taux,

@@ -2,6 +2,7 @@
 
 namespace App\CustomTasks;
 
+use App\Constants\JournalType;
 use App\Models\Portefeuille;
 use App\Models\Transactions;
 use App\Models\Remboursementcredit;
@@ -176,6 +177,7 @@ class GestionInteretsPostEcheance
         // 1. Débit du compte épargne du client
         Transactions::create([
             "NumTransaction" => $numTransaction,
+            "RefJournal" => JournalType::CREDIT,
             "DateTransaction" => $this->dateSystem,
             "DateSaisie" => $this->dateSystem,
             "TypeTransaction" => "D",
@@ -198,6 +200,7 @@ class GestionInteretsPostEcheance
         // 2. Crédit du compte de produit financier
         Transactions::create([
             "NumTransaction" => $numTransaction,
+            "RefJournal" => JournalType::CREDIT,
             "DateTransaction" => $this->dateSystem,
             "DateSaisie" => $this->dateSystem,
             "TypeTransaction" => "C",

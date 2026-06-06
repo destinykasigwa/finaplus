@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Constants\JournalType;
 use App\Models\ExchangeRate;
 use App\Models\ExchangeTransaction;
 use App\Models\Comptes;
@@ -222,6 +223,7 @@ class CurrencyExchangeService
     {
         $data = [
             'NumTransaction' => $numTransaction,
+            "RefJournal" => JournalType::TRANSFERT,
             'DateTransaction' => $dataSystem->DateSystem,
             'DateSaisie' => now(),
             'Taux' => $taux,

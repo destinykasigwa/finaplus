@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\JournalType;
 use App\Models\BatchPaiement;
 use App\Models\BatchPaiementLigne;
 use App\Models\Comptes;
@@ -119,6 +120,7 @@ public function GestionBatchHomePage()
         // Débit
         Transactions::create([
             'NumTransaction' => $numTransaction,
+            "RefJournal" => JournalType::PAIEMENT,
             'DateTransaction' => $dataSystem->DateSystem,
             'DateSaisie' => now(),
             'Taux' => $taux,
@@ -137,6 +139,7 @@ public function GestionBatchHomePage()
         // Crédit
         Transactions::create([
             'NumTransaction' => $numTransaction,
+            "RefJournal" => JournalType::PAIEMENT,
             'DateTransaction' => $dataSystem->DateSystem,
             'DateSaisie' => now(),
             'Taux' => $taux,

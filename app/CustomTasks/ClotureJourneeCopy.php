@@ -2,6 +2,7 @@
 
 namespace App\CustomTasks;
 
+use App\Constants\JournalType;
 use App\Models\Comptes;
 use App\Models\Echeancier;
 // use App\Models\t_cloture;
@@ -1887,6 +1888,7 @@ class ClotureJourneeCopy
         //DEBITE LE COMPTE DU CLIENT DE l'INTERET
         Transactions::create([
             "NumTransaction" => $NumTransaction,
+            "RefJournal" => JournalType::REMBOURSEMENT,
             "DateTransaction" => $dateSystem,
             "DateSaisie" => date("Y-m-d"),
             "TypeTransaction" => "D",
@@ -1908,6 +1910,7 @@ class ClotureJourneeCopy
         // CREDITE LE COMPTE INTERET
         Transactions::create([
             "NumTransaction" => $NumTransaction,
+            "RefJournal" => JournalType::REMBOURSEMENT,
             "DateTransaction" => $dateSystem,
             "DateSaisie" => date("Y-m-d"),
             "TypeTransaction" => "C",
@@ -1968,6 +1971,7 @@ class ClotureJourneeCopy
         //DEBITE LE COMPTE  EPARGNE DU CLIENT
         Transactions::create([
             "NumTransaction" => $NumTransaction,
+            "RefJournal" => JournalType::REMBOURSEMENT,
             "DateTransaction" => $dateSystem,
             "DateSaisie" => date("Y-m-d"),
             "TypeTransaction" => "D",
@@ -2000,6 +2004,7 @@ class ClotureJourneeCopy
             //CREDITE LE COMPTE CREDIT DU MEMBRE 
             Transactions::create([
                 "NumTransaction" => $NumTransaction,
+                "RefJournal" => JournalType::REMBOURSEMENT,
                 "DateTransaction" => $dateSystem,
                 "DateSaisie" => date("Y-m-d"),
                 "TypeTransaction" => "C",
@@ -2022,6 +2027,7 @@ class ClotureJourneeCopy
             //CREDITE LE COMPTE CREDIT DU MEMBRE 
             Transactions::create([
                 "NumTransaction" => $NumTransaction,
+                "RefJournal" => JournalType::REMBOURSEMENT,
                 "DateTransaction" => $dateSystem,
                 "DateSaisie" => date("Y-m-d"),
                 "TypeTransaction" => "C",
@@ -2280,6 +2286,7 @@ class ClotureJourneeCopy
             //DEBITE SON COMPTE 39
             Transactions::create([
                 "NumTransaction" => $NumTransaction,
+                "RefJournal" => JournalType::CREDIT,
                 "DateTransaction" => $dateSystem,
                 "DateSaisie" => $dateSystem,
                 "TypeTransaction" => "D",
@@ -2301,6 +2308,7 @@ class ClotureJourneeCopy
             //CREDITE LE COMPTE CREDIT DU CLIENT
             Transactions::create([
                 "NumTransaction" => $NumTransaction,
+                "RefJournal" => JournalType::CREDIT,
                 "DateTransaction" => $dateSystem,
                 "DateSaisie" => $dateSystem,
                 "TypeTransaction" => "C",
@@ -2328,6 +2336,7 @@ class ClotureJourneeCopy
         //DEBITE 69 POUR DOTATION AUX PROVISION
         Transactions::create([
             "NumTransaction" => $NumTransaction,
+            "RefJournal" => JournalType::CREDIT,
             "DateTransaction" => $dateSystem,
             "DateSaisie" => $dateSystem,
             "TypeTransaction" => "D",
@@ -2356,6 +2365,7 @@ class ClotureJourneeCopy
         $compteDotation = $this->getCompteDotationProvision($CodeAgence, $codeMonnaie);
         Transactions::create([
             "NumTransaction" => $NumTransaction,
+            "RefJournal" => JournalType::CREDIT,
             "DateTransaction" => $dateSystem,
             "DateSaisie" => $dateSystem,
             "TypeTransaction" => "C",
@@ -2439,6 +2449,7 @@ class ClotureJourneeCopy
         $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
         Transactions::create([
             "NumTransaction" => $NumTransaction,
+            "RefJournal" => JournalType::CREDIT,
             "DateTransaction" => $this->dateSystem,
             "DateSaisie" => $this->dateSystem,
             "TypeTransaction" => "D",
@@ -2462,6 +2473,7 @@ class ClotureJourneeCopy
         $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
         Transactions::create([
             "NumTransaction" => $NumTransaction,
+            "RefJournal" => JournalType::CREDIT,
             "DateTransaction" => $this->dateSystem,
             "DateSaisie" => $this->dateSystem,
             "TypeTransaction" => "C",
@@ -2587,6 +2599,7 @@ class ClotureJourneeCopy
                         $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CREDIT,
                             "DateTransaction" => $dateSystem,
                             "DateSaisie" => date("Y-m-d"),
                             "TypeTransaction" => "D",
@@ -2609,6 +2622,7 @@ class ClotureJourneeCopy
                         $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CREDIT,
                             "DateTransaction" => $dateSystem,
                             "DateSaisie" => $dateSystem,
                             "TypeTransaction" => "C",
@@ -2736,6 +2750,7 @@ class ClotureJourneeCopy
                     $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::CREDIT,
                         "DateTransaction" => $dateSystem,
                         "DateSaisie" => date("Y-m-d"),
                         "TypeTransaction" => "D",
@@ -2760,6 +2775,7 @@ class ClotureJourneeCopy
                     $compteReprise = $this->getCompteRepriseProvision($CodeAgence, $codeMonnaie);
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::CREDIT,
                         "DateTransaction" => $dateSystem,
                         "DateSaisie" => $dateSystem,
                         "TypeTransaction" => "C",
@@ -2815,6 +2831,7 @@ class ClotureJourneeCopy
                     //DEBITE LE COMPTE CREDIT DU CLIENT
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::CREDIT,
                         "DateTransaction" => $dateSystem,
                         "DateSaisie" => $dateSystem,
                         "TypeTransaction" => "D",
@@ -2838,6 +2855,7 @@ class ClotureJourneeCopy
 
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::CREDIT,
                         "DateTransaction" => $dateSystem,
                         "DateSaisie" => $dateSystem,
                         "TypeTransaction" => "C",
@@ -3321,6 +3339,7 @@ class ClotureJourneeCopy
         // Débit du compte de provision (38)
         Transactions::create([
             "NumTransaction" => $numTransaction,
+            "RefJournal" => JournalType::CREDIT,
             "DateTransaction" => $dateSystem,
             "DateSaisie" => $dateSystem,
             "TypeTransaction" => "D",
@@ -3341,6 +3360,7 @@ class ClotureJourneeCopy
         // Crédit du compte de reprise (79)
         Transactions::create([
             "NumTransaction" => $numTransaction,
+            "RefJournal" => JournalType::CREDIT,
             "DateTransaction" => $dateSystem,
             "DateSaisie" => $dateSystem,
             "TypeTransaction" => "C",
@@ -4595,6 +4615,7 @@ class ClotureJourneeCopy
                 // Débit du compte 32 (crédit client)
                 Transactions::create([
                     "NumTransaction" => $numTransaction,
+                    "RefJournal" => JournalType::CREDIT,
                     "DateTransaction" => $this->dateSystem,
                     "DateSaisie" => $this->dateSystem,
                     "TypeTransaction" => "D",
@@ -4615,6 +4636,7 @@ class ClotureJourneeCopy
                 // Crédit du compte 39
                 Transactions::create([
                     "NumTransaction" => $numTransaction,
+                    "RefJournal" => JournalType::CREDIT,
                     "DateTransaction" => $this->dateSystem,
                     "DateSaisie" => $this->dateSystem,
                     "TypeTransaction" => "C",

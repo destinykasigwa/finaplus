@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\JournalType;
 use App\Models\Agences;
 use App\Models\User;
 use App\Models\Comptes;
@@ -990,6 +991,7 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
                                 //DEBITE LE COMPTE DU MEMBRE
                                 Transactions::create([
                                     "NumTransaction" => $NumTransaction,
+                                      "RefJournal" => JournalType::CREDIT,
                                     // "DateTransaction" => $getDossier->DateOctroi,
                                     "DateTransaction" => $dataSystem,
                                     "DateSaisie" => $dateSaisie,
@@ -1028,6 +1030,7 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
                                 //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LE CLIENT
                                 Transactions::create([
                                     "NumTransaction" => $NumTransaction,
+                                    "RefJournal" => JournalType::CREDIT,
                                     "DateTransaction" => $dataSystem,
                                     "DateSaisie" => $dateSaisie,
                                     "TypeTransaction" => "C",
@@ -1108,6 +1111,7 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
                                 //DEBITE LE COMPTE DU MEMBRE
                                 Transactions::create([
                                     "NumTransaction" => $NumTransaction,
+                                    "RefJournal" => JournalType::CREDIT,
                                     "DateTransaction" => $getDossier->DateOctroi,
                                     "DateSaisie" => $dateSaisie,
                                     "TypeTransaction" => "D",
@@ -1146,6 +1150,7 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
                                 //PUIS ON CREDITE LE COMPTE EPARGNE GARANTIE DE CE MONTANT POUR LE CLIENT
                                 Transactions::create([
                                     "NumTransaction" => $NumTransaction,
+                                    "RefJournal" => JournalType::CREDIT,
                                     "DateTransaction" => $getDossier->DateOctroi,
                                     "DateSaisie" => $dateSaisie,
                                     "TypeTransaction" => "C",
@@ -1421,6 +1426,7 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
                     //DEBITE LE COMPTE CREDIT
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::CREDIT,
                         "DateTransaction" => $dateSystem,
                         "DateSaisie" => $dateSaisie,
                         "TypeTransaction" => "D",
@@ -1465,6 +1471,7 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
 
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::CREDIT,
                         "DateTransaction" => $dateSystem,
                         "DateSaisie" =>  $dateSystem,
                         "TypeTransaction" => "C",
@@ -1518,6 +1525,7 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
                     // DEBITE LE COMPTE CREDIT DU MEMBRE
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::CREDIT,
                         "DateTransaction" => $dateSystem,
                         "DateSaisie" => $dateSaisie,
                         "TypeTransaction" => "D",
@@ -1541,6 +1549,7 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
 
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::CREDIT,
                         "DateTransaction" => $dateSystem,
                         "DateSaisie" => $dateSaisie,
                         "TypeTransaction" => "C",
@@ -1903,6 +1912,7 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
         // Débit 67 (charge), Crédit 39 (actif)
         Transactions::create([
             'NumTransaction' => $numTransaction,
+            "RefJournal" => JournalType::CREDIT,
             'DateTransaction' => $dataSystem->DateSystem,
             'DateSaisie' => now(),
             'TypeTransaction' => 'D',
@@ -1920,6 +1930,7 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
 
         Transactions::create([
             'NumTransaction' => $numTransaction,
+            "RefJournal" => JournalType::CREDIT,
             'DateTransaction' => $dataSystem->DateSystem,
             'DateSaisie' => now(),
             'TypeTransaction' => 'C',
@@ -1938,6 +1949,7 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
         // 2. Enregistrement hors bilan (crédit du compte 90)
         Transactions::create([
             'NumTransaction' => $numTransaction,
+            "RefJournal" => JournalType::CREDIT,
             'DateTransaction' => $dataSystem->DateSystem,
             'DateSaisie' => now(),
             'TypeTransaction' => 'C',

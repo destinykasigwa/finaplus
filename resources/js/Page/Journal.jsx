@@ -13,7 +13,7 @@ import { EnteteRapport } from "./HeaderReport";
 const Journal = () => {
     const [loading, setloading] = useState(false);
     const [devise, setDevise] = useState();
-const [getData, setGetData] = useState();
+    const [getData, setGetData] = useState();
     const [getDataCDF, setGetdataCDF] = useState();
     const [getDataUSD, setGetdataUSD] = useState();
     const [getdefaultDateDebut, setGetdefaultDateDebut] = useState();
@@ -21,7 +21,7 @@ const [getData, setGetData] = useState();
     const [dateDebut, setDateDebut] = useState();
     const [dateFin, setDateFin] = useState();
     const [getTypeJournal, setGetTypeJournal] = useState();
-     const [typeJournal, setTypeJournal] = useState();
+    const [typeJournal, setTypeJournal] = useState();
     // const [checkboxValue, setCheckboxValue] = useState(false);
     const [radioValue, setRadioValue] = useState("");
     const [radioValue2, setRadioValue2] = useState("");
@@ -44,13 +44,12 @@ const [getData, setGetData] = useState();
     });
 
     const [userAgences, setUserAgences] = useState([]);
-const [currentAgence, setCurrentAgence] = useState(null);
-
+    const [currentAgence, setCurrentAgence] = useState(null);
 
     useEffect(() => {
-          // Récupération des données injectées par Blade
-    if (window.userAgences) setUserAgences(window.userAgences);
-    if (window.currentAgence) setCurrentAgence(window.currentAgence);
+        // Récupération des données injectées par Blade
+        if (window.userAgences) setUserAgences(window.userAgences);
+        if (window.currentAgence) setCurrentAgence(window.currentAgence);
         GetInformation();
         getDefaultDate();
         getJournalDropMenu();
@@ -102,7 +101,7 @@ const [currentAgence, setCurrentAgence] = useState(null);
             // TypeAgence: radioValue,
             TypeJournal: typeJournal,
             AutresCriteres: checkboxValues,
-            Currency:devise,
+            Currency: devise,
             // AgenceFrom: AgenceFrom,
             UserName: UserName,
             // MonnaieDonnee: MonnaieDonnee,
@@ -112,12 +111,12 @@ const [currentAgence, setCurrentAgence] = useState(null);
         if (res.data.status == 1) {
             setloading(false);
             setGetData(res.data.data);
-        setTot({
-            totalDebit: res.data.totalDebit,
-            totalCredit: res.data.totalCredit
-        });
+            setTot({
+                totalDebit: res.data.totalDebit,
+                totalCredit: res.data.totalCredit,
+            });
 
-        console.log(res.data.data);
+            console.log(res.data.data);
             //console.log(getTot.totCDF.TotalDebitfc);
         } else {
             setloading(false);
@@ -269,16 +268,16 @@ const [currentAgence, setCurrentAgence] = useState(null);
         return parts.join(".");
     }
 
-
- const getAgenceNom = () => {
-    if (!userAgences || userAgences.length === 0) return "Agence non définie";
-    if (agenceFilter === 'current') {
-        return "AGENCE DE " + (currentAgence?.nom_agence || "Non définie");
-    }
-    if (agenceFilter === 'all') return "TOUTES AGENCES";
-    const agence = userAgences.find(a => a.id == agenceFilter);
-    return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
-};
+    const getAgenceNom = () => {
+        if (!userAgences || userAgences.length === 0)
+            return "Agence non définie";
+        if (agenceFilter === "current") {
+            return "AGENCE DE " + (currentAgence?.nom_agence || "Non définie");
+        }
+        if (agenceFilter === "all") return "TOUTES AGENCES";
+        const agence = userAgences.find((a) => a.id == agenceFilter);
+        return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
+    };
     let compteur = 1;
     let compteur2 = 1;
     return (
@@ -389,18 +388,16 @@ const [currentAgence, setCurrentAgence] = useState(null);
                                     </option>
                                 ))}
                             </select>
-                       
-    <select
-        className="modern-select w-100"
-        value={devise}
-        onChange={(e) => setDevise(e.target.value)}
-    >
-        <option value="ALL">Toutes</option>
-        <option value="CDF">CDF</option>
-        <option value="USD">USD</option>
-       
-    </select> 
-                          
+
+                            <select
+                                className="modern-select w-100"
+                                value={devise}
+                                onChange={(e) => setDevise(e.target.value)}
+                            >
+                                <option value="ALL">Toutes les devises</option>
+                                <option value="CDF">CDF</option>
+                                <option value="USD">USD</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -419,42 +416,84 @@ const [currentAgence, setCurrentAgence] = useState(null);
                         </div>
                         <div className="card-body pt-2">
                             <select
-    className="modern-select w-100 mb-3"
-    value={agenceFilter}
-    onChange={(e) => setAgenceFilter(e.target.value)}
-    disabled={!userAgences || userAgences.length <= 1}
->
-    <option value="current">
-        Agence courante ({currentAgence?.nom_agence || "Non définie"})
-    </option>
-    {userAgences && userAgences.length > 1 && (
-        <>
-            <option value="all">Toutes mes agences</option>
-            {userAgences.map((agence) => (
-                <option key={agence.id} value={agence.id}>
-                    {agence.code_agence} - {agence.nom_agence}
-                </option>
-            ))}
-        </>
-    )}
-</select>
+                                className="modern-select w-100 mb-3"
+                                value={agenceFilter}
+                                onChange={(e) =>
+                                    setAgenceFilter(e.target.value)
+                                }
+                                disabled={
+                                    !userAgences || userAgences.length <= 1
+                                }
+                            >
+                                <option value="current">
+                                    Agence courante (
+                                    {currentAgence?.nom_agence || "Non définie"}
+                                    )
+                                </option>
+                                {userAgences && userAgences.length > 1 && (
+                                    <>
+                                        <option value="all">
+                                            Toutes mes agences
+                                        </option>
+                                        {userAgences.map((agence) => (
+                                            <option
+                                                key={agence.id}
+                                                value={agence.id}
+                                            >
+                                                {agence.code_agence} -{" "}
+                                                {agence.nom_agence}
+                                            </option>
+                                        ))}
+                                    </>
+                                )}
+                            </select>
 
-
-    <select
-        className="modern-select w-100"
-        value={typeJournal}
-        onChange={(e) => setTypeJournal(e.target.value)}
-    >
-        <option value="ALL">Tous les journaux</option>
-        <option value="CHANGE">Journal des opérations de change</option>
-        <option value="REMBOURSEMENT">Journal des remboursements</option>
-        <option value="TRANSFERT">Journal des transferts</option>
-        <option value="CREDIT">Journal des crédits</option>
-        <option value="SUSPENS">Journal des Suspens</option>
-    </select>
-
-
-
+                            <select
+                                className="modern-select w-100"
+                                value={typeJournal}
+                                onChange={(e) => setTypeJournal(e.target.value)}
+                            >
+                                <option value="ALL">Tous les journaux</option>
+                                <option value="CHANGE">
+                                    Journal des opérations de change
+                                </option>
+                                <option value="REMBOURSEMENT">
+                                    Journal des remboursements
+                                </option>
+                                <option value="TRANSFERT">
+                                    Journal des transferts
+                                </option>
+                                <option value="CREDIT">
+                                    Journal des crédits
+                                </option>
+                                <option value="SUSPENS">
+                                    Journal des Suspens
+                                </option>
+                                <option value="SUSPENS">
+                                    Journal des Suspens
+                                </option>
+                                <option value="CAISSE">
+                                    Journal des caisses
+                                </option>
+                                <option value="TRESORERIE">
+                                    Journal de Trésorerie
+                                </option>
+                                <option value="COMPTABILITE">
+                                    Journal de Comptabilité
+                                </option>
+                                <option value="ANNULATION">
+                                    Journal des annulations
+                                </option>
+                                <option value="AMMORTISSEMENT">
+                                    Journal des ammortissements
+                                </option>
+                                <option value="PAIEMENT">
+                                    Journal des paiment en masse
+                                </option>
+                                <option value="AUXILIAIRE">
+                                    Journal auxiliaire des opérations
+                                </option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -493,140 +532,222 @@ const [currentAgence, setCurrentAgence] = useState(null);
                 </div>
             </div>
 
-          {/* Tableau des résultats */}
-{getData && getData.length > 0 ? (
-    <div className="card border-0 shadow-sm rounded-3 mb-4">
-        <div className="card-body p-4">
+            {/* Tableau des résultats */}
+            {getData && getData.length > 0 ? (
+                <div className="card border-0 shadow-sm rounded-3 mb-4">
+                    <div className="card-body p-4">
+                        <div id="content-to-download-journal">
+                            {/* HEADER */}
+                            <div className="text-center mb-3">
+                                <EnteteRapport />
+                            </div>
 
-            <div id="content-to-download-journal">
+                            <div className="text-center mb-4">
+                                <h4
+                                    style={{
+                                        background: "#1a2632",
+                                        padding: "12px",
+                                        color: "#fff",
+                                        borderRadius: "8px",
+                                        display: "inline-block",
+                                        borderLeft: "5px solid #20c997",
+                                    }}
+                                >
+                                    JOURNAL DES OPÉRATIONS {getAgenceNom()}
+                                    <br />
+                                    <small style={{ fontSize: "14px" }}>
+                                        Du{" "}
+                                        {dateParser(
+                                            dateDebut || getdefaultDateDebut,
+                                        )}
+                                        au{" "}
+                                        {dateParser(
+                                            dateFin || getdefaultDateFin,
+                                        )}
+                                    </small>
+                                </h4>
+                            </div>
 
-                {/* HEADER */}
-                <div className="text-center mb-3">
-                    <EnteteRapport />
-                </div>
+                            {/* TABLE */}
+                            <div className="table-responsive">
+                                <table className="table table-bordered table-striped table-sm">
+                                    <thead
+                                        style={{
+                                            backgroundColor: "#1a2632",
+                                            color: "white",
+                                        }}
+                                    >
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Réf</th>
+                                            <th>Type journal</th>
+                                            <th>Compte</th>
+                                            <th>Libellé</th>
+                                            <th className="text-end">Débit</th>
+                                            <th className="text-end">Crédit</th>
+                                        </tr>
+                                    </thead>
 
-                <div className="text-center mb-4">
-                    <h4 style={{
-                        background: "#1a2632",
-                        padding: "12px",
-                        color: "#fff",
-                        borderRadius: "8px",
-                        display: "inline-block",
-                        borderLeft: "5px solid #20c997",
-                    }}>
-                        JOURNAL DES OPÉRATIONS {getAgenceNom()}
-                        <br />
-                        <small style={{ fontSize: "14px" }}>
-                            Du {dateParser(dateDebut || getdefaultDateDebut)}
-                            au {dateParser(dateFin || getdefaultDateFin)}
-                        </small>
-                    </h4>
-                </div>
+                                    <tbody>
+                                        {getData.map((op, idx) => (
+                                            <>
+                                                {/* HEADER OPERATION */}
+                                                <tr
+                                                    key={idx}
+                                                    style={{
+                                                        backgroundColor:
+                                                            op.isBalanced
+                                                                ? "#e6f2f9"
+                                                                : "#f8d7da",
+                                                        color: op.isBalanced
+                                                            ? "inherit"
+                                                            : "#721c24",
+                                                        fontWeight: "bold",
+                                                    }}
+                                                >
+                                                    <td
+                                                        colSpan="7"
+                                                        className="fw-bold"
+                                                        style={{
+                                                            border: "0px",
+                                                        }}
+                                                    >
+                                                        {op.NumTransaction} —{" "}
+                                                        {op.RefJournal} —{" "}
+                                                        {dateParser(
+                                                            op.DateTransaction,
+                                                        )}
+                                                    </td>
+                                                </tr>
 
-                {/* TABLE */}
-                <div className="table-responsive">
-                    <table className="table table-bordered table-striped table-sm">
+                                                {/* LIGNES */}
+                                                {op.lignes.map((l, i) => (
+                                                    <tr key={i}>
+                                                        <td
+                                                            style={{
+                                                                border: "0px",
+                                                            }}
+                                                        ></td>
+                                                        <td
+                                                            style={{
+                                                                border: "0px",
+                                                            }}
+                                                        ></td>
+                                                        <td
+                                                            style={{
+                                                                border: "0px",
+                                                            }}
+                                                        >
+                                                            {op.TypeJournal}
+                                                        </td>
+                                                        <td
+                                                            style={{
+                                                                border: "0px",
+                                                            }}
+                                                        >
+                                                            {l.Compte}
+                                                            <br />
+                                                            <small className="text-muted">
+                                                                {l.NomCompte}
+                                                            </small>
+                                                        </td>
+                                                        <td>{op.Libelle}</td>
+                                                        <td
+                                                            className="text-end text-danger"
+                                                            style={{
+                                                                border: "0px",
+                                                            }}
+                                                        >
+                                                            {numberWithSpaces(
+                                                                l.Debit,
+                                                            )}
+                                                        </td>
+                                                        <td
+                                                            className="text-end text-success"
+                                                            style={{
+                                                                border: "0px",
+                                                            }}
+                                                        >
+                                                            {numberWithSpaces(
+                                                                l.Credit,
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </>
+                                        ))}
 
-                        <thead style={{ backgroundColor: "#1a2632", color: "white" }}>
-                            <tr>
-                                <th>Date</th>
-                                <th>Réf</th>
-                                <th>Type journal</th>
-                                <th>Compte</th>
-                                <th>Libellé</th>
-                                <th className="text-end">Débit</th>
-                                <th className="text-end">Crédit</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                            {getData.map((op, idx) => (
-                                <>
-
-                                    {/* HEADER OPERATION */}
-                                    <tr key={idx} style={{
-    backgroundColor: op.isBalanced ? "#e6f2f9" : "#f8d7da",
-    color: op.isBalanced ? "inherit" : "#721c24",
-    fontWeight: "bold"
-}}>
-                                        <td colSpan="7" className="fw-bold" style={{ border:"0px" }}>
-                                            {op.NumTransaction} — {op.TypeJournal} — {dateParser(op.DateTransaction)}
-                                        </td>
-                                    </tr>
-
-                                    {/* LIGNES */}
-                                    {op.lignes.map((l, i) => (
-                                        <tr key={i}>
-                                            <td style={{ border:"0px" }}></td>
-                                            <td style={{ border:"0px" }}></td>
-                                            <td style={{ border:"0px" }}>{op.TypeJournal}</td>
-                                            <td style={{ border:"0px" }}>
-                                                {l.Compte}
-                                                <br />
-                                                <small className="text-muted">{l.NomCompte}</small>
+                                        {/* TOTAL */}
+                                        <tr
+                                            style={{
+                                                backgroundColor: "#20c997",
+                                                color: "white",
+                                            }}
+                                        >
+                                            <td
+                                                colSpan="5"
+                                                className="text-end fw-bold"
+                                            >
+                                                TOTAL
                                             </td>
-                                            <td>{op.Libelle}</td>
-                                            <td className="text-end text-danger" style={{ border:"0px" }}>
-                                                {numberWithSpaces(l.Debit)}
+                                            <td className="text-end">
+                                                {numberWithSpaces(
+                                                    tot?.totalDebit?.toFixed(2),
+                                                )}
                                             </td>
-                                            <td className="text-end text-success" style={{ border:"0px" }}>
-                                                {numberWithSpaces(l.Credit)}
+                                            <td className="text-end">
+                                                {numberWithSpaces(
+                                                    tot?.totalCredit?.toFixed(
+                                                        2,
+                                                    ),
+                                                )}
                                             </td>
                                         </tr>
-                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
 
-                                </>
-                            ))}
+                        {/* EXPORT */}
+                        <div className="d-flex justify-content-end gap-2 mt-4">
+                            <button
+                                onClick={() =>
+                                    exportTableData(
+                                        "content-to-download-journal",
+                                    )
+                                }
+                                className="btn"
+                                style={{
+                                    background: "#28a745",
+                                    color: "white",
+                                    borderRadius: "8px",
+                                }}
+                            >
+                                Exporter en Excel
+                            </button>
 
-                            {/* TOTAL */}
-                            <tr style={{ backgroundColor: "#20c997", color: "white" }}>
-                                <td colSpan="5" className="text-end fw-bold">
-                                    TOTAL
-                                </td>
-                                <td className="text-end">
-                                    {numberWithSpaces(tot?.totalDebit?.toFixed(2))}
-                                </td>
-                                <td className="text-end">
-                                    {numberWithSpaces(tot?.totalCredit?.toFixed(2))}
-                                </td>
-                            </tr>
-
-                        </tbody>
-                    </table>
+                            <button
+                                onClick={exportToPDF}
+                                className="btn"
+                                style={{
+                                    background: "#dc3545",
+                                    color: "white",
+                                    borderRadius: "8px",
+                                }}
+                            >
+                                Exporter en PDF
+                            </button>
+                        </div>
+                    </div>
                 </div>
-
-            </div>
-
-            {/* EXPORT */}
-            <div className="d-flex justify-content-end gap-2 mt-4">
-                <button
-                    onClick={() => exportTableData("content-to-download-journal")}
-                    className="btn"
-                    style={{ background: "#28a745", color: "white", borderRadius: "8px" }}
-                >
-                    Exporter en Excel
-                </button>
-
-                <button
-                    onClick={exportToPDF}
-                    className="btn"
-                    style={{ background: "#dc3545", color: "white", borderRadius: "8px" }}
-                >
-                    Exporter en PDF
-                </button>
-            </div>
-
-        </div>
-    </div>
-) : (
-    <div className="text-center py-5">
-        <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
-        <p className="text-muted">
-            Aucune opération trouvée pour les critères sélectionnés.
-        </p>
-    </div>
-)}
+            ) : (
+                <div className="text-center py-5">
+                    <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
+                    <p className="text-muted">
+                        Aucune opération trouvée pour les critères sélectionnés.
+                    </p>
+                </div>
+            )}
 
             <div style={{ height: "30px" }}></div>
 

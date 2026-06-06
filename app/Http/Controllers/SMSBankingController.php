@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\JournalType;
 use Exception;
 use App\Models\Comptes;
 use App\Models\CompteurTransaction;
@@ -487,6 +488,7 @@ public function prelevementFraisSMS(Request $request)
             // Débit du compte client
             Transactions::create([
                 'NumTransaction'   => $NumTransaction,
+                "RefJournal" => JournalType::AUXILIAIRE,
                 'DateTransaction'  => $dateSysteme,
                 'DateSaisie'       => $dateSysteme,
                 'Taux'             => $tauxFc,
@@ -515,6 +517,7 @@ public function prelevementFraisSMS(Request $request)
 
             Transactions::create([
                 'NumTransaction'   => $NumTransaction, // Même numéro pour lier les deux écritures
+                "RefJournal" => JournalType::AUXILIAIRE,
                 'DateTransaction'  => $dateSysteme,
                 'DateSaisie'       => $dateSysteme,
                 'Taux'             => $tauxFc,

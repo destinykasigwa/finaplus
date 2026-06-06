@@ -35,6 +35,7 @@ use App\Services\AfricaTalkingService;
 use Illuminate\Support\Facades\Validator;
 use App\CustomTasks\ClotureJourneeCopy;
 use App\Models\Agences;
+use App\Constants\JournalType;
 
 class TransactionsController extends Controller
 {
@@ -467,379 +468,6 @@ class TransactionsController extends Controller
     }
     //PERMET D'EFFECTUER UN DEPOT
 
-    // public function DepositEspece(Request $request)
-    // {
-    //     $validator = validator::make($request->all(), [
-    //         'devise' => 'required',
-    //         'motifDepot' => 'required',
-    //         'DeposantName' => 'required',
-    //         // 'Montant' => 'required',
-    //     ]);
-    //     if ($validator->fails()) {
-    //         return response()->json([
-    //             'validate_error' => $validator->messages()
-    //         ]);
-    //     }
-    //     try {
-    //         if ($request->devise == "CDF") {
-
-    //             //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
-    //             $dataCompte = Comptes::where(function ($query) use ($request) {
-    //                 $query->where("NumAdherant", $request->NumAbrege)
-    //                     ->orWhere("NumCompte", $request->NumAbrege);
-    //             })
-    //                 ->where("CodeMonnaie", 2)
-    //                 ->first();
-
-    //             $NumCompte = $request->getNumCompte;
-    //             if ($NumCompte) {
-
-    //                 $numCompteCaissierCDF = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "2")->first();
-    //                 $CompteCaissierCDF = $numCompteCaissierCDF->NumCompte;
-    //                 // dd($numCompteCaissierCDF);
-    //                 $codeAgenceCaissier = $numCompteCaissierCDF->CodeAgence;
-
-    //                 $NomCaissier = $numCompteCaissierCDF->NomCompte;
-    //                 $dataSystem = TauxEtDateSystem::latest()->first();
-
-    //                 //CHECK THERE IS A COMMISSION 
-
-    //                 if (isset($request->Commission) and $request->Commission > 0) {
-    //                     CompteurTransaction::create([
-    //                         'fakevalue' => "0000",
-    //                     ]);
-    //                     $numOperation = [];
-    //                     $numOperation = CompteurTransaction::latest()->first();
-    //                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-    //                     //CREDITE LE COMPTE COMMISION CDF
-    //                     $compteCommissionCDF = "7270000000202";
-    //                     Transactions::create([
-    //                         "NumTransaction" => $NumTransaction,
-    //                         "DateTransaction" => $dataSystem->DateSystem,
-    //                         "DateSaisie" => $dataSystem->DateSystem,
-    //                         "Taux" => 1,
-    //                         "TypeTransaction" => "C",
-    //                         "CodeMonnaie" => 2,
-    //                         "CodeAgence" => $codeAgenceCaissier,
-    //                         "NumDossier" => "DOS0" . $numOperation->id,
-    //                         "NumDemande" => "V0" . $numOperation->id,
-    //                         "NumCompte" => $compteCommissionCDF,
-    //                         "NumComptecp" => $NumCompte,
-    //                         "Credit"  => $request->Commission,
-    //                         "Creditusd"  => $request->Commission / $dataSystem->TauxEnFc,
-    //                         "Creditfc" => $request->Commission,
-    //                         "NomUtilisateur" => Auth::user()->name,
-    //                         "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $NumCompte . " par le caissier " . Auth::user()->name,
-    //                         "refCompteMembre" => $compteCommissionCDF,
-    //                     ]);
-
-    //                     //DEBITE LE COMPTE DU MEMBRE DE LA COMMISSION
-    //                     Transactions::create([
-    //                         "NumTransaction" => $NumTransaction,
-    //                         "DateTransaction" => $dataSystem->DateSystem,
-    //                         "DateSaisie" => $dataSystem->DateSystem,
-    //                         "Taux" => 1,
-    //                         "TypeTransaction" => "D",
-    //                         "CodeMonnaie" => 2,
-    //                         "CodeAgence" => $codeAgenceCaissier,
-    //                         "NumDossier" => "DOS0" . $numOperation->id,
-    //                         "NumDemande" => "V0" . $numOperation->id,
-    //                         "NumCompte" => $NumCompte,
-    //                         "NumComptecp" =>  $compteCommissionCDF,
-    //                         "Debit"  => $request->Commission,
-    //                         "Debitusd"  => $request->Commission / $dataSystem->TauxEnFc,
-    //                         "Debitfc" => $request->Commission,
-    //                         "NomUtilisateur" => Auth::user()->name,
-    //                         "Libelle" => "PRISE COMMISSION",
-    //                     ]);
-    //                     // Transactions::recalculateBalances($dataCompte->NumCompte, $dataSystem->DateSystem);
-    //                     //PERMET DE DIPLIQUE LA LIGNE POUR METTRE A JOUR Résultat Net de l'exercice
-    //                     // $this->CheckTransactionStatus(871);
-    //                     if ($request->Montant == 0) {
-    //                         return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
-    //                     }
-    //                 }
-    //                 if ($request->Montant > 0) {
-    //                     CompteurTransaction::create([
-    //                         'fakevalue' => "0000",
-    //                     ]);
-    //                     $numOperation = [];
-    //                     $numOperation = CompteurTransaction::latest()->first();
-    //                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-    //                     //DEBITE LE COMPTE DU CAISSIER
-    //                     Transactions::create([
-    //                         "NumTransaction" => $NumTransaction,
-    //                         "DateTransaction" => $dataSystem->DateSystem,
-    //                         "DateSaisie" => $dataSystem->DateSystem,
-    //                         "TypeTransaction" => "D",
-    //                         "CodeMonnaie" => 2,
-    //                         "CodeAgence" => $codeAgenceCaissier,
-    //                         "NumDossier" => "DOS0" . $numOperation->id,
-    //                         "NumDemande" => "V0" . $numOperation->id,
-    //                         "NumCompte" => $CompteCaissierCDF,
-    //                         "NumComptecp" => $NumCompte,
-    //                         "Operant" => $NomCaissier,
-    //                         "Debit"  => $request->Montant,
-    //                         "Debitusd"  => $request->Montant / $dataSystem->TauxEnFc,
-    //                         "Debitfc" => $request->Montant,
-    //                         "NomUtilisateur" => Auth::user()->name,
-    //                         "Libelle" => $request->motifDepot,
-
-    //                     ]);
-    //                     //CREDITE LE COMPTE DU CLIENT
-    //                     Transactions::create([
-    //                         "NumTransaction" => $NumTransaction,
-    //                         "DateTransaction" => $dataSystem->DateSystem,
-    //                         "DateSaisie" => $dataSystem->DateSystem,
-    //                         "TypeTransaction" => "C",
-    //                         "CodeMonnaie" => 2,
-    //                         "CodeAgence" => $dataCompte->CodeAgence,
-    //                         "NumDossier" => "DOS0" . $numOperation->id,
-    //                         "NumDemande" => "V0" . $numOperation->id,
-    //                         "NumCompte" => $NumCompte,
-    //                         "NumComptecp" => $CompteCaissierCDF,
-    //                         "Operant" => $request->DeposantName,
-    //                         "Credit"  => $request->Montant,
-    //                         "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
-    //                         "Creditfc" => $request->Montant,
-    //                         "NomUtilisateur" => Auth::user()->name,
-    //                         "Libelle" => $request->motifDepot,
-    //                     ]);
-
-    //                     //CREDIT  LE COMPTE COMPTABLE 33 EPARGNE
-    //                     // $Ecompte_courant_cdf = EpargneAdhesionModel::first()->Ecompte_courant_cdf;
-    //                     // Transactions::create([
-    //                     //     "NumTransaction" => $NumTransaction,
-    //                     //     "DateTransaction" => $dataSystem->DateSystem,
-    //                     //     "DateSaisie" => $dataSystem->DateSystem,
-    //                     //     "TypeTransaction" => "C",
-    //                     //     "CodeMonnaie" => 2,
-    //                     //     "CodeAgence" => $codeAgenceCaissier,
-    //                     //     "NumDossier" => "DOS0" . $numOperation->id,
-    //                     //     "NumDemande" => "V0" . $numOperation->id,
-    //                     //     "NumCompte" => $Ecompte_courant_cdf,
-    //                     //     "NumComptecp" => $dataCompte->NumCompte,
-    //                     //     "Credit"  => $request->Montant,
-    //                     //     "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
-    //                     //     "Creditfc" => $request->Montant,
-    //                     //     "NomUtilisateur" => Auth::user()->name,
-    //                     //     "Libelle" => $request->motifDepot,
-    //                     // ]);
-
-    //                     //RENSEIGNE LE BILLETAGE
-    //                     $lastInsertedId = Transactions::latest()->first();
-    //                     //COMPLETE LE BILLETAGE
-
-    //                     BilletageCDF::create([
-    //                         "refOperation" => $lastInsertedId->NumTransaction,
-    //                         "NumCompte" => $NumCompte,
-    //                         "NomMembre" => $dataCompte->NomCompte,
-    //                         "NumAbrege" => $request->NumAbrege,
-    //                         "Beneficiaire" => $request->DeposantName,
-    //                         "Motif" => $request->motifDepot,
-    //                         "Devise" => $request->devise,
-    //                         "vightMilleFranc" => $request->vightMille,
-    //                         "dixMilleFranc" => $request->dixMille,
-    //                         "cinqMilleFranc" => $request->cinqMille,
-    //                         "milleFranc" => $request->milleFranc,
-    //                         "cinqCentFranc" => $request->cinqCentFr,
-    //                         "deuxCentFranc" => $request->deuxCentFranc,
-    //                         "centFranc" => $request->centFranc,
-    //                         "montantEntre" => $request->Montant,
-    //                         "cinquanteFanc" => $request->cinquanteFanc,
-    //                         "NomUtilisateur" => Auth::user()->name,
-    //                         "DateTransaction" => $dataSystem->DateSystem
-    //                     ]);
-
-    //                     //SEND NOTIFICATION
-    //                     $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $request->DeposantName);
-    //                     return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
-    //                 } else {
-    //                     return response()->json([
-    //                         'validate_error' => $validator->messages()
-    //                     ]);
-    //                 }
-    //             } else {
-    //                 return response()->json(["status" => 0, "msg" => "Le compte en franc pour ce client n'est pas activé" . $request->searched_account]);
-    //             }
-    //         } else if ($request->devise == "USD") {
-
-    //             //RECUPERE LE COMPTE DU CAISSIER CONCERNE USD
-    //             $dataCompte = Comptes::where(function ($query) use ($request) {
-    //                 $query->where("NumAdherant", $request->NumAbrege)
-    //                     ->orWhere("NumCompte", $request->NumAbrege);
-    //             })
-    //                 ->where("CodeMonnaie", 1)
-    //                 ->first();
-    //             $NumCompte = $request->getNumCompte;
-    //             if ($NumCompte) {
-    //                 $numCompteCaissierUSD = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "1")->first();
-    //                 $CompteCaissierUSD = $numCompteCaissierUSD->NumCompte;
-    //                 $codeAgenceCaissier = $numCompteCaissierUSD->CodeAgence;
-    //                 $NomCaissier = $numCompteCaissierUSD->NomCompte;
-    //                 $dataSystem = TauxEtDateSystem::latest()->first();
-
-
-    //                 //CHECK THERE IS A COMMISSION 
-
-    //                 if (isset($request->Commission) and $request->Commission > 0) {
-    //                     CompteurTransaction::create([
-    //                         'fakevalue' => "0000",
-    //                     ]);
-    //                     $numOperation = [];
-    //                     $numOperation = CompteurTransaction::latest()->first();
-    //                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-    //                     //CREDITE LE COMPTE COMMISION USD
-    //                     $compteCommissionUSD = "7270000000201";
-    //                     Transactions::create([
-    //                         "NumTransaction" => $NumTransaction,
-    //                         "DateTransaction" => $dataSystem->DateSystem,
-    //                         "DateSaisie" => $dataSystem->DateSystem,
-    //                         "Taux" => 1,
-    //                         "TypeTransaction" => "C",
-    //                         "CodeMonnaie" => 1,
-    //                         "CodeAgence" => "20",
-    //                         "NumDossier" => "DOS00" . $numOperation->id,
-    //                         "NumDemande" => "V00" . $numOperation->id,
-    //                         "NumCompte" => $compteCommissionUSD,
-    //                         "NumComptecp" => $NumCompte,
-    //                         //   "Operant" => "COMPTE COMMISSION CDF",
-    //                         "Credit"  => $request->Commission,
-    //                         "Creditusd"  => $request->Commission,
-    //                         "Creditfc" => $request->Commission * $dataSystem->TauxEnFc,
-    //                         "NomUtilisateur" => Auth::user()->name,
-    //                         "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $dataCompte->NumCompte . " par le caissier " . Auth::user()->name,
-    //                         "refCompteMembre" => $compteCommissionUSD
-    //                     ]);
-
-    //                     //DEBITE LE COMPTE DU MEMBRE DE LA COMMISSION
-    //                     Transactions::create([
-    //                         "NumTransaction" => $NumTransaction,
-    //                         "DateTransaction" => $dataSystem->DateSystem,
-    //                         "DateSaisie" => $dataSystem->DateSystem,
-    //                         "Taux" => 1,
-    //                         "TypeTransaction" => "D",
-    //                         "CodeMonnaie" => 1,
-    //                         "CodeAgence" => "20",
-    //                         "NumDossier" => "DOS00" . $numOperation->id,
-    //                         "NumDemande" => "V00" . $numOperation->id,
-    //                         "NumCompte" => $NumCompte,
-    //                         "NumComptecp" =>  $compteCommissionUSD,
-    //                         "Debit"  => $request->Commission,
-    //                         "Debitusd"  => $request->Commission,
-    //                         "Debitfc" => $request->Commission * $dataSystem->TauxEnFc,
-    //                         "NomUtilisateur" => Auth::user()->name,
-    //                         "Libelle" => "PRISE COMMISSION",
-    //                     ]);
-    //                 }
-    //                 if ($request->Montant > 0) {
-    //                     CompteurTransaction::create([
-    //                         'fakevalue' => "0000",
-    //                     ]);
-    //                     $numOperation = [];
-    //                     $numOperation = CompteurTransaction::latest()->first();
-    //                     $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-    //                     //CREDITE LE COMPTE DU CLIENT
-    //                     Transactions::create([
-    //                         "NumTransaction" => $NumTransaction,
-    //                         "DateTransaction" => $dataSystem->DateSystem,
-    //                         "DateSaisie" => $dataSystem->DateSystem,
-    //                         "TypeTransaction" => "C",
-    //                         "CodeMonnaie" => 1,
-    //                         "CodeAgence" => $dataCompte->CodeAgence,
-    //                         "NumDossier" => "DOS0" . $numOperation->id,
-    //                         "NumDemande" => "V0" . $numOperation->id,
-    //                         "NumCompte" => $NumCompte,
-    //                         "NumComptecp" => $CompteCaissierUSD,
-    //                         "Operant" => $request->DeposantName,
-    //                         "Credit"  => $request->Montant,
-    //                         "Creditusd"  => $request->Montant,
-    //                         "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
-    //                         "NomUtilisateur" => Auth::user()->name,
-    //                         "Libelle" => $request->motifDepot,
-    //                     ]);
-    //                     //DEBITE LE COMPTE DU CAISSIER
-    //                     Transactions::create([
-    //                         "NumTransaction" => $NumTransaction,
-    //                         "DateTransaction" => $dataSystem->DateSystem,
-    //                         "DateSaisie" => $dataSystem->DateSystem,
-    //                         "TypeTransaction" => "D",
-    //                         "CodeMonnaie" => 1,
-    //                         "CodeAgence" => $codeAgenceCaissier,
-    //                         "NumDossier" => "DOS0" . $numOperation->id,
-    //                         "NumDemande" => "V0" . $numOperation->id,
-    //                         "NumCompte" => $CompteCaissierUSD,
-    //                         "NumComptecp" => $NumCompte,
-    //                         "Operant" => $NomCaissier,
-    //                         "Debit"  => $request->Montant,
-    //                         "Debitusd"  => $request->Montant,
-    //                         "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
-    //                         "NomUtilisateur" => Auth::user()->name,
-    //                         "Libelle" => $request->motifDepot,
-    //                     ]);
-    //                     //CREDIT  LE COMPTE COMPTABLE 33 EPARGNE
-    //                     // $Ecompte_courant_usd = EpargneAdhesionModel::first()->Ecompte_courant_usd;
-    //                     // Transactions::create([
-    //                     //     "NumTransaction" => $NumTransaction,
-    //                     //     "DateTransaction" => $dataSystem->DateSystem,
-    //                     //     "DateSaisie" => $dataSystem->DateSystem,
-    //                     //     "TypeTransaction" => "C",
-    //                     //     "CodeMonnaie" => 1,
-    //                     //     "CodeAgence" => $codeAgenceCaissier,
-    //                     //     "NumDossier" => "DOS0" . $numOperation->id,
-    //                     //     "NumDemande" => "V0" . $numOperation->id,
-    //                     //     "NumCompte" => $Ecompte_courant_usd,
-    //                     //     "NumComptecp" => $dataCompte->NumCompte,
-    //                     //     "Credit"  => $request->Montant,
-    //                     //     "Creditusd"  => $request->Montant,
-    //                     //     "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
-    //                     //     "NomUtilisateur" => Auth::user()->name,
-    //                     //     "Libelle" => $request->motifDepot,
-    //                     // ]);
-
-    //                     //RECUPERE LE DERNIER ID DU L'OPERATION INSEREE
-    //                     $lastInsertedId = Transactions::latest()->first();
-    //                     //RENSEIGNE LE BILLETAGE
-
-    //                     BilletageUSD::create([
-    //                         "refOperation" => $lastInsertedId->NumTransaction,
-    //                         "NumCompte" => $NumCompte,
-    //                         "NomMembre" => $dataCompte->NomCompte,
-    //                         "NumAbrege" => $request->NumAbrege,
-    //                         "Beneficiaire" => $request->DeposantName,
-    //                         "Motif" => $request->motifDepot,
-    //                         "Devise" => $request->devise,
-    //                         "centDollars" => $request->hundred,
-    //                         "cinquanteDollars" => $request->fitfty,
-    //                         "vightDollars" => $request->twenty,
-    //                         "dixDollars" => $request->ten,
-    //                         "cinqDollars" => $request->five,
-    //                         "unDollars" => $request->oneDollar,
-    //                         "montantEntre" => $request->Montant,
-    //                         "NomUtilisateur" => Auth::user()->name,
-    //                         "DateTransaction" => $dataSystem->DateSystem
-    //                     ]);
-
-    //                     //SEND NOTIFICATION
-
-    //                     $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $request->DeposantName);
-    //                     return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
-    //                 } else {
-    //                     return response()->json([
-    //                         'validate_error' => $validator->messages()
-    //                     ]);
-    //                 }
-    //             } else {
-    //                 return response()->json(["status" => 0, "msg" => "Le compte en franc pour ce client n'est pas activé" . $request->searched_account]);
-    //             }
-    //         }
-    //     } catch (\Exception $e) {
-    //         // Attraper les exceptions liées à la connexion ou autres erreurs
-
-    //         return response()->json(["status" => 0, "msg" => "Erreur de connexion. Veuillez patienter et réessayer.", "error" => $e->getMessage()]);
-    //     }
-    // }
-
 
     public function DepositEspece(Request $request)
     {
@@ -902,6 +530,7 @@ class TransactionsController extends Controller
                     //DEBITE LE COMPTE DU MEMBRE DE LA COMMISSION
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::CAISSE,
                         "DateTransaction" => $dataSystem->DateSystem,
                         "DateSaisie" => $dataSystem->DateSystem,
                         "Taux" => 1,
@@ -921,6 +550,7 @@ class TransactionsController extends Controller
 
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::CAISSE,
                         "DateTransaction" => $dataSystem->DateSystem,
                         "DateSaisie" => $dataSystem->DateSystem,
                         "Taux" => 1,
@@ -958,6 +588,7 @@ class TransactionsController extends Controller
                         // Débit caisse
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CAISSE,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "D",
@@ -977,6 +608,7 @@ class TransactionsController extends Controller
                         // Crédit client
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CAISSE,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "C",
@@ -1010,6 +642,7 @@ class TransactionsController extends Controller
                         // 1) Débit caisse (agence caissier) ↔ Crédit liaison caissier
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CAISSE,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "D",
@@ -1029,6 +662,7 @@ class TransactionsController extends Controller
                         ]);
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CAISSE,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "C",
@@ -1049,6 +683,7 @@ class TransactionsController extends Controller
                         // 2) Débit liaison client ↔ Crédit compte client
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CAISSE,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "D",
@@ -1067,6 +702,7 @@ class TransactionsController extends Controller
                         ]);
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CAISSE,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "C",
@@ -1166,6 +802,7 @@ class TransactionsController extends Controller
                         // Même agence : écritures simples
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CAISSE,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "C",
@@ -1184,6 +821,7 @@ class TransactionsController extends Controller
                         ]);
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CAISSE,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "D",
@@ -1216,6 +854,7 @@ class TransactionsController extends Controller
                         // Débit caisse ↔ Crédit liaison caissier
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CAISSE,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "D",
@@ -1235,6 +874,7 @@ class TransactionsController extends Controller
                         ]);
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CAISSE,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "C",
@@ -1255,6 +895,7 @@ class TransactionsController extends Controller
                         // Débit liaison client ↔ Crédit client
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CAISSE,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "D",
@@ -1273,6 +914,7 @@ class TransactionsController extends Controller
                         ]);
                         Transactions::create([
                             "NumTransaction" => $NumTransaction,
+                            "RefJournal" => JournalType::CAISSE,
                             "DateTransaction" => $dataSystem->DateSystem,
                             "DateSaisie" => $dataSystem->DateSystem,
                             "TypeTransaction" => "C",
@@ -1658,6 +1300,7 @@ class TransactionsController extends Controller
                             $compteCommissionCDF = "7270000000202";
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionComm,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "Taux" => 1,
@@ -1677,6 +1320,7 @@ class TransactionsController extends Controller
                             ]);
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionComm,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "Taux" => 1,
@@ -1708,6 +1352,7 @@ class TransactionsController extends Controller
                             // Débit client
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "D",
@@ -1727,6 +1372,7 @@ class TransactionsController extends Controller
                             // Crédit caisse
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "C",
@@ -1759,6 +1405,7 @@ class TransactionsController extends Controller
                             // 1) Dans l'agence du caissier : débit liaison ↔ crédit caisse
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "C",
@@ -1777,6 +1424,7 @@ class TransactionsController extends Controller
                             ]);
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "D",
@@ -1797,6 +1445,7 @@ class TransactionsController extends Controller
                             // 2) Dans l'agence du client : débit client ↔ crédit liaison client
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "D",
@@ -1816,6 +1465,7 @@ class TransactionsController extends Controller
                             ]);
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "C",
@@ -1956,6 +1606,7 @@ class TransactionsController extends Controller
                             $compteCommissionUSD = "7270000000201";
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionComm,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "Taux" => 1,
@@ -1975,6 +1626,7 @@ class TransactionsController extends Controller
                             ]);
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionComm,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "Taux" => 1,
@@ -2003,6 +1655,7 @@ class TransactionsController extends Controller
                             // Même agence : 2 écritures
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "D",
@@ -2021,6 +1674,7 @@ class TransactionsController extends Controller
                             ]);
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "C",
@@ -2053,6 +1707,7 @@ class TransactionsController extends Controller
                             // Agence caissier : crédit caisse, débit liaison
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "C",
@@ -2071,6 +1726,7 @@ class TransactionsController extends Controller
                             ]);
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "D",
@@ -2091,6 +1747,7 @@ class TransactionsController extends Controller
                             // Agence client : débit client, crédit liaison
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "D",
@@ -2110,6 +1767,7 @@ class TransactionsController extends Controller
                             ]);
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "C",
@@ -2175,179 +1833,6 @@ class TransactionsController extends Controller
 
     //GET DELESTAGE INFORMATION
 
-    // public function getDelestageInfo()
-    // {
-    //     $dataSystem = TauxEtDateSystem::latest()->first();
-
-    //     $billetageUSD = BilletageUSD::select(
-    //         DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollars"),
-    //         DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollars"),
-    //         DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollars"),
-    //         DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollars"),
-    //         DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollars"),
-    //         DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollars"),
-    //         DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD"),
-    //     )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dataSystem->DateSystem)
-    //         ->where("delested", "=", 0)
-    //         ->groupBy("NomUtilisateur")
-    //         ->get();
-
-    //     // $getCommissionUSD = BilletageUsd::select(
-    //     //     DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeCommissionUSD"),
-    //     // )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $date)
-    //     //     ->where("delested", "=", 0)
-    //     //     ->where("is_commision", "=", 1)
-    //     //     ->groupBy("NomUtilisateur")
-    //     //     ->first();
-
-
-    //     //RECUPERE LE BILLETAGE EN FRANC CONGOLAIS
-    //     $billetageCDF = BilletageCDF::select(
-    //         DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFranc"),
-    //         DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFranc"),
-    //         DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
-    //         DB::raw("SUM(milleFranc)-SUM(milleFrancSortie) as milleFranc"),
-    //         DB::raw("SUM(cinqCentFranc)-SUM(cinqCentFrancSortie) as cinqCentFranc"),
-    //         DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFranc"),
-    //         DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFranc"),
-    //         DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFanc"),
-    //         DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF"),
-    //     )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dataSystem->DateSystem)
-    //         ->where("delested", "=", 0)
-    //         ->groupBy("NomUtilisateur")
-    //         ->get();
-
-    //     //RECUPERE LA COMMISSION PRISE
-
-    //     // $getCommissionCDF = BilletageCdf::select(
-    //     //     DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeCommissionCDF"),
-    //     // )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $date)
-    //     //     ->where("delested", "=", 0)
-    //     //     ->where("is_commision", "=", 1)
-    //     //     ->groupBy("NomUtilisateur")
-    //     //     ->first();
-    //     return response()->json([
-    //         "status" => 1,
-    //         "billetageUSD" => $billetageUSD,
-    //         "billetageCDF" => $billetageCDF
-    //     ]);
-    // }
-
-
-    //     public function getDelestageInfo()
-    // {
-    //     $user = Auth::user();
-    //     $isSuperAdmin = ($user->role === 'SuperAdmin'); // adaptez selon votre champ (ex: $user->role == 'SuperAdmin')
-
-    //     $dataSystem = TauxEtDateSystem::latest()->first();
-
-    //     // Billetage USD
-    //     $billetageUSD = BilletageUSD::select(
-    //         DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollars"),
-    //         DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollars"),
-    //         DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollars"),
-    //         DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollars"),
-    //         DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollars"),
-    //         DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollars"),
-    //         DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD"),
-    //     )
-    //     ->where("DateTransaction", "=", $dataSystem->DateSystem)
-    //     ->where("delested", "=", 0);
-
-    //     // Si l'utilisateur n'est pas SuperAdmin, on filtre par son nom
-    //     if (!$isSuperAdmin) {
-    //         $billetageUSD->where("NomUtilisateur", "=", $user->name);
-    //     }
-
-    //     $billetageUSD = $billetageUSD->groupBy("NomUtilisateur")->get();
-
-    //     // Billetage CDF
-    //     $billetageCDF = BilletageCDF::select(
-    //         DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFranc"),
-    //         DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFranc"),
-    //         DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
-    //         DB::raw("SUM(milleFranc)-SUM(milleFrancSortie) as milleFranc"),
-    //         DB::raw("SUM(cinqCentFranc)-SUM(cinqCentFrancSortie) as cinqCentFranc"),
-    //         DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFranc"),
-    //         DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFranc"),
-    //         DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFanc"),
-    //         DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF"),
-    //     )
-    //     ->where("DateTransaction", "=", $dataSystem->DateSystem)
-    //     ->where("delested", "=", 0);
-
-    //     if (!$isSuperAdmin) {
-    //         $billetageCDF->where("NomUtilisateur", "=", $user->name);
-    //     }
-
-    //     $billetageCDF = $billetageCDF->groupBy("NomUtilisateur")->get();
-
-    //     return response()->json([
-    //         "status" => 1,
-    //         "billetageUSD" => $billetageUSD,
-    //         "billetageCDF" => $billetageCDF
-    //     ]);
-    // }
-
-    // public function getDelestageInfo(Request $request)
-    // {
-    //     $user = Auth::user();
-    //     $isSuperAdmin = ($user->role === 'SuperAdmin'); // adaptez selon votre champ
-
-    //     $dataSystem = TauxEtDateSystem::latest()->first();
-    //     $date = $request->input('date');
-    //     if (!$date) {
-    //         $dataSystem = TauxEtDateSystem::latest()->first();
-    //         $date = $dataSystem->DateSystem;
-    //     }
-    //     // Requête de base pour USD (sans filtre date)
-    //     $queryUSD = BilletageUSD::select(
-    //         'NomUtilisateur',
-    //         DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollars"),
-    //         DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollars"),
-    //         DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollars"),
-    //         DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollars"),
-    //         DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollars"),
-    //         DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollars"),
-    //         DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD"),
-    //     )
-    //     ->where("delested", "=", 0);
-
-    //     // Requête de base pour CDF
-    //     $queryCDF = BilletageCDF::select(
-    //         'NomUtilisateur',
-    //         DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFranc"),
-    //         DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFranc"),
-    //         DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
-    //         DB::raw("SUM(milleFranc)-SUM(milleFrancSortie) as milleFranc"),
-    //         DB::raw("SUM(cinqCentFranc)-SUM(cinqCentFrancSortie) as cinqCentFranc"),
-    //         DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFranc"),
-    //         DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFranc"),
-    //         DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFanc"),
-    //         DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF"),
-    //     )
-    //     ->where("delested", "=", 0);
-
-    //     if ($isSuperAdmin) {
-    //         // Admin : pas de filtre sur la date, ni sur le nom
-    //         // Il voit tous les billetages non délestés de tous les caissiers, toutes dates confondues
-    //     } else {
-    //         // Simple caissier : uniquement ses propres billetages du jour
-    //         $queryUSD->where("NomUtilisateur", "=", $user->name)
-    //                  ->where("DateTransaction", "=", $dataSystem->DateSystem);
-    //         $queryCDF->where("NomUtilisateur", "=", $user->name)
-    //                  ->where("DateTransaction", "=", $dataSystem->DateSystem);
-    //     }
-
-    //     $billetageUSD = $queryUSD->groupBy("NomUtilisateur")->get();
-    //     $billetageCDF = $queryCDF->groupBy("NomUtilisateur")->get();
-
-    //     return response()->json([
-    //         "status" => 1,
-    //         "billetageUSD" => $billetageUSD,
-    //         "billetageCDF" => $billetageCDF
-    //     ]);
-    // }
 
     public function getDelestageInfo(Request $request)
     {
@@ -2419,148 +1904,7 @@ class TransactionsController extends Controller
     }
 
     //VALIDATE DELESTAGE
-    // public function ValidateDelestage(Request $request)
-    // {
-    //     $currentAgence = session('current_agence');
-    //     $codeAgence = $currentAgence['code_agence'];
-
-    //      $user = Auth::user();
-    // $isSuperAdmin = ($user->role === 'SuperAdmin');
-    // $date = $request->input('date');
-    // if (!$date) {
-    //     $dataSystem = TauxEtDateSystem::latest()->first();
-    //     $date = $dataSystem->DateSystem;
-    // }
-
-    //     if (isset($request->devise)) {
-    //         if ($request->devise == "CDF") {
-    //             CompteurTransaction::create([
-    //                 'fakevalue' => "0000",
-    //             ]);
-    //             $numOperation = [];
-    //             $numOperation = CompteurTransaction::latest()->first();
-    //             $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-    //             $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
-    //             //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
-    //             $numCompteCaissierCDF = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "2")->where("CodeAgence", $codeAgence)->first();
-    //             $CompteCaissierCDF = $numCompteCaissierCDF->NumCompte;
-
-    //             //RECUPERE LE BILLETAGE EN FRANC CONGOLAIS
-    //             $billetageCDF = BilletageCdf::select(
-    //                 DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFranc"),
-    //                 DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFranc"),
-    //                 DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
-    //                 DB::raw("SUM(milleFranc)-SUM(milleFrancSortie) as milleFranc"),
-    //                 DB::raw("SUM(cinqCentFranc)-SUM(cinqCentFrancSortie) as cinqCentFranc"),
-    //                 DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFranc"),
-    //                 DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFranc"),
-    //                 DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFanc"),
-    //                 DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF"),
-    //             )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)
-    //                 ->where("delested", "=", 0)
-    //                 ->groupBy("NomUtilisateur")
-    //                 ->first();
-    //             if (!$billetageCDF) {
-    //                 return response()->json([
-    //                     "status" => 0,
-    //                     "msg" => "Le délestage est déjà effectué.",
-    //                 ]);
-    //             }
-    //             //RENSEINE LE DELESTAGE
-    //             BilletageCDF::where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)->update([
-    //                 "delested" => 1
-    //             ]);
-
-    //             Delestages::create([
-    //                 "Reference" => $NumTransaction,
-    //                 "code_agence" => $codeAgence,
-    //                 "NumCompteCaissier" => $CompteCaissierCDF,
-    //                 "vightMilleFranc" => $billetageCDF->vightMilleFranc,
-    //                 "dixMilleFranc" => $billetageCDF->dixMilleFranc,
-    //                 "cinqMilleFranc" => $billetageCDF->cinqMilleFranc,
-    //                 "milleFranc" => $billetageCDF->milleFranc,
-    //                 "cinqCentFranc" => $billetageCDF->cinqCentFranc,
-    //                 "deuxCentFranc" => $billetageCDF->deuxCentFranc,
-    //                 "centFranc" => $billetageCDF->centFranc,
-    //                 "cinquanteFanc" => $billetageCDF->cinquanteFanc,
-    //                 "montantCDF" => $billetageCDF->sommeMontantCDF,
-    //                 "NomUtilisateur" => Auth::user()->name,
-    //                 "NomDemandeur" => Auth::user()->name,
-    //                 "DateTransaction" => $dateSystem,
-    //                 "CodeMonnaie" => 2,
-    //             ]);
-    //             return response()->json([
-    //                 "status" => 1,
-    //                 "msg" => "Délestage effectuer avec succès",
-    //             ]);
-    //         } else if ($request->devise == "USD") {
-    //             CompteurTransaction::create([
-    //                 'fakevalue' => "0000",
-    //             ]);
-    //             $numOperation = [];
-    //             $numOperation = CompteurTransaction::latest()->first();
-    //             $NumTransaction = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperation->id;
-    //             $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
-    //             //RECUPERE LE COMPTE DU CAISSIER CONCERNE CDF
-    //             //RECUPERE LE COMPTE DU CAISSIER CONCERNE USD
-    //             $numCompteCaissierUSD = Comptes::where("caissierId", "=", Auth::user()->id)->where("CodeMonnaie", "=", "1")->where("CodeAgence", $codeAgence)->first();
-    //             $CompteCaissierUSD = $numCompteCaissierUSD->NumCompte;
-
-    //             //RECUPERE LE BILLETAGE EN DOLLARS
-    //             $billetageUSD = BilletageUsd::select(
-    //                 DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollars"),
-    //                 DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollars"),
-    //                 DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollars"),
-    //                 DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollars"),
-    //                 DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollars"),
-    //                 DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollars"),
-    //                 DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD"),
-    //             )->where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)
-    //                 ->where("delested", "=", 0)
-    //                 ->groupBy("NomUtilisateur")
-    //                 ->first();
-    //             if (!$billetageUSD) {
-    //                 return response()->json([
-    //                     "status" => 0,
-    //                     "msg" => "Le délestage est déjà effectué.",
-    //                 ]);
-    //             }
-
-    //             //RENSEINE LE DELESTAGE
-    //             BilletageUSD::where("NomUtilisateur", "=", Auth::user()->name)->where("DateTransaction", "=", $dateSystem)->update([
-    //                 "delested" => 1
-    //             ]);
-
-    //             Delestages::create([
-    //                 "Reference" => $NumTransaction,
-    //                 "code_agence" => $codeAgence,
-    //                 "NumCompteCaissier" => $CompteCaissierUSD,
-    //                 "centDollars" => $billetageUSD->centDollars,
-    //                 "cinquanteDollars" => $billetageUSD->cinquanteDollars,
-    //                 "vightDollars" => $billetageUSD->vightDollars,
-    //                 "dixDollars" => $billetageUSD->dixDollars,
-    //                 "cinqDollars" => $billetageUSD->cinqDollars,
-    //                 "unDollars" => $billetageUSD->unDollars,
-    //                 "montantUSD" => $billetageUSD->sommeMontantUSD,
-    //                 "NomUtilisateur" => Auth::user()->name,
-    //                 "NomDemandeur" => Auth::user()->name,
-    //                 "DateTransaction" => $dateSystem,
-    //                 "CodeMonnaie" => 1,
-    //             ]);
-
-    //             return response()->json([
-    //                 "status" => 1,
-    //                 "msg" => "Délestage effectuer avec succès",
-    //             ]);
-    //         }
-    //     } else {
-    //         return response()->json([
-    //             "status" => 0,
-    //             "msg" => "Unknown error !",
-    //         ]);
-    //     }
-    // }
-
+   
 
     //VALIDATE DELESTAGE
     public function ValidateDelestage(Request $request)
@@ -2926,6 +2270,7 @@ class TransactionsController extends Controller
                 //ECRITURE DE TRANSERT INTER GUICHET  DEBIT
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::TRESORERIE,
                     "DateTransaction" =>  $dateSystem,
                     "DateSaisie" =>  $dateSystem,
                     "Taux" => 1,
@@ -2946,6 +2291,7 @@ class TransactionsController extends Controller
                 //CREDITE LE COMPTE DE VIREMENT INTER GUICHET
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::TRESORERIE,
                     "DateTransaction" =>  $dateSystem,
                     "DateSaisie" =>  $dateSystem,
                     "Taux" => 1,
@@ -2966,6 +2312,7 @@ class TransactionsController extends Controller
                 //CREDITE LA CAISSE PRINCIPALE 
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::TRESORERIE,
                     "DateTransaction" =>  $dateSystem,
                     "DateSaisie" =>  $dateSystem,
                     "Taux" => 1,
@@ -2986,6 +2333,7 @@ class TransactionsController extends Controller
                 //DEBITE LA CAISSE DU CAISSIER 
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::TRESORERIE,
                     "DateTransaction" =>  $dateSystem,
                     "DateSaisie" =>  $dateSystem,
                     "Taux" => 1,
@@ -3054,6 +2402,7 @@ class TransactionsController extends Controller
                 //ECRITURE DE TRANSERT INTER GUICHET  DEBIT
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::TRESORERIE,
                     "DateTransaction" =>  $dateSystem,
                     "DateSaisie" =>  $dateSystem,
                     "Taux" => 1,
@@ -3076,6 +2425,7 @@ class TransactionsController extends Controller
 
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::TRESORERIE,
                     "DateTransaction" =>  $dateSystem,
                     "DateSaisie" =>  $dateSystem,
                     "Taux" => 1,
@@ -3096,6 +2446,7 @@ class TransactionsController extends Controller
                 //CREDITE LA CAISSE PRINCIPALE
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::TRESORERIE,
                     "DateTransaction" =>  $dateSystem,
                     "DateSaisie" =>  $dateSystem,
                     "Taux" => 1,
@@ -3116,6 +2467,7 @@ class TransactionsController extends Controller
                 //DEBITE LA CAISSE DU CAISSIER
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::TRESORERIE,
                     "DateTransaction" =>  $dateSystem,
                     "DateSaisie" =>  $dateSystem,
                     "Taux" => 1,
@@ -3215,6 +2567,7 @@ class TransactionsController extends Controller
             //ECRITURE DE TRANSERT INTER GUICHET  DEBIT
             Transactions::create([
                 "NumTransaction" => $data->Reference,
+                "RefJournal" => JournalType::TRESORERIE,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
@@ -3237,6 +2590,7 @@ class TransactionsController extends Controller
 
             Transactions::create([
                 "NumTransaction" => $data->Reference,
+                "RefJournal" => JournalType::TRESORERIE,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
@@ -3258,6 +2612,7 @@ class TransactionsController extends Controller
             //DEBITE LE COMPTE DE LA CAISSE PRINCIPALE
             Transactions::create([
                 "NumTransaction" => $data->Reference,
+                "RefJournal" => JournalType::TRESORERIE,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
@@ -3279,6 +2634,7 @@ class TransactionsController extends Controller
             //ON CREDITE LE COMPTE DU CAISSIER CONCERNE 
             Transactions::create([
                 "NumTransaction" => $data->Reference,
+                "RefJournal" => JournalType::TRESORERIE,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
@@ -3335,6 +2691,7 @@ class TransactionsController extends Controller
             //ECRITURE DE TRANSERT INTER GUICHET  DEBIT
             Transactions::create([
                 "NumTransaction" => $data->Reference,
+                "RefJournal" => JournalType::TRESORERIE,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
@@ -3357,6 +2714,7 @@ class TransactionsController extends Controller
 
             Transactions::create([
                 "NumTransaction" => $data->Reference,
+                "RefJournal" => JournalType::TRESORERIE,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
@@ -3378,6 +2736,7 @@ class TransactionsController extends Controller
             //DEBITE LE COMPTE DE LA CAISSE PRINCIPALE
             Transactions::create([
                 "NumTransaction" => $data->Reference,
+                "RefJournal" => JournalType::TRESORERIE,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
@@ -3399,6 +2758,7 @@ class TransactionsController extends Controller
             //ON CREDITE LE COMPTE DU CAISSIER CONCERNE 
             Transactions::create([
                 "NumTransaction" => $data->Reference,
+                "RefJournal" => JournalType::TRESORERIE,
                 "DateTransaction" =>  $dateSystem,
                 "DateSaisie" =>  $dateSystem,
                 "Taux" => 1,
@@ -3651,7 +3011,9 @@ class TransactionsController extends Controller
                     //DEBITE LE COMPTE DU CAISSIER
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::TRESORERIE,
                         "DateTransaction" => $dateTransaction,
+                        
                         "DateSaisie" => $dataSystem->DateSystem,
                         "TypeTransaction" => "D",
                         "CodeMonnaie" => 2,
@@ -3671,6 +3033,7 @@ class TransactionsController extends Controller
                     //CREDITE LE COMPTE DU CLIENT
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::TRESORERIE,
                         "DateTransaction" => $dateTransaction,
                         "DateSaisie" => $dataSystem->DateSystem,
                         "TypeTransaction" => "C",
@@ -3747,6 +3110,7 @@ class TransactionsController extends Controller
                     $dateTransaction = date('Y-m-d', strtotime($dateDuJour . ' +1 day'));
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::TRESORERIE,
                         "DateTransaction" => $dateTransaction,
                         "DateSaisie" => $dataSystem->DateSystem,
                         "TypeTransaction" => "C",
@@ -3767,6 +3131,7 @@ class TransactionsController extends Controller
                     //DEBITE LE COMPTE DU CAISSIER
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                        "RefJournal" => JournalType::TRESORERIE,
                         "DateTransaction" => $dateTransaction,
                         "DateSaisie" => $dataSystem->DateSystem,
                         "TypeTransaction" => "D",
@@ -3998,6 +3363,7 @@ class TransactionsController extends Controller
                 // Débit
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::COMPTABILITE,
                     "DateTransaction" => $dataSystem->DateSystem,
                     "DateSaisie" => $dataSystem->DateSystem,
                     "TypeTransaction" => "D",
@@ -4017,6 +3383,7 @@ class TransactionsController extends Controller
                 // Crédit
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::COMPTABILITE,
                     "DateTransaction" => $dataSystem->DateSystem,
                     "DateSaisie" => $dataSystem->DateSystem,
                     "TypeTransaction" => "C",
@@ -4050,6 +3417,7 @@ class TransactionsController extends Controller
                 // 1) Débit du compte débiteur, crédit de son compte de liaison
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::COMPTABILITE,
                     "DateTransaction" => $dataSystem->DateSystem,
                     "DateSaisie" => $dataSystem->DateSystem,
                     "TypeTransaction" => "D",
@@ -4069,6 +3437,7 @@ class TransactionsController extends Controller
                 ]);
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::COMPTABILITE,
                     "DateTransaction" => $dataSystem->DateSystem,
                     "DateSaisie" => $dataSystem->DateSystem,
                     "TypeTransaction" => "C",
@@ -4089,6 +3458,7 @@ class TransactionsController extends Controller
                 // 2) Débit du compte de liaison du créditeur, crédit du compte créditeur
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::COMPTABILITE,
                     "DateTransaction" => $dataSystem->DateSystem,
                     "DateSaisie" => $dataSystem->DateSystem,
                     "TypeTransaction" => "D",
@@ -4107,6 +3477,7 @@ class TransactionsController extends Controller
                 ]);
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::COMPTABILITE,
                     "DateTransaction" => $dataSystem->DateSystem,
                     "DateSaisie" => $dataSystem->DateSystem,
                     "TypeTransaction" => "C",
@@ -4187,6 +3558,7 @@ class TransactionsController extends Controller
                 // Même agence
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::COMPTABILITE,
                     "DateTransaction" => $dataSystem->DateSystem,
                     "DateSaisie" => $dataSystem->DateSystem,
                     "TypeTransaction" => "D",
@@ -4205,6 +3577,7 @@ class TransactionsController extends Controller
                 ]);
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::COMPTABILITE,
                     "DateTransaction" => $dataSystem->DateSystem,
                     "DateSaisie" => $dataSystem->DateSystem,
                     "TypeTransaction" => "C",
@@ -4237,6 +3610,7 @@ class TransactionsController extends Controller
                 // 1) Débit du compte débiteur, crédit de son liaison
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::COMPTABILITE,
                     "DateTransaction" => $dataSystem->DateSystem,
                     "DateSaisie" => $dataSystem->DateSystem,
                     "TypeTransaction" => "D",
@@ -4256,6 +3630,7 @@ class TransactionsController extends Controller
                 ]);
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::COMPTABILITE,
                     "DateTransaction" => $dataSystem->DateSystem,
                     "DateSaisie" => $dataSystem->DateSystem,
                     "TypeTransaction" => "C",
@@ -4276,6 +3651,7 @@ class TransactionsController extends Controller
                 // 2) Débit du liaison du créditeur, crédit du compte créditeur
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::COMPTABILITE,
                     "DateTransaction" => $dataSystem->DateSystem,
                     "DateSaisie" => $dataSystem->DateSystem,
                     "TypeTransaction" => "D",
@@ -4294,6 +3670,7 @@ class TransactionsController extends Controller
                 ]);
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::COMPTABILITE,
                     "DateTransaction" => $dataSystem->DateSystem,
                     "DateSaisie" => $dataSystem->DateSystem,
                     "TypeTransaction" => "C",
@@ -4585,6 +3962,7 @@ class TransactionsController extends Controller
 
                         Transactions::create([
                             "NumTransaction" => $data[$i]->NumTransaction,
+                              "RefJournal" => JournalType::ANNULATION,
                             "DateTransaction" => $data[$i]->DateTransaction,
                             "DateSaisie" => $data[$i]->DateSaisie,
                             "Taux" => 1,
@@ -4619,6 +3997,7 @@ class TransactionsController extends Controller
                         //SI C UN DEBIT ON PASSE UNE ECRITURE CONTRAIRE CAD UN CREDIT
                         Transactions::create([
                             "NumTransaction" => $data[$i]->NumTransaction,
+                              "RefJournal" => JournalType::ANNULATION,
                             "DateTransaction" => $data[$i]->DateTransaction,
                             "DateSaisie" => $data[$i]->DateSaisie,
                             "Taux" => 1,

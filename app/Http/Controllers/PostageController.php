@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Constants\JournalType;
 use App\Models\Agences;
 use Carbon\Carbon;
 use App\Models\Comptes;
@@ -421,6 +422,7 @@ class PostageController extends Controller
         // Écriture sur le compte source (produit ou charge)
         $dataSource = [
             "NumTransaction" => $numTransaction,
+             "RefJournal" => JournalType::AUXILIAIRE,
             "DateTransaction" => $dataSystem->DateSystem,
             "DateSaisie" => now(),
             "Taux" => 1,
@@ -452,6 +454,7 @@ class PostageController extends Controller
         $typeReport = ($type == 'D') ? 'C' : 'D'; // inverse
         $dataReport = [
             "NumTransaction" => $numTransaction,
+            "RefJournal" => JournalType::AUXILIAIRE,
             "DateTransaction" => $dataSystem->DateSystem,
             "DateSaisie" => now(),
             "Taux" => 1,
