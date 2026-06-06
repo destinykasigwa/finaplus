@@ -223,7 +223,7 @@ class CurrencyExchangeService
     {
         $data = [
             'NumTransaction' => $numTransaction,
-            "RefJournal" => JournalType::TRANSFERT,
+            "RefJournal" => JournalType::CHANGE,
             'DateTransaction' => $dataSystem->DateSystem,
             'DateSaisie' => now(),
             'Taux' => $taux,
@@ -296,16 +296,16 @@ class CurrencyExchangeService
     $numTransaction = $this->generateReference();
 
     // 1. Débit du compte USD client
-    $this->createEcriture($numTransaction, $dataSystem, 1, $sourceCompte->CodeAgence, $sourceCompte->NumCompte, $this->comptePositionUSD, 'D', $amount, "Change USD->CDF: $motif (Ref: $reference)", $userId, $taux, 'Debitusd', 'Creditusd');
+    $this->createEcriture($numTransaction, $dataSystem, 1, $sourceCompte->CodeAgence, $sourceCompte->NumCompte, $this->comptePositionUSD, 'D', $amount, "$motif (Ref: $reference)", $userId, $taux, 'Debitusd', 'Creditusd');
 
     // 2. Crédit du compte position USD
-    $this->createEcriture($numTransaction, $dataSystem, 1, $sourceCompte->CodeAgence, $this->comptePositionUSD, $sourceCompte->NumCompte, 'C', $amount, "Change USD->CDF: $motif (Ref: $reference)", $userId, $taux, 'Debitusd', 'Creditusd');
+    $this->createEcriture($numTransaction, $dataSystem, 1, $sourceCompte->CodeAgence, $this->comptePositionUSD, $sourceCompte->NumCompte, 'C', $amount, "$motif (Ref: $reference)", $userId, $taux, 'Debitusd', 'Creditusd');
 
     // 3. Débit du compte position CDF
-    $this->createEcriture($numTransaction, $dataSystem, 2, $targetCompte->CodeAgence, $this->comptePositionCDF, $targetCompte->NumCompte, 'D', $amountTarget, "Change USD->CDF: $motif (Ref: $reference)", $userId, $taux, 'Debitfc', 'Creditfc');
+    $this->createEcriture($numTransaction, $dataSystem, 2, $targetCompte->CodeAgence, $this->comptePositionCDF, $targetCompte->NumCompte, 'D', $amountTarget, "$motif (Ref: $reference)", $userId, $taux, 'Debitfc', 'Creditfc');
 
     // 4. Crédit du compte CDF client
-    $this->createEcriture($numTransaction, $dataSystem, 2, $targetCompte->CodeAgence, $targetCompte->NumCompte, $this->comptePositionCDF, 'C', $amountTarget, "Change USD->CDF: $motif (Ref: $reference)", $userId, $taux, 'Debitfc', 'Creditfc');
+    $this->createEcriture($numTransaction, $dataSystem, 2, $targetCompte->CodeAgence, $targetCompte->NumCompte, $this->comptePositionCDF, 'C', $amountTarget, "$motif (Ref: $reference)", $userId, $taux, 'Debitfc', 'Creditfc');
 
     // 5. Gain/Perte
     // if ($gainLoss != 0) {
@@ -333,16 +333,16 @@ class CurrencyExchangeService
     $numTransaction = $this->generateReference();
 
     // 1. Débit client CDF
-    $this->createEcriture($numTransaction, $dataSystem, 2, $sourceCompte->CodeAgence, $sourceCompte->NumCompte, $this->comptePositionCDF, 'D', $amount, "Change CDF->USD: $motif (Ref: $reference)", $userId, $taux, 'Debitfc', 'Creditfc');
+    $this->createEcriture($numTransaction, $dataSystem, 2, $sourceCompte->CodeAgence, $sourceCompte->NumCompte, $this->comptePositionCDF, 'D', $amount, "$motif (Ref: $reference)", $userId, $taux, 'Debitfc', 'Creditfc');
 
     // 2. Crédit position CDF
-    $this->createEcriture($numTransaction, $dataSystem, 2, $sourceCompte->CodeAgence, $this->comptePositionCDF, $sourceCompte->NumCompte, 'C', $amount, "Change CDF->USD: $motif (Ref: $reference)", $userId, $taux, 'Debitfc', 'Creditfc');
+    $this->createEcriture($numTransaction, $dataSystem, 2, $sourceCompte->CodeAgence, $this->comptePositionCDF, $sourceCompte->NumCompte, 'C', $amount, "$motif (Ref: $reference)", $userId, $taux, 'Debitfc', 'Creditfc');
 
     // 3. Débit position USD
-    $this->createEcriture($numTransaction, $dataSystem, 1, $targetCompte->CodeAgence, $this->comptePositionUSD, $targetCompte->NumCompte, 'D', $amountTarget, "Change CDF->USD: $motif (Ref: $reference)", $userId, $taux, 'Debitusd', 'Creditusd');
+    $this->createEcriture($numTransaction, $dataSystem, 1, $targetCompte->CodeAgence, $this->comptePositionUSD, $targetCompte->NumCompte, 'D', $amountTarget, "$motif (Ref: $reference)", $userId, $taux, 'Debitusd', 'Creditusd');
 
     // 4. Crédit client USD
-    $this->createEcriture($numTransaction, $dataSystem, 1, $targetCompte->CodeAgence, $targetCompte->NumCompte, $this->comptePositionUSD, 'C', $amountTarget, "Change CDF->USD: $motif (Ref: $reference)", $userId, $taux, 'Debitusd', 'Creditusd');
+    $this->createEcriture($numTransaction, $dataSystem, 1, $targetCompte->CodeAgence, $targetCompte->NumCompte, $this->comptePositionUSD, 'C', $amountTarget, "$motif (Ref: $reference)", $userId, $taux, 'Debitusd', 'Creditusd');
 
     // 5. Gain/Perte – on ajuste le compte position CDF et on constate le résultat
     if ($gainLoss != 0) {

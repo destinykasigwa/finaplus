@@ -454,11 +454,20 @@ const Journal = () => {
                                 onChange={(e) => setTypeJournal(e.target.value)}
                             >
                                 <option value="ALL">Tous les journaux</option>
-                                <option value="CHANGE">
-                                    Journal des opérations de change
+                                 <option value="CAISSE">
+                                    Journal des caisses
+                                </option>
+                                <option value="TRESORERIE">
+                                    Journal de Trésorerie
+                                </option>
+                                <option value="COMPTABILITE">
+                                    Journal de Comptabilité
                                 </option>
                                 <option value="REMBOURSEMENT">
                                     Journal des remboursements
+                                </option>
+                                 <option value="CHANGE">
+                                    Journal des opérations de change
                                 </option>
                                 <option value="TRANSFERT">
                                     Journal des transferts
@@ -469,18 +478,7 @@ const Journal = () => {
                                 <option value="SUSPENS">
                                     Journal des Suspens
                                 </option>
-                                <option value="SUSPENS">
-                                    Journal des Suspens
-                                </option>
-                                <option value="CAISSE">
-                                    Journal des caisses
-                                </option>
-                                <option value="TRESORERIE">
-                                    Journal de Trésorerie
-                                </option>
-                                <option value="COMPTABILITE">
-                                    Journal de Comptabilité
-                                </option>
+                               
                                 <option value="ANNULATION">
                                     Journal des annulations
                                 </option>
@@ -622,7 +620,9 @@ const Journal = () => {
 
                                                 {/* LIGNES */}
                                                 {op.lignes.map((l, i) => (
-                                                    <tr key={i}>
+                                                    <tr key={i}  style={{
+                                                                border: "0px",
+                                                            }}>
                                                         <td
                                                             style={{
                                                                 border: "0px",

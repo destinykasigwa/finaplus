@@ -25,9 +25,19 @@ class CurrencyExchangeController extends Controller
     }
 
     // ==================== TAUX DE CHANGE ====================
+    // public function getRates()
+    // {
+    //     $rates = ExchangeRate::with('creator')->orderBy('valid_from', 'desc')->get();
+    //     return response()->json(['status' => 1, 'data' => $rates]);
+    // }
+
     public function getRates()
     {
-        $rates = ExchangeRate::with('creator')->orderBy('valid_from', 'desc')->get();
+        $rates = ExchangeRate::with('creator')
+            ->orderBy('created_at', 'desc')
+            ->limit(6)
+            ->get();
+
         return response()->json(['status' => 1, 'data' => $rates]);
     }
 
@@ -66,8 +76,14 @@ class CurrencyExchangeController extends Controller
         $applyMargin = $request->apply_margin ?? true;
 
         // Récupérer le taux de référence (toujours USD -> CDF)
+        // $usdToCdfRate = ExchangeRate::getCurrentRate('USD', 'CDF');
+        // $tauxRefUSDToCDF = $usdToCdfRate ? (float)$usdToCdfRate->rate : 2350;
+
         $usdToCdfRate = ExchangeRate::getCurrentRate('USD', 'CDF');
-        $tauxRefUSDToCDF = $usdToCdfRate ? (float)$usdToCdfRate->rate : 2350;
+        if (!$usdToCdfRate) {
+            return response()->json(['status' => 0, 'msg' => 'Aucun taux USD/CDF configuré']);
+        }
+        $tauxRefUSDToCDF = (float)$usdToCdfRate->rate;
 
         $margeValue = 0;
         $tauxClient = 0;

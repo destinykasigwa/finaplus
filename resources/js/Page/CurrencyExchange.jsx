@@ -79,12 +79,12 @@ const CurrencyExchange = () => {
 
     const fetchRates = async () => {
         const res = await axios.get("/eco/exchange/rates");
-        if (res.data.status === 1) setRates(res.data.data);
+        if (res.data.status == 1) setRates(res.data.data);
     };
 
     const fetchExchangeAccounts = async () => {
         const res = await axios.get("/eco/exchange/accounts");
-        if (res.data.status === 1) setExchangeAccounts(res.data.data);
+        if (res.data.status == 1) setExchangeAccounts(res.data.data);
     };
 
     const fetchTransactions = async () => {
@@ -93,7 +93,7 @@ const CurrencyExchange = () => {
             const res = await axios.get("/eco/exchange/transactions", {
                 params: filters,
             });
-            if (res.data.status === 1) setTransactions(res.data.data.data);
+            if (res.data.status == 1) setTransactions(res.data.data.data);
         } catch (error) {
             console.error(error);
         } finally {
@@ -104,7 +104,7 @@ const CurrencyExchange = () => {
     const fetchMarges = async () => {
         try {
             const res = await axios.get("/eco/exchange/marges");
-            if (res.data.status === 1) {
+            if (res.data.status == 1) {
                 setMarges(res.data.data);
             }
         } catch (error) {
@@ -118,7 +118,7 @@ const CurrencyExchange = () => {
             const res = await axios.post("/eco/exchange/search-client", {
                 search: clientSearch,
             });
-            if (res.data.status === 1 && res.data.data.length > 0) {
+            if (res.data.status == 1 && res.data.data.length > 0) {
                 const client = res.data.data[0];
                 console.log("Client trouvé:", client);
 
@@ -137,7 +137,7 @@ const CurrencyExchange = () => {
             const res = await axios.post("/eco/exchange/client-accounts", {
                 client_id: numCompte, // Envoyer le NumCompte
             });
-            if (res.data.status === 1) setClientAccounts(res.data.data);
+            if (res.data.status == 1) setClientAccounts(res.data.data);
         } catch (error) {
             console.error(error);
         }
@@ -147,19 +147,19 @@ const CurrencyExchange = () => {
         setUserModifiedRate(false);
         const account = e.target.value;
         setSourceAccount(account);
-        const compte = clientAccounts.find((c) => c.NumCompte === account);
+        const compte = clientAccounts.find((c) => c.NumCompte == account);
         if (compte) {
             setSourceDevise(
-                compte.CodeMonnaie === 1
+                compte.CodeMonnaie == 1
                     ? "USD"
-                    : compte.CodeMonnaie === 2
+                    : compte.CodeMonnaie == 2
                       ? "CDF"
                       : "EUR",
             );
             const res = await axios.post("/eco/exchange/balance", {
                 num_compte: account,
             });
-            if (res.data.status === 1) setSoldeSource(res.data.solde);
+            if (res.data.status == 1) setSoldeSource(res.data.solde);
         }
     };
 
@@ -167,12 +167,12 @@ const CurrencyExchange = () => {
         setUserModifiedRate(false);
         const account = e.target.value;
         setTargetAccount(account);
-        const compte = clientAccounts.find((c) => c.NumCompte === account);
+        const compte = clientAccounts.find((c) => c.NumCompte == account);
         if (compte)
             setTargetDevise(
-                compte.CodeMonnaie === 1
+                compte.CodeMonnaie == 1
                     ? "USD"
-                    : compte.CodeMonnaie === 2
+                    : compte.CodeMonnaie == 2
                       ? "CDF"
                       : "EUR",
             );
@@ -197,13 +197,13 @@ const CurrencyExchange = () => {
 
             console.log("📊 Réponse API complète:", res.data);
 
-            if (res.data.status === 1) {
+            if (res.data.status == 1) {
                 let reference = res.data.reference_rate;
                 let applied = res.data.rate;
                 let margeValue = res.data.margin || 0;
                 if (
-                    sourceDevise === "CDF" &&
-                    targetDevise === "USD" &&
+                    sourceDevise == "CDF" &&
+                    targetDevise == "USD" &&
                     useMargin &&
                     margeValue > 0
                 ) {
@@ -239,9 +239,9 @@ const CurrencyExchange = () => {
             return;
         let gain = 0;
 
-        if (sourceDevise === "USD" && targetDevise === "CDF") {
+        if (sourceDevise == "USD" && targetDevise == "CDF") {
             gain = (referenceRate - appliedRate) * parseFloat(amount);
-        } else if (sourceDevise === "CDF" && targetDevise === "USD") {
+        } else if (sourceDevise == "CDF" && targetDevise == "USD") {
             // 🔥 Correction : le taux doit être en CDF pour 1 USD
             const tauxRefCDF = 1 / referenceRate; // 2350
             const tauxAppliedCDF = 1 / appliedRate; // 2400
@@ -252,6 +252,7 @@ const CurrencyExchange = () => {
         console.log("Gain calculé:", gain);
         setGainLoss(gain);
     };
+
     useEffect(() => {
         calculateGainLoss();
     }, [amount, appliedRate, referenceRate, sourceDevise, targetDevise]);
@@ -259,7 +260,7 @@ const CurrencyExchange = () => {
     // Fonctions d'affichage des taux
     const displayReferenceRate = (rate, source, target) => {
         if (!rate) return "";
-        if (source === "CDF" && target === "USD") {
+        if (source == "CDF" && target == "USD") {
             return (1 / rate).toFixed(0);
         }
         return rate.toFixed(2);
@@ -267,12 +268,94 @@ const CurrencyExchange = () => {
 
     const displayAppliedRate = (rate, source, target) => {
         if (!rate) return "";
-        if (source === "CDF" && target === "USD") {
+        if (source == "CDF" && target == "USD") {
             return (1 / rate).toFixed(0);
         }
         return rate.toFixed(2);
     };
 
+    // const executeExchange = async () => {
+    //     if (
+    //         !sourceAccount ||
+    //         !targetAccount ||
+    //         !amount ||
+    //         !appliedRate ||
+    //         !motif
+    //     ) {
+    //         Swal.fire("Erreur", "Veuillez remplir tous les champs", "error");
+    //         return;
+    //     }
+    //     if (parseFloat(amount) > soldeSource) {
+    //         Swal.fire("Erreur", "Solde insuffisant", "error");
+    //         return;
+    //     }
+    //     setLoading(true);
+
+    //     console.log("Envoi au backend:", {
+    //         amount: amount,
+    //         applied_rate: appliedRate,
+    //         source: sourceDevise,
+    //         target: targetDevise,
+    //     });
+
+    //     try {
+    //         // 🔥 Convertir le taux pour CDF -> USD
+    //         let finalRate = appliedRate;
+
+    //         if (sourceDevise == "CDF" && targetDevise == "USD") {
+    //             // Convertir referenceRate (ex: 0.0004255) en taux CDF (ex: 2350)
+    //             const tauxRefCDF = Number(1 / referenceRate);
+    //             console.log("Taux référence en CDF:", tauxRefCDF);
+
+    //             if (useMargin) {
+    //                 // Récupérer la marge (doit être un nombre)
+    //                 const margeActuelle = Number(
+    //                     marges.find(
+    //                         (m) =>
+    //                             m.devise_source == "CDF" &&
+    //                             m.devise_target == "USD",
+    //                     )?.marge || 50,
+    //                 );
+    //                 // Additionner (pas concaténer)
+    //                 finalRate = tauxRefCDF + margeActuelle;
+    //                 console.log("Taux avec marge:", finalRate);
+    //             } else {
+    //                 finalRate = tauxRefCDF;
+    //             }
+    //         }
+
+    //         const res = await axios.post("/eco/exchange/execute", {
+    //             client_id: clientId,
+    //             source_account: sourceAccount,
+    //             target_account: targetAccount,
+    //             amount: parseFloat(amount),
+    //             applied_rate: finalRate,
+    //             motif: motif,
+    //         });
+
+    //         if (res.data.status == 1) {
+    //             Swal.fire(
+    //                 "Succès",
+    //                 `Opération effectuée. Gain: ${res.data.data.gain_loss.toFixed(2)} CDF`,
+    //                 "success",
+    //             );
+    //             setAmount("");
+    //             setAppliedRate(null);
+    //             setMotif("");
+    //             setSourceAccount("");
+    //             setTargetAccount("");
+    //             setUserModifiedRate(false);
+    //             fetchClientAccounts(clientId);
+    //             fetchTransactions();
+    //         } else {
+    //             Swal.fire("Erreur", res.data.msg, "error");
+    //         }
+    //     } catch (error) {
+    //         Swal.fire("Erreur", "Erreur lors de l'opération", "error");
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
     const executeExchange = async () => {
         if (
             !sourceAccount ||
@@ -290,57 +373,54 @@ const CurrencyExchange = () => {
         }
         setLoading(true);
 
+        // Normalisation du taux pour le backend : toujours en CDF pour 1 unité de devise source
+        let rateToSend = appliedRate;
+        if (sourceDevise === "CDF" && targetDevise === "USD") {
+            // appliedRate stocké est l'inverse (USD/CDF) car l'affichage se fait en CDF/USD
+            rateToSend = 1 / appliedRate;
+        }
+        // Pour USD → CDF, rateToSend = appliedRate (déjà en CDF/USD)
+
         console.log("Envoi au backend:", {
             amount: amount,
-            applied_rate: appliedRate,
+            applied_rate: rateToSend,
             source: sourceDevise,
             target: targetDevise,
         });
 
         try {
-            // 🔥 Convertir le taux pour CDF -> USD
-            let finalRate = appliedRate;
-
-            if (sourceDevise === "CDF" && targetDevise === "USD") {
-                // Convertir referenceRate (ex: 0.0004255) en taux CDF (ex: 2350)
-                const tauxRefCDF = Number(1 / referenceRate);
-                console.log("Taux référence en CDF:", tauxRefCDF);
-
-                if (useMargin) {
-                    // Récupérer la marge (doit être un nombre)
-                    const margeActuelle = Number(
-                        marges.find(
-                            (m) =>
-                                m.devise_source === "CDF" &&
-                                m.devise_target === "USD",
-                        )?.marge || 50,
-                    );
-                    // Additionner (pas concaténer)
-                    finalRate = tauxRefCDF + margeActuelle;
-                    console.log("Taux avec marge:", finalRate);
-                } else {
-                    finalRate = tauxRefCDF;
-                }
-            }
-
             const res = await axios.post("/eco/exchange/execute", {
                 client_id: clientId,
                 source_account: sourceAccount,
                 target_account: targetAccount,
                 amount: parseFloat(amount),
-                applied_rate: finalRate,
+                applied_rate: rateToSend, // ← taux normalisé
                 motif: motif,
             });
 
-            if (res.data.status === 1) {
+            if (res.data.status == 1) {
+                // Swal.fire(
+                //     "Succès",
+                //     `Opération effectuée. Gain: ${res.data.data.gain_loss.toFixed(2)} CDF`,
+                //     "success"
+                // );
+                const gainLossValue = res.data.data.gain_loss;
+                const gainLossLabel = gainLossValue >= 0 ? "Gain" : "Perte";
                 Swal.fire(
                     "Succès",
-                    `Opération effectuée. Gain: ${res.data.data.gain_loss.toFixed(2)} CDF`,
+                    `Opération effectuée. ${gainLossValue >= 0 ? "Gain" : "Perte"}: ${gainLossValue.toFixed(2)} CDF`,
                     "success",
                 );
+                fetchRates(); // recharge la liste des taux
+                // 👇 Force le rechargement du taux de référence pour l'opération en cours
+                if (sourceDevise && targetDevise) {
+                    getReferenceRate();
+                   
+                }
+                // Réinitialisation
                 setAmount("");
                 setAppliedRate(null);
-                setMotif("");
+                // setMotif("");
                 setSourceAccount("");
                 setTargetAccount("");
                 setUserModifiedRate(false);
@@ -355,7 +435,6 @@ const CurrencyExchange = () => {
             setLoading(false);
         }
     };
-
     const saveRate = async () => {
         if (!newRate.rate || !newRate.valid_from) {
             Swal.fire("Erreur", "Veuillez remplir tous les champs", "error");
@@ -364,7 +443,7 @@ const CurrencyExchange = () => {
         setLoading(true);
         try {
             const res = await axios.post("/eco/exchange/rates", newRate);
-            if (res.data.status === 1) {
+            if (res.data.status == 1) {
                 Swal.fire("Succès", "Taux enregistré", "success");
                 fetchRates();
                 setNewRate({
@@ -391,7 +470,7 @@ const CurrencyExchange = () => {
                 "/eco/exchange/accounts",
                 exchangeAccounts,
             );
-            if (res.data.status === 1) {
+            if (res.data.status == 1) {
                 Swal.fire("Succès", "Comptes paramétrés", "success");
             } else {
                 Swal.fire("Erreur", res.data.msg, "error");
@@ -406,7 +485,7 @@ const CurrencyExchange = () => {
     const updateMarge = async (id, marge) => {
         try {
             const res = await axios.post("/eco/exchange/marges", { id, marge });
-            if (res.data.status === 1) {
+            if (res.data.status == 1) {
                 Swal.fire("Succès", "Marge mise à jour", "success");
                 fetchMarges();
                 setEditingMarge(null);
@@ -423,54 +502,74 @@ const CurrencyExchange = () => {
         setEditMargeValue(marge.marge.toString());
     };
 
-    // ==================== NOUVELLES FONCTIONS D'EXPORT ====================
+    // == NOUVELLES FONCTIONS D'EXPORT ==
     const exportToExcel = () => {
-        if (transactions.length === 0) {
+        if (transactions.length == 0) {
             Swal.fire("Information", "Aucune transaction à exporter", "info");
             return;
         }
 
         // Préparer les données pour Excel (colonnes souhaitées)
         const exportData = transactions.map((row) => ({
-            "Référence": row.reference,
-            "Client": row.client?.name,
+            Référence: row.reference,
+            Client: row.client?.name,
             "Montant source": `${row.amount_source} ${row.source_currency}`,
             "Montant destination": `${row.amount_target} ${row.target_currency}`,
             "Taux appliqué": row.applied_rate,
             "Gain/Perte (CDF)": row.gain_loss,
-            "Motif": row.motif,
-            "Date": new Date(row.created_at).toLocaleString("fr-FR")
+            Motif: row.motif,
+            Date: new Date(row.created_at).toLocaleString("fr-FR"),
         }));
 
         // Créer un classeur et une feuille
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Historique_Change");
-        
+
         // Générer le fichier
-        XLSX.writeFile(wb, `historique_change_${new Date().toISOString().slice(0,19)}.xlsx`);
-        
-        Swal.fire("Export réussi", "Le fichier Excel a été téléchargé", "success");
+        XLSX.writeFile(
+            wb,
+            `historique_change_${new Date().toISOString().slice(0, 19)}.xlsx`,
+        );
+
+        Swal.fire(
+            "Export réussi",
+            "Le fichier Excel a été téléchargé",
+            "success",
+        );
     };
 
     const exportToPDF = () => {
-        if (transactions.length === 0) {
+        if (transactions.length == 0) {
             Swal.fire("Information", "Aucune transaction à exporter", "info");
             return;
         }
 
         // Créer un document PDF
-        const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-        
+        const doc = new jsPDF({
+            orientation: "landscape",
+            unit: "mm",
+            format: "a4",
+        });
+
         // Titre
         doc.setFontSize(16);
         doc.text("Historique des opérations de change", 14, 15);
         doc.setFontSize(10);
         doc.text(`Généré le ${new Date().toLocaleString("fr-FR")}`, 14, 22);
-        
+
         // Préparer les lignes pour le tableau
-        const tableColumn = ["Référence", "Client", "Montant source", "Montant destination", "Taux appliqué", "Gain/Perte (CDF)", "Motif", "Date"];
-        const tableRows = transactions.map(row => [
+        const tableColumn = [
+            "Référence",
+            "Client",
+            "Montant source",
+            "Montant destination",
+            "Taux appliqué",
+            "Gain/Perte (CDF)",
+            "Motif",
+            "Date",
+        ];
+        const tableRows = transactions.map((row) => [
             row.reference,
             row.client?.name || "",
             `${row.amount_source} ${row.source_currency}`,
@@ -478,7 +577,7 @@ const CurrencyExchange = () => {
             row.applied_rate,
             `${row.gain_loss.toLocaleString()} CDF`,
             row.motif,
-            new Date(row.created_at).toLocaleString("fr-FR")
+            new Date(row.created_at).toLocaleString("fr-FR"),
         ]);
 
         // Ajouter le tableau avec autotable
@@ -488,16 +587,26 @@ const CurrencyExchange = () => {
             startY: 30,
             theme: "striped",
             styles: { fontSize: 8, cellPadding: 1.5 },
-            headStyles: { fillColor: [19, 132, 150], textColor: 255, fontSize: 9 },
+            headStyles: {
+                fillColor: [19, 132, 150],
+                textColor: 255,
+                fontSize: 9,
+            },
             alternateRowStyles: { fillColor: [240, 248, 255] },
-            margin: { top: 30, left: 10, right: 10 }
+            margin: { top: 30, left: 10, right: 10 },
         });
 
         // Sauvegarder le PDF
-        doc.save(`historique_change_${new Date().toISOString().slice(0,19)}.pdf`);
-        Swal.fire("Export réussi", "Le fichier PDF a été téléchargé", "success");
+        doc.save(
+            `historique_change_${new Date().toISOString().slice(0, 19)}.pdf`,
+        );
+        Swal.fire(
+            "Export réussi",
+            "Le fichier PDF a été téléchargé",
+            "success",
+        );
     };
-    // ==================== FIN NOUVELLES FONCTIONS ====================
+    // == FIN NOUVELLES FONCTIONS ==
 
     const columns = [
         { name: "Référence", selector: (row) => row.reference, sortable: true },
@@ -547,8 +656,8 @@ const CurrencyExchange = () => {
     const currentMargin =
         marges.find(
             (m) =>
-                m.devise_source === sourceDevise &&
-                m.devise_target === targetDevise,
+                m.devise_source == sourceDevise &&
+                m.devise_target == targetDevise,
         )?.marge || 50;
 
     return (
@@ -583,7 +692,7 @@ const CurrencyExchange = () => {
             <ul className="nav nav-tabs mb-4">
                 <li className="nav-item">
                     <button
-                        className={`nav-link ${activeTab === "operation" ? "active" : ""}`}
+                        className={`nav-link ${activeTab == "operation" ? "active" : ""}`}
                         onClick={() => setActiveTab("operation")}
                     >
                         <i className="fas fa-exchange-alt me-2"></i>Opération
@@ -591,7 +700,7 @@ const CurrencyExchange = () => {
                 </li>
                 <li className="nav-item">
                     <button
-                        className={`nav-link ${activeTab === "settings" ? "active" : ""}`}
+                        className={`nav-link ${activeTab == "settings" ? "active" : ""}`}
                         onClick={() => setActiveTab("settings")}
                     >
                         <i className="fas fa-sliders-h me-2"></i>Paramétrage
@@ -599,7 +708,7 @@ const CurrencyExchange = () => {
                 </li>
                 <li className="nav-item">
                     <button
-                        className={`nav-link ${activeTab === "history" ? "active" : ""}`}
+                        className={`nav-link ${activeTab == "history" ? "active" : ""}`}
                         onClick={() => setActiveTab("history")}
                     >
                         <i className="fas fa-history me-2"></i>Historique
@@ -608,7 +717,7 @@ const CurrencyExchange = () => {
             </ul>
 
             {/* Onglet Opération */}
-            {activeTab === "operation" && (
+            {activeTab == "operation" && (
                 <div className="row g-4">
                     <div className="col-md-6">
                         {/* Carte Client */}
@@ -699,9 +808,9 @@ const CurrencyExchange = () => {
                                                 >
                                                     {acc.NumCompte} -{" "}
                                                     {acc.NomCompte} (
-                                                    {acc.CodeMonnaie === 1
+                                                    {acc.CodeMonnaie == 1
                                                         ? "USD"
-                                                        : acc.CodeMonnaie === 2
+                                                        : acc.CodeMonnaie == 2
                                                           ? "CDF"
                                                           : "EUR"}
                                                     )
@@ -742,9 +851,9 @@ const CurrencyExchange = () => {
                                                     >
                                                         {acc.NumCompte} -{" "}
                                                         {acc.NomCompte} (
-                                                        {acc.CodeMonnaie === 1
+                                                        {acc.CodeMonnaie == 1
                                                             ? "USD"
-                                                            : acc.CodeMonnaie ===
+                                                            : acc.CodeMonnaie ==
                                                                 2
                                                               ? "CDF"
                                                               : "EUR"}
@@ -806,10 +915,8 @@ const CurrencyExchange = () => {
                                                         e.target.value,
                                                     );
                                                     if (
-                                                        sourceDevise ===
-                                                            "CDF" &&
-                                                        targetDevise ===
-                                                            "USD" &&
+                                                        sourceDevise == "CDF" &&
+                                                        targetDevise == "USD" &&
                                                         value > 0
                                                     ) {
                                                         value = 1 / value;
@@ -896,7 +1003,7 @@ const CurrencyExchange = () => {
             )}
 
             {/* Onglet Paramétrage */}
-            {activeTab === "settings" && (
+            {activeTab == "settings" && (
                 <div className="row g-4">
                     {/* Taux de change */}
                     <div className="col-md-6">
@@ -1081,7 +1188,7 @@ const CurrencyExchange = () => {
                                                         {marge.devise_target}
                                                     </td>
                                                     <td>
-                                                        {editingMarge ===
+                                                        {editingMarge ==
                                                         marge.id ? (
                                                             <input
                                                                 type="number"
@@ -1107,7 +1214,7 @@ const CurrencyExchange = () => {
                                                         )}
                                                     </td>
                                                     <td>
-                                                        {editingMarge ===
+                                                        {editingMarge ==
                                                         marge.id ? (
                                                             <>
                                                                 <button
@@ -1150,7 +1257,7 @@ const CurrencyExchange = () => {
                                                     </td>
                                                 </tr>
                                             ))}
-                                            {marges.length === 0 && (
+                                            {marges.length == 0 && (
                                                 <tr>
                                                     <td
                                                         colSpan="4"
@@ -1308,7 +1415,7 @@ const CurrencyExchange = () => {
             )}
 
             {/* Onglet Historique - MODIFIÉ POUR AJOUTER LES BOUTONS D'EXPORT */}
-            {activeTab === "history" && (
+            {activeTab == "history" && (
                 <div className="card border-0 shadow-sm rounded-4">
                     <div className="card-body">
                         <div className="row g-3 mb-4">
@@ -1390,7 +1497,8 @@ const CurrencyExchange = () => {
                                     onClick={exportToExcel}
                                     title="Exporter en Excel"
                                 >
-                                    <i className="fas fa-file-excel me-1"></i> Excel
+                                    <i className="fas fa-file-excel me-1"></i>{" "}
+                                    Excel
                                 </button>
                                 <button
                                     className="btn btn-danger w-50"

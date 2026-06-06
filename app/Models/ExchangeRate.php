@@ -25,21 +25,25 @@ class ExchangeRate extends Model
 
     public static function getCurrentRate($source, $target)
     {
-        $query = self::where('source_currency', $source)
-            ->where('target_currency', $target)
-            ->whereDate('valid_from', '<=', now())
-            ->where(function ($q) {
-                $q->whereNull('valid_to')->orWhereDate('valid_to', '>=', now());
-            })
-            ->orderBy('valid_from', 'desc');
+        // $query = self::where('source_currency', $source)
+        //     ->where('target_currency', $target)
+        //     ->whereDate('valid_from', '<=', now())
+        //     ->where(function ($q) {
+        //         $q->whereNull('valid_to')->orWhereDate('valid_to', '>=', now());
+        //     })
+        //     ->orderBy('valid_from', 'desc');
         
-        Log::info("SQL getCurrentRate: " . $query->toSql());
-        Log::info("Bindings: " . json_encode($query->getBindings()));
+        // Log::info("SQL getCurrentRate: " . $query->toSql());
+        // Log::info("Bindings: " . json_encode($query->getBindings()));
         
-        $result = $query->first();
-        Log::info("Résultat: " . ($result ? $result->rate : 'null'));
+        // $result = $query->first();
+        // Log::info("Résultat: " . ($result ? $result->rate : 'null'));
         
-        return $result;
+        // return $result;
+         return self::where('source_currency', $source)
+        ->where('target_currency', $target)
+        ->orderBy('created_at', 'desc')   // le dernier inséré
+        ->first();
     }
 
     public function creator()
