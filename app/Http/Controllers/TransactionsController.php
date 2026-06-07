@@ -353,7 +353,10 @@ class TransactionsController extends Controller
         elseif (ctype_digit($search)) {
             // Chercher d'abord dans l'agence courante
             $compte = Comptes::where('CodeAgence', $codeAgenceUtil)
-                ->whereIn('RefGroupe', [330, 470])
+                ->where(function ($query) {
+                    $query->whereIn('RefGroupe', [330, 470])
+                        ->orWhere('RefCadre', 47);
+                })
                 ->where(function ($query) use ($search) {
                     $query->where('NumAdherant', $search)
                         ->orWhere('NumCompte', $search)
@@ -365,7 +368,7 @@ class TransactionsController extends Controller
             } else {
                 // Vérifier si ce numéro abrégé existe dans une autre agence
                 $compteAutre = Comptes::where('CodeAgence', $codeAgenceUtil)
-                    ->whereIn('RefGroupe', [330, 470])
+                    ->whereIn('RefGroupe', [330, 475])
                     ->where(function ($query) use ($search) {
                         $query->where('NumAdherant', $search)
                             ->orWhere('NumCompte', $search)
@@ -395,13 +398,16 @@ class TransactionsController extends Controller
         $numDocument = CompteurDocument::latest()->first();
 
         // Récupérer les comptes (la requête originale retourne une collection, mais ici on a un seul compte)
-        $data = Comptes::where(function ($query) use ($search) {
-            $query->where('NumCompte', $search)
-                ->orWhere('NumAdherant', $search)
-                ->orWhere('Num_Manuel', $search);
-        })
-            ->where('niveau', 5)
-            ->whereIn('RefGroupe', [330, 470])
+        $data = Comptes::where('CodeAgence', $codeAgenceUtil)
+            ->where(function ($query) {
+                $query->whereIn('RefGroupe', [330, 470])
+                    ->orWhere('RefCadre', 47);
+            })
+            ->where(function ($query) use ($search) {
+                $query->where('NumAdherant', $search)
+                    ->orWhere('NumCompte', $search)
+                    ->orWhere('Num_Manuel', $search);
+            })
             ->get();
 
         // $membreSignature = AdhesionMembre::where('compte_abrege', $compte->NumAdherant)->first();
@@ -1036,7 +1042,7 @@ class TransactionsController extends Controller
                     )->where("NumCompte", '=', $getCompte->NumCompte)
                         ->groupBy("NumCompte")
                         ->first();
-                    $soldeMembre=$soldeMembreCDF?$soldeMembreCDF->soldeMembreCDF:0;
+                    $soldeMembre = $soldeMembreCDF ? $soldeMembreCDF->soldeMembreCDF : 0;
                     //VERIFIE SI LE SOLDE EST INFERIEUR OU EGAL AU SOLDE QU'ON ESSAIE DE POSITIONNER
                     if ($request->Montant <= $soldeMembre or $getCompte->RefTypeCompte == 4) {
                         Positionnements::create([
@@ -2011,7 +2017,7 @@ class TransactionsController extends Controller
                 "deuxCentFranc"       => $billetageCDF->deuxCentFranc,
                 "centFranc"           => $billetageCDF->centFranc,
                 "cinquanteFanc"       => $billetageCDF->cinquanteFanc,
-                "montantCDF"          => $billetageCDF->sommeMontantCDF,
+                "montantCDF"          => $billetageCDF->montantCDF,
                 // "NomUtilisateur"      => $caissierNom,
                 "NomUtilisateur" => $NomCaissier ?? $caissierNom,
                 "NomDemandeur"        => $user->name,
@@ -2086,6 +2092,114 @@ class TransactionsController extends Controller
 
         return response()->json(['status' => 0, 'msg' => 'Devise non reconnue']);
     }
+
+public function adjustBilletage(Request $request)
+{
+    $user = Auth::user();
+    $isSuperAdmin = ($user->role === 'SuperAdmin');
+    $devise = $request->devise;
+    $adjustedData = $request->adjusted_data;
+
+    // Déterminer le caissier
+    if ($isSuperAdmin && $request->filled('caissier')) {
+        $caissierNom = $request->input('caissier');
+        $caissier = \App\Models\User::where('name', $caissierNom)->first();
+        if (!$caissier) {
+            return response()->json(['status' => 0, 'msg' => 'Caissier introuvable']);
+        }
+        $userName = $caissier->name;
+    } else {
+        $userName = $user->name;
+    }
+
+    $date = $request->input('date') ?? date('Y-m-d');
+
+    if ($devise === 'CDF') {
+        $billetage = BilletageCdf::where('NomUtilisateur', $userName)
+            ->where('DateTransaction', $date)
+            ->where('delested', 0)
+            ->first();
+
+        if (!$billetage) {
+            return response()->json(['status' => 0, 'msg' => 'Aucun billetage CDF non délesté trouvé']);
+        }
+
+        // Sauvegarder l'ancien total
+        $ancienTotal = $billetage->montantEntre ?? $billetage->sommeMontantCDF ?? 0;
+
+        // Mise à jour des quantités
+        $fields = [
+            'vightMilleFranc', 'dixMilleFranc', 'cinqMilleFranc', 'milleFranc',
+            'cinqCentFranc', 'deuxCentFranc', 'centFranc', 'cinquanteFanc'
+        ];
+        foreach ($fields as $field) {
+            $billetage->$field = (int) ($adjustedData[$field] ?? 0);
+        }
+
+        // Recalcul du nouveau total
+        $nouveauTotal = 
+            ($billetage->vightMilleFranc * 20000) +
+            ($billetage->dixMilleFranc * 10000) +
+            ($billetage->cinqMilleFranc * 5000) +
+            ($billetage->milleFranc * 1000) +
+            ($billetage->cinqCentFranc * 500) +
+            ($billetage->deuxCentFranc * 200) +
+            ($billetage->centFranc * 100) +
+            ($billetage->cinquanteFanc * 50);
+
+        // 🔥 Validation : on n'autorise pas un total supérieur à l'ancien total
+        if ($nouveauTotal > $ancienTotal) {
+            return response()->json([
+                'status' => 0,
+                'msg' => "Le montant total ajusté ($nouveauTotal) ne peut pas dépasser l'ancien total ($ancienTotal)."
+            ]);
+        }
+
+        $billetage->montantEntre = $nouveauTotal;
+        // $billetage->sommeMontantCDF = $nouveauTotal; // si nécessaire
+        $billetage->save();
+
+    } elseif ($devise === 'USD') {
+        $billetage = BilletageUsd::where('NomUtilisateur', $userName)
+            ->where('DateTransaction', $date)
+            ->where('delested', 0)
+            ->first();
+
+        if (!$billetage) {
+            return response()->json(['status' => 0, 'msg' => 'Aucun billetage USD non délesté trouvé']);
+        }
+
+        $ancienTotal = $billetage->montantEntre ?? $billetage->sommeMontantUSD ?? 0;
+
+        $fields = ['centDollars', 'cinquanteDollars', 'vightDollars', 'dixDollars', 'cinqDollars', 'unDollars'];
+        foreach ($fields as $field) {
+            $billetage->$field = (int) ($adjustedData[$field] ?? 0);
+        }
+
+        $nouveauTotal = 
+            ($billetage->centDollars * 100) +
+            ($billetage->cinquanteDollars * 50) +
+            ($billetage->vightDollars * 20) +
+            ($billetage->dixDollars * 10) +
+            ($billetage->cinqDollars * 5) +
+            ($billetage->unDollars * 1);
+
+        if ($nouveauTotal > $ancienTotal) {
+            return response()->json([
+                'status' => 0,
+                'msg' => "Le montant total ajusté ($nouveauTotal) ne peut pas dépasser l'ancien total ($ancienTotal)."
+            ]);
+        }
+
+        $billetage->montantEntre = $nouveauTotal;
+        $billetage->save();
+
+    } else {
+        return response()->json(['status' => 0, 'msg' => 'Devise non reconnue']);
+    }
+
+    return response()->json(['status' => 1, 'msg' => 'Ajustement enregistré avec succès']);
+}
 
 
     //GET APPRO HOME PAGE 

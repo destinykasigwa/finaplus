@@ -19,7 +19,6 @@ const Delestage = () => {
     const [isSuperAdmin, setIsSuperAdmin] = useState(() => {
         return window.currentUser?.role === "SuperAdmin";
     });
-    // const [selectedDate, setSelectedDate] = useState("");
     const [selectedDate, setSelectedDate] = useState(
         new Date().toISOString().split("T")[0],
     );
@@ -33,6 +32,15 @@ const Delestage = () => {
 
     const [myBilletageCDF, setMyBilletageCDF] = useState(null);
     const [myBilletageUSD, setMyBilletageUSD] = useState(null);
+
+    // États pour l'ajustement
+    const [editing, setEditing] = useState(false);
+    const [adjustedCDF, setAdjustedCDF] = useState(null);
+    const [adjustedUSD, setAdjustedUSD] = useState(null);
+    const [adjustedTotalCDF, setAdjustedTotalCDF] = useState(0);
+    const [adjustedTotalUSD, setAdjustedTotalUSD] = useState(0);
+    const [initialCDF, setInitialCDF] = useState(null);
+const [initialUSD, setInitialUSD] = useState(null);
 
     // Détection du rôle
     useEffect(() => {
@@ -51,12 +59,19 @@ const Delestage = () => {
                     setAllBilletagesCDF(billetageRes.data.billetageCDF || []);
                     setAllBilletagesUSD(billetageRes.data.billetageUSD || []);
                 } else {
-                    setMyBilletageCDF(
-                        billetageRes.data.billetageCDF?.[0] || null,
-                    );
-                    setMyBilletageUSD(
-                        billetageRes.data.billetageUSD?.[0] || null,
-                    );
+                    const cdfData = billetageRes.data.billetageCDF?.[0] || null;
+                    const usdData = billetageRes.data.billetageUSD?.[0] || null;
+                    setMyBilletageCDF(cdfData);
+                    setMyBilletageUSD(usdData);
+                    // Initialisation des données ajustées
+                    if (cdfData) {
+                        setAdjustedCDF({ ...cdfData });
+                        setAdjustedTotalCDF(parseInt(cdfData.sommeMontantCDF) || 0);
+                    }
+                    if (usdData) {
+                        setAdjustedUSD({ ...usdData });
+                        setAdjustedTotalUSD(parseInt(usdData.sommeMontantUSD) || 0);
+                    }
                 }
             }
             if (histoRes.data.status === 1) {
@@ -74,7 +89,6 @@ const Delestage = () => {
     useEffect(() => {
         if (!fetchInfo) return;
         if (!selectedDate) {
-            // Pas de filtre => toutes les données
             setFilteredCDF([...allBilletagesCDF]);
             setFilteredUSD([...allBilletagesUSD]);
         } else {
@@ -112,7 +126,91 @@ const Delestage = () => {
         usd: filteredUSD.find((u) => u.NomUtilisateur === nom),
     });
 
-    // Action de délestage
+    // Fonctions utilitaires
+    function numberWithSpaces(x) {
+        if (x === null || x === undefined) return "0.00";
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+
+    // Mise à jour d'une coupure CDF (mode édition)
+    const updateCoupureCDF = (field, value) => {
+        
+        if (!adjustedCDF) return;
+        const newVal = parseInt(value) || 0;
+        const updated = { ...adjustedCDF, [field]: newVal };
+      
+        // Recalcul du total
+        const total =
+            (updated.vightMilleFranc || 0) * 20000 +
+            (updated.dixMilleFranc || 0) * 10000 +
+            (updated.cinqMilleFranc || 0) * 5000 +
+            (updated.milleFranc || 0) * 1000 +
+            (updated.cinqCentFranc || 0) * 500 +
+            (updated.deuxCentFranc || 0) * 200 +
+            (updated.centFranc || 0) * 100 +
+            (updated.cinquanteFanc || 0) * 50;
+        setAdjustedCDF(updated);
+        setAdjustedTotalCDF(total);
+    };
+
+    // Mise à jour d'une coupure USD (mode édition)
+    const updateCoupureUSD = (field, value) => {
+        if (!adjustedUSD) return;
+        const newVal = parseInt(value) || 0;
+        const updated = { ...adjustedUSD, [field]: newVal };
+        const total =
+            (updated.centDollars || 0) * 100 +
+            (updated.cinquanteDollars || 0) * 50 +
+            (updated.vightDollars || 0) * 20 +
+            (updated.dixDollars || 0) * 10 +
+            (updated.cinqDollars || 0) * 5 +
+            (updated.unDollars || 0) * 1;
+        setAdjustedUSD(updated);
+        setAdjustedTotalUSD(total);
+    };
+
+    // Sauvegarde de l'ajustement (envoi au backend)
+    const saveAdjustment = async () => {
+        setLoading(true);
+        try {
+            let payload = {
+                devise: devise,
+                adjusted_data: devise === "USD" ? adjustedUSD : adjustedCDF
+            };
+            // Si admin, on envoie aussi le nom du caissier
+            if (isSuperAdmin && selectedCaissier) {
+                payload.caissier = selectedCaissier;
+            }
+            const res = await axios.post("/eco/page/delestage/adjust-billetage", payload);
+            if (res.data.status === 1) {
+                Swal.fire("Succès", "Ajustement enregistré", "success");
+                setEditing(false);
+                // Recharger les données pour obtenir les nouveaux billetages
+                await fetchAllData();
+            } else {
+                Swal.fire("Erreur", res.data.msg, "error");
+            }
+        } catch (error) {
+            Swal.fire("Erreur", "Impossible d'enregistrer l'ajustement", "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Annuler l'édition
+    const resetAdjustment = () => {
+        if (myBilletageCDF) {
+            setAdjustedCDF({ ...myBilletageCDF });
+            setAdjustedTotalCDF(parseInt(myBilletageCDF.sommeMontantCDF) || 0);
+        }
+        if (myBilletageUSD) {
+            setAdjustedUSD({ ...myBilletageUSD });
+            setAdjustedTotalUSD(parseInt(myBilletageUSD.sommeMontantUSD) || 0);
+        }
+        setEditing(false);
+    };
+
+    // Action de délestage (inchangée, mais utilise les données réelles du backend après ajustement)
     const handleDelestage = async () => {
         if (!selectedCaissier) {
             Swal.fire(
@@ -140,10 +238,7 @@ const Delestage = () => {
                     );
                     if (res.data.status === 1) {
                         Swal.fire("Succès", res.data.msg, "success");
-                        // Recharger les données fraîches
                         await fetchAllData();
-                        // Réinitialiser la date pour éviter incohérence (ou laisser)
-                        // setSelectedDate("");
                     } else {
                         Swal.fire("Erreur", res.data.msg, "error");
                     }
@@ -154,12 +249,6 @@ const Delestage = () => {
             setLoading(false);
         });
     };
-
-    // Fonctions utilitaires (inchangées)
-    function numberWithSpaces(x) {
-        if (x === null || x === undefined) return "0.00";
-        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-    }
 
     const handleMyDelestage = async () => {
         setLoading(true);
@@ -190,51 +279,52 @@ const Delestage = () => {
         });
     };
 
-    const renderBilletageTable = (data, type) => {
-        if (!data)
-            return (
-                <div className="alert alert-light">
-                    Aucune donnée disponible
-                </div>
-            );
+    const renderBilletageTable = (data, type, isEditable = false, updateFn = null) => {
+        if (!data) return <div className="alert alert-light">Aucune donnée disponible</div>;
         if (type === "USD") {
             const items = [
-                { label: "100", value: data.centDollars, multiplier: 100 },
-                { label: "50", value: data.cinquanteDollars, multiplier: 50 },
-                { label: "20", value: data.vightDollars, multiplier: 20 },
-                { label: "10", value: data.dixDollars, multiplier: 10 },
-                { label: "5", value: data.cinqDollars, multiplier: 5 },
-                { label: "1", value: data.unDollars, multiplier: 1 },
+                { label: "100", field: "centDollars", multiplier: 100 },
+                { label: "50", field: "cinquanteDollars", multiplier: 50 },
+                { label: "20", field: "vightDollars", multiplier: 20 },
+                { label: "10", field: "dixDollars", multiplier: 10 },
+                { label: "5", field: "cinqDollars", multiplier: 5 },
+                { label: "1", field: "unDollars", multiplier: 1 },
             ];
             return (
                 <table className="table table-bordered table-sm">
                     <thead className="table-light">
-                        <tr>
-                            <th>Coupure</th>
-                            <th>Nbr Billets</th>
-                            <th className="text-end">Montant</th>
-                        </tr>
+                        <tr><th>Coupure</th><th>Nbr Billets</th><th className="text-end">Montant</th></tr>
                     </thead>
                     <tbody>
-                        {items.map((item, idx) => (
-                            <tr key={idx}>
+                        {items.map((item) => (
+                            <tr key={item.field}>
                                 <td>{item.label} X</td>
-                                <td>{parseInt(item.value) || 0}</td>
+                                <td>
+                                    {isEditable ? (
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            className="form-control form-control-sm text-center"
+                                            value={data[item.field] || 0}
+                                            onFocus={(e) => e.target.select()}
+                                            onChange={(e) => updateFn && updateFn(item.field, e.target.value)}
+                                            
+                                        />
+                                    ) : (
+                                        parseInt(data[item.field]) || 0
+                                    )}
+                                </td>
                                 <td className="text-end">
-                                    {(
-                                        parseInt(item.value) * item.multiplier
-                                    ).toLocaleString()}
+                                    {((parseInt(data[item.field]) || 0) * item.multiplier).toLocaleString()}
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                     <tfoot className="table-secondary">
-                        <tr>
-                            <th colSpan="2">Total</th>
+                        <tr><th colSpan="2">Total</th>
                             <th className="text-end">
-                                {numberWithSpaces(
-                                    parseInt(data.sommeMontantUSD),
-                                )}
+                                {type === "USD" ? adjustedTotalUSD.toLocaleString() : numberWithSpaces(parseInt(data.sommeMontantUSD))}
                             </th>
                         </tr>
                     </tfoot>
@@ -242,56 +332,48 @@ const Delestage = () => {
             );
         } else {
             const items = [
-                {
-                    label: "20 000",
-                    value: data.vightMilleFranc,
-                    multiplier: 20000,
-                },
-                {
-                    label: "10 000",
-                    value: data.dixMilleFranc,
-                    multiplier: 10000,
-                },
-                {
-                    label: "5 000",
-                    value: data.cinqMilleFranc,
-                    multiplier: 5000,
-                },
-                { label: "1 000", value: data.milleFranc, multiplier: 1000 },
-                { label: "500", value: data.cinqCentFranc, multiplier: 500 },
-                { label: "200", value: data.deuxCentFranc, multiplier: 200 },
-                { label: "100", value: data.centFranc, multiplier: 100 },
-                { label: "50", value: data.cinquanteFanc, multiplier: 50 },
+                { label: "20 000", field: "vightMilleFranc", multiplier: 20000 },
+                { label: "10 000", field: "dixMilleFranc", multiplier: 10000 },
+                { label: "5 000", field: "cinqMilleFranc", multiplier: 5000 },
+                { label: "1 000", field: "milleFranc", multiplier: 1000 },
+                { label: "500", field: "cinqCentFranc", multiplier: 500 },
+                { label: "200", field: "deuxCentFranc", multiplier: 200 },
+                { label: "100", field: "centFranc", multiplier: 100 },
+                { label: "50", field: "cinquanteFanc", multiplier: 50 },
             ];
             return (
                 <table className="table table-bordered table-sm">
                     <thead className="table-light">
-                        <tr>
-                            <th>Coupure</th>
-                            <th>Nbr Billets</th>
-                            <th className="text-end">Montant</th>
-                        </tr>
+                        <tr><th>Coupure</th><th>Nbr Billets</th><th className="text-end">Montant</th></tr>
                     </thead>
                     <tbody>
-                        {items.map((item, idx) => (
-                            <tr key={idx}>
+                        {items.map((item) => (
+                            <tr key={item.field}>
                                 <td>{item.label} X</td>
-                                <td>{parseInt(item.value) || 0}</td>
-                                <td className="text-end">
-                                    {(
-                                        parseInt(item.value) * item.multiplier
-                                    ).toLocaleString()}
+                                <td>
+                                    {isEditable ? (
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            className="form-control form-control-sm text-center"
+                                            value={data[item.field] || 0}
+                                            onChange={(e) => updateFn && updateFn(item.field, e.target.value)}
+                                        />
+                                    ) : (
+                                        parseInt(data[item.field]) || 0
+                                    )}
                                 </td>
-                            </tr>
+                                <td className="text-end">
+                                    {((parseInt(data[item.field]) || 0) * item.multiplier).toLocaleString()}
+                                </td>
+                             </tr>
                         ))}
                     </tbody>
                     <tfoot className="table-secondary">
-                        <tr>
-                            <th colSpan="2">Total</th>
+                        <tr><th colSpan="2">Total</th>
                             <th className="text-end">
-                                {numberWithSpaces(
-                                    parseInt(data.sommeMontantCDF),
-                                )}
+                                {type === "CDF" ? adjustedTotalCDF.toLocaleString() : numberWithSpaces(parseInt(data.sommeMontantCDF))}
                             </th>
                         </tr>
                     </tfoot>
@@ -365,14 +447,13 @@ const Delestage = () => {
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
                         />
-                        {/* <small className="text-muted">Laissez vide pour afficher toutes les dates (billetages non délestés)</small> */}
                     </div>
                 </div>
             )}
 
+            {/* Vue simple caissier */}
             {!isSuperAdmin && (myBilletageCDF || myBilletageUSD) && (
                 <div className="row g-4 mb-4">
-                    {/* Carte informations */}
                     <div className="col-md-4">
                         <div className="card shadow-sm h-100">
                             <div className="card-body">
@@ -385,9 +466,7 @@ const Delestage = () => {
                                     <select
                                         className="form-select modern-select w-50"
                                         value={devise}
-                                        onChange={(e) =>
-                                            setDevise(e.target.value)
-                                        }
+                                        onChange={(e) => setDevise(e.target.value)}
                                     >
                                         <option value="CDF">CDF</option>
                                         <option value="USD">USD</option>
@@ -402,10 +481,12 @@ const Delestage = () => {
                                         className="form-control form-control-lg fw-bold text-end modern-input w-50"
                                         value={numberWithSpaces(
                                             devise === "USD"
-                                                ? myBilletageUSD?.sommeMontantUSD ||
-                                                      0
-                                                : myBilletageCDF?.sommeMontantCDF ||
-                                                      0,
+                                                ? (adjustedUSD?.sommeMontantUSD ||
+                                                    myBilletageUSD?.sommeMontantUSD ||
+                                                    0)
+                                                : (adjustedCDF?.sommeMontantCDF ||
+                                                    myBilletageCDF?.sommeMontantCDF ||
+                                                    0)
                                         )}
                                         disabled
                                     />
@@ -414,28 +495,51 @@ const Delestage = () => {
                         </div>
                     </div>
 
-                    {/* Tableau des coupures */}
+                    {/* Tableau des coupures avec édition */}
                     <div className="col-md-5">
                         <div className="card shadow-sm h-100">
                             <div className="card-body">
                                 <h6 className="fw-bold text-info">
-                                    Détail des coupures
+                                    Détail des coupures {editing && "(édition)"}
                                 </h6>
                                 <hr />
-                                {devise === "USD"
-                                    ? renderBilletageTable(
-                                          myBilletageUSD,
-                                          "USD",
-                                      )
-                                    : renderBilletageTable(
-                                          myBilletageCDF,
-                                          "CDF",
-                                      )}
+                                {devise === "USD" ? (
+                                    adjustedUSD ? (
+                                        renderBilletageTable(adjustedUSD, "USD", editing, updateCoupureUSD)
+                                    ) : (
+                                        renderBilletageTable(myBilletageUSD, "USD", false, null)
+                                    )
+                                ) : (
+                                    adjustedCDF ? (
+                                        renderBilletageTable(adjustedCDF, "CDF", editing, updateCoupureCDF)
+                                    ) : (
+                                        renderBilletageTable(myBilletageCDF, "CDF", false, null)
+                                    )
+                                )}
+                               
+                                {/* Afficher les boutons d'ajustement uniquement si des données existent pour la devise courante */}
+{(devise === "USD" ? (adjustedUSD || myBilletageUSD) : (adjustedCDF || myBilletageCDF)) && (
+    <div className="d-flex gap-2 mt-3">
+        {!editing ? (
+            <button className="btn btn-warning" onClick={() => setEditing(true)}>
+                <i className="fas fa-edit"></i> Ajuster
+            </button>
+        ) : (
+            <>
+                <button className="btn btn-success" onClick={saveAdjustment}>
+                    <i className="fas fa-save"></i> Valider l'ajustement
+                </button>
+                <button className="btn btn-secondary" onClick={resetAdjustment}>
+                    Annuler
+                </button>
+            </>
+        )}
+    </div>
+)}
                             </div>
                         </div>
                     </div>
 
-                    {/* Bouton Délester */}
                     <div className="col-md-3">
                         <div className="card shadow-sm h-100">
                             <div className="card-body d-flex align-items-center justify-content-center">
@@ -459,7 +563,7 @@ const Delestage = () => {
                 </div>
             )}
 
-            {/* Tableau récapitulatif (admin) */}
+            {/* Admin : tableau récapitulatif */}
             {isSuperAdmin && caissiersList.length === 0 && (
                 <div className="alert alert-info">
                     Aucun billetage non délesté pour la période sélectionnée.
@@ -483,33 +587,20 @@ const Delestage = () => {
                                 </thead>
                                 <tbody>
                                     {caissiersList.map((caissier) => {
-                                        const { cdf, usd } =
-                                            getCaissierData(caissier);
+                                        const { cdf, usd } = getCaissierData(caissier);
                                         return (
                                             <tr key={caissier}>
-                                                <td className="fw-bold">
-                                                    {caissier}
-                                                </td>
+                                                <td className="fw-bold">{caissier}</td>
                                                 <td className="text-end text-success">
-                                                    {numberWithSpaces(
-                                                        cdf?.sommeMontantCDF ||
-                                                            0,
-                                                    )}
+                                                    {numberWithSpaces(cdf?.sommeMontantCDF || 0)}
                                                 </td>
                                                 <td className="text-end text-primary">
-                                                    {numberWithSpaces(
-                                                        usd?.sommeMontantUSD ||
-                                                            0,
-                                                    )}
+                                                    {numberWithSpaces(usd?.sommeMontantUSD || 0)}
                                                 </td>
                                                 <td>
                                                     <button
                                                         className="btn btn-sm btn-outline-primary"
-                                                        onClick={() =>
-                                                            setSelectedCaissier(
-                                                                caissier,
-                                                            )
-                                                        }
+                                                        onClick={() => setSelectedCaissier(caissier)}
                                                     >
                                                         Sélectionner
                                                     </button>
@@ -524,24 +615,20 @@ const Delestage = () => {
                 </div>
             )}
 
-            {/* Détail du caissier sélectionné */}
+            {/* Détail du caissier sélectionné (admin) */}
             {selectedCaissier && (
                 <div className="row g-4">
                     <div className="col-md-4">
                         <div className="card shadow-sm h-100">
                             <div className="card-body">
-                                <h6 className="fw-bold text-info">
-                                    Informations
-                                </h6>
+                                <h6 className="fw-bold text-info">Informations</h6>
                                 <hr />
                                 <div className="mb-3">
                                     <label>Devise</label>
                                     <select
                                         className="form-select modern-select w-50"
                                         value={devise}
-                                        onChange={(e) =>
-                                            setDevise(e.target.value)
-                                        }
+                                        onChange={(e) => setDevise(e.target.value)}
                                     >
                                         <option value="CDF">CDF</option>
                                         <option value="USD">USD</option>
@@ -558,8 +645,7 @@ const Delestage = () => {
                                 </div>
                                 {isSuperAdmin && (
                                     <div className="mt-3 text-muted">
-                                        <i className="fas fa-user"></i>{" "}
-                                        Caissier: {selectedCaissier}
+                                        <i className="fas fa-user"></i> Caissier: {selectedCaissier}
                                     </div>
                                 )}
                             </div>
@@ -569,18 +655,29 @@ const Delestage = () => {
                         <div className="card shadow-sm h-100">
                             <div className="card-body">
                                 <h6 className="fw-bold text-info">
-                                    Détail des coupures
+                                    Détail des coupures {editing && "(édition)"}
                                 </h6>
                                 <hr />
-                                {devise === "USD"
-                                    ? renderBilletageTable(
-                                          currentCaissier.usd,
-                                          "USD",
-                                      )
-                                    : renderBilletageTable(
-                                          currentCaissier.cdf,
-                                          "CDF",
-                                      )}
+                                {devise === "USD" ? (
+                                    currentCaissier.usd ? (
+                                        renderBilletageTable(currentCaissier.usd, "USD", editing, (field, val) => {
+                                            // Pour l'admin, on devrait gérer un état adjusted spécifique au caissier sélectionné.
+                                            // Pour simplifier, on désactive l'édition admin dans cet exemple.
+                                            Swal.fire("Info", "L'édition pour admin est désactivée dans cette version", "info");
+                                        })
+                                    ) : (
+                                        <div className="alert alert-light">Aucune donnée USD</div>
+                                    )
+                                ) : (
+                                    currentCaissier.cdf ? (
+                                        renderBilletageTable(currentCaissier.cdf, "CDF", editing, (field, val) => {
+                                            Swal.fire("Info", "L'édition pour admin est désactivée dans cette version", "info");
+                                        })
+                                    ) : (
+                                        <div className="alert alert-light">Aucune donnée CDF</div>
+                                    )
+                                )}
+                                {/* On n'ajoute pas les boutons d'édition pour l'admin ici pour ne pas complexifier */}
                             </div>
                         </div>
                     </div>
@@ -608,169 +705,95 @@ const Delestage = () => {
             )}
 
             {/* Historique des délestages */}
-            {/* Historique des délestages */}
-            <div className="row">
+            <div className="row mt-4">
                 <div className="col-12">
                     <div className="card border-0 shadow-sm rounded-4">
                         <div className="card-body px-4">
                             {historicalCDF && historicalCDF.length > 0 && (
                                 <>
-                                    <h5
-                                        className="fw-bold mb-3"
-                                        style={{ color: "#0b7285" }}
-                                    >
-                                        <i className="fas fa-chart-line me-2"></i>
-                                        CDF
+                                    <h5 className="fw-bold mb-3" style={{ color: "#0b7285" }}>
+                                        <i className="fas fa-chart-line me-2"></i>CDF
                                     </h5>
                                     <div className="table-responsive">
                                         <table className="table table-hover align-middle">
                                             <thead className="table-light">
-                                                <tr
-                                                    style={{ color: "#0b7285" }}
-                                                >
+                                                <tr style={{ color: "#0b7285" }}>
                                                     <th>Référence</th>
                                                     <th>Montant</th>
                                                     <th>Caissier</th>
-                                                    <th className="text-end">
-                                                        Action
-                                                    </th>
+                                                    <th className="text-end">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {historicalCDF.map(
-                                                    (res, idx) => (
-                                                        <tr key={idx}>
-                                                            <td>
-                                                                <small className="text-muted">
-                                                                    {
-                                                                        res.Reference
-                                                                    }
-                                                                </small>
-                                                            </td>
-                                                            <td className="fw-bold text-danger">
-                                                                {res.montantCDF?.toLocaleString()}
-                                                            </td>
-                                                            <td>
-                                                                <small>
-                                                                    {
-                                                                        res.NomUtilisateur
-                                                                    }
-                                                                </small>
-                                                            </td>
-                                                            <td className="text-end">
-                                                                <button
-                                                                 data-toggle="modal"
-                                                                 data-target="#modal-delestage-cdf"
-                                                                    onClick={() =>
-                                                                        handlePrintClick(
-                                                                            res,
-                                                                        )
-                                                                    }
-                                                                    className="btn btn-sm rounded-pill px-3"
-                                                                    style={{
-                                                                        background:
-                                                                            "#6c757d",
-                                                                        color: "white",
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-print me-1"></i>{" "}
-                                                                    Imprimer
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    ),
-                                                )}
+                                                {historicalCDF.map((res, idx) => (
+                                                    <tr key={idx}>
+                                                        <td><small className="text-muted">{res.Reference}</small></td>
+                                                        <td className="fw-bold text-danger">{res.montantCDF?.toLocaleString()}</td>
+                                                        <td><small>{res.NomUtilisateur}</small></td>
+                                                        <td className="text-end">
+                                                            <button
+                                                                data-toggle="modal"
+                                                                data-target="#modal-delestage-cdf"
+                                                                onClick={() => handlePrintClick(res)}
+                                                                className="btn btn-sm rounded-pill px-3"
+                                                                style={{ background: "#6c757d", color: "white" }}
+                                                            >
+                                                                <i className="fas fa-print me-1"></i> Imprimer
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
                                             </tbody>
                                         </table>
                                     </div>
-                                    {selectedData && (
-                                        <RecuDelestageCDF data={selectedData} />
-                                    )}
+                                    {selectedData && <RecuDelestageCDF data={selectedData} />}
                                 </>
                             )}
                             {historicalUSD && historicalUSD.length > 0 && (
                                 <>
-                                    <h5
-                                        className="fw-bold mb-3 mt-4"
-                                        style={{ color: "#0b7285" }}
-                                    >
-                                        <i className="fas fa-dollar-sign me-2"></i>
-                                        USD
+                                    <h5 className="fw-bold mb-3 mt-4" style={{ color: "#0b7285" }}>
+                                        <i className="fas fa-dollar-sign me-2"></i>USD
                                     </h5>
                                     <div className="table-responsive">
                                         <table className="table table-hover align-middle">
                                             <thead className="table-light">
-                                                <tr
-                                                    style={{ color: "#0b7285" }}
-                                                >
+                                                <tr style={{ color: "#0b7285" }}>
                                                     <th>Référence</th>
                                                     <th>Montant</th>
                                                     <th>Caissier</th>
-                                                    <th className="text-end">
-                                                        Action
-                                                    </th>
+                                                    <th className="text-end">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {historicalUSD.map(
-                                                    (res, idx) => (
-                                                        <tr key={idx}>
-                                                            <td>
-                                                                <small className="text-muted">
-                                                                    {
-                                                                        res.Reference
-                                                                    }
-                                                                </small>
-                                                            </td>
-                                                            <td className="fw-bold text-danger">
-                                                                {res.montantUSD?.toLocaleString()}
-                                                            </td>
-                                                            <td>
-                                                                <small>
-                                                                    {
-                                                                        res.NomUtilisateur
-                                                                    }
-                                                                </small>
-                                                            </td>
-                                                            <td className="text-end">
-                                                                <button
-                                                                 data-toggle="modal"
-                                                                 data-target="#modal-delestage-usd"
-                                                                    onClick={() =>
-                                                                        handlePrintClick(
-                                                                            res,
-                                                                        )
-                                                                    }
-                                                                    className="btn btn-sm rounded-pill px-3"
-                                                                    style={{
-                                                                        background:
-                                                                            "#6c757d",
-                                                                        color: "white",
-                                                                    }}
-                                                                >
-                                                                    <i className="fas fa-print me-1"></i>{" "}
-                                                                    Imprimer
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    ),
-                                                )}
+                                                {historicalUSD.map((res, idx) => (
+                                                    <tr key={idx}>
+                                                        <td><small className="text-muted">{res.Reference}</small></td>
+                                                        <td className="fw-bold text-danger">{res.montantUSD?.toLocaleString()}</td>
+                                                        <td><small>{res.NomUtilisateur}</small></td>
+                                                        <td className="text-end">
+                                                            <button
+                                                                data-toggle="modal"
+                                                                data-target="#modal-delestage-usd"
+                                                                onClick={() => handlePrintClick(res)}
+                                                                className="btn btn-sm rounded-pill px-3"
+                                                                style={{ background: "#6c757d", color: "white" }}
+                                                            >
+                                                                <i className="fas fa-print me-1"></i> Imprimer
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
                                             </tbody>
                                         </table>
                                     </div>
-                                    {selectedData && (
-                                        <RecuDelestageUSD data={selectedData} />
-                                    )}
+                                    {selectedData && <RecuDelestageUSD data={selectedData} />}
                                 </>
                             )}
                             {(!historicalCDF || historicalCDF.length === 0) &&
-                                (!historicalUSD ||
-                                    historicalUSD.length === 0) && (
+                                (!historicalUSD || historicalUSD.length === 0) && (
                                     <div className="text-center py-5 text-muted">
                                         <i className="fas fa-inbox fa-3x mb-3 opacity-50"></i>
-                                        <p className="mb-0 fw-bold">
-                                            Aucun délestage récent
-                                        </p>
+                                        <p className="mb-0 fw-bold">Aucun délestage récent</p>
                                     </div>
                                 )}
                         </div>
@@ -782,505 +805,3 @@ const Delestage = () => {
 };
 
 export default Delestage;
-
-// import { useState, useEffect } from "react";
-// import axios from "axios";
-// import Swal from "sweetalert2";
-// import RecuApproUSD from "./Modals/RecuApproUSD";
-// import RecuApproCDF from "./Modals/RecuApproCDF";
-// import RecuDelestageUSD from "./Modals/RecuDelestageUSD";
-// import RecuDelestageCDF from "./Modals/RecuDelestageCDF";
-
-// const Delestage = () => {
-//     const [loading, setloading] = useState(false);
-//     const [Montant, setMontant] = useState(0);
-//     const [devise, setDevise] = useState("CDF");
-//     const [getBilletageCDF, setGetBilletageCDF] = useState();
-//     const [getBilletageUSD, setGetBilletageUSD] = useState();
-//     const [fetchInfo, setFetchInfo] = useState(false);
-//     const [fetchDailyOperationCDF, setFetchDailyOperationCDF] = useState();
-//     const [fetchDailyOperationUSD, setFetchDailyOperationUSD] = useState();
-//     const [selectedData, setSelectedData] = useState(null);
-//     const [delesteRealise, setDelesteRealise] = useState(false); // ← empêche de recliquer
-
-//     useEffect(() => {
-//         getLastestOperation();
-//         GetInformation();
-//     }, []);
-
-//     const getLastestOperation = async () => {
-//         const res = await axios.get("/eco/pages/delestage/get-daily-operations");
-//         if (res.data.status == 1) {
-//             setFetchDailyOperationCDF(res.data.dataCDF);
-//             setFetchDailyOperationUSD(res.data.dataUSD);
-//         }
-//     };
-
-//     // const saveOperation = async (e) => {
-//     //     e.preventDefault();
-//     //     setloading(true);
-//     //     Swal.fire({
-//     //         title: "Confirmation !",
-//     //         text: "Etes vous sûr d'effectuer ce délestage ?",
-//     //         icon: "warning",
-//     //         showCancelButton: true,
-//     //         confirmButtonColor: "#3085d6",
-//     //         cancelButtonColor: "#d33",
-//     //         confirmButtonText: "Oui Délester!",
-//     //     }).then(async (result) => {
-//     //         if (result.isConfirmed) {
-//     //             setloading(false);
-//     //             const res = await axios.post("/eco/page/delestage/validation", {
-//     //                 devise: devise,
-//     //             });
-//     //             if (res.data.status == 1) {
-//     //                 Swal.fire({
-//     //                     title: "Succès",
-//     //                     text: res.data.msg,
-//     //                     icon: "success",
-//     //                     timer: 8000,
-//     //                     confirmButtonText: "Okay",
-//     //                 });
-//     //                 // Rafraîchir les données (billetterie + historique)
-//     //                 getLastestOperation();
-//     //                 GetInformation();
-//     //                 // Marque que le délestage a été fait -> bouton désactivé
-//     //                 setDelesteRealise(true);
-//     //             } else {
-//     //                 setloading(false);
-//     //                 Swal.fire({
-//     //                     title: "Erreur",
-//     //                     text: res.data.msg,
-//     //                     icon: "error",
-//     //                     timer: 8000,
-//     //                     confirmButtonText: "Okay",
-//     //                 });
-//     //             }
-//     //         } else {
-//     //             setloading(false);
-//     //         }
-//     //     });
-//     // };
-
-//     const saveOperation = async (e) => {
-//         e.preventDefault();
-//         setloading(true);
-//         Swal.fire({
-//             title: "Confirmation !",
-//             text: "Etes vous sûr d'effectuer ce délestage ?",
-//             icon: "warning",
-//             showCancelButton: true,
-//             confirmButtonColor: "#3085d6",
-//             cancelButtonColor: "#d33",
-//             confirmButtonText: "Oui Délester!",
-//         }).then(async (result) => {
-//             if (result.isConfirmed) {
-//                 setloading(false);
-//                 const res = await axios.post("/eco/page/delestage/validation", {
-//                     devise: devise,
-//                 });
-//                 if (res.data.status == 1) {
-//                     Swal.fire({
-//                         title: "Succès",
-//                         text: res.data.msg,
-//                         icon: "success",
-//                         timer: 8000,
-//                         confirmButtonText: "Okay",
-//                     });
-//                     // Rafraîchir les données (billetterie + historique)
-//                     getLastestOperation();
-//                     GetInformation();
-//                     // NE PAS MODIFIER DE ETAT DE MASQUAGE
-//                 } else {
-//                     setloading(false);
-//                     Swal.fire({
-//                         title: "Erreur",
-//                         text: res.data.msg,
-//                         icon: "error",
-//                         timer: 8000,
-//                         confirmButtonText: "Okay",
-//                     });
-//                 }
-//             } else {
-//                 setloading(false);
-//             }
-//         });
-//     };
-//     const GetInformation = async () => {
-//         const res = await axios.get("/eco/page/delestage/get-billetage-caissier");
-//         if (res.data.status == 1) {
-//             setGetBilletageCDF(res.data.billetageCDF[0]);
-//             setGetBilletageUSD(res.data.billetageUSD[0]);
-//             setFetchInfo(true);
-//         }
-//     };
-
-//     function numberWithSpaces(x) {
-//         if (x === null || x === undefined) return "0.00";
-//         var parts = x.toString().split(".");
-//         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-//         return parts.join(".");
-//     }
-
-//     const handlePrintClick = (data) => {
-//         setSelectedData(data);
-//     };
-
-//     return (
-//         <div className="container-fluid" style={{ marginTop: "20px", padding: "0 20px", maxWidth: "1400px" }}>
-//             {/* En-tête moderne amélioré */}
-//             <div className="row mb-4">
-//                 <div className="col-12">
-//                     <div className="card border-0 shadow-lg rounded-4 overflow-hidden">
-//                         <div className="card-body p-4" style={{
-//                             background: "linear-gradient(135deg, #0b7285 0%, #138496 100%)",
-//                         }}>
-//                             <div className="d-flex align-items-center">
-//                                 <div className="me-3">
-//                                     <i className="fas fa-power-off" style={{ fontSize: "30px", color: "white" }}></i>
-//                                 </div>
-//                                 <div>
-//                                     <h5 className="text-white fw-bold mb-1">Délestage</h5>
-//                                     <small className="text-white-50" style={{ letterSpacing: "0.5px" }}>Clôture et délestage de la caisse</small>
-//                                 </div>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
-
-//             {fetchInfo && (
-//                 <>
-//                     <div className="row g-4 mb-4">
-//                         {/* Carte Informations */}
-//                         <div className="col-md-4">
-//                             <div className="card border-0 shadow-sm rounded-4 h-100">
-//                                 <div className="card-header bg-white border-0 pt-3 px-4">
-//                                     <h6 className="fw-bold mb-0" style={{ color: "#0b7285" }}>
-//                                         <i className="fas fa-info-circle me-2"></i>Informations
-//                                     </h6>
-//                                 </div>
-//                                 <div className="card-body px-4">
-//                                     <div className="mb-3">
-//                                         <label className="form-label" style={{ color: "#0b7285", fontWeight: "500" }}>Devise</label>
-//                                         <select
-//                                             className="form-select rounded-3 modern-selects w-50"
-//                                             onChange={(e) => setDevise(e.target.value)}
-//                                         >
-//                                             <option value="CDF">CDF</option>
-//                                             <option value="USD">USD</option>
-//                                         </select>
-//                                     </div>
-//                                     <div className="mb-2">
-//                                         <label className="form-label" style={{ color: "#0b7285", fontWeight: "500" }}>Montant</label>
-//                                         {devise === "USD" ? (
-//                                             <input
-//                                                 type="text"
-//                                                 className="form-control rounded-3 w-50"
-//                                                 style={{
-//                                                     backgroundColor: "#f8f9fa",
-//                                                     fontWeight: "bold",
-//                                                     fontSize: "22px",
-//                                                     textAlign: "right",
-//                                                     color: "#0b7285",
-//                                                     border: "1px solid #dee2e6"
-//                                                 }}
-//                                                 value={getBilletageUSD?.sommeMontantUSD ? numberWithSpaces(getBilletageUSD.sommeMontantUSD) : ""}
-//                                                 disabled
-//                                             />
-//                                         ) : (
-//                                             <input
-//                                                 type="text"
-//                                                 className="form-control rounded-3 w-50"
-//                                                 style={{
-//                                                     backgroundColor: "#f8f9fa",
-//                                                     fontWeight: "bold",
-//                                                     fontSize: "22px",
-//                                                     textAlign: "right",
-//                                                     color: "#0b7285",
-//                                                     border: "1px solid #dee2e6"
-//                                                 }}
-//                                                 value={getBilletageCDF?.sommeMontantCDF ? numberWithSpaces(getBilletageCDF.sommeMontantCDF) : ""}
-//                                                 disabled
-//                                             />
-//                                         )}
-//                                     </div>
-//                                 </div>
-//                             </div>
-//                         </div>
-
-//                         {/* Billetage Disponible + Bouton : masqués après délestage réussi si les données sont vides */}
-//                         {(getBilletageCDF || getBilletageUSD) && !delesteRealise && (
-//                             <>
-//                                 <div className="col-md-5">
-//                                     <div className="card border-0 shadow-sm rounded-4 h-100">
-//                                         <div className="card-header bg-white border-0 pt-3 px-4">
-//                                             <h6 className="fw-bold mb-0" style={{ color: "#0b7285" }}>
-//                                                 <i className="fas fa-money-bill-wave me-2"></i>Billetage Disponible
-//                                             </h6>
-//                                         </div>
-//                                         <div className="card-body px-3" style={{ maxHeight: "400px", overflowY: "auto" }}>
-//                                             {devise === "USD" ? (
-//                                                 getBilletageUSD && (
-//                                                     <div className="table-responsive">
-//                                                         <table className="table table-bordered table-sm align-middle">
-//                                                             <thead style={{ backgroundColor: "#e6f4f1" }}>
-//                                                                 <tr style={{ color: "#0b7285" }}>
-//                                                                     <th>Coupure</th>
-//                                                                     <th className="text-center">Nbr Billets</th>
-//                                                                     <th className="text-end">Montant</th>
-//                                                                 </tr>
-//                                                             </thead>
-//                                                             <tbody>
-//                                                                 {[
-//                                                                     { label: "100", value: getBilletageUSD.centDollars, multiplier: 100 },
-//                                                                     { label: "50", value: getBilletageUSD.cinquanteDollars, multiplier: 50 },
-//                                                                     { label: "20", value: getBilletageUSD.vightDollars, multiplier: 20 },
-//                                                                     { label: "10", value: getBilletageUSD.dixDollars, multiplier: 10 },
-//                                                                     { label: "5", value: getBilletageUSD.cinqDollars, multiplier: 5 },
-//                                                                     { label: "1", value: getBilletageUSD.unDollars, multiplier: 1 }
-//                                                                 ].map((item, idx) => (
-//                                                                     <tr key={idx}>
-//                                                                         <td className="fw-semibold">{item.label} X</td>
-//                                                                         <td className="text-center">{parseInt(item.value) || 0}</td>
-//                                                                         <td className="text-end text-success fw-bold">
-//                                                                             {(parseInt(item.value) * item.multiplier).toLocaleString()}
-//                                                                         </td>
-//                                                                     </tr>
-//                                                                 ))}
-//                                                             </tbody>
-//                                                             <tfoot>
-//                                                                 <tr style={{ backgroundColor: "#6c757d", color: "white" }}>
-//                                                                     <th colSpan="2" className="text-start ps-3">Total</th>
-//                                                                     <th className="text-end pe-3">
-//                                                                         {numberWithSpaces(parseInt(getBilletageUSD.sommeMontantUSD))}
-//                                                                     </th>
-//                                                                 </tr>
-//                                                             </tfoot>
-//                                                         </table>
-//                                                     </div>
-//                                                 )
-//                                             ) : (
-//                                                 getBilletageCDF && (
-//                                                     <div className="table-responsive">
-//                                                         <table className="table table-bordered table-sm align-middle">
-//                                                             <thead style={{ backgroundColor: "#e6f4f1" }}>
-//                                                                 <tr style={{ color: "#0b7285" }}>
-//                                                                     <th>Coupure</th>
-//                                                                     <th className="text-center">Nbr Billets</th>
-//                                                                     <th className="text-end">Montant</th>
-//                                                                 </tr>
-//                                                             </thead>
-//                                                             <tbody>
-//                                                                 {[
-//                                                                     { label: "20 000", value: getBilletageCDF.vightMilleFranc, multiplier: 20000 },
-//                                                                     { label: "10 000", value: getBilletageCDF.dixMilleFranc, multiplier: 10000 },
-//                                                                     { label: "5 000", value: getBilletageCDF.cinqMilleFranc, multiplier: 5000 },
-//                                                                     { label: "1 000", value: getBilletageCDF.milleFranc, multiplier: 1000 },
-//                                                                     { label: "500", value: getBilletageCDF.cinqCentFranc, multiplier: 500 },
-//                                                                     { label: "200", value: getBilletageCDF.deuxCentFranc, multiplier: 200 },
-//                                                                     { label: "100", value: getBilletageCDF.centFranc, multiplier: 100 },
-//                                                                     { label: "50", value: getBilletageCDF.cinquanteFanc, multiplier: 50 }
-//                                                                 ].map((item, idx) => (
-//                                                                     <tr key={idx}>
-//                                                                         <td className="fw-semibold">{item.label} X</td>
-//                                                                         <td className="text-center">{parseInt(item.value) || 0}</td>
-//                                                                         <td className="text-end text-success fw-bold">
-//                                                                             {(parseInt(item.value) * item.multiplier).toLocaleString()}
-//                                                                         </td>
-//                                                                     </tr>
-//                                                                 ))}
-//                                                             </tbody>
-//                                                             <tfoot>
-//                                                                 <tr style={{ backgroundColor: "#6c757d", color: "white" }}>
-//                                                                     <th colSpan="2" className="text-start ps-3">Total</th>
-//                                                                     <th className="text-end pe-3">
-//                                                                         {numberWithSpaces(parseInt(getBilletageCDF.sommeMontantCDF))}
-//                                                                     </th>
-//                                                                 </tr>
-//                                                             </tfoot>
-//                                                         </table>
-//                                                     </div>
-//                                                 )
-//                                             )}
-//                                         </div>
-//                                     </div>
-//                                 </div>
-
-//                                 {/* Bouton Délester */}
-//                                 <div className="col-md-3">
-//                                     <div className="card border-0 shadow-sm rounded-4 h-100">
-//                                         <div className="card-body d-flex align-items-center justify-content-center">
-//                                             {(getBilletageCDF !== undefined || getBilletageUSD !== undefined) && (
-//                                                 <button
-//                                                     className="btn w-100 py-3 fw-bold"
-//                                                     style={{
-//                                                         background: "linear-gradient(135deg, #0b7285, #0d9488)",
-//                                                         border: "none",
-//                                                         borderRadius: "12px",
-//                                                         fontSize: "17px",
-//                                                         color: "white",
-//                                                         transition: "all 0.3s ease",
-//                                                         boxShadow: "0 4px 12px rgba(11,114,133,0.3)"
-//                                                     }}
-//                                                     onClick={saveOperation}
-//                                                     onMouseEnter={(e) => {
-//                                                         e.currentTarget.style.transform = "translateY(-2px)";
-//                                                         e.currentTarget.style.boxShadow = "0 6px 18px rgba(11,114,133,0.5)";
-//                                                     }}
-//                                                     onMouseLeave={(e) => {
-//                                                         e.currentTarget.style.transform = "translateY(0)";
-//                                                         e.currentTarget.style.boxShadow = "0 4px 12px rgba(11,114,133,0.3)";
-//                                                     }}
-//                                                 >
-//                                                     <i className={`${loading ? "spinner-border spinner-border-sm me-2" : "fas fa-power-off me-2"}`}></i>
-//                                                     Délester
-//                                                 </button>
-//                                             )}
-//                                         </div>
-//                                     </div>
-//                                 </div>
-
-//                                 {/* Bouton : désactivé si le montant de la devise courante est nul */}
-
-//                             </>
-//                         )}
-
-//                         {/* Si billetage vide après délestage ou premier chargement, on affiche un message (optionnel) */}
-//                         {(!getBilletageCDF && !getBilletageUSD) && !delesteRealise && fetchInfo && (
-//                             <div className="col-md-8">
-//                                 <div className="card border-0 shadow-sm rounded-4 h-100">
-//                                     <div className="card-body d-flex align-items-center justify-content-center text-muted">
-//                                         <i className="fas fa-box-open me-3" style={{ fontSize: "4rem", opacity: 0.3 }}></i>
-//                                         <div>
-//                                             <h5 className="fw-bold mb-1">Aucun billetage disponible</h5>
-//                                             <p className="mb-0">Le caissier n'a pas encore de billetage ou le délestage a été effectué.</p>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             </div>
-//                         )}
-//                     </div>
-
-//                     {/* Séparateur décoratif */}
-//                     <div className="position-relative my-5">
-//                         <hr className="border-2" style={{ borderColor: "#e0e0e0" }} />
-//                         <span className="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small fw-bold rounded-pill shadow-sm">
-//                             <i className="fas fa-history me-1"></i> Délestages récents
-//                         </span>
-//                     </div>
-
-//                     {/* Historique des délestages */}
-//                     <div className="row">
-//                         <div className="col-12">
-//                             <div className="card border-0 shadow-sm rounded-4">
-//                                 <div className="card-header bg-white border-0 pt-3 px-4">
-//                                     <h6 className="fw-bold mb-0" style={{ color: "#0b7285" }}>
-//                                         <i className="fas fa-clock me-2"></i>Délestages récents
-//                                     </h6>
-//                                 </div>
-//                                 <div className="card-body px-4">
-//                                     {fetchDailyOperationCDF && fetchDailyOperationCDF.length > 0 && (
-//                                         <>
-//                                             <div className="mb-3">
-//                                                 <h5 className="fw-bold" style={{ color: "#0b7285" }}>
-//                                                     <i className="fas fa-chart-line me-2"></i>CDF
-//                                                 </h5>
-//                                             </div>
-//                                             <div className="table-responsive">
-//                                                 <table className="table table-hover align-middle">
-//                                                     <thead className="table-light">
-//                                                         <tr style={{ color: "#0b7285" }}>
-//                                                             <th>Référence</th>
-//                                                             <th>Montant</th>
-//                                                             <th>Caissier</th>
-//                                                             <th className="text-end">Action</th>
-//                                                         </tr>
-//                                                     </thead>
-//                                                     <tbody>
-//                                                         {fetchDailyOperationCDF.map((res, index) => (
-//                                                             <tr key={index}>
-//                                                                 <td><small className="text-muted">{res.Reference}</small></td>
-//                                                                 <td className="fw-bold text-danger">{res.montantCDF?.toLocaleString()}</td>
-//                                                                 <td><small>{res.NomUtilisateur}</small></td>
-//                                                                 <td className="text-end">
-//                                                                     <button
-//                                                                         onClick={() => handlePrintClick(res)}
-//                                                                         data-toggle="modal"
-//                                                                         data-target="#modal-delestage-cdf"
-//                                                                         className="btn btn-sm rounded-pill px-3"
-//                                                                         style={{ background: "#6c757d", color: "white" }}
-//                                                                     >
-//                                                                         <i className="fas fa-print me-1"></i> Imprimer
-//                                                                     </button>
-//                                                                 </td>
-//                                                             </tr>
-//                                                         ))}
-//                                                     </tbody>
-//                                                 </table>
-//                                             </div>
-//                                             {selectedData && <RecuDelestageCDF data={selectedData} />}
-//                                         </>
-//                                     )}
-
-//                                     {fetchDailyOperationUSD && fetchDailyOperationUSD.length > 0 && (
-//                                         <>
-//                                             <div className="mb-3 mt-4">
-//                                                 <h5 className="fw-bold" style={{ color: "#0b7285" }}>
-//                                                     <i className="fas fa-dollar-sign me-2"></i>USD
-//                                                 </h5>
-//                                             </div>
-//                                             <div className="table-responsive">
-//                                                 <table className="table table-hover align-middle">
-//                                                     <thead className="table-light">
-//                                                         <tr style={{ color: "#0b7285" }}>
-//                                                             <th>Référence</th>
-//                                                             <th>Montant</th>
-//                                                             <th>Caissier</th>
-//                                                             <th className="text-end">Action</th>
-//                                                         </tr>
-//                                                     </thead>
-//                                                     <tbody>
-//                                                         {fetchDailyOperationUSD.map((res, index) => (
-//                                                             <tr key={index}>
-//                                                                 <td><small className="text-muted">{res.Reference}</small></td>
-//                                                                 <td className="fw-bold text-danger">{res.montantUSD?.toLocaleString()}</td>
-//                                                                 <td><small>{res.NomUtilisateur}</small></td>
-//                                                                 <td className="text-end">
-//                                                                     <button
-//                                                                         onClick={() => handlePrintClick(res)}
-//                                                                         data-toggle="modal"
-//                                                                         data-target="#modal-delestage-usd"
-//                                                                         className="btn btn-sm rounded-pill px-3"
-//                                                                         style={{ background: "#6c757d", color: "white" }}
-//                                                                     >
-//                                                                         <i className="fas fa-print me-1"></i> Imprimer
-//                                                                     </button>
-//                                                                 </td>
-//                                                             </tr>
-//                                                         ))}
-//                                                     </tbody>
-//                                                 </table>
-//                                             </div>
-//                                             {selectedData && <RecuDelestageUSD data={selectedData} />}
-//                                         </>
-//                                     )}
-
-//                                     {(!fetchDailyOperationCDF || fetchDailyOperationCDF.length === 0) &&
-//                                      (!fetchDailyOperationUSD || fetchDailyOperationUSD.length === 0) && (
-//                                         <div className="text-center py-5 text-muted">
-//                                             <i className="fas fa-inbox fa-3x mb-3 opacity-50"></i>
-//                                             <p className="mb-0 fw-bold">Aucun délestage récent</p>
-//                                         </div>
-//                                     )}
-//                                 </div>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </>
-//             )}
-//         </div>
-//     );
-// };
-
-// export default Delestage;

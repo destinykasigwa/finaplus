@@ -240,6 +240,9 @@ Route::middleware(['web'])->group(function () {
     //SAVE DELESTAGE 
     Route::post('eco/page/delestage/validation', [TransactionsController::class, 'ValidateDelestage']);
 
+
+    Route::post('/eco/page/delestage/adjust-billetage', [TransactionsController::class, 'adjustBilletage']);
+
     //GET ALL CAISSIERS 
     Route::get('eco/page/appro/get-all-caissiers', [TransactionsController::class, 'getAllCaissiers']);
 
@@ -763,6 +766,7 @@ Route::get('/eco/change-devises', [CurrencyExchangeController::class, 'getChange
 Route::get('/eco/exchange/marges', [CurrencyExchangeController::class, 'getMarges']);
 Route::post('/eco/exchange/marges', [CurrencyExchangeController::class, 'updateMarge']);
   
+
 
 
 });

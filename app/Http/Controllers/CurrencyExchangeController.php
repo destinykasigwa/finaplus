@@ -297,13 +297,7 @@ class CurrencyExchangeController extends Controller
 
         $transactions = $query->orderBy('created_at', 'desc')->paginate(20);
 
-        // Ajouter un champ 'name' à chaque client
-$transactions->getCollection()->transform(function ($tx) {
-    if ($tx->client) {
-        $tx->client->name = $tx->client->client_id; // ou autre champ
-    }
-    return $tx;
-});
+        
         return response()->json(['status' => 1, 'data' => $transactions]);
     }
 
