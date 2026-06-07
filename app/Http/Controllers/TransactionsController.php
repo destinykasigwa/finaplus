@@ -352,15 +352,26 @@ class TransactionsController extends Controller
         // 3. Sinon, c'est un numéro abrégé numérique
         elseif (ctype_digit($search)) {
             // Chercher d'abord dans l'agence courante
-            $compte = Comptes::where('NumAdherant', $search)
-                ->where('CodeAgence', $codeAgenceUtil)
-                ->where('RefGroupe', 330)
+            $compte = Comptes::where('CodeAgence', $codeAgenceUtil)
+                ->whereIn('RefGroupe', [330, 470])
+                ->where(function ($query) use ($search) {
+                    $query->where('NumAdherant', $search)
+                        ->orWhere('NumCompte', $search)
+                        ->orWhere('Num_Manuel', $search);
+                })
                 ->first();
             if ($compte) {
                 $typeRecherche = 'NumAdherant (même agence)';
             } else {
                 // Vérifier si ce numéro abrégé existe dans une autre agence
-                $compteAutre = Comptes::where('NumAdherant', $search)->where('RefGroupe', 330)->first();
+                $compteAutre = Comptes::where('CodeAgence', $codeAgenceUtil)
+                    ->whereIn('RefGroupe', [330, 470])
+                    ->where(function ($query) use ($search) {
+                        $query->where('NumAdherant', $search)
+                            ->orWhere('NumCompte', $search)
+                            ->orWhere('Num_Manuel', $search);
+                    })
+                    ->first();
                 if ($compteAutre) {
                     // Récupérer le nom de l'agence correspondante
                     $agence = Agences::where('code_agence', $compteAutre->CodeAgence)->first();
@@ -390,7 +401,7 @@ class TransactionsController extends Controller
                 ->orWhere('Num_Manuel', $search);
         })
             ->where('niveau', 5)
-            ->where('RefGroupe', 330)
+            ->whereIn('RefGroupe', [330, 470])
             ->get();
 
         // $membreSignature = AdhesionMembre::where('compte_abrege', $compte->NumAdherant)->first();
@@ -479,7 +490,7 @@ class TransactionsController extends Controller
         if ($validator->fails()) {
             return response()->json(['validate_error' => $validator->messages()]);
         }
-   
+
         try {
             if ($request->devise == "CDF") {
                 // --- Récupération des comptes (inchangé) ---
@@ -1025,8 +1036,9 @@ class TransactionsController extends Controller
                     )->where("NumCompte", '=', $getCompte->NumCompte)
                         ->groupBy("NumCompte")
                         ->first();
+                    $soldeMembre=$soldeMembreCDF?$soldeMembreCDF->soldeMembreCDF:0;
                     //VERIFIE SI LE SOLDE EST INFERIEUR OU EGAL AU SOLDE QU'ON ESSAIE DE POSITIONNER
-                    if ($request->Montant <= $soldeMembreCDF->soldeMembreCDF or $getCompte->RefTypeCompte == 4) {
+                    if ($request->Montant <= $soldeMembre or $getCompte->RefTypeCompte == 4) {
                         Positionnements::create([
                             "code_agence" => $codeAgence,
                             "NumCompte" => $getCompte->NumCompte,
@@ -1312,7 +1324,7 @@ class TransactionsController extends Controller
                                 "NumCompte" => $compteCommissionCDF,
                                 "NumComptecp" => $dataCompte->NumCompte,
                                 "Credit"  => $request->Commission,
-                                "Creditusd"  =>$request->Montant / $dataSystem->TauxEnFc,
+                                "Creditusd"  => $request->Montant / $dataSystem->TauxEnFc,
                                 "Creditfc" => $request->Commission,
                                 "NomUtilisateur" => Auth::user()->name,
                                 "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $dataCompte->NumCompte . " par le caissier " . Auth::user()->name,
@@ -1492,7 +1504,7 @@ class TransactionsController extends Controller
                             "NomMembre" => $dataCompte->NomCompte,
                             "NumAbrege" => $request->NumAbrege,
                             "Beneficiaire" => $dataVisa->Retirant,
-                            "Telephone"=>$dataVisa->NumTel,
+                            "Telephone" => $dataVisa->NumTel,
                             "Motif" => $request->motifRetrait,
                             "Devise" => $request->devise,
                             "vightMilleFrancSortie" => $request->vightMille,
@@ -1904,7 +1916,7 @@ class TransactionsController extends Controller
     }
 
     //VALIDATE DELESTAGE
-   
+
 
     //VALIDATE DELESTAGE
     public function ValidateDelestage(Request $request)
@@ -1924,7 +1936,7 @@ class TransactionsController extends Controller
                 return response()->json(['status' => 0, 'msg' => 'Caissier introuvable']);
             }
             $caissierId = $caissier->id;
-             $NomCaissier=$caissier->name;
+            $NomCaissier = $caissier->name;
         } else {
             $caissierNom = $user->name;
             $caissierId = $user->id;
@@ -2093,9 +2105,9 @@ class TransactionsController extends Controller
         $data = Comptes::where("isCaissier", 1)->where("CodeMonnaie", 2)->where("CodeAgence", $codeAgence)->get();
         //$data = Comptes::where("isCaissier", 1)->where("CodeMonnaie", 2)->where("isChefCaisse", 0)->get();
         //$chefIfIsChefCaisse = Comptes::where("caissierId", Auth::user()->id)->where("isChefCaisse", 1)->first();
-        $userRole=Auth::user()->role;
+        $userRole = Auth::user()->role;
 
-         return response()->json(["status" => 1, "data" => $data, "user_role" => $userRole]);
+        return response()->json(["status" => 1, "data" => $data, "user_role" => $userRole]);
     }
 
     //SAVE APPRO
@@ -2877,14 +2889,14 @@ class TransactionsController extends Controller
             }
 
             // Récupération sécurisée de l'adresse (évite l'erreur si aucun enregistrement)
-            $adhesion = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->where("code_agence",$codeAgence)->first();
+            $adhesion = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->where("code_agence", $codeAgence)->first();
             $getAdresseMembre = $adhesion ? $adhesion->suiteAdresse : null;
 
-        //     $adhesion = AdhesionMembre::where(function($query) use ($request) {
-        //     $query->where('num_compte', $request->NumCompte)
-        //   ->orWhere('compte_abrege', $request->NumCompte)
-        //   ->orWhere('Num_Manuel', $request->NumCompte);
-        //   })->first();
+            //     $adhesion = AdhesionMembre::where(function($query) use ($request) {
+            //     $query->where('num_compte', $request->NumCompte)
+            //   ->orWhere('compte_abrege', $request->NumCompte)
+            //   ->orWhere('Num_Manuel', $request->NumCompte);
+            //   })->first();
 
             // Vérifier que le compte appartient bien à l'agence choisie (sauf si all)
             if ($codeAgence && $compte->CodeAgence != $codeAgence) {
@@ -3013,7 +3025,7 @@ class TransactionsController extends Controller
                         "NumTransaction" => $NumTransaction,
                         "RefJournal" => JournalType::TRESORERIE,
                         "DateTransaction" => $dateTransaction,
-                        
+
                         "DateSaisie" => $dataSystem->DateSystem,
                         "TypeTransaction" => "D",
                         "CodeMonnaie" => 2,
@@ -3256,7 +3268,7 @@ class TransactionsController extends Controller
                     ->orWhere("Num_Manuel", $request->compte_a_crediter);   // ← ajout
             })->first();
             if ($checkData) {
-              
+
                 $data = Comptes::where(function ($query) use ($request) {
                     $query->where('NumCompte', $request->compte_a_crediter)
                         ->orWhere(function ($q) use ($request) {
@@ -3962,7 +3974,7 @@ class TransactionsController extends Controller
 
                         Transactions::create([
                             "NumTransaction" => $data[$i]->NumTransaction,
-                              "RefJournal" => JournalType::ANNULATION,
+                            "RefJournal" => JournalType::ANNULATION,
                             "DateTransaction" => $data[$i]->DateTransaction,
                             "DateSaisie" => $data[$i]->DateSaisie,
                             "Taux" => 1,
@@ -3997,7 +4009,7 @@ class TransactionsController extends Controller
                         //SI C UN DEBIT ON PASSE UNE ECRITURE CONTRAIRE CAD UN CREDIT
                         Transactions::create([
                             "NumTransaction" => $data[$i]->NumTransaction,
-                              "RefJournal" => JournalType::ANNULATION,
+                            "RefJournal" => JournalType::ANNULATION,
                             "DateTransaction" => $data[$i]->DateTransaction,
                             "DateSaisie" => $data[$i]->DateSaisie,
                             "Taux" => 1,
@@ -4050,18 +4062,18 @@ class TransactionsController extends Controller
     }
 
     //OBTIENT LES OPERATION JOURNALIERES DU COMPTABLE
-   public function getDailyOperation(Request $request)
-{
-    $date = $request->input('date');
-    if (!$date) {
-        $dataSystem = TauxEtDateSystem::latest()->first();
-        $date = $dataSystem->DateSystem;
-    }
+    public function getDailyOperation(Request $request)
+    {
+        $date = $request->input('date');
+        if (!$date) {
+            $dataSystem = TauxEtDateSystem::latest()->first();
+            $date = $dataSystem->DateSystem;
+        }
 
-    $data = Transactions::where("transactions.NomUtilisateur", "=", Auth::user()->name)
-        ->where("transactions.DateTransaction", "=", $date)
-        ->join("comptes", "transactions.NumCompte", "=", "comptes.NumCompte")
-        ->selectRaw("
+        $data = Transactions::where("transactions.NomUtilisateur", "=", Auth::user()->name)
+            ->where("transactions.DateTransaction", "=", $date)
+            ->join("comptes", "transactions.NumCompte", "=", "comptes.NumCompte")
+            ->selectRaw("
             transactions.NumTransaction,
             transactions.Creditfc,
             transactions.Debitfc,
@@ -4074,25 +4086,25 @@ class TransactionsController extends Controller
             transactions.NumCompte,
             transactions.CodeMonnaie
         ")
-        ->groupBy(
-            "transactions.NumTransaction",
-            "transactions.NumCompte",
-            "transactions.Credit",
-            "transactions.Debit",
-            "transactions.Creditfc",
-            "transactions.Debitfc",
-            "transactions.Creditusd",
-            "transactions.Debitusd",
-            "transactions.Libelle",
-            "transactions.TypeTransaction",
-            "transactions.CodeMonnaie"
-        )
-        ->orderBy("transactions.RefTransaction", "desc") // décroissant (le plus récent en premier)
-        ->limit(100)   // 🔧 correction : on ne met que l'entier
-        ->get();
+            ->groupBy(
+                "transactions.NumTransaction",
+                "transactions.NumCompte",
+                "transactions.Credit",
+                "transactions.Debit",
+                "transactions.Creditfc",
+                "transactions.Debitfc",
+                "transactions.Creditusd",
+                "transactions.Debitusd",
+                "transactions.Libelle",
+                "transactions.TypeTransaction",
+                "transactions.CodeMonnaie"
+            )
+            ->orderBy("transactions.RefTransaction", "desc") // décroissant (le plus récent en premier)
+            ->limit(100)   // 🔧 correction : on ne met que l'entier
+            ->get();
 
-    return response()->json(["status" => 1, "data" => $data]);
-}
+        return response()->json(["status" => 1, "data" => $data]);
+    }
 
 
     //PERMET DE TROUVER UNE OPERATION RECHERCHEE MOYENNANT SA REFERENCE
@@ -4133,9 +4145,4 @@ class TransactionsController extends Controller
 
         return response()->json(["status" => 1, "data" => $data, "type_recu" => $type_recu]);
     }
-
-
-
-
-
 }

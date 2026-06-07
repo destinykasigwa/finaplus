@@ -415,7 +415,6 @@ const CurrencyExchange = () => {
                 // 👇 Force le rechargement du taux de référence pour l'opération en cours
                 if (sourceDevise && targetDevise) {
                     getReferenceRate();
-                   
                 }
                 // Réinitialisation
                 setAmount("");
@@ -610,7 +609,11 @@ const CurrencyExchange = () => {
 
     const columns = [
         { name: "Référence", selector: (row) => row.reference, sortable: true },
-        { name: "Client", selector: (row) => row.client?.name, sortable: true },
+        {
+            name: "NumCompte",
+            cell: (row) => <span>{row.client_id}</span>,
+            sortable: true,
+        },
         {
             name: "Montant source",
             selector: (row) => `${row.amount_source} ${row.source_currency}`,

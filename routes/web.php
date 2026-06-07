@@ -721,7 +721,7 @@ Route::get('/eco/pages/radiation-credit', [SuiviCreditController::class, 'getRad
 
 
  Route::post('/eco/page/montage-credit/get-credits-by-member', [SuiviCreditController::class, 'getCreditsByMember']);
-  Route::post('/eco/page/montage-credit/get-credit-by-dossier', [SuiviCreditController::class, 'getCreditByDossier']);
+ Route::post('/eco/page/montage-credit/get-credit-by-dossier', [SuiviCreditController::class, 'getCreditByDossier']);
 
 
 
@@ -759,9 +759,7 @@ Route::middleware(['auth'])->prefix('eco/exchange')->group(function () {
 });
 
 // Vue Blade pour le module
-Route::view('/eco/change-devises', 'eco.pages.currency-exchange')->name('eco.pages.currency-exchange');
-
-
+Route::get('/eco/change-devises', [CurrencyExchangeController::class, 'getChangeCreditHomePage'])->name('eco.pages.currency-exchange');
 Route::get('/eco/exchange/marges', [CurrencyExchangeController::class, 'getMarges']);
 Route::post('/eco/exchange/marges', [CurrencyExchangeController::class, 'updateMarge']);
   

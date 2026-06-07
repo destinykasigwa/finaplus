@@ -51,23 +51,44 @@ const Debiter = () => {
         return parseFloat(formatted.replace(/ /g, "").replace(",", "."));
     };
     
+    // const formatMontantSaisie = (value) => {
+    //     // Nettoyer : enlever tout sauf chiffres et virgule
+    //     let clean = value.replace(/[^\d,]/g, "");
+    //     if (clean === "") return "";
+    //     let parts = clean.split(",");
+    //     if (parts.length > 2) parts = [parts[0], parts.slice(1).join("")];
+    //     let entier = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    //     if (parts.length === 2) return entier + "," + parts[1].slice(0, 2);
+    //     return entier;
+    // };
+
     const formatMontantSaisie = (value) => {
-        // Nettoyer : enlever tout sauf chiffres et virgule
-        let clean = value.replace(/[^\d,]/g, "");
-        if (clean === "") return "";
-        let parts = clean.split(",");
-        if (parts.length > 2) parts = [parts[0], parts.slice(1).join("")];
-        let entier = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-        if (parts.length === 2) return entier + "," + parts[1].slice(0, 2);
-        return entier;
-    };
+    // Convertir d'abord le point en virgule
+    let temp = value.replace(/\./g, ",");
+    // Enlever tout sauf chiffres et virgule
+    let clean = temp.replace(/[^\d,]/g, "");
+    if (clean === "") return "";
+    let parts = clean.split(",");
+    if (parts.length > 2) parts = [parts[0], parts.slice(1).join("")];
+    let entier = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    if (parts.length === 2) return entier + "," + parts[1].slice(0, 2);
+    return entier;
+};
+    
+    // const handleMontantChange = (e) => {
+    //     const raw = e.target.value;
+    //     const formatted = formatMontantSaisie(raw);
+    //     setMontant(formatted);
+    // };
     
     const handleMontantChange = (e) => {
-        const raw = e.target.value;
-        const formatted = formatMontantSaisie(raw);
-        setMontant(formatted);
-    };
-    
+    const raw = e.target.value;
+    console.log("Saisie brute :", raw);
+    const formatted = formatMontantSaisie(raw);
+    console.log("Après formatage :", formatted);
+    setMontant(formatted);
+};
+
     // Suggérer un libellé basé sur les comptes
     useEffect(() => {
         if (fetchDataDebit && fetchDataCredit && !libelle) {
@@ -187,8 +208,10 @@ const Debiter = () => {
         setChargement(true);
         try {
             const res = await axios.post("/eco/page/transaction/debiter/save", {
-                compte_a_debiter: compteADebiter,
-                compte_a_crediter: compteACrediter,
+                // compte_a_debiter: compteADebiter,
+                // compte_a_crediter: compteACrediter,
+                compte_a_debiter: fetchDataDebit.NumCompte,
+                compte_a_crediter: fetchDataCredit.NumCompte,
                 Montant: montantNumerique,
                 devise: fetchDataDebit.CodeMonnaie,
                 Libelle: libelle,
@@ -460,6 +483,7 @@ const Debiter = () => {
                                 className="form-control form-control-lg text-end fw-bold"
                                 placeholder="0,00"
                                 value={montant}
+                                inputMode="decimal"
                                 onChange={handleMontantChange}
                                 style={{ fontSize: "1.2rem" }}
                             />

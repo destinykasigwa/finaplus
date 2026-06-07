@@ -31,6 +31,10 @@ class CurrencyExchangeController extends Controller
     //     return response()->json(['status' => 1, 'data' => $rates]);
     // }
 
+    public function getChangeCreditHomePage(){
+        return view("eco.pages.currency-exchange");
+    }
+
     public function getRates()
     {
         $rates = ExchangeRate::with('creator')
@@ -289,7 +293,17 @@ class CurrencyExchangeController extends Controller
         if ($request->filled('min_gain')) $query->where('gain_loss', '>=', $request->min_gain);
         if ($request->filled('max_gain')) $query->where('gain_loss', '<=', $request->max_gain);
 
+
+
         $transactions = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        // Ajouter un champ 'name' à chaque client
+$transactions->getCollection()->transform(function ($tx) {
+    if ($tx->client) {
+        $tx->client->name = $tx->client->client_id; // ou autre champ
+    }
+    return $tx;
+});
         return response()->json(['status' => 1, 'data' => $transactions]);
     }
 

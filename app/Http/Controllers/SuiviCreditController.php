@@ -1284,12 +1284,13 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
                     //DEBITE LE COMPTE EPARGNE GARANTIE 
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                         "RefJournal" => JournalType::CREDIT,
                         "DateTransaction" => $dateSystem,
                         "DateSaisie" => $dateSaisie,
                         "Taux" => 1,
                         "TypeTransaction" => "D",
                         "CodeMonnaie" => 2,
-                        "CodeAgence" => $getData->CodeAgence,
+                        "CodeAgence" => $getNumCompte->CodeAgence,
                         "NumDossier" => "DOS00" . $numOperation->id,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $getData->EpargneGarantie,
@@ -1304,12 +1305,13 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
                     //CREDITE LE COMPTE DU MEMBRE
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                         "RefJournal" => JournalType::CREDIT,
                         "DateTransaction" => $dateSystem,
                         "DateSaisie" => $dateSaisie,
                         "Taux" => 1,
                         "TypeTransaction" => "C",
                         "CodeMonnaie" => 2,
-                        "CodeAgence" => $getData->CodeAgence,
+                        "CodeAgence" => $getNumCompte->CodeAgence,
                         "NumDossier" => "DOS00" . $numOperation->id,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $NumCompte,
@@ -1336,12 +1338,13 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
                     //DEBITE LE COMPTE EPARGNE GARANTIE 
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                         "RefJournal" => JournalType::CREDIT,
                         "DateTransaction" => $dateSystem,
                         "DateSaisie" => $dateSaisie,
                         "Taux" => 1,
                         "TypeTransaction" => "D",
                         "CodeMonnaie" => 1,
-                        "CodeAgence" => $getData->CodeAgence,
+                        "CodeAgence" => $getNumCompte->CodeAgence,
                         "NumDossier" => "DOS00" . $numOperation->id,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $getData->EpargneGarantie,
@@ -1356,12 +1359,13 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
                     //CREDITE LE COMPTE DU MEMBRE
                     Transactions::create([
                         "NumTransaction" => $NumTransaction,
+                         "RefJournal" => JournalType::CREDIT,
                         "DateTransaction" => $dateSystem,
                         "DateSaisie" => $dateSaisie,
                         "Taux" => 1,
                         "TypeTransaction" => "C",
                         "CodeMonnaie" => 1,
-                        "CodeAgence" => $getData->CodeAgence,
+                        "CodeAgence" => $getNumCompte->CodeAgence,
                         "NumDossier" => "DOS00" . $numOperation->id,
                         "NumDemande" => "V00" . $numOperation->id,
                         "NumCompte" => $NumCompte,
