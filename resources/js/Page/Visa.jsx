@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { Bars } from "react-loader-spinner";
+import Zoom from 'react-medium-image-zoom';
+import 'react-medium-image-zoom/dist/styles.css';
 
 const TableWithPagination = ({ data, itemsPerPage, renderRow }) => {
     const [currentPage, setCurrentPage] = useState(1);
@@ -841,6 +843,7 @@ const Visa = () => {
                                     borderRadius: "8px",
                                 }}
                             >
+                                   <Zoom>
                                 <img
                                     src={`uploads/membres/photos/files/${photo_file}`}
                                     alt="Photo du membre"
@@ -853,6 +856,7 @@ const Visa = () => {
                                         e.target.src = "/images/default-avatar.png";
                                     }}
                                 />
+                                </Zoom>
                             </div>
                             <div className="mt-2">
                                 <span className="badge bg-success rounded-pill px-2 py-1" style={{ fontSize: "10px" }}>
@@ -890,16 +894,22 @@ const Visa = () => {
                                     overflow: "auto",
                                     borderRadius: "8px",
                                 }}
-                            >
-                                <iframe
-                                    src={`uploads/membres/signatures/files/${signature_file}`}
+                                 >
+                               
+                                    <Zoom>
+                                <img
+                                     src={`uploads/membres/signatures/files/${signature_file}`}
+                                    alt="Photo du membre"
                                     style={{
                                         width: "100%",
-                                        height: "700px",
-                                        border: "none",
+                                        minHeight: "150px",
+                                        objectFit: "contain",
                                     }}
-                                    title="Signature du membre"
-                                ></iframe>
+                                    onError={(e) => {
+                                        e.target.src = "/images/default-avatar.png";
+                                    }}
+                                />
+                                </Zoom>
                             </div>
                             <div className="mt-2">
                                 <span className="badge bg-success rounded-pill px-2 py-1" style={{ fontSize: "10px" }}>

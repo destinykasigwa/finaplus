@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
 
 const Adhesion = () => {
     const [adhesion, setAdhesion] = useState({
@@ -2820,17 +2822,26 @@ const Adhesion = () => {
                                                                 actuelle
                                                             </label>
                                                             <div className="border rounded-3 p-2 bg-light">
-                                                                <iframe
-                                                                    src={`/uploads/membres/signatures/files/${signature_file}`}
-                                                                    style={{
-                                                                        width: "100%",
-                                                                        height: "150px",
-                                                                        border: "none",
-                                                                        borderRadius:
-                                                                            "8px",
-                                                                    }}
-                                                                    title="Signature"
-                                                                ></iframe>
+                                                                <Zoom>
+                                                                    <img
+                                                                        src={`/uploads/membres/signatures/files/${signature_file}`}
+                                                                        alt="Photo du membre"
+                                                                        style={{
+                                                                            width: "100%",
+                                                                            height:"100px",
+                                                                            // minHeight:
+                                                                            //     "50px",
+                                                                            objectFit:
+                                                                                "contain",
+                                                                        }}
+                                                                        onError={(
+                                                                            e,
+                                                                        ) => {
+                                                                            e.target.src =
+                                                                                "/images/default-avatar.png";
+                                                                        }}
+                                                                    />
+                                                                </Zoom>
                                                             </div>
                                                         </div>
                                                     )}

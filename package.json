@@ -31,6 +31,7 @@
         "react-data-export": "^0.6.0",
         "react-data-table-component": "^7.5.4",
         "react-loader-spinner": "^6.1.6",
+        "react-medium-image-zoom": "^5.4.6",
         "react-router-dom": "^6.15.0",
         "sweetalert2": "^11.7.27",
         "xlsx": "^0.18.5"
