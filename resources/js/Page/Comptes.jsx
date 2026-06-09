@@ -215,8 +215,8 @@ const Comptes = () => {
     const [epargneObligatoire, setEpargneObligatoire] = useState();
     const [showForm, setShowForm] = useState(false);
     const [selectedAgenceId, setSelectedAgenceId] = useState(null);
-   const [soldeMinimumUSD, setSoldeMinimumUSD] = useState(0);
-const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
+    const [soldeMinimumUSD, setSoldeMinimumUSD] = useState(0);
+    const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
     useEffect(() => {
         getCompanyData();
     }, []);
@@ -549,9 +549,15 @@ const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
             setTypeRecu(res.data.adhesion_epargne_data.type_recu);
 
             setFraisSMS(res.data.adhesion_epargne_data.fraisSMS);
-            setEpargneObligatoire(res.data.adhesion_epargne_data.epargneObligatoire);
-             setSoldeMinimumUSD(res.data.adhesion_epargne_data.solde_minimum_usd);
-             setSoldeMinimumCDF(res.data.adhesion_epargne_data.solde_minimum_cdf);
+            setEpargneObligatoire(
+                res.data.adhesion_epargne_data.epargneObligatoire,
+            );
+            setSoldeMinimumUSD(
+                res.data.adhesion_epargne_data.solde_minimum_usd,
+            );
+            setSoldeMinimumCDF(
+                res.data.adhesion_epargne_data.solde_minimum_cdf,
+            );
 
             console.log(login_attempt);
         }
@@ -782,8 +788,8 @@ const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
                 typeRecu,
                 FraisSMS,
                 epargneObligatoire,
-                  solde_minimum_cdf: soldeMinimumUSD,
-                  solde_minimum_usd: soldeMinimumCDF,
+                solde_minimum_cdf: soldeMinimumUSD,
+                solde_minimum_usd: soldeMinimumCDF,
             },
         );
         if (res.data.status == 1) {
@@ -1013,10 +1019,9 @@ const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
         });
     };
 
-
     //PERMET DE LANCER LES ECRITURES D'AMMORTISEMENT AUTOMATIQUE
 
-     const AmmortissementAutomatiqueBtn = async (e) => {
+    const AmmortissementAutomatiqueBtn = async (e) => {
         e.preventDefault();
         setchargement(true);
         Swal.fire({
@@ -1035,9 +1040,7 @@ const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
                     "success",
                 ).then(async function () {
                     try {
-                        const res = await axios.post(
-                            "/eco/immo/amortissement",
-                        );
+                        const res = await axios.post("/eco/immo/amortissement");
                         if (res.data.status === 1) {
                             setchargement(false);
                             Swal.fire({
@@ -1075,7 +1078,6 @@ const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
             }
         });
     };
-
 
     const downloadReport = (type) => {
         setchargement(true);
@@ -5883,7 +5885,6 @@ const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
                                                         </td>
                                                     </tr>
 
-
                                                     <tr>
                                                         <td
                                                             style={{
@@ -5897,7 +5898,8 @@ const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
                                                                 }}
                                                             >
                                                                 <i class="fas fa-sms"></i>{" "}
-                                                                Epargne Obligatoire en %
+                                                                Epargne
+                                                                Obligatoire en %
                                                             </label>
                                                         </td>
                                                         <td
@@ -5926,18 +5928,30 @@ const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
                                                                     }
                                                                 />
                                                                 <span className="text-muted small">
-                                                                   EPargne obligatoire en %
+                                                                    EPargne
+                                                                    obligatoire
+                                                                    en %
                                                                 </span>
                                                             </div>
                                                             <small className="text-muted d-block mt-1">
                                                                 <i className="fas fa-info-circle me-1"></i>
                                                                 il s'agit d'un
-                                                                paramètre en % pour specifier ou non si une Epargne obligatoire
-                                                                 est exigée au membre lors de l'octroie d'un crédit il est appliqué sur le montant global du crédit accordé 
+                                                                paramètre en %
+                                                                pour specifier
+                                                                ou non si une
+                                                                Epargne
+                                                                obligatoire est
+                                                                exigée au membre
+                                                                lors de
+                                                                l'octroie d'un
+                                                                crédit il est
+                                                                appliqué sur le
+                                                                montant global
+                                                                du crédit
+                                                                accordé
                                                             </small>
                                                         </td>
                                                     </tr>
-
 
                                                     <tr>
                                                         <td colSpan="2">
@@ -6003,7 +6017,6 @@ const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
                                                                     htmlFor="commissionSwitch"
                                                                     style={{
                                                                         color: "steelblue",
-                                                                      
                                                                     }}
                                                                 >
                                                                     {showCommissionPanel
@@ -6021,54 +6034,122 @@ const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
                                                             </small>
                                                         </td>
                                                     </tr>
-                                                 
+
                                                     {/* Frais de tenue de compte */}
-<tr>
-  <td style={{ padding: "8px" }}>
-    <label className="small fw-semibold" style={{ color: "steelblue" }}>
-      <i className="fas fa-credit-card me-1"></i> Solde Minimum compte (USD)
-    </label>
-  </td>
-  <td style={{ padding: "8px" }}>
-    <div className="d-flex align-items-center gap-2">
-      <input
-        type="number"
-        step="0.01"
-        className="form-control form-control-sm modern-input"
-        style={{ width: "120px" }}
-        value={soldeMinimumUSD}
-        onChange={(e) => setSoldeMinimumUSD(parseFloat(e.target.value) || 0)}
-      />
-      <span className="text-muted small">USD</span>
-    </div>
-    <small className="text-muted d-block mt-1">
-      Solde Minimum comptes en USD
-    </small>
-  </td>
-</tr>
-<tr>
-  <td style={{ padding: "8px" }}>
-    <label className="small fw-semibold" style={{ color: "steelblue" }}>
-      <i className="fas fa-credit-card me-1"></i> Solde Minimum compte (CDF)
-    </label>
-  </td>
-  <td style={{ padding: "8px" }}>
-    <div className="d-flex align-items-center gap-2">
-      <input
-        type="number"
-        step="0.01"
-        className="form-control form-control-sm modern-input"
-        style={{ width: "120px" }}
-        value={soldeMinimumCDF}
-        onChange={(e) => setSoldeMinimumsUSD(parseFloat(e.target.value) || 0)}
-      />
-      <span className="text-muted small">CDF</span>
-    </div>
-    <small className="text-muted d-block mt-1">
-      Solde Minimum pour les comptes en Francs congolais
-    </small>
-  </td>
-</tr>
+                                                    <tr>
+                                                        <td
+                                                            style={{
+                                                                padding: "8px",
+                                                            }}
+                                                        >
+                                                            <label
+                                                                className="small fw-semibold"
+                                                                style={{
+                                                                    color: "steelblue",
+                                                                }}
+                                                            >
+                                                                <i className="fas fa-credit-card me-1"></i>{" "}
+                                                                Solde Minimum
+                                                                compte (USD)
+                                                            </label>
+                                                        </td>
+                                                        <td
+                                                            style={{
+                                                                padding: "8px",
+                                                            }}
+                                                        >
+                                                            <div className="d-flex align-items-center gap-2">
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    className="form-control form-control-sm modern-input"
+                                                                    style={{
+                                                                        width: "120px",
+                                                                    }}
+                                                                    value={
+                                                                        soldeMinimumUSD
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setSoldeMinimumUSD(
+                                                                            parseFloat(
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                            ) ||
+                                                                                0,
+                                                                        )
+                                                                    }
+                                                                />
+                                                                <span className="text-muted small">
+                                                                    USD
+                                                                </span>
+                                                            </div>
+                                                            <small className="text-muted d-block mt-1">
+                                                                Solde Minimum
+                                                                comptes en USD
+                                                            </small>
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td
+                                                            style={{
+                                                                padding: "8px",
+                                                            }}
+                                                        >
+                                                            <label
+                                                                className="small fw-semibold"
+                                                                style={{
+                                                                    color: "steelblue",
+                                                                }}
+                                                            >
+                                                                <i className="fas fa-credit-card me-1"></i>{" "}
+                                                                Solde Minimum
+                                                                compte (CDF)
+                                                            </label>
+                                                        </td>
+                                                        <td
+                                                            style={{
+                                                                padding: "8px",
+                                                            }}
+                                                        >
+                                                            <div className="d-flex align-items-center gap-2">
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    className="form-control form-control-sm modern-input"
+                                                                    style={{
+                                                                        width: "120px",
+                                                                    }}
+                                                                    value={
+                                                                        soldeMinimumCDF
+                                                                    }
+                                                                    onChange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        setSoldeMinimumsUSD(
+                                                                            parseFloat(
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                            ) ||
+                                                                                0,
+                                                                        )
+                                                                    }
+                                                                />
+                                                                <span className="text-muted small">
+                                                                    CDF
+                                                                </span>
+                                                            </div>
+                                                            <small className="text-muted d-block mt-1">
+                                                                Solde Minimum
+                                                                pour les comptes
+                                                                en Francs
+                                                                congolais
+                                                            </small>
+                                                        </td>
+                                                    </tr>
 
                                                     {/* Bouton de mise à jour */}
                                                     <tr>
@@ -6186,60 +6267,66 @@ const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
                                                 </div>
                                             </div>
                                             <div className="row">
-                                              <div className="col-md-12">
-                                               <button
-                                                onClick={clotureAnuelle}
-                                                className="btn btn-danger px-5 py-2 fw-bold"
-                                                style={{
-                                                    borderRadius: "10px",
-                                                    transition: "all 0.3s ease",
-                                                    fontSize: "16px",
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    e.currentTarget.style.transform =
-                                                        "translateY(-2px)";
-                                                    e.currentTarget.style.boxShadow =
-                                                        "0 6px 16px rgba(220, 53, 69, 0.3)";
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.currentTarget.style.transform =
-                                                        "translateY(0)";
-                                                    e.currentTarget.style.boxShadow =
-                                                        "none";
-                                                }}
-                                            >
-                                                <i className="fas fa-lock me-2"></i>
-                                                Clôturer l'exercice
-                                            </button>
-                                              </div>
-                                              <div className="col-md-12 mt-5">
-                                                 <button
-                                                onClick={AmmortissementAutomatiqueBtn}
-                                                className="btn btn-danger px-5 py-2 fw-bold"
-                                                style={{
-                                                    borderRadius: "10px",
-                                                    transition: "all 0.3s ease",
-                                                    fontSize: "16px",
-                                                }}
-                                                onMouseEnter={(e) => {
-                                                    e.currentTarget.style.transform =
-                                                        "translateY(-2px)";
-                                                    e.currentTarget.style.boxShadow =
-                                                        "0 6px 16px rgba(220, 53, 69, 0.3)";
-                                                }}
-                                                onMouseLeave={(e) => {
-                                                    e.currentTarget.style.transform =
-                                                        "translateY(0)";
-                                                    e.currentTarget.style.boxShadow =
-                                                        "none";
-                                                }}
-                                            >
-                                                 <i className="fas fa-charging-station me-2"></i>
-                                                Lancer les écritures d'ammortissement
-                                            </button>
-                                              </div>
+                                                <div className="col-md-12">
+                                                    <button
+                                                        onClick={clotureAnuelle}
+                                                        className="btn btn-danger px-5 py-2 fw-bold"
+                                                        style={{
+                                                            borderRadius:
+                                                                "10px",
+                                                            transition:
+                                                                "all 0.3s ease",
+                                                            fontSize: "16px",
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.transform =
+                                                                "translateY(-2px)";
+                                                            e.currentTarget.style.boxShadow =
+                                                                "0 6px 16px rgba(220, 53, 69, 0.3)";
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.transform =
+                                                                "translateY(0)";
+                                                            e.currentTarget.style.boxShadow =
+                                                                "none";
+                                                        }}
+                                                    >
+                                                        <i className="fas fa-lock me-2"></i>
+                                                        Clôturer l'exercice
+                                                    </button>
+                                                </div>
+                                                <div className="col-md-12 mt-5">
+                                                    <button
+                                                        onClick={
+                                                            AmmortissementAutomatiqueBtn
+                                                        }
+                                                        className="btn btn-danger px-5 py-2 fw-bold"
+                                                        style={{
+                                                            borderRadius:
+                                                                "10px",
+                                                            transition:
+                                                                "all 0.3s ease",
+                                                            fontSize: "16px",
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.transform =
+                                                                "translateY(-2px)";
+                                                            e.currentTarget.style.boxShadow =
+                                                                "0 6px 16px rgba(220, 53, 69, 0.3)";
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.transform =
+                                                                "translateY(0)";
+                                                            e.currentTarget.style.boxShadow =
+                                                                "none";
+                                                        }}
+                                                    >
+                                                        <i className="fas fa-charging-station me-2"></i>
+                                                        Lancer les écritures
+                                                        d'ammortissement
+                                                    </button>
+                                                </div>
                                             </div>
-                                           
 
                                             <hr className="my-4" />
 
@@ -6275,8 +6362,7 @@ const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
                                                         Les états financiers
                                                         sont vérifiés
                                                     </li>
-                                                </ul> 
-                                                
+                                                </ul>
                                             </div>
                                         </div>
                                     </div>
