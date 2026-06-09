@@ -2786,6 +2786,8 @@ class ReportsController extends Controller
             return response()->json(['status' => 0, 'msg' => 'Aucun compte de produit ou charge trouvé pour cette devise']);
         }
 
+        
+
         // Calcul des soldes sur la période (cumul des mouvements)
         $soldes = DB::table('transactions as t')
             ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
@@ -2810,6 +2812,8 @@ class ReportsController extends Controller
             )
             ->groupBy('c.NumCompte', 'c.NomCompte', 'c.nature_compte', 'c.RefGroupe', 'c.RefCadre')
             ->get();
+
+            
 
         $rawData = [];
         foreach ($soldes as $compte) {
@@ -2846,7 +2850,7 @@ class ReportsController extends Controller
             }
             $groupes = DB::table('comptes')
                 ->whereIn('RefGroupe', array_keys($grouped))
-                ->where('niveau', 3)
+                ->where('niveau', 5)
                 ->get(['RefGroupe', 'NomCompte'])
                 ->keyBy('RefGroupe');
             $data = [];
@@ -2869,6 +2873,7 @@ class ReportsController extends Controller
                 ];
             }
         }
+        
 
         // Totaux
         $totalProduits = collect($rawData)->where('nature', 'PRODUIT')->sum('solde');

@@ -219,7 +219,10 @@ class ComptesParamController extends Controller
                 "show_commission_pannel" => $request->showCommissionPanel == true ? 1 : 0,
                 "type_recu" => $request->typeRecu,
                 "fraisSMS" => $request->FraisSMS,
-                "epargneObligatoire" => $request->epargneObligatoire
+                "epargneObligatoire" => $request->epargneObligatoire,
+                "solde_minimum_usd"=>$request->solde_minimum_usd,
+                "solde_minimum_cdf" =>$request->solde_minimum_cdf
+              
             ]);
 
             return response()->json(["status" => 1, "msg" => "Mise à jour réussie."]);

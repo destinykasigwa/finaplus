@@ -2931,6 +2931,7 @@ const Adhesion = () => {
                                                                 Photo actuelle
                                                             </label>
                                                             <div className="border rounded-3 p-2 bg-light text-center">
+                                                                 <Zoom>
                                                                 <img
                                                                     src={`/uploads/membres/photos/files/${photo_file}`}
                                                                     alt="Photo du membre"
@@ -2951,6 +2952,7 @@ const Adhesion = () => {
                                                                             "/images/default-avatar.png";
                                                                     }}
                                                                 />
+                                                                </Zoom>
                                                             </div>
                                                         </div>
                                                     )}

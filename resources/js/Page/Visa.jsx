@@ -582,9 +582,9 @@ const Visa = () => {
                                             </span>
                                         </label>
                                         <div className="input-group">
-                                            <span className="input-group-text bg-light border-0 rounded-3">
+                                            {/* <span className="input-group-text bg-light border-0 rounded-3">
                                                 <i className="fas fa-money-bill-wave text-success"></i>
-                                            </span>
+                                            </span> */}
                                             <input
                                                 id="Montant"
                                                 name="Montant"

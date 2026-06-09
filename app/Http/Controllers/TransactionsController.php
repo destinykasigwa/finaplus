@@ -998,7 +998,7 @@ class TransactionsController extends Controller
     public function Positionnement(Request $request)
     {
         if (isset($request->refCompte)) {
-
+            $params  = EpargneAdhesionModel::first();
             // Récupérer l'agence depuis la base
             $currentAgence = session('current_agence');
             $codeAgence = $currentAgence['code_agence'] ?? null;
@@ -1037,12 +1037,20 @@ class TransactionsController extends Controller
 
                 if ($getCompte) {
                     //RECUPERE LE SOLDE 
+
                     $soldeMembreCDF = Transactions::select(
                         DB::raw("SUM(Creditfc)-SUM(Debitfc) as soldeMembreCDF"),
                     )->where("NumCompte", '=', $getCompte->NumCompte)
                         ->groupBy("NumCompte")
                         ->first();
-                    $soldeMembre = $soldeMembreCDF ? $soldeMembreCDF->soldeMembreCDF : 0;
+                    $soldeReel = $soldeMembreCDF->soldeMembreCDF ?? 0;
+
+                    // Solde minimum requis
+                    $soldeMinimumCDF = $params->solde_minimum_cdf ?? 0;
+
+                    // Solde disponible (utilisable pour transactions)
+                    $soldeDisponibleCDF = max($soldeReel - $soldeMinimumCDF, 0);
+                    $soldeMembre = $soldeDisponibleCDF;
                     //VERIFIE SI LE SOLDE EST INFERIEUR OU EGAL AU SOLDE QU'ON ESSAIE DE POSITIONNER
                     if ($request->Montant <= $soldeMembre or $getCompte->RefTypeCompte == 4) {
                         Positionnements::create([
@@ -1078,7 +1086,11 @@ class TransactionsController extends Controller
 
                         return response()->json(['status' => 1, 'msg' => "Opération bien enregistrée.", 'validate_error' => $validator->messages()]);
                     } else {
-                        return response()->json(['status' => 0, 'msg' => "Le solde du compte est insuffissant.", 'validate_error' => $validator->messages()]);
+                        return response()->json([
+                            'status' => 0,
+                            'msg' => "Fonds insuffisants. Vous ne pouvez pas retirer $request->Montant CDF. Votre solde disponible (après déduction du solde minimum de $soldeMinimumCDF CDF) est de  $soldeMembre CDF.",
+                            'validate_error' => $validator->messages()
+                        ]);
                     }
                     //ON ENREGISTRE L'OPERATION          
                 } else {
@@ -1103,8 +1115,14 @@ class TransactionsController extends Controller
                     )->where("NumCompte", '=', $getCompte->NumCompte)
                         ->groupBy("NumCompte")
                         ->first();
+                    $soldeReel = $soldeMembreUSD->soldeMembreUSD ?? 0;
+                    // Solde minimum requis
+                    $soldeMinimumUSD = $params->solde_minimum_usd ?? 0;
+                    // Solde disponible (utilisable pour transactions)
+                    $soldeDisponibleUSD = max($soldeReel - $soldeMinimumUSD, 0);
+                    $soldeMembre = $soldeDisponibleUSD;
                     //VERIFIE SI LE SOLDE EST INFERIEUR OU EGAL AU SOLDE QU'ON ESSAIE DE POSITIONNER
-                    if ($request->Montant <= $soldeMembreUSD->soldeMembreUSD or $getCompte->RefTypeCompte == 4) {
+                    if ($request->Montant <= $soldeMembre or $getCompte->RefTypeCompte == 4) {
                         Positionnements::create([
                             "NumCompte" => $getCompte->NumCompte,
                             "Montant" => $request->Montant,
@@ -1137,7 +1155,11 @@ class TransactionsController extends Controller
                         // ]);
                         return response()->json(['status' => 1, 'msg' => "Opération bien enregistrée.", 'validate_error' => $validator->messages()]);
                     } else {
-                        return response()->json(['status' => 0, 'msg' => "Le solde du compte est insuffissant.", 'validate_error' => $validator->messages()]);
+                        return response()->json([
+                            'status' => 0,
+                            'msg' => "Fonds insuffisants. Vous ne pouvez pas retirer $request->Montant USD. Votre solde disponible (après déduction du solde minimum de $soldeMinimumUSD USD) est de  $soldeMembre USD.",
+                            'validate_error' => $validator->messages()
+                        ]);
                     }
                     //ON ENREGISTRE L'OPERATION          
                 } else {
@@ -1316,6 +1338,27 @@ class TransactionsController extends Controller
                             $numOperationComm = CompteurTransaction::latest()->first();
                             $NumTransactionComm = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperationComm->id;
                             $compteCommissionCDF = "7270000000202";
+
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionComm,
+                                "RefJournal" => JournalType::CAISSE,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "Taux" => 1,
+                                "TypeTransaction" => "D",
+                                "CodeMonnaie" => 2,
+                                "CodeAgence" => "20",
+                                "NumDossier" => "DOS00" . $numOperationComm->id,
+                                "NumDemande" => "V00" . $numOperationComm->id,
+                                "NumCompte" => $dataCompte->NumCompte,
+                                "NumComptecp" =>  $compteCommissionCDF,
+                                "Debit"  => $request->Commission,
+                                "Debitusd"  => $request->Commissiont / $dataSystem->TauxEnFc,
+                                "Debitfc" => $request->Commission,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => "PRISE COMMISSION",
+                            ]);
+
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionComm,
                                 "RefJournal" => JournalType::CAISSE,
@@ -1335,25 +1378,6 @@ class TransactionsController extends Controller
                                 "NomUtilisateur" => Auth::user()->name,
                                 "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $dataCompte->NumCompte . " par le caissier " . Auth::user()->name,
                                 "refCompteMembre" => $compteCommissionCDF
-                            ]);
-                            Transactions::create([
-                                "NumTransaction" => $NumTransactionComm,
-                                "RefJournal" => JournalType::CAISSE,
-                                "DateTransaction" => $dataSystem->DateSystem,
-                                "DateSaisie" => $dataSystem->DateSystem,
-                                "Taux" => 1,
-                                "TypeTransaction" => "D",
-                                "CodeMonnaie" => 2,
-                                "CodeAgence" => "20",
-                                "NumDossier" => "DOS00" . $numOperationComm->id,
-                                "NumDemande" => "V00" . $numOperationComm->id,
-                                "NumCompte" => $dataCompte->NumCompte,
-                                "NumComptecp" =>  $compteCommissionCDF,
-                                "Debit"  => $request->Commission,
-                                "Debitusd"  => $request->Commissiont / $dataSystem->TauxEnFc,
-                                "Debitfc" => $request->Commission,
-                                "NomUtilisateur" => Auth::user()->name,
-                                "Libelle" => "PRISE COMMISSION",
                             ]);
                         }
 
@@ -1426,25 +1450,6 @@ class TransactionsController extends Controller
                                 "RefJournal" => JournalType::CAISSE,
                                 "DateTransaction" => $dataSystem->DateSystem,
                                 "DateSaisie" => $dataSystem->DateSystem,
-                                "TypeTransaction" => "C",
-                                "CodeMonnaie" => 2,
-                                "CodeAgence" => $codeAgenceCaissier,
-                                "CodeAgenceOrigine" => $codeAgenceCourante,
-                                "NumDossier" => "DOS0" . $numOperationMain->id,
-                                "NumDemande" => "V0" . $numOperationMain->id,
-                                "NumCompte" => $CompteCaissierCDF,
-                                "NumComptecp" => $compteLiaisonCaissier,
-                                "Credit" => $request->Montant,
-                                "Creditusd" => $request->Montant / $dataSystem->TauxEnFc,
-                                "Creditfc" => $request->Montant,
-                                "NomUtilisateur" => Auth::user()->name,
-                                "Libelle" => $request->motifRetrait . " (retrait client agence $codeAgenceClient)",
-                            ]);
-                            Transactions::create([
-                                "NumTransaction" => $NumTransactionMain,
-                                "RefJournal" => JournalType::CAISSE,
-                                "DateTransaction" => $dataSystem->DateSystem,
-                                "DateSaisie" => $dataSystem->DateSystem,
                                 "TypeTransaction" => "D",
                                 "CodeMonnaie" => 2,
                                 "CodeAgence" => $codeAgenceCaissier,
@@ -1459,6 +1464,26 @@ class TransactionsController extends Controller
                                 "NomUtilisateur" => Auth::user()->name,
                                 "Libelle" => $request->motifRetrait . " (retrait client agence $codeAgenceClient)",
                             ]);
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "C",
+                                "CodeMonnaie" => 2,
+                                "CodeAgence" => $codeAgenceCaissier,
+                                "CodeAgenceOrigine" => $codeAgenceCourante,
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $CompteCaissierCDF,
+                                "NumComptecp" => $compteLiaisonCaissier,
+                                "Credit" => $request->Montant,
+                                "Creditusd" => $request->Montant / $dataSystem->TauxEnFc,
+                                "Creditfc" => $request->Montant,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait . " (retrait client agence $codeAgenceClient)",
+                            ]);
+
 
                             // 2) Dans l'agence du client : débit client ↔ crédit liaison client
                             Transactions::create([
@@ -1622,6 +1647,27 @@ class TransactionsController extends Controller
                             $numOperationComm = CompteurTransaction::latest()->first();
                             $NumTransactionComm = Auth::user()->name[0] . Auth::user()->name[1] . "00" . $numOperationComm->id;
                             $compteCommissionUSD = "7270000000201";
+
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionComm,
+                                "RefJournal" => JournalType::CAISSE,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "Taux" => 1,
+                                "TypeTransaction" => "D",
+                                "CodeMonnaie" => 1,
+                                "CodeAgence" => "20",
+                                "NumDossier" => "DOS00" . $numOperationComm->id,
+                                "NumDemande" => "V00" . $numOperationComm->id,
+                                "NumCompte" => $dataCompte->NumCompte,
+                                "NumComptecp" =>  $compteCommissionUSD,
+                                "Debit"  => $request->Commission,
+                                "Debitusd"  => $request->Commission,
+                                "Debitfc" => $request->Commission * $dataSystem->TauxEnFc,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => "PRISE COMMISSION",
+                            ]);
+
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionComm,
                                 "RefJournal" => JournalType::CAISSE,
@@ -1641,25 +1687,6 @@ class TransactionsController extends Controller
                                 "NomUtilisateur" => Auth::user()->name,
                                 "Libelle" => "PRELEVEMENT DE COMMISSION SUR LE COMPTE " . $dataCompte->NumCompte . " par le caissier " . Auth::user()->name,
                                 "refCompteMembre" => $compteCommissionUSD
-                            ]);
-                            Transactions::create([
-                                "NumTransaction" => $NumTransactionComm,
-                                "RefJournal" => JournalType::CAISSE,
-                                "DateTransaction" => $dataSystem->DateSystem,
-                                "DateSaisie" => $dataSystem->DateSystem,
-                                "Taux" => 1,
-                                "TypeTransaction" => "D",
-                                "CodeMonnaie" => 1,
-                                "CodeAgence" => "20",
-                                "NumDossier" => "DOS00" . $numOperationComm->id,
-                                "NumDemande" => "V00" . $numOperationComm->id,
-                                "NumCompte" => $dataCompte->NumCompte,
-                                "NumComptecp" =>  $compteCommissionUSD,
-                                "Debit"  => $request->Commission,
-                                "Debitusd"  => $request->Commission,
-                                "Debitfc" => $request->Commission * $dataSystem->TauxEnFc,
-                                "NomUtilisateur" => Auth::user()->name,
-                                "Libelle" => "PRISE COMMISSION",
                             ]);
                         }
 
@@ -1723,25 +1750,7 @@ class TransactionsController extends Controller
                             }
 
                             // Agence caissier : crédit caisse, débit liaison
-                            Transactions::create([
-                                "NumTransaction" => $NumTransactionMain,
-                                "RefJournal" => JournalType::CAISSE,
-                                "DateTransaction" => $dataSystem->DateSystem,
-                                "DateSaisie" => $dataSystem->DateSystem,
-                                "TypeTransaction" => "C",
-                                "CodeMonnaie" => 1,
-                                "CodeAgence" => $codeAgenceCaissier,
-                                "CodeAgenceOrigine" => $codeAgenceCourante,
-                                "NumDossier" => "DOS0" . $numOperationMain->id,
-                                "NumDemande" => "V0" . $numOperationMain->id,
-                                "NumCompte" => $CompteCaissierUSD,
-                                "NumComptecp" => $compteLiaisonCaissier,
-                                "Credit" => $request->Montant,
-                                "Creditusd" => $request->Montant,
-                                "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
-                                "NomUtilisateur" => Auth::user()->name,
-                                "Libelle" => $request->motifRetrait . " (retrait client agence $codeAgenceClient)",
-                            ]);
+
                             Transactions::create([
                                 "NumTransaction" => $NumTransactionMain,
                                 "RefJournal" => JournalType::CAISSE,
@@ -1758,6 +1767,26 @@ class TransactionsController extends Controller
                                 "Debit" => $request->Montant,
                                 "Debitusd" => $request->Montant,
                                 "Debitfc" => $request->Montant * $dataSystem->TauxEnFc,
+                                "NomUtilisateur" => Auth::user()->name,
+                                "Libelle" => $request->motifRetrait . " (retrait client agence $codeAgenceClient)",
+                            ]);
+
+                            Transactions::create([
+                                "NumTransaction" => $NumTransactionMain,
+                                "RefJournal" => JournalType::CAISSE,
+                                "DateTransaction" => $dataSystem->DateSystem,
+                                "DateSaisie" => $dataSystem->DateSystem,
+                                "TypeTransaction" => "C",
+                                "CodeMonnaie" => 1,
+                                "CodeAgence" => $codeAgenceCaissier,
+                                "CodeAgenceOrigine" => $codeAgenceCourante,
+                                "NumDossier" => "DOS0" . $numOperationMain->id,
+                                "NumDemande" => "V0" . $numOperationMain->id,
+                                "NumCompte" => $CompteCaissierUSD,
+                                "NumComptecp" => $compteLiaisonCaissier,
+                                "Credit" => $request->Montant,
+                                "Creditusd" => $request->Montant,
+                                "Creditfc" => $request->Montant * $dataSystem->TauxEnFc,
                                 "NomUtilisateur" => Auth::user()->name,
                                 "Libelle" => $request->motifRetrait . " (retrait client agence $codeAgenceClient)",
                             ]);
@@ -2017,7 +2046,7 @@ class TransactionsController extends Controller
                 "deuxCentFranc"       => $billetageCDF->deuxCentFranc,
                 "centFranc"           => $billetageCDF->centFranc,
                 "cinquanteFanc"       => $billetageCDF->cinquanteFanc,
-                "montantCDF"          => $billetageCDF->montantCDF,
+                "montantCDF"          => $billetageCDF->sommeMontantCDF,
                 // "NomUtilisateur"      => $caissierNom,
                 "NomUtilisateur" => $NomCaissier ?? $caissierNom,
                 "NomDemandeur"        => $user->name,
@@ -2093,113 +2122,117 @@ class TransactionsController extends Controller
         return response()->json(['status' => 0, 'msg' => 'Devise non reconnue']);
     }
 
-public function adjustBilletage(Request $request)
-{
-    $user = Auth::user();
-    $isSuperAdmin = ($user->role === 'SuperAdmin');
-    $devise = $request->devise;
-    $adjustedData = $request->adjusted_data;
+    public function adjustBilletage(Request $request)
+    {
+        $user = Auth::user();
+        $isSuperAdmin = ($user->role === 'SuperAdmin');
+        $devise = $request->devise;
+        $adjustedData = $request->adjusted_data;
 
-    // Déterminer le caissier
-    if ($isSuperAdmin && $request->filled('caissier')) {
-        $caissierNom = $request->input('caissier');
-        $caissier = \App\Models\User::where('name', $caissierNom)->first();
-        if (!$caissier) {
-            return response()->json(['status' => 0, 'msg' => 'Caissier introuvable']);
+        // Déterminer le caissier
+        if ($isSuperAdmin && $request->filled('caissier')) {
+            $caissierNom = $request->input('caissier');
+            $caissier = \App\Models\User::where('name', $caissierNom)->first();
+            if (!$caissier) {
+                return response()->json(['status' => 0, 'msg' => 'Caissier introuvable']);
+            }
+            $userName = $caissier->name;
+        } else {
+            $userName = $user->name;
         }
-        $userName = $caissier->name;
-    } else {
-        $userName = $user->name;
+
+        $date = $request->input('date') ?? date('Y-m-d');
+
+        if ($devise === 'CDF') {
+            $billetage = BilletageCdf::where('NomUtilisateur', $userName)
+                ->where('DateTransaction', $date)
+                ->where('delested', 0)
+                ->first();
+
+            if (!$billetage) {
+                return response()->json(['status' => 0, 'msg' => 'Aucun billetage CDF non délesté trouvé']);
+            }
+
+            // Sauvegarder l'ancien total
+            $ancienTotal = $billetage->montantEntre ?? $billetage->sommeMontantCDF ?? 0;
+
+            // Mise à jour des quantités
+            $fields = [
+                'vightMilleFranc',
+                'dixMilleFranc',
+                'cinqMilleFranc',
+                'milleFranc',
+                'cinqCentFranc',
+                'deuxCentFranc',
+                'centFranc',
+                'cinquanteFanc'
+            ];
+            foreach ($fields as $field) {
+                $billetage->$field = (int) ($adjustedData[$field] ?? 0);
+            }
+
+            // Recalcul du nouveau total
+            $nouveauTotal =
+                ($billetage->vightMilleFranc * 20000) +
+                ($billetage->dixMilleFranc * 10000) +
+                ($billetage->cinqMilleFranc * 5000) +
+                ($billetage->milleFranc * 1000) +
+                ($billetage->cinqCentFranc * 500) +
+                ($billetage->deuxCentFranc * 200) +
+                ($billetage->centFranc * 100) +
+                ($billetage->cinquanteFanc * 50);
+
+            // 🔥 Validation : on n'autorise pas un total supérieur à l'ancien total
+            if ($nouveauTotal > $ancienTotal) {
+                return response()->json([
+                    'status' => 0,
+                    'msg' => "Le montant total ajusté ($nouveauTotal) ne peut pas dépasser l'ancien total ($ancienTotal)."
+                ]);
+            }
+
+            $billetage->montantEntre = $nouveauTotal;
+            // $billetage->sommeMontantCDF = $nouveauTotal; // si nécessaire
+            $billetage->save();
+        } elseif ($devise === 'USD') {
+            $billetage = BilletageUsd::where('NomUtilisateur', $userName)
+                ->where('DateTransaction', $date)
+                ->where('delested', 0)
+                ->first();
+
+            if (!$billetage) {
+                return response()->json(['status' => 0, 'msg' => 'Aucun billetage USD non délesté trouvé']);
+            }
+
+            $ancienTotal = $billetage->montantEntre ?? $billetage->sommeMontantUSD ?? 0;
+
+            $fields = ['centDollars', 'cinquanteDollars', 'vightDollars', 'dixDollars', 'cinqDollars', 'unDollars'];
+            foreach ($fields as $field) {
+                $billetage->$field = (int) ($adjustedData[$field] ?? 0);
+            }
+
+            $nouveauTotal =
+                ($billetage->centDollars * 100) +
+                ($billetage->cinquanteDollars * 50) +
+                ($billetage->vightDollars * 20) +
+                ($billetage->dixDollars * 10) +
+                ($billetage->cinqDollars * 5) +
+                ($billetage->unDollars * 1);
+
+            if ($nouveauTotal > $ancienTotal) {
+                return response()->json([
+                    'status' => 0,
+                    'msg' => "Le montant total ajusté ($nouveauTotal) ne peut pas dépasser l'ancien total ($ancienTotal)."
+                ]);
+            }
+
+            $billetage->montantEntre = $nouveauTotal;
+            $billetage->save();
+        } else {
+            return response()->json(['status' => 0, 'msg' => 'Devise non reconnue']);
+        }
+
+        return response()->json(['status' => 1, 'msg' => 'Ajustement enregistré avec succès']);
     }
-
-    $date = $request->input('date') ?? date('Y-m-d');
-
-    if ($devise === 'CDF') {
-        $billetage = BilletageCdf::where('NomUtilisateur', $userName)
-            ->where('DateTransaction', $date)
-            ->where('delested', 0)
-            ->first();
-
-        if (!$billetage) {
-            return response()->json(['status' => 0, 'msg' => 'Aucun billetage CDF non délesté trouvé']);
-        }
-
-        // Sauvegarder l'ancien total
-        $ancienTotal = $billetage->montantEntre ?? $billetage->sommeMontantCDF ?? 0;
-
-        // Mise à jour des quantités
-        $fields = [
-            'vightMilleFranc', 'dixMilleFranc', 'cinqMilleFranc', 'milleFranc',
-            'cinqCentFranc', 'deuxCentFranc', 'centFranc', 'cinquanteFanc'
-        ];
-        foreach ($fields as $field) {
-            $billetage->$field = (int) ($adjustedData[$field] ?? 0);
-        }
-
-        // Recalcul du nouveau total
-        $nouveauTotal = 
-            ($billetage->vightMilleFranc * 20000) +
-            ($billetage->dixMilleFranc * 10000) +
-            ($billetage->cinqMilleFranc * 5000) +
-            ($billetage->milleFranc * 1000) +
-            ($billetage->cinqCentFranc * 500) +
-            ($billetage->deuxCentFranc * 200) +
-            ($billetage->centFranc * 100) +
-            ($billetage->cinquanteFanc * 50);
-
-        // 🔥 Validation : on n'autorise pas un total supérieur à l'ancien total
-        if ($nouveauTotal > $ancienTotal) {
-            return response()->json([
-                'status' => 0,
-                'msg' => "Le montant total ajusté ($nouveauTotal) ne peut pas dépasser l'ancien total ($ancienTotal)."
-            ]);
-        }
-
-        $billetage->montantEntre = $nouveauTotal;
-        // $billetage->sommeMontantCDF = $nouveauTotal; // si nécessaire
-        $billetage->save();
-
-    } elseif ($devise === 'USD') {
-        $billetage = BilletageUsd::where('NomUtilisateur', $userName)
-            ->where('DateTransaction', $date)
-            ->where('delested', 0)
-            ->first();
-
-        if (!$billetage) {
-            return response()->json(['status' => 0, 'msg' => 'Aucun billetage USD non délesté trouvé']);
-        }
-
-        $ancienTotal = $billetage->montantEntre ?? $billetage->sommeMontantUSD ?? 0;
-
-        $fields = ['centDollars', 'cinquanteDollars', 'vightDollars', 'dixDollars', 'cinqDollars', 'unDollars'];
-        foreach ($fields as $field) {
-            $billetage->$field = (int) ($adjustedData[$field] ?? 0);
-        }
-
-        $nouveauTotal = 
-            ($billetage->centDollars * 100) +
-            ($billetage->cinquanteDollars * 50) +
-            ($billetage->vightDollars * 20) +
-            ($billetage->dixDollars * 10) +
-            ($billetage->cinqDollars * 5) +
-            ($billetage->unDollars * 1);
-
-        if ($nouveauTotal > $ancienTotal) {
-            return response()->json([
-                'status' => 0,
-                'msg' => "Le montant total ajusté ($nouveauTotal) ne peut pas dépasser l'ancien total ($ancienTotal)."
-            ]);
-        }
-
-        $billetage->montantEntre = $nouveauTotal;
-        $billetage->save();
-
-    } else {
-        return response()->json(['status' => 0, 'msg' => 'Devise non reconnue']);
-    }
-
-    return response()->json(['status' => 1, 'msg' => 'Ajustement enregistré avec succès']);
-}
 
 
     //GET APPRO HOME PAGE 
@@ -2729,7 +2762,7 @@ public function adjustBilletage(Request $request)
                 "NumComptecp" => $compteVirementInterGuichetUSD,
                 "Credit" => $data->montantUSD,
                 "Operant" => $data->NomDemandeur,
-                "Creditusd" => $data->montant,
+                "Creditusd" => $data->montantUSD,
                 "Creditfc" => $data->montantUSD * $tauxDuJour,
                 "NomUtilisateur" => Auth::user()->name,
                 "Libelle" => "Delestage caisse secondaire de " . $data->NomDemandeur,
@@ -2786,7 +2819,7 @@ public function adjustBilletage(Request $request)
             BilletageUSD::where("NomUtilisateur", $data->NomDemandeur)
                 ->where("DateTransaction", $dateSystem)
                 ->where("delested", 0)->update([
-                    "delested" => 0
+                    "delested" => 1
                 ]);
             return response()->json(["status" => 1, "msg" => "Vous avez confirmé ce delestage avec succès."]);
         } else {
@@ -2910,7 +2943,7 @@ public function adjustBilletage(Request $request)
             BilletageCDF::where("NomUtilisateur", $data->NomDemandeur)
                 ->where("DateTransaction", $dateSystem)
                 ->where("delested", 0)->update([
-                    "delested" => 0
+                    "delested" => 1
                 ]);
             return response()->json(["status" => 1, "msg" => "Vous avez confirmé ce delestage avec succès."]);
         } else {

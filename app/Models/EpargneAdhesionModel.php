@@ -44,6 +44,8 @@ class EpargneAdhesionModel extends Model
         "show_commission_pannel",
         "type_recu",
         "fraisSMS",
-        "epargneObligatoire"
+        "epargneObligatoire",
+        "solde_minimum_usd",
+    "solde_minimum_cdf"
     ];
 }

@@ -7,6 +7,30 @@ import * as FileSaver from "file-saver";
 import html2canvas from "html2canvas";
 
 const RecuDelestageUSD = ({ data }) => {
+    const [agenceNom, setAgenceNom] = useState("");
+  const [data_, setData] = useState(null);
+  
+   const getData = async () => {
+        try {
+            const res = await axios.get("/eco/page/header-report");
+            if (res.data.status === 1) {
+                setData(res.data.data);
+            }
+        } catch (error) {
+            console.error("Erreur chargement en-tête", error);
+        }
+    };
+     useEffect(() => {
+        getData();
+        axios
+            .get("/eco/agence/courante")
+            .then((res) => {
+                if (res.data.status === 1) {
+                    setAgenceNom(res.data.nom_agence);
+                }
+            })
+            .catch((err) => console.error("Erreur chargement agence", err));
+    }, []);
     function Unite(nombre) {
         var unite;
         switch (nombre) {
@@ -867,7 +891,7 @@ const RecuDelestageUSD = ({ data }) => {
                                                         </div>
 
                                                         <div>
-                                                            Fait à goma le{" "}
+                                                             Fait à {agenceNom || "..."} le{" "}
                                                             {dateParser(
                                                                 data.DateTransaction
                                                             )}{" "}

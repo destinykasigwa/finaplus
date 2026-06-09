@@ -215,6 +215,8 @@ const Comptes = () => {
     const [epargneObligatoire, setEpargneObligatoire] = useState();
     const [showForm, setShowForm] = useState(false);
     const [selectedAgenceId, setSelectedAgenceId] = useState(null);
+   const [soldeMinimumUSD, setSoldeMinimumUSD] = useState(0);
+const [soldeMinimumCDF, setSoldeMinimumCDF] = useState(0);
     useEffect(() => {
         getCompanyData();
     }, []);
@@ -548,6 +550,8 @@ const Comptes = () => {
 
             setFraisSMS(res.data.adhesion_epargne_data.fraisSMS);
             setEpargneObligatoire(res.data.adhesion_epargne_data.epargneObligatoire);
+             setSoldeMinimumUSD(res.data.adhesion_epargne_data.solde_minimum_usd);
+             setSoldeMinimumCDF(res.data.adhesion_epargne_data.solde_minimum_cdf);
 
             console.log(login_attempt);
         }
@@ -777,7 +781,9 @@ const Comptes = () => {
                 showCommissionPanel,
                 typeRecu,
                 FraisSMS,
-                epargneObligatoire
+                epargneObligatoire,
+                  solde_minimum_cdf: soldeMinimumUSD,
+                  solde_minimum_usd: soldeMinimumCDF,
             },
         );
         if (res.data.status == 1) {
@@ -6015,6 +6021,54 @@ const Comptes = () => {
                                                             </small>
                                                         </td>
                                                     </tr>
+                                                 
+                                                    {/* Frais de tenue de compte */}
+<tr>
+  <td style={{ padding: "8px" }}>
+    <label className="small fw-semibold" style={{ color: "steelblue" }}>
+      <i className="fas fa-credit-card me-1"></i> Solde Minimum compte (USD)
+    </label>
+  </td>
+  <td style={{ padding: "8px" }}>
+    <div className="d-flex align-items-center gap-2">
+      <input
+        type="number"
+        step="0.01"
+        className="form-control form-control-sm modern-input"
+        style={{ width: "120px" }}
+        value={soldeMinimumUSD}
+        onChange={(e) => setSoldeMinimumUSD(parseFloat(e.target.value) || 0)}
+      />
+      <span className="text-muted small">USD</span>
+    </div>
+    <small className="text-muted d-block mt-1">
+      Solde Minimum comptes en USD
+    </small>
+  </td>
+</tr>
+<tr>
+  <td style={{ padding: "8px" }}>
+    <label className="small fw-semibold" style={{ color: "steelblue" }}>
+      <i className="fas fa-credit-card me-1"></i> Solde Minimum compte (CDF)
+    </label>
+  </td>
+  <td style={{ padding: "8px" }}>
+    <div className="d-flex align-items-center gap-2">
+      <input
+        type="number"
+        step="0.01"
+        className="form-control form-control-sm modern-input"
+        style={{ width: "120px" }}
+        value={soldeMinimumCDF}
+        onChange={(e) => setSoldeMinimumsUSD(parseFloat(e.target.value) || 0)}
+      />
+      <span className="text-muted small">CDF</span>
+    </div>
+    <small className="text-muted d-block mt-1">
+      Solde Minimum pour les comptes en Francs congolais
+    </small>
+  </td>
+</tr>
 
                                                     {/* Bouton de mise à jour */}
                                                     <tr>

@@ -11,7 +11,31 @@ import Barcode from "./Barcode";
 
 //import "../../styles/style.css";
 
+
 const RecuDepotA5 = ({ data }) => {
+       const [agenceNom, setAgenceNom] = useState("");
+  const [data_, setData] = useState(null);
+   const getData = async () => {
+        try {
+            const res = await axios.get("/eco/page/header-report");
+            if (res.data.status === 1) {
+                setData(res.data.data);
+            }
+        } catch (error) {
+            console.error("Erreur chargement en-tête", error);
+        }
+    };
+     useEffect(() => {
+        getData();
+        axios
+            .get("/eco/agence/courante")
+            .then((res) => {
+                if (res.data.status === 1) {
+                    setAgenceNom(res.data.nom_agence);
+                }
+            })
+            .catch((err) => console.error("Erreur chargement agence", err));
+    }, []);
     function Unite(nombre) {
         var unite;
         switch (nombre) {
@@ -358,6 +382,8 @@ const RecuDepotA5 = ({ data }) => {
 
         return date.toString();
     };
+
+    
 
     const exportToPDF = () => {
         const content = document.getElementById("modal-to-print");
@@ -1583,7 +1609,7 @@ svg {
                                                                     margin: "2px 0",
                                                                 }}
                                                             >
-                                                                Fait à Goma le{" "}
+                                                                Fait à {agenceNom || "..."} le{" "}
                                                                 {dateParser(
                                                                     data.DateTransaction,
                                                                 )}{" "}
@@ -2801,7 +2827,7 @@ svg {
                                                                     margin: "2px 0",
                                                                 }}
                                                             >
-                                                                Fait à Goma le{" "}
+                                                                Fait à {agenceNom || "..."} le{" "}
                                                                 {dateParser(
                                                                     data.DateTransaction,
                                                                 )}{" "}

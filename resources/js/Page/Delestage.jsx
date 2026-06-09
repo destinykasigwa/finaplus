@@ -17,7 +17,7 @@ const Delestage = () => {
 
     // État pour l'admin
     const [isSuperAdmin, setIsSuperAdmin] = useState(() => {
-        return window.currentUser?.role === "SuperAdmin";
+        return window.currentUser?.role == "SuperAdmin";
     });
     const [selectedDate, setSelectedDate] = useState(
         new Date().toISOString().split("T")[0],
@@ -54,7 +54,7 @@ const [initialUSD, setInitialUSD] = useState(null);
                 axios.get("/eco/page/delestage/get-billetage-caissier"),
                 axios.get("/eco/pages/delestage/get-daily-operations"),
             ]);
-            if (billetageRes.data.status === 1) {
+            if (billetageRes.data.status == 1) {
                 if (isSuperAdmin) {
                     setAllBilletagesCDF(billetageRes.data.billetageCDF || []);
                     setAllBilletagesUSD(billetageRes.data.billetageUSD || []);
@@ -74,7 +74,7 @@ const [initialUSD, setInitialUSD] = useState(null);
                     }
                 }
             }
-            if (histoRes.data.status === 1) {
+            if (histoRes.data.status == 1) {
                 setHistoricalCDF(histoRes.data.dataCDF || []);
                 setHistoricalUSD(histoRes.data.dataUSD || []);
             }
@@ -94,12 +94,12 @@ const [initialUSD, setInitialUSD] = useState(null);
         } else {
             setFilteredCDF(
                 allBilletagesCDF.filter(
-                    (item) => item.DateTransaction === selectedDate,
+                    (item) => item.DateTransaction == selectedDate,
                 ),
             );
             setFilteredUSD(
                 allBilletagesUSD.filter(
-                    (item) => item.DateTransaction === selectedDate,
+                    (item) => item.DateTransaction == selectedDate,
                 ),
             );
         }
@@ -115,20 +115,20 @@ const [initialUSD, setInitialUSD] = useState(null);
         setCaissiersList(caissiers);
         if (caissiers.length > 0 && !caissiers.includes(selectedCaissier)) {
             setSelectedCaissier(caissiers[0]);
-        } else if (caissiers.length === 0) {
+        } else if (caissiers.length == 0) {
             setSelectedCaissier("");
         }
     }, [filteredCDF, filteredUSD]);
 
     // Récupérer les données d'un caissier donné (parmi les filtrées)
     const getCaissierData = (nom) => ({
-        cdf: filteredCDF.find((c) => c.NomUtilisateur === nom),
-        usd: filteredUSD.find((u) => u.NomUtilisateur === nom),
+        cdf: filteredCDF.find((c) => c.NomUtilisateur == nom),
+        usd: filteredUSD.find((u) => u.NomUtilisateur == nom),
     });
 
     // Fonctions utilitaires
     function numberWithSpaces(x) {
-        if (x === null || x === undefined) return "0.00";
+        if (x == null || x == undefined) return "0.00";
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
     }
 
@@ -175,14 +175,14 @@ const [initialUSD, setInitialUSD] = useState(null);
         try {
             let payload = {
                 devise: devise,
-                adjusted_data: devise === "USD" ? adjustedUSD : adjustedCDF
+                adjusted_data: devise == "USD" ? adjustedUSD : adjustedCDF
             };
             // Si admin, on envoie aussi le nom du caissier
             if (isSuperAdmin && selectedCaissier) {
                 payload.caissier = selectedCaissier;
             }
             const res = await axios.post("/eco/page/delestage/adjust-billetage", payload);
-            if (res.data.status === 1) {
+            if (res.data.status == 1) {
                 Swal.fire("Succès", "Ajustement enregistré", "success");
                 setEditing(false);
                 // Recharger les données pour obtenir les nouveaux billetages
@@ -236,7 +236,7 @@ const [initialUSD, setInitialUSD] = useState(null);
                         "/eco/page/delestage/validation",
                         payload,
                     );
-                    if (res.data.status === 1) {
+                    if (res.data.status == 1) {
                         Swal.fire("Succès", res.data.msg, "success");
                         await fetchAllData();
                     } else {
@@ -265,7 +265,7 @@ const [initialUSD, setInitialUSD] = useState(null);
                         "/eco/page/delestage/validation",
                         { devise },
                     );
-                    if (res.data.status === 1) {
+                    if (res.data.status == 1) {
                         Swal.fire("Succès", res.data.msg, "success");
                         await fetchAllData();
                     } else {
@@ -281,7 +281,7 @@ const [initialUSD, setInitialUSD] = useState(null);
 
     const renderBilletageTable = (data, type, isEditable = false, updateFn = null) => {
         if (!data) return <div className="alert alert-light">Aucune donnée disponible</div>;
-        if (type === "USD") {
+        if (type == "USD") {
             const items = [
                 { label: "100", field: "centDollars", multiplier: 100 },
                 { label: "50", field: "cinquanteDollars", multiplier: 50 },
@@ -324,7 +324,7 @@ const [initialUSD, setInitialUSD] = useState(null);
                     <tfoot className="table-secondary">
                         <tr><th colSpan="2">Total</th>
                             <th className="text-end">
-                                {type === "USD" ? adjustedTotalUSD.toLocaleString() : numberWithSpaces(parseInt(data.sommeMontantUSD))}
+                                {type == "USD" ? adjustedTotalUSD.toLocaleString() : numberWithSpaces(parseInt(data.sommeMontantUSD))}
                             </th>
                         </tr>
                     </tfoot>
@@ -373,7 +373,7 @@ const [initialUSD, setInitialUSD] = useState(null);
                     <tfoot className="table-secondary">
                         <tr><th colSpan="2">Total</th>
                             <th className="text-end">
-                                {type === "CDF" ? adjustedTotalCDF.toLocaleString() : numberWithSpaces(parseInt(data.sommeMontantCDF))}
+                                {type == "CDF" ? adjustedTotalCDF.toLocaleString() : numberWithSpaces(parseInt(data.sommeMontantCDF))}
                             </th>
                         </tr>
                     </tfoot>
@@ -386,7 +386,7 @@ const [initialUSD, setInitialUSD] = useState(null);
 
     const currentCaissier = getCaissierData(selectedCaissier);
     const currentMontant =
-        devise === "USD"
+        devise == "USD"
             ? currentCaissier.usd?.sommeMontantUSD || 0
             : currentCaissier.cdf?.sommeMontantCDF || 0;
 
@@ -480,7 +480,7 @@ const [initialUSD, setInitialUSD] = useState(null);
                                         type="text"
                                         className="form-control form-control-lg fw-bold text-end modern-input w-50"
                                         value={numberWithSpaces(
-                                            devise === "USD"
+                                            devise == "USD"
                                                 ? (adjustedUSD?.sommeMontantUSD ||
                                                     myBilletageUSD?.sommeMontantUSD ||
                                                     0)
@@ -503,7 +503,7 @@ const [initialUSD, setInitialUSD] = useState(null);
                                     Détail des coupures {editing && "(édition)"}
                                 </h6>
                                 <hr />
-                                {devise === "USD" ? (
+                                {devise == "USD" ? (
                                     adjustedUSD ? (
                                         renderBilletageTable(adjustedUSD, "USD", editing, updateCoupureUSD)
                                     ) : (
@@ -518,7 +518,7 @@ const [initialUSD, setInitialUSD] = useState(null);
                                 )}
                                
                                 {/* Afficher les boutons d'ajustement uniquement si des données existent pour la devise courante */}
-{(devise === "USD" ? (adjustedUSD || myBilletageUSD) : (adjustedCDF || myBilletageCDF)) && (
+{(devise == "USD" ? (adjustedUSD || myBilletageUSD) : (adjustedCDF || myBilletageCDF)) && (
     <div className="d-flex gap-2 mt-3">
         {!editing ? (
             <button className="btn btn-warning" onClick={() => setEditing(true)}>
@@ -564,7 +564,7 @@ const [initialUSD, setInitialUSD] = useState(null);
             )}
 
             {/* Admin : tableau récapitulatif */}
-            {isSuperAdmin && caissiersList.length === 0 && (
+            {isSuperAdmin && caissiersList.length == 0 && (
                 <div className="alert alert-info">
                     Aucun billetage non délesté pour la période sélectionnée.
                 </div>
@@ -658,7 +658,7 @@ const [initialUSD, setInitialUSD] = useState(null);
                                     Détail des coupures {editing && "(édition)"}
                                 </h6>
                                 <hr />
-                                {devise === "USD" ? (
+                                {devise == "USD" ? (
                                     currentCaissier.usd ? (
                                         renderBilletageTable(currentCaissier.usd, "USD", editing, (field, val) => {
                                             // Pour l'admin, on devrait gérer un état adjusted spécifique au caissier sélectionné.
@@ -789,8 +789,8 @@ const [initialUSD, setInitialUSD] = useState(null);
                                     {selectedData && <RecuDelestageUSD data={selectedData} />}
                                 </>
                             )}
-                            {(!historicalCDF || historicalCDF.length === 0) &&
-                                (!historicalUSD || historicalUSD.length === 0) && (
+                            {(!historicalCDF || historicalCDF.length == 0) &&
+                                (!historicalUSD || historicalUSD.length == 0) && (
                                     <div className="text-center py-5 text-muted">
                                         <i className="fas fa-inbox fa-3x mb-3 opacity-50"></i>
                                         <p className="mb-0 fw-bold">Aucun délestage récent</p>
