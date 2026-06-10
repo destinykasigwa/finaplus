@@ -217,6 +217,12 @@ class ImmobilisationController extends Controller
             $immobilisations = Immobilisations::where('code_agence', $agence->code_agence)->get();
 
             foreach ($immobilisations as $immo) {
+                // 🔽 AJOUTEZ ICI la vérification du mois
+                $currentMonth = now()->format('Y-m');
+                if ($immo->dernier_amortissement_mois === $currentMonth) {
+                    continue; // déjà amorti ce mois-ci, on passe à l'immo suivante
+                }
+
                 // Déterminer la devise (CDF ou USD)
                 $devise = (substr($immo->compte_comptable_immo, -1) == '2') ? 'CDF' : 'USD';
                 $compteCharge = ($devise == 'CDF') ? $agence->compte_charge_amortissement_cdf : $agence->compte_charge_amortissement_usd;
@@ -239,10 +245,12 @@ class ImmobilisationController extends Controller
                 // Mettre à jour l'immobilisation
                 $immo->amortissement_cumule += $montantMensuel;
                 $immo->valeur_nette_comptable = $baseAmortissable - $immo->amortissement_cumule;
+                // 🔽 AJOUTEZ ICI la mise à jour du mois
+                $immo->dernier_amortissement_mois = $currentMonth;
                 $immo->save();
-                return response()->json(["status" => 1]);
             }
         }
+        return response()->json(["status" => 1, "msg" => "Opération réussie."]);
     }
 
     /**
@@ -531,59 +539,59 @@ class ImmobilisationController extends Controller
     //     }
 
     //     $immobilisations = $query->get();
-   
+
 
     //     // Calcul des valeurs nettes si nécessaire (déjà stockées)
     //     return response()->json(['status' => 1, 'data' => $immobilisations]);
     // }
 
     public function getRapportImmobilisations(Request $request)
-{
-    $dateDebut = $request->date_debut;
-    $dateFin = $request->date_fin;
-    $devise = $request->devise;
-    $categorie = $request->categorie;
-    $service = $request->service;
-    $agenceFilter = $request->agence_filter ?? 'current';
+    {
+        $dateDebut = $request->date_debut;
+        $dateFin = $request->date_fin;
+        $devise = $request->devise;
+        $categorie = $request->categorie;
+        $service = $request->service;
+        $agenceFilter = $request->agence_filter ?? 'current';
 
-    $user = auth()->user();
-    $codeAgence = null;
+        $user = auth()->user();
+        $codeAgence = null;
 
-    if ($agenceFilter === 'current') {
-        $currentAgence = session('current_agence');
-        $codeAgence = $currentAgence['code_agence'] ?? null;
-    } elseif ($agenceFilter !== 'all') {
-        $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
-        $codeAgence = $agence ? $agence->code_agence : null;
-    }
+        if ($agenceFilter === 'current') {
+            $currentAgence = session('current_agence');
+            $codeAgence = $currentAgence['code_agence'] ?? null;
+        } elseif ($agenceFilter !== 'all') {
+            $agence = $user->agences()->where('agences.id', $agenceFilter)->first();
+            $codeAgence = $agence ? $agence->code_agence : null;
+        }
 
-    $query = Immobilisations::with('type');
+        $query = Immobilisations::with('type');
 
-    if ($codeAgence) {
-        $query->where('code_agence', $codeAgence);
-    }
-    if ($categorie) {
-        $query->where('type_immo', $categorie);
-    }
-    if ($service) {
-        $query->where('service_affectation', $service);
-    }
-    if ($dateDebut && $dateFin) {
-        $query->whereBetween('date_acquisition', [$dateDebut, $dateFin]);
-    }
-    if ($devise === 'USD') {
-        $query->where('compte_comptable_immo', 'like', '%1');
-    } else {
-        $query->where('compte_comptable_immo', 'like', '%2');
-    }
+        if ($codeAgence) {
+            $query->where('code_agence', $codeAgence);
+        }
+        if ($categorie) {
+            $query->where('type_immo', $categorie);
+        }
+        if ($service) {
+            $query->where('service_affectation', $service);
+        }
+        if ($dateDebut && $dateFin) {
+            $query->whereBetween('date_acquisition', [$dateDebut, $dateFin]);
+        }
+        if ($devise === 'USD') {
+            $query->where('compte_comptable_immo', 'like', '%1');
+        } else {
+            $query->where('compte_comptable_immo', 'like', '%2');
+        }
 
-    $immobilisations = $query->orderBy('date_acquisition', 'desc')->get();
+        $immobilisations = $query->orderBy('date_acquisition', 'desc')->get();
 
-    // Debug : renvoyer aussi le nombre
-    return response()->json([
-        'status' => 1,
-        'data' => $immobilisations,
-        'debug_count' => $immobilisations->count()
-    ]);
-}
+        // Debug : renvoyer aussi le nombre
+        return response()->json([
+            'status' => 1,
+            'data' => $immobilisations,
+            'debug_count' => $immobilisations->count()
+        ]);
+    }
 }

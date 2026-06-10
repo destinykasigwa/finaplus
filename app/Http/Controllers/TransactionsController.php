@@ -2468,28 +2468,8 @@ class TransactionsController extends Controller
                     "NomUtilisateur" => Auth::user()->name,
                     "Libelle" => "Approvisionnement caisse secondaire de " . $getApproRow->NomDemandeur,
                 ]);
-                //CREDITE LA CAISSE PRINCIPALE 
-                Transactions::create([
-                    "NumTransaction" => $NumTransaction,
-                    "RefJournal" => JournalType::TRESORERIE,
-                    "DateTransaction" =>  $dateSystem,
-                    "DateSaisie" =>  $dateSystem,
-                    "Taux" => 1,
-                    "TypeTransaction" => "C",
-                    "CodeMonnaie" => 2,
-                    "CodeAgence" => $codeAgence,
-                    "NumDossier" => "DOS00" . $numOperation->id,
-                    "NumDemande" => "V00" . $numOperation->id,
-                    "NumCompte" => $numCompteCaissePrCDF,
-                    "NumComptecp" => $numCompteCaissierCDF,
-                    "Credit" => $getApproRow->montant,
-                    "Operant" => $getApproRow->NomDemandeur,
-                    "Creditusd" => $getApproRow->montant / $tauxDuJour,
-                    "Creditfc" => $getApproRow->montant,
-                    "NomUtilisateur" => Auth::user()->name,
-                    "Libelle" => "Approvisionnement caisse secondaire de " . $getApproRow->NomDemandeur,
-                ]);
-                //DEBITE LA CAISSE DU CAISSIER 
+
+                     //DEBITE LA CAISSE DU CAISSIER 
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
                     "RefJournal" => JournalType::TRESORERIE,
@@ -2511,6 +2491,28 @@ class TransactionsController extends Controller
                     "Libelle" => "Approvisionnement caisse secondaire de " . $getApproRow->NomDemandeur,
                 ]);
 
+                //CREDITE LA CAISSE PRINCIPALE 
+                Transactions::create([
+                    "NumTransaction" => $NumTransaction,
+                    "RefJournal" => JournalType::TRESORERIE,
+                    "DateTransaction" =>  $dateSystem,
+                    "DateSaisie" =>  $dateSystem,
+                    "Taux" => 1,
+                    "TypeTransaction" => "C",
+                    "CodeMonnaie" => 2,
+                    "CodeAgence" => $codeAgence,
+                    "NumDossier" => "DOS00" . $numOperation->id,
+                    "NumDemande" => "V00" . $numOperation->id,
+                    "NumCompte" => $numCompteCaissePrCDF,
+                    "NumComptecp" => $numCompteCaissierCDF,
+                    "Credit" => $getApproRow->montant,
+                    "Operant" => $getApproRow->NomDemandeur,
+                    "Creditusd" => $getApproRow->montant / $tauxDuJour,
+                    "Creditfc" => $getApproRow->montant,
+                    "NomUtilisateur" => Auth::user()->name,
+                    "Libelle" => "Approvisionnement caisse secondaire de " . $getApproRow->NomDemandeur,
+                ]);
+           
 
                 //RENSEIGNE LE BILLETAGE
                 BilletageCDF::create([

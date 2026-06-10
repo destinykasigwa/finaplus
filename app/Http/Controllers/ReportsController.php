@@ -1178,6 +1178,7 @@ class ReportsController extends Controller
                     // -------------------------------------------------------------
                     // 12. Retour JSON (ajout de interetPostEcheance si utile)
                     // -------------------------------------------------------------
+                  
                     return response()->json([
                         "status" => 1,
                         "data_ammortissement" => $data,

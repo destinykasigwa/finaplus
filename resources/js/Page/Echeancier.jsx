@@ -1487,7 +1487,7 @@ const safeToFixed = (value, decimals = 2) => {
                                                                 </td>
                                                                 <td>
                                                                     {numberFormat(
-                                                                        fetchInteretRembourse?.intereRembourse,
+                                                                        fetchInteretRembourse,
                                                                     )}
                                                                 </td>
                                                             </tr>
@@ -1497,7 +1497,7 @@ const safeToFixed = (value, decimals = 2) => {
                                                                     Restant :
                                                                 </td>
                                                                 <td>
-                                                                    {numberFormat(safeToFixed(fetchInteretRestant?.intereRestant))}
+                                                                    {numberFormat(safeToFixed(fetchInteretRestant))}
                                                                 </td>
                                                             </tr>
                                                             <tr>

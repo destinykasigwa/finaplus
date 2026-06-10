@@ -19,8 +19,7 @@ use App\Models\PorteFeuilleConfing;
 use App\Models\Remboursementcredit;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\TransactionsController;
-
-
+use App\Models\EpargneAdhesionModel;
 
 class ClotureJourneeCopy
 
@@ -57,6 +56,8 @@ class ClotureJourneeCopy
     protected $hasError = false;
     protected $errorMessage = null;
     protected $errorCode = null;
+    protected $soldeMinimumUSD;
+    protected $soldeMinimumCDF;
 
 
     public function __construct(Request $request)
@@ -75,6 +76,10 @@ class ClotureJourneeCopy
         // 🔥 Ajout : instanciation de la classe de pénalités
         $delaiAvantPenalite = 30; // À configurer selon votre politique (peut venir d'une config)
         $this->gestionPenalites = new GestionInteretsRetard($this->dateSystem, $this->tauxDuJour, $delaiAvantPenalite);
+        //PARAMETRE SOLDE MINIMUM
+        $params = EpargneAdhesionModel::first();
+        $this->soldeMinimumUSD = $params ? (float)($params->solde_minimum_usd ?? 0) : 0;
+        $this->soldeMinimumCDF = $params ? (float)($params->solde_minimum_cdf ?? 0) : 0;
     }
 
     /**
@@ -340,6 +345,12 @@ class ClotureJourneeCopy
         $this->ensureAccountExists($numCompte, $nomCompte, $nature, $codeAgence, $codeMonnaie);
         return $numCompte;
     }
+
+
+    protected function getSoldeMinimum($codeMonnaie)
+{
+    return $codeMonnaie == 1 ? $this->soldeMinimumUSD : $this->soldeMinimumCDF;
+}
 
 
     /**

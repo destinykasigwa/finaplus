@@ -25,6 +25,7 @@ class Immobilisations extends Model
         'valeur_nette_comptable',
         'code_agence',
         'service_affectation',
+         'dernier_amortissement_mois', // ou 'date_dernier_amortissement'
     ];
 
     // Relation avec le type d'immobilisation

@@ -245,7 +245,7 @@ const Releve = () => {
             return;
         }
 
-        html2canvas(content, { scale: 2 })
+        html2canvas(content, { scale: 1.5 })
             .then((canvas) => {
                 const imgData = canvas.toDataURL("image/jpeg", 0.75); // Change to JPEG and set quality to 0.75
                 const pdf = new jsPDF("p", "mm", "a4");
@@ -301,7 +301,7 @@ const Releve = () => {
             return;
         }
 
-        html2canvas(content, { scale: 2 }).then((canvas) => {
+        html2canvas(content, { scale: 1.5 }).then((canvas) => {
             const paddingTop = 50;
             const paddingRight = 50;
             const paddingBottom = 50;

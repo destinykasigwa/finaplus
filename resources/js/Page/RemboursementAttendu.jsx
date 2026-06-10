@@ -256,6 +256,13 @@ const RemboursementAttendu = () => {
         backgroundColor: "#FFC107", // Change color for selected button
     };
 
+      // Gère l'arrondi et les décimales
+const safeToFixed = (value, decimals = 2) => {
+    if (value === null || value === undefined) return 0;
+    const num = typeof value === 'number' ? value : parseFloat(value);
+    return isNaN(num) ? 0 : num;
+};
+
     return (
      <div className="container-fluid" style={{ marginTop: "10px", padding: "0 15px" }}>
     {/* En-tête moderne */}
@@ -462,7 +469,7 @@ const RemboursementAttendu = () => {
                                         <th className="text-end">Capital Échu</th>
                                         <th className="text-end">Intérêt Échu</th>
                                         <th className="text-end">Solde Compte</th>
-                                        <th className="text-center">Statut</th>
+                                        {/* <th className="text-center">Statut</th> */}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -481,12 +488,12 @@ const RemboursementAttendu = () => {
                                                     </span>
                                                 </td>
                                                 <td>{res.NumDossier}</td>
-                                                <td className="text-end fw-bold">{numberWithSpaces(parseFloat(res.CapAmmorti)?.toFixed(2))}</td>
-                                                <td className="text-end fw-bold">{numberWithSpaces(parseFloat(res.Interet)?.toFixed(2))}</td>
+                                                <td className="text-end fw-bold">{numberWithSpaces(safeToFixed(res.CapAmmorti))}</td>
+                                                <td className="text-end fw-bold">{numberWithSpaces(safeToFixed(res.Interet))}</td>
                                                 <td className={`text-end fw-bold ${soldeDispo < 0 ? 'text-danger' : 'text-success'}`}>
-                                                    {numberWithSpaces(soldeDispo?.toFixed(2))}
+                                                {numberWithSpaces(safeToFixed(soldeDispo))}
                                                 </td>
-                                                <td className="text-center">
+                                                {/* <td className="text-center">
                                                     {estImpaye ? (
                                                         <span className="badge bg-danger">
                                                             <i className="fas fa-exclamation-triangle me-1"></i>Impayé
@@ -496,7 +503,7 @@ const RemboursementAttendu = () => {
                                                             <i className="fas fa-check-circle me-1"></i>Payé
                                                         </span>
                                                     )}
-                                                </td>
+                                                </td> */}
                                             </tr>
                                         );
                                     })}
@@ -504,10 +511,10 @@ const RemboursementAttendu = () => {
                                 <tfoot style={{ backgroundColor: "#e6f2f9", fontWeight: "bold" }}>
                                     <tr>
                                         <td colSpan="4" className="text-end fw-bold">TOTAUX :</td>
-                                        <td className="text-end text-danger">{numberWithSpaces(total1?.toFixed(2))}</td>
-                                        <td className="text-end text-danger">{numberWithSpaces(total2?.toFixed(2))}</td>
-                                        <td className="text-end text-success">{numberWithSpaces((total1 + total2)?.toFixed(2))}</td>
-                                        <td></td>
+                                        <td className="text-end text-danger">{numberWithSpaces(safeToFixed(total1))}</td>
+                                        <td className="text-end text-danger">{numberWithSpaces(safeToFixed(total2))}</td>
+                                        <td className="text-end text-success">{numberWithSpaces((safeToFixed(total1 + total2)))}</td>
+                                        {/* <td></td> */}
                                     </tr>
                                 </tfoot>
                             </table>
