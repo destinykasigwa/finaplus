@@ -351,8 +351,8 @@ const fetchComptesAmortissements = async () => {
                                         <div className="col-md-4">
                                             <label className="label-modern">Méthode</label>
                                             <select className="modern-select w-100" name="methode_amortissement" value={formData.methode_amortissement} onChange={handleChange}>
-                                                <option value="lineaire">Linéaire</option>
-                                                <option value="degresif">Dégressif (OHADA)</option>
+                                                <option value="lineaire">Linéaire(Constant)</option>
+                                                <option value="degresif">Dégressif (PCCI/OHADA)</option>
                                             </select>
                                         </div>
                                         <div className="col-md-4">

@@ -26,6 +26,7 @@ class Immobilisations extends Model
         'code_agence',
         'service_affectation',
          'dernier_amortissement_mois', // ou 'date_dernier_amortissement'
+         'dernier_amortissement_annee'
     ];
 
     // Relation avec le type d'immobilisation

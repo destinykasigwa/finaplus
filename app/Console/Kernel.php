@@ -29,6 +29,7 @@ class Kernel extends ConsoleKernel
 
 
         $schedule->command('immo:amortir')->monthlyOn(1, '00:00');
+        // $schedule->command('immo:amortir')->yearlyOn(12, 31, '23:55');
     }
     /**
      * Register the commands for the application.

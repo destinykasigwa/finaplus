@@ -99,10 +99,14 @@ const RapportImmobilisations = () => {
         if (page >= 1 && page <= totalPages) setCurrentPage(page);
     };
 
-    const numberWithSpaces = (x) => {
-        if (x === null || x === undefined) return "0,00";
-        return x.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    };
+     function numberWithSpaces(x) {
+        if (x === null || x === undefined) {
+            return "0.00"; // ou une autre valeur par défaut appropriée
+        }
+        var parts = x.toString().split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        return parts.join(".");
+    }
 
     // Export Excel (TOUTES les données, pas seulement la page courante)
     const exportTableData = () => {

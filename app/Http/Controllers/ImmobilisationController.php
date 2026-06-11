@@ -195,9 +195,6 @@ class ImmobilisationController extends Controller
         return response()->json(['status' => 1, 'msg' => 'Supprimée']);
     }
 
-
-
-
     /**
      * Calcule et enregistre les amortissements mensuels pour toutes les immobilisations
      * (à exécuter via cron ou commande planifiée chaque mois)
@@ -253,6 +250,50 @@ class ImmobilisationController extends Controller
         return response()->json(["status" => 1, "msg" => "Opération réussie."]);
     }
 
+//     public function calculerAmortissementAnnuel($codeAgence = null)
+// {
+//     if ($codeAgence) {
+//         $agences = Agences::where('code_agence', $codeAgence)->get();
+//     } else {
+//         $agences = Agences::all();
+//     }
+
+//     $currentYear = now()->year; // ou bien fixer à l'année comptable souhaitée
+
+//     foreach ($agences as $agence) {
+//         $immobilisations = Immobilisations::where('code_agence', $agence->code_agence)->get();
+
+//         foreach ($immobilisations as $immo) {
+//             // Vérifier si déjà amorti cette année
+//             if ($immo->dernier_amortissement_annee === $currentYear) {
+//                 continue;
+//             }
+
+//             $devise = (substr($immo->compte_comptable_immo, -1) == '2') ? 'CDF' : 'USD';
+//             $compteCharge = ($devise == 'CDF') ? $agence->compte_charge_amortissement_cdf : $agence->compte_charge_amortissement_usd;
+//             if (!$compteCharge) continue;
+
+//             // Calcul du montant annuel
+//             $montantAnnuel = $this->calculerMontantAmortissementAnnuel($immo);
+//             if ($montantAnnuel <= 0) continue;
+
+//             $baseAmortissable = $immo->valeur_acquisition - $immo->valeur_residuelle;
+//             if ($immo->amortissement_cumule + $montantAnnuel > $baseAmortissable) {
+//                 $montantAnnuel = $baseAmortissable - $immo->amortissement_cumule;
+//                 if ($montantAnnuel <= 0) continue;
+//             }
+
+//             $this->genererEcritureAmortissement($immo, $montantAnnuel, $compteCharge);
+
+//             $immo->amortissement_cumule += $montantAnnuel;
+//             $immo->valeur_nette_comptable = $baseAmortissable - $immo->amortissement_cumule;
+//             $immo->dernier_amortissement_annee = $currentYear;
+//             $immo->save();
+//         }
+//     }
+//     return response()->json(["status" => 1, "msg" => "Amortissement annuel exécuté."]);
+// }
+
     /**
      * Calcule le montant d'amortissement mensuel pour une immobilisation
      */
@@ -272,7 +313,22 @@ class ImmobilisationController extends Controller
         }
     }
 
+//     private function calculerMontantAmortissementAnnuel($immo)
+// {
+//     $base = $immo->valeur_acquisition - $immo->valeur_residuelle;
+//     if ($base <= 0) return 0;
 
+//     if ($immo->methode_amortissement == 'lineaire') {
+//         // Annuité linéaire = base * taux / 100
+//         return $base * ($immo->taux_amortissement / 100);
+//     } else {
+//         // Dégressif : calcul sur la VNC en début d'année
+//         $coefficient = $this->getCoefficientDegressif($immo->duree_amortissement_ans);
+//         $tauxDegressif = $immo->taux_amortissement * $coefficient;
+//         $vnc_debut_annee = $immo->valeur_acquisition - $immo->amortissement_cumule;
+//         return $vnc_debut_annee * ($tauxDegressif / 100);
+//     }
+// }
 
     /**
      * Coefficient dégressif selon la durée (OHADA)
@@ -380,13 +436,6 @@ class ImmobilisationController extends Controller
 
 //     return round($mensuel, 2);
 // }
-
-
-
-
-
-
-
 
 
     /**

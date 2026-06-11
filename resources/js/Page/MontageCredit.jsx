@@ -1027,7 +1027,7 @@ const saveEcheancier = async (e) => {
                 checked={fetchDataToUpdate && fetchDataToUpdate.Reechelonne == 1}
             />
             <label className="form-check-label" style={{ color: "steelblue" }}>
-                Rééchelonné
+                Réechelonné
             </label>
         </div>
 

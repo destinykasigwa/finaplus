@@ -2821,7 +2821,8 @@ class TransactionsController extends Controller
             BilletageUSD::where("NomUtilisateur", $data->NomDemandeur)
                 ->where("DateTransaction", $dateSystem)
                 ->where("delested", 0)->update([
-                    "delested" => 1
+                    "delested" => 1,
+                    "NomUtilisateur"=>Auth::user()->name,
                 ]);
             return response()->json(["status" => 1, "msg" => "Vous avez confirmé ce delestage avec succès."]);
         } else {
@@ -2940,6 +2941,7 @@ class TransactionsController extends Controller
             //ON RENSEIGNE LE DELESTAGE
             Delestages::where("id", $request->refDelestage)->update([
                 "received" => 1,
+                "NomUtilisateur"=>Auth::user()->name,
             ]);
             //CONFIRME LE DELESTAGE AU PRET DU CAISSIER 
             BilletageCDF::where("NomUtilisateur", $data->NomDemandeur)
