@@ -595,6 +595,7 @@ const Visa = () => {
                                                 }
                                                 value={Montant}
                                                 placeholder="0,00"
+                                               
                                             />
                                         </div>
                                         {error.Montant && (

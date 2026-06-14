@@ -196,9 +196,8 @@
     border: 2px dashed #555;
     color: #444;
     cursor: pointer;
-    transition:
-        background 0.2s ease-in-out,
-        border 0.2s ease-in-out;
+    transition: 0.2s ease-in-out,
+        
 }
 
 .drop-container:hover {
@@ -332,7 +331,7 @@ body {
 
 /* Styles pour les onglets */
 .custom-tabs {
-    background: linear-gradient(135deg, #1a2632 0%, #0f1419 100%);
+    background: #0f172a !important;
     border-radius: 12px 12px 0 0;
     border-bottom: none;
     padding: 0 8px;
@@ -370,7 +369,7 @@ body {
 .user-tabs {
     gap: 8px;
     padding: 0 20px;
-    background: linear-gradient(135deg, #1a2632 0%, #0f1419 100%);
+    background: #0f172a !important;
     border-bottom: none;
 }
 
@@ -389,7 +388,7 @@ body {
 
 .user-tabs .nav-link:hover {
     color: teal;
-    background-color: rgba(0, 128, 128, 0.05);
+    background: white !important;
 }
 
 .user-tabs .nav-link.active {
@@ -536,7 +535,7 @@ body {
 }
 
 .sidebar::-webkit-scrollbar-track {
-    background: #1a1a1a;
+  background: #0f172a !important;
 }
 
 .sidebar::-webkit-scrollbar-thumb {

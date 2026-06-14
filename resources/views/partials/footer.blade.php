@@ -5,7 +5,7 @@ $userInfo = DB::select('SELECT * FROM users WHERE id="' . Auth::user()->id . '"'
 ?>
 
 <!-- Footer moderne et collant -->
-<footer class="footer" style="background: linear-gradient(135deg, #1a2632 0%, #0f1419 100%); border-top: 3px solid #20c997; position: relative; overflow: hidden; margin-top: auto;">
+<footer class="footer" style="background: #0f172a !important; border-top: 3px solid #20c997; position: relative; overflow: hidden; margin-top: auto;">
   
   <!-- Effet de vague décorative -->
   <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #20c997, #ffc107, #20c997);"></div>

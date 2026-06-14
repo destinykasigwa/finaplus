@@ -1080,6 +1080,9 @@ const RetraitEspece = () => {
                                                                         .value,
                                                                 )
                                                             }
+
+                                                       
+                                                            
                                                         />
                                                     </td>
                                                     <td className="fw-bold text-danger">

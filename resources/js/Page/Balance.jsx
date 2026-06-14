@@ -236,51 +236,51 @@ const Balance = () => {
 
     // Export Excel
     const exportToExcel = () => {
-    // 1. Vérifier qu'il y a des données
-    if (!balanceData || balanceData.length === 0) {
-        Swal.fire("Information", "Aucune donnée à exporter", "info");
-        return;
-    }
-
-    // 2. Construire les lignes
-    const wsData = balanceData.map((item) => {
-        const base = {
-            "Report Débit": item.report_debit,
-            "Report Crédit": item.report_credit,
-            "Mvt Débit": item.mvt_debit,
-            "Mvt Crédit": item.mvt_credit,
-            "Total Débit": item.total_debit,
-            "Total Crédit": item.total_credit,
-            "Solde Débiteur": item.solde_debiteur,
-            "Solde Créditeur": item.solde_crediteur,
-        };
-        if (typeBalance === "detail") {
-            return { Compte: item.compte, Libellé: item.libelle, ...base };
-        } else {
-            return { "Compte (sous-groupe)": item.compte, ...base };
+        // 1. Vérifier qu'il y a des données
+        if (!balanceData || balanceData.length === 0) {
+            Swal.fire("Information", "Aucune donnée à exporter", "info");
+            return;
         }
-    });
 
-    // 3. Créer la feuille
-    const ws = XLSX.utils.json_to_sheet(wsData);
-
-    // 4. (Optionnel) Ajuster les largeurs de colonnes – sans planter si vide
-    if (wsData.length > 0) {
-        const colWidths = Object.keys(wsData[0]).map((key) => {
-            const maxLen = Math.max(
-                key.length,
-                ...wsData.map((row) => (row[key]?.toString().length || 0))
-            );
-            return { wch: Math.min(maxLen + 2, 30) };
+        // 2. Construire les lignes
+        const wsData = balanceData.map((item) => {
+            const base = {
+                "Report Débit": item.report_debit,
+                "Report Crédit": item.report_credit,
+                "Mvt Débit": item.mvt_debit,
+                "Mvt Crédit": item.mvt_credit,
+                "Total Débit": item.total_debit,
+                "Total Crédit": item.total_credit,
+                "Solde Débiteur": item.solde_debiteur,
+                "Solde Créditeur": item.solde_crediteur,
+            };
+            if (typeBalance === "detail") {
+                return { Compte: item.compte, Libellé: item.libelle, ...base };
+            } else {
+                return { "Compte (sous-groupe)": item.compte, ...base };
+            }
         });
-        ws["!cols"] = colWidths;
-    }
 
-    // 5. Sauvegarder le fichier
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Balance");
-    XLSX.writeFile(wb, `balance_${date_debut}_${date_fin}.xlsx`);
-};
+        // 3. Créer la feuille
+        const ws = XLSX.utils.json_to_sheet(wsData);
+
+        // 4. (Optionnel) Ajuster les largeurs de colonnes – sans planter si vide
+        if (wsData.length > 0) {
+            const colWidths = Object.keys(wsData[0]).map((key) => {
+                const maxLen = Math.max(
+                    key.length,
+                    ...wsData.map((row) => row[key]?.toString().length || 0),
+                );
+                return { wch: Math.min(maxLen + 2, 30) };
+            });
+            ws["!cols"] = colWidths;
+        }
+
+        // 5. Sauvegarder le fichier
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Balance");
+        XLSX.writeFile(wb, `balance_${date_debut}_${date_fin}.xlsx`);
+    };
 
     // const exportToPDF = () => {
     //     const element = document.getElementById("balance-content");
@@ -296,82 +296,94 @@ const Balance = () => {
     //     });
     // };
 
-
     const exportToPDF = async () => {
-    const element = document.getElementById("balance-content");
-    if (!element) return;
+        const element = document.getElementById("balance-content");
+        if (!element) return;
 
-    try {
-        // 1. Capturer tout l'élément
-        const canvas = await html2canvas(element, { scale: 2 });
-        const imgData = canvas.toDataURL("image/png");
+        try {
+            // 1. Capturer tout l'élément
+            const canvas = await html2canvas(element, { scale: 2 });
+            const imgData = canvas.toDataURL("image/png");
 
-        // 2. Initialiser le PDF
-        const pdf = new jsPDF("p", "mm", "a4");
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+            // 2. Initialiser le PDF
+            const pdf = new jsPDF("p", "mm", "a4");
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
 
-        // 3. Dimensions de l'image en mm et en pixels
-        const imgWidthMm = pdfWidth;           // pleine largeur
-        const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
-        const scaleMmPerPx = imgHeightMm / canvas.height; // mm par pixel
+            // 3. Dimensions de l'image en mm et en pixels
+            const imgWidthMm = pdfWidth; // pleine largeur
+            const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+            const scaleMmPerPx = imgHeightMm / canvas.height; // mm par pixel
 
-        // 4. Hauteur d'une page en pixels (dans l'image source)
-        const pageHeightPx = pdfHeight / scaleMmPerPx;
+            // 4. Hauteur d'une page en pixels (dans l'image source)
+            const pageHeightPx = pdfHeight / scaleMmPerPx;
 
-        let remainingHeightPx = canvas.height;
-        let yOffsetPx = 0;           // position verticale dans l'image source
-        let firstPage = true;
+            let remainingHeightPx = canvas.height;
+            let yOffsetPx = 0; // position verticale dans l'image source
+            let firstPage = true;
 
-        while (remainingHeightPx > 0) {
-            // Hauteur du morceau à extraire (ne pas dépasser l'image)
-            const sliceHeightPx = Math.min(pageHeightPx, remainingHeightPx);
+            while (remainingHeightPx > 0) {
+                // Hauteur du morceau à extraire (ne pas dépasser l'image)
+                const sliceHeightPx = Math.min(pageHeightPx, remainingHeightPx);
 
-            // Créer un canvas temporaire pour la portion
-            const tmpCanvas = document.createElement("canvas");
-            tmpCanvas.width = canvas.width;
-            tmpCanvas.height = sliceHeightPx;
-            const ctx = tmpCanvas.getContext("2d");
+                // Créer un canvas temporaire pour la portion
+                const tmpCanvas = document.createElement("canvas");
+                tmpCanvas.width = canvas.width;
+                tmpCanvas.height = sliceHeightPx;
+                const ctx = tmpCanvas.getContext("2d");
 
-            // Copier la région correspondante depuis l'image originale
-            ctx.drawImage(
-                canvas,
-                0, yOffsetPx, canvas.width, sliceHeightPx,
-                0, 0, canvas.width, sliceHeightPx
-            );
+                // Copier la région correspondante depuis l'image originale
+                ctx.drawImage(
+                    canvas,
+                    0,
+                    yOffsetPx,
+                    canvas.width,
+                    sliceHeightPx,
+                    0,
+                    0,
+                    canvas.width,
+                    sliceHeightPx,
+                );
 
-            const sliceData = tmpCanvas.toDataURL("image/png");
+                const sliceData = tmpCanvas.toDataURL("image/png");
 
-            if (!firstPage) {
-                pdf.addPage();
+                if (!firstPage) {
+                    pdf.addPage();
+                }
+                pdf.addImage(
+                    sliceData,
+                    "PNG",
+                    0,
+                    0,
+                    imgWidthMm,
+                    (sliceHeightPx * imgWidthMm) / canvas.width,
+                );
+
+                // Mise à jour pour la page suivante
+                yOffsetPx += sliceHeightPx;
+                remainingHeightPx -= sliceHeightPx;
+                firstPage = false;
             }
-            pdf.addImage(sliceData, "PNG", 0, 0, imgWidthMm, (sliceHeightPx * imgWidthMm) / canvas.width);
 
-            // Mise à jour pour la page suivante
-            yOffsetPx += sliceHeightPx;
-            remainingHeightPx -= sliceHeightPx;
-            firstPage = false;
+            pdf.save(`balance_${date_debut}_${date_fin}.pdf`);
+        } catch (error) {
+            console.error("Erreur export PDF :", error);
+            Swal.fire("Erreur", "L'export PDF a échoué", "error");
         }
+    };
 
-        pdf.save(`balance_${date_debut}_${date_fin}.pdf`);
-    } catch (error) {
-        console.error("Erreur export PDF :", error);
-        Swal.fire("Erreur", "L'export PDF a échoué", "error");
-    }
-};
-
-        const getAgenceNom = () => {
-    if (agenceFilter === 'current') {
-         return "AGENCE DE " +currentAgence?.nom_agence || "Non définie";
-    }
-    if (agenceFilter === 'all') {
-        return "TOUTES AGENCES";
-    }
-    // agenceFilter est un id
-    const agence = userAgences.find(a => a.id == agenceFilter);
-    // return agence ? `${agence.code_agence} - ${agence.nom_agence}` : "Non définie";
-    return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
-};
+    const getAgenceNom = () => {
+        if (agenceFilter === "current") {
+            return "AGENCE DE " + currentAgence?.nom_agence || "Non définie";
+        }
+        if (agenceFilter === "all") {
+            return "TOUTES AGENCES";
+        }
+        // agenceFilter est un id
+        const agence = userAgences.find((a) => a.id == agenceFilter);
+        // return agence ? `${agence.code_agence} - ${agence.nom_agence}` : "Non définie";
+        return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
+    };
 
     return (
         <div className="balance-container">
@@ -385,20 +397,34 @@ const Balance = () => {
             )}
 
             {/* Header */}
-            <div className="balance-header" style={{ background: "#138496" }}>
-                <div className="balance-header-content">
-                    <div className="balance-header-icon">
-                        <i className="fas fa-balance-scale"></i>
+
+            <div
+                className="card-body p-3"
+                style={{
+                    background: "#138496",
+                    borderRadius: "12px",
+                }}
+            >
+                <div className="d-flex align-items-center">
+                    <div className="me-3">
+                        <i
+                            className="fas fa-chart-line"
+                            style={{
+                                fontSize: "28px",
+                                color: "white",
+                            }}
+                        ></i>
                     </div>
                     <div>
-                        <h1>Balance des comptes</h1>
-                        <p>Synthèse des soldes et mouvements</p>
+                        <h5 className="text-white fw-bold mb-0">
+                            Balance des comptes
+                        </h5>
                     </div>
                 </div>
             </div>
 
             {/* Filtres */}
-            <div className="balance-filters">
+            <div className="balance-filters mt-2">
                 <div className="filter-card">
                     <div className="filter-header">
                         <i className="fas fa-calendar-alt"></i> Période
@@ -574,71 +600,73 @@ const Balance = () => {
             {/* Résultats */}
             {balanceData.length > 0 && (
                 <>
-                  <div id="balance-content">
-                    <div className="balance-report-card">
-                        <div className="balance-report-header text-center">
-                            <EnteteRapport />
+                    <div id="balance-content">
+                        <div className="balance-report-card">
+                            <div className="balance-report-header text-center">
+                                <EnteteRapport />
 
-                            <h3 className="fw-bold">
-                                BALANCE GENERALE DES COMPTES {getAgenceNom()}
-                            </h3>
+                                <h3 className="fw-bold">
+                                    BALANCE GENERALE DES COMPTES{" "}
+                                    {getAgenceNom()}
+                                </h3>
 
-                            <p>
-                                DU {dateParser(date_debut)} AU{" "}
-                                {dateParser(date_fin)}
-                            </p>
+                                <p>
+                                    DU {dateParser(date_debut)} AU{" "}
+                                    {dateParser(date_fin)}
+                                </p>
 
-                            <p>
-                                Devise : <strong>{devise}</strong> | Comptes :{" "}
-                                <strong>{compteDebut}</strong> à{" "}
-                                <strong>{compteFin}</strong>
-                            </p>
-                        </div>
-                        <div className="table-responsive">
-                            <table className="balance-table">
-                                <thead>
-                                    <tr className="text-center">
-                                        <th rowSpan="2">Compte</th>
-                                        {typeBalance === "detail" && (
-                                            <th rowSpan="2">Libellé</th>
-                                        )}
+                                <p>
+                                    Devise : <strong>{devise}</strong> | Comptes
+                                    : <strong>{compteDebut}</strong> à{" "}
+                                    <strong>{compteFin}</strong>
+                                </p>
+                            </div>
+                            <div className="table-responsive">
+                                <table className="balance-table">
+                                    <thead>
+                                        <tr className="text-center">
+                                            <th rowSpan="2">Compte</th>
+                                            {typeBalance === "detail" && (
+                                                <th rowSpan="2">Libellé</th>
+                                            )}
 
-                                        <th colSpan="2">REPORT</th>
-                                        <th colSpan="2">MOUVEMENTS</th>
-                                        <th colSpan="2">TOTAUX</th>
-                                        <th colSpan="2">SOLDE</th>
-                                    </tr>
+                                            <th colSpan="2">REPORT</th>
+                                            <th colSpan="2">MOUVEMENTS</th>
+                                            <th colSpan="2">TOTAUX</th>
+                                            <th colSpan="2">SOLDE</th>
+                                        </tr>
 
-                                    <tr className="text-center">
-                                        <th>D</th>
-                                        <th>C</th>
+                                        <tr className="text-center">
+                                            <th>D</th>
+                                            <th>C</th>
 
-                                        <th>D</th>
-                                        <th>C</th>
+                                            <th>D</th>
+                                            <th>C</th>
 
-                                        <th>D</th>
-                                        <th>C</th>
+                                            <th>D</th>
+                                            <th>C</th>
 
-                                        <th>D</th>
-                                        <th>C</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {Object.values(
-                                        buildHierarchy(currentItems),
-                                    ).map((classe, i) => (
-                                        <React.Fragment key={i}>
-                                            {/* ===== CLASSE ===== */}
-                                            <tr className="classe-row">
-                                                <td colSpan={10}>
-                                                    <strong>
-                                                        CLASSE {classe.code}
-                                                    </strong>
-                                                </td>
-                                            </tr>
+                                            <th>D</th>
+                                            <th>C</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {Object.values(
+                                            buildHierarchy(currentItems),
+                                        ).map((classe, i) => (
+                                            <React.Fragment key={i}>
+                                                {/* ===== CLASSE ===== */}
+                                                <tr className="classe-row">
+                                                    <td colSpan={10}>
+                                                        <strong>
+                                                            CLASSE {classe.code}
+                                                        </strong>
+                                                    </td>
+                                                </tr>
 
-                                            {Object.values(classe.items).map(
-                                                (sg, j) => {
+                                                {Object.values(
+                                                    classe.items,
+                                                ).map((sg, j) => {
                                                     // Calcul total sous-groupe
                                                     const totalSG =
                                                         sg.comptes.reduce(
@@ -815,123 +843,127 @@ const Balance = () => {
                                                             </tr>
                                                         </React.Fragment>
                                                     );
-                                                },
-                                            )}
-                                        </React.Fragment>
-                                    ))}
-                                </tbody>
-                                <tfoot className="balance-footer">
-                                    <tr>
-                                        <td
-                                            colSpan={
-                                                typeBalance === "detail" ? 2 : 1
-                                            }
-                                            className="fw-bold"
-                                        >
-                                            TOTAUX
-                                        </td>
-                                        <td className="text-end fw-bold">
-                                            {numberWithSpaces(
-                                                balanceData.reduce(
-                                                    (sum, i) =>
-                                                        sum + i.report_debit,
-                                                    0,
-                                                ),
-                                            )}
-                                        </td>
-                                        <td className="text-end fw-bold">
-                                            {numberWithSpaces(
-                                                balanceData.reduce(
-                                                    (sum, i) =>
-                                                        sum + i.report_credit,
-                                                    0,
-                                                ),
-                                            )}
-                                        </td>
-                                        <td className="text-end fw-bold">
-                                            {numberWithSpaces(
-                                                balanceData.reduce(
-                                                    (sum, i) =>
-                                                        sum + i.mvt_debit,
-                                                    0,
-                                                ),
-                                            )}
-                                        </td>
-                                        <td className="text-end fw-bold">
-                                            {numberWithSpaces(
-                                                balanceData.reduce(
-                                                    (sum, i) =>
-                                                        sum + i.mvt_credit,
-                                                    0,
-                                                ),
-                                            )}
-                                        </td>
-                                        <td className="text-end fw-bold">
-                                            {numberWithSpaces(
-                                                balanceData.reduce(
-                                                    (sum, i) =>
-                                                        sum + i.total_debit,
-                                                    0,
-                                                ),
-                                            )}
-                                        </td>
-                                        <td className="text-end fw-bold">
-                                            {numberWithSpaces(
-                                                balanceData.reduce(
-                                                    (sum, i) =>
-                                                        sum + i.total_credit,
-                                                    0,
-                                                ),
-                                            )}
-                                        </td>
-                                        <td className="text-end fw-bold">
-                                            {numberWithSpaces(
-                                                balanceData.reduce(
-                                                    (sum, i) =>
-                                                        sum + i.solde_debiteur,
-                                                    0,
-                                                ),
-                                            )}
-                                        </td>
-                                        <td className="text-end fw-bold">
-                                            {numberWithSpaces(
-                                                balanceData.reduce(
-                                                    (sum, i) =>
-                                                        sum + i.solde_crediteur,
-                                                    0,
-                                                ),
-                                            )}
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                                                })}
+                                            </React.Fragment>
+                                        ))}
+                                    </tbody>
+                                    <tfoot className="balance-footer">
+                                        <tr>
+                                            <td
+                                                colSpan={
+                                                    typeBalance === "detail"
+                                                        ? 2
+                                                        : 1
+                                                }
+                                                className="fw-bold"
+                                            >
+                                                TOTAUX
+                                            </td>
+                                            <td className="text-end fw-bold">
+                                                {numberWithSpaces(
+                                                    balanceData.reduce(
+                                                        (sum, i) =>
+                                                            sum +
+                                                            i.report_debit,
+                                                        0,
+                                                    ),
+                                                )}
+                                            </td>
+                                            <td className="text-end fw-bold">
+                                                {numberWithSpaces(
+                                                    balanceData.reduce(
+                                                        (sum, i) =>
+                                                            sum +
+                                                            i.report_credit,
+                                                        0,
+                                                    ),
+                                                )}
+                                            </td>
+                                            <td className="text-end fw-bold">
+                                                {numberWithSpaces(
+                                                    balanceData.reduce(
+                                                        (sum, i) =>
+                                                            sum + i.mvt_debit,
+                                                        0,
+                                                    ),
+                                                )}
+                                            </td>
+                                            <td className="text-end fw-bold">
+                                                {numberWithSpaces(
+                                                    balanceData.reduce(
+                                                        (sum, i) =>
+                                                            sum + i.mvt_credit,
+                                                        0,
+                                                    ),
+                                                )}
+                                            </td>
+                                            <td className="text-end fw-bold">
+                                                {numberWithSpaces(
+                                                    balanceData.reduce(
+                                                        (sum, i) =>
+                                                            sum + i.total_debit,
+                                                        0,
+                                                    ),
+                                                )}
+                                            </td>
+                                            <td className="text-end fw-bold">
+                                                {numberWithSpaces(
+                                                    balanceData.reduce(
+                                                        (sum, i) =>
+                                                            sum +
+                                                            i.total_credit,
+                                                        0,
+                                                    ),
+                                                )}
+                                            </td>
+                                            <td className="text-end fw-bold">
+                                                {numberWithSpaces(
+                                                    balanceData.reduce(
+                                                        (sum, i) =>
+                                                            sum +
+                                                            i.solde_debiteur,
+                                                        0,
+                                                    ),
+                                                )}
+                                            </td>
+                                            <td className="text-end fw-bold">
+                                                {numberWithSpaces(
+                                                    balanceData.reduce(
+                                                        (sum, i) =>
+                                                            sum +
+                                                            i.solde_crediteur,
+                                                        0,
+                                                    ),
+                                                )}
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            {totalPages > 1 && (
+                                <PaginationModerne
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={setCurrentPage}
+                                />
+                            )}
                         </div>
-                        {totalPages > 1 && (
-                            <PaginationModerne
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                onPageChange={setCurrentPage}
-                            />
-                        )}
                     </div>
-                   
-                </div>
-                  <div>
-
-                 <div className="balance-export-buttons">
-                        <button className="btn-excel" onClick={exportToExcel}>
-                            <i className="fas fa-file-excel"></i> Excel
-                        </button>
-                        <button className="btn-pdf" onClick={exportToPDF}>
-                            <i className="fas fa-file-pdf"></i> PDF
-                        </button>
+                    <div>
+                        <div className="balance-export-buttons">
+                            <button
+                                className="btn-excel"
+                                onClick={exportToExcel}
+                            >
+                                <i className="fas fa-file-excel"></i> Excel
+                            </button>
+                            <button className="btn-pdf" onClick={exportToPDF}>
+                                <i className="fas fa-file-pdf"></i> PDF
+                            </button>
+                        </div>
                     </div>
-            </div>
                 </>
-              
             )}
-
-          
 
             {balanceData.length === 0 && !loading && (
                 <div className="balance-empty">
@@ -974,7 +1006,7 @@ const Balance = () => {
                 .balance-header {
                     background: linear-gradient(135deg, #0f766e, #14b8a6);
                     border-radius: 28px;
-                    padding: 20px 28px;
+                    padding: 5px 6px;
                     margin-bottom: 32px;
                     box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
                 }

@@ -36,407 +36,450 @@ const Users = () => {
     const [Profilrecords, setProfilrecords] = useState();
     const [menuRecords, setMenuRecords] = useState();
 
-
-      // NOUVEAUX ÉTATS POUR LES AGENCES
-    const [fetchAgences, setFetchAgences] = useState();       // toutes les agences
-    const [agenceRecords, setAgenceRecords] = useState();     // pour le filtrage
+    // NOUVEAUX ÉTATS POUR LES AGENCES
+    const [fetchAgences, setFetchAgences] = useState(); // toutes les agences
+    const [agenceRecords, setAgenceRecords] = useState(); // pour le filtrage
     const [selectedAgenceData, setSelectedAgenceData] = useState(); // agence(s) sélectionnée(s) dans le tableau
-    const [fetchAgencesForSelectedUser, setFetchAgencesForSelectedUser] = useState(); // agences de l'utilisateur
+    const [fetchAgencesForSelectedUser, setFetchAgencesForSelectedUser] =
+        useState(); // agences de l'utilisateur
     const [loadingAgences, setLoadingAgences] = useState(false);
     const [multiAgenceLoading, setMultiAgenceLoading] = useState(false);
 
-   const columns = [
-  {
-    name: (
-      <div className="d-flex align-items-center gap-2">
-        <i className="fas fa-user-circle" style={{ fontSize: "14px" }}></i>
-        <span>Nom d'utilisateur</span>
-      </div>
-    ),
-    selector: (row) => row.name,
-    sortable: true,
-    grow: 2,
-    style: {
-      fontWeight: "500",
-      color: "#2c3e50"
-    }
-  },
-  {
-    name: (
-      <div className="d-flex align-items-center gap-2">
-        <i className="fas fa-envelope" style={{ fontSize: "14px" }}></i>
-        <span>Email</span>
-      </div>
-    ),
-    selector: (row) => row.email,
-    grow: 2,
-  },
-  {
-    name: (
-      <div className="d-flex align-items-center gap-2">
-        <i className="fas fa-building" style={{ fontSize: "14px" }}></i>
-        <span>Code Agence</span>
-      </div>
-    ),
-    selector: "code_agence",
-    grow: 1,
-    cell: (row) => (
-      <span className="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">
-        {row.code_agence || "N/A"}
-      </span>
-    )
-  },
-  {
-    name: (
-      <div className="d-flex align-items-center gap-2">
-        <i className="fas fa-phone" style={{ fontSize: "14px" }}></i>
-        <span>Téléphone</span>
-      </div>
-    ),
-    selector: "phone",
-    grow: 1,
-    cell: (row) => (
-      <span className="d-flex align-items-center gap-1">
-        <i className="fas fa-phone-alt text-muted" style={{ fontSize: "11px" }}></i>
-        {row.phone || "Non renseigné"}
-      </span>
-    )
-  },
-];
+    const columns = [
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i
+                        className="fas fa-user-circle"
+                        style={{ fontSize: "14px" }}
+                    ></i>
+                    <span>Nom d'utilisateur</span>
+                </div>
+            ),
+            selector: (row) => row.name,
+            sortable: true,
+            grow: 2,
+            style: {
+                fontWeight: "500",
+                color: "#2c3e50",
+            },
+        },
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i
+                        className="fas fa-envelope"
+                        style={{ fontSize: "14px" }}
+                    ></i>
+                    <span>Email</span>
+                </div>
+            ),
+            selector: (row) => row.email,
+            grow: 2,
+        },
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i
+                        className="fas fa-building"
+                        style={{ fontSize: "14px" }}
+                    ></i>
+                    <span>Code Agence</span>
+                </div>
+            ),
+            selector: "code_agence",
+            grow: 1,
+            cell: (row) => (
+                <span className="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">
+                    {row.code_agence || "N/A"}
+                </span>
+            ),
+        },
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i
+                        className="fas fa-phone"
+                        style={{ fontSize: "14px" }}
+                    ></i>
+                    <span>Téléphone</span>
+                </div>
+            ),
+            selector: "phone",
+            grow: 1,
+            cell: (row) => (
+                <span className="d-flex align-items-center gap-1">
+                    <i
+                        className="fas fa-phone-alt text-muted"
+                        style={{ fontSize: "11px" }}
+                    ></i>
+                    {row.phone || "Non renseigné"}
+                </span>
+            ),
+        },
+    ];
 
-const ProfilForUserCulumn = [
-  {
-    name: (
-      <div className="d-flex align-items-center gap-2">
-        <i className="fas fa-tag" style={{ fontSize: "14px" }}></i>
-        <span>Profil</span>
-      </div>
-    ),
-    selector: (row) => row.nom_profile,
-    grow: 3,
-    cell: (row) => (
-      <span className="fw-semibold" style={{ color: "teal" }}>
-        <i className="fas fa-id-card me-2" style={{ fontSize: "12px" }}></i>
-        {row.nom_profile}
-      </span>
-    )
-  },
-  {
-    name: (
-      <div className="d-flex align-items-center gap-2">
-        <i className="fas fa-trash-alt" style={{ fontSize: "14px" }}></i>
-        <span>Action</span>
-      </div>
-    ),
-    cell: (row) => (
-      <button
-        className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
-        onClick={() => removeProfil(row.id)}
-        style={{
-          borderRadius: "8px",
-          padding: "6px 12px",
-          fontSize: "12px",
-          fontWeight: "500",
-          transition: "all 0.2s ease"
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "#dc3545";
-          e.currentTarget.style.color = "white";
-          e.currentTarget.style.transform = "translateY(-1px)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "transparent";
-          e.currentTarget.style.color = "#dc3545";
-          e.currentTarget.style.transform = "translateY(0)";
-        }}
-      >
-        <i className="fas fa-trash-alt"></i>
-        <span>Retirer</span>
-      </button>
-    ),
-    grow: 1,
-    center: true,
-  },
-];
+    const ProfilForUserCulumn = [
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i className="fas fa-tag" style={{ fontSize: "14px" }}></i>
+                    <span>Profil</span>
+                </div>
+            ),
+            selector: (row) => row.nom_profile,
+            grow: 3,
+            cell: (row) => (
+                <span className="fw-semibold" style={{ color: "teal" }}>
+                    <i
+                        className="fas fa-id-card me-2"
+                        style={{ fontSize: "12px" }}
+                    ></i>
+                    {row.nom_profile}
+                </span>
+            ),
+        },
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i
+                        className="fas fa-trash-alt"
+                        style={{ fontSize: "14px" }}
+                    ></i>
+                    <span>Action</span>
+                </div>
+            ),
+            cell: (row) => (
+                <button
+                    className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
+                    onClick={() => removeProfil(row.id)}
+                    style={{
+                        borderRadius: "8px",
+                        padding: "6px 12px",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                        transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#dc3545";
+                        e.currentTarget.style.color = "white";
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "#dc3545";
+                        e.currentTarget.style.transform = "translateY(0)";
+                    }}
+                >
+                    <i className="fas fa-trash-alt"></i>
+                    <span>Retirer</span>
+                </button>
+            ),
+            grow: 1,
+            center: true,
+        },
+    ];
 
-const columnsProfil = [
-  {
-    name: (
-      <div className="d-flex align-items-center gap-2">
-        <i className="fas fa-id-card" style={{ fontSize: "14px" }}></i>
-        <span>Description du profil</span>
-      </div>
-    ),
-    selector: (row) => row.nom_profile,
-    grow: 3,
-    cell: (row) => (
-      <div className="d-flex align-items-center gap-2">
-        <div
-          style={{
-            width: "32px",
-            height: "32px",
-            backgroundColor: "rgba(32, 201, 151, 0.1)",
-            borderRadius: "8px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <i className="fas fa-users" style={{ color: "teal", fontSize: "14px" }}></i>
-        </div>
-        <span className="fw-semibold">{row.nom_profile}</span>
-      </div>
-    )
-  },
-  {
-    name: (
-      <div className="d-flex align-items-center gap-2">
-        <i className="fas fa-plus-circle" style={{ fontSize: "14px" }}></i>
-        <span>Action</span>
-      </div>
-    ),
-    cell: (row) => (
-      <button
-        className="btn btn-sm btn-teal d-flex align-items-center gap-1"
-        onClick={() => addUserProfil(row.id)}
-        style={{
-          backgroundColor: "teal",
-          color: "white",
-          borderRadius: "8px",
-          padding: "6px 12px",
-          fontSize: "12px",
-          fontWeight: "500",
-          border: "none",
-          transition: "all 0.2s ease"
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "teal";
-          e.currentTarget.style.transform = "translateY(-1px)";
-          e.currentTarget.style.boxShadow = "0 2px 8px rgba(32, 201, 151, 0.3)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "teal";
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "none";
-        }}
-      >
-        <i className="fas fa-user-plus"></i>
-        <span>Ajouter ce profil</span>
-      </button>
-    ),
-    grow: 2,
-    center: true,
-  },
-];
+    const columnsProfil = [
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i
+                        className="fas fa-id-card"
+                        style={{ fontSize: "14px" }}
+                    ></i>
+                    <span>Description du profil</span>
+                </div>
+            ),
+            selector: (row) => row.nom_profile,
+            grow: 3,
+            cell: (row) => (
+                <div className="d-flex align-items-center gap-2">
+                    <div
+                        style={{
+                            width: "32px",
+                            height: "32px",
+                            backgroundColor: "rgba(32, 201, 151, 0.1)",
+                            borderRadius: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <i
+                            className="fas fa-users"
+                            style={{ color: "teal", fontSize: "14px" }}
+                        ></i>
+                    </div>
+                    <span className="fw-semibold">{row.nom_profile}</span>
+                </div>
+            ),
+        },
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i
+                        className="fas fa-plus-circle"
+                        style={{ fontSize: "14px" }}
+                    ></i>
+                    <span>Action</span>
+                </div>
+            ),
+            cell: (row) => (
+                <button
+                    className="btn btn-sm btn-teal d-flex align-items-center gap-1"
+                    onClick={() => addUserProfil(row.id)}
+                    style={{
+                        backgroundColor: "teal",
+                        color: "white",
+                        borderRadius: "8px",
+                        padding: "6px 12px",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                        border: "none",
+                        transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "teal";
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                        e.currentTarget.style.boxShadow =
+                            "0 2px 8px rgba(32, 201, 151, 0.3)";
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "teal";
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "none";
+                    }}
+                >
+                    <i className="fas fa-user-plus"></i>
+                    <span>Ajouter ce profil</span>
+                </button>
+            ),
+            grow: 2,
+            center: true,
+        },
+    ];
 
-const columnsMenu = [
-  {
-    name: (
-      <div className="d-flex align-items-center gap-2">
-        <i className="fas fa-bars" style={{ fontSize: "14px" }}></i>
-        <span>Nom du menu</span>
-      </div>
-    ),
-    selector: (row) => row.menu_name,
-    grow: 3,
-    cell: (row) => (
-      <div className="d-flex align-items-center gap-2">
-        <div
-          style={{
-            width: "28px",
-            height: "28px",
-            backgroundColor: "rgba(13, 110, 253, 0.1)",
-            borderRadius: "6px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}
-        >
-          <i className="fas fa-folder" style={{ color: "#0d6efd", fontSize: "12px" }}></i>
-        </div>
-        <span>{row.menu_name}</span>
-      </div>
-    )
-  },
-  {
-    name: (
-      <div className="d-flex align-items-center gap-2">
-        <i className="fas fa-plus-circle" style={{ fontSize: "14px" }}></i>
-        <span>Action</span>
-      </div>
-    ),
-    cell: (row) => (
-      <button
-        className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
-        onClick={() => addMenuForUser(row.id)}
-        style={{
-          borderRadius: "8px",
-          padding: "6px 12px",
-          fontSize: "12px",
-          fontWeight: "500",
-          transition: "all 0.2s ease"
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "#0d6efd";
-          e.currentTarget.style.color = "white";
-          e.currentTarget.style.transform = "translateY(-1px)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "transparent";
-          e.currentTarget.style.color = "#0d6efd";
-          e.currentTarget.style.transform = "translateY(0)";
-        }}
-      >
-        <i className="fas fa-plus"></i>
-        <span>Ajouter</span>
-      </button>
-    ),
-    grow: 1,
-    center: true,
-  },
-];
+    const columnsMenu = [
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i className="fas fa-bars" style={{ fontSize: "14px" }}></i>
+                    <span>Nom du menu</span>
+                </div>
+            ),
+            selector: (row) => row.menu_name,
+            grow: 3,
+            cell: (row) => (
+                <div className="d-flex align-items-center gap-2">
+                    <div
+                        style={{
+                            width: "28px",
+                            height: "28px",
+                            backgroundColor: "rgba(13, 110, 253, 0.1)",
+                            borderRadius: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                        }}
+                    >
+                        <i
+                            className="fas fa-folder"
+                            style={{ color: "#0d6efd", fontSize: "12px" }}
+                        ></i>
+                    </div>
+                    <span>{row.menu_name}</span>
+                </div>
+            ),
+        },
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i
+                        className="fas fa-plus-circle"
+                        style={{ fontSize: "14px" }}
+                    ></i>
+                    <span>Action</span>
+                </div>
+            ),
+            cell: (row) => (
+                <button
+                    className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
+                    onClick={() => addMenuForUser(row.id)}
+                    style={{
+                        borderRadius: "8px",
+                        padding: "6px 12px",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                        transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#0d6efd";
+                        e.currentTarget.style.color = "white";
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "#0d6efd";
+                        e.currentTarget.style.transform = "translateY(0)";
+                    }}
+                >
+                    <i className="fas fa-plus"></i>
+                    <span>Ajouter</span>
+                </button>
+            ),
+            grow: 1,
+            center: true,
+        },
+    ];
 
-const MenuForUserCulumn = [
-  {
-    name: (
-      <div className="d-flex align-items-center gap-2">
-        <i className="fas fa-bars" style={{ fontSize: "14px" }}></i>
-        <span>Nom du menu</span>
-      </div>
-    ),
-    selector: (row) => row.menu_name,
-    grow: 3,
-    cell: (row) => (
-      <span className="d-flex align-items-center gap-2">
-        <i className="fas fa-angle-right text-muted" style={{ fontSize: "11px" }}></i>
-        {row.menu_name}
-      </span>
-    )
-  },
-  {
-    name: (
-      <div className="d-flex align-items-center gap-2">
-        <i className="fas fa-trash-alt" style={{ fontSize: "14px" }}></i>
-        <span>Action</span>
-      </div>
-    ),
-    cell: (row) => (
-      <button
-        className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
-        onClick={() => removeMenuForUser(row.id)}
-        style={{
-          borderRadius: "8px",
-          padding: "6px 12px",
-          fontSize: "12px",
-          fontWeight: "500",
-          transition: "all 0.2s ease"
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "#dc3545";
-          e.currentTarget.style.color = "white";
-          e.currentTarget.style.transform = "translateY(-1px)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "transparent";
-          e.currentTarget.style.color = "#dc3545";
-          e.currentTarget.style.transform = "translateY(0)";
-        }}
-      >
-        <i className="fas fa-trash-alt"></i>
-        <span>Retirer</span>
-      </button>
-    ),
-    grow: 1,
-    center: true,
-  },
-];
+    const MenuForUserCulumn = [
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i className="fas fa-bars" style={{ fontSize: "14px" }}></i>
+                    <span>Nom du menu</span>
+                </div>
+            ),
+            selector: (row) => row.menu_name,
+            grow: 3,
+            cell: (row) => (
+                <span className="d-flex align-items-center gap-2">
+                    <i
+                        className="fas fa-angle-right text-muted"
+                        style={{ fontSize: "11px" }}
+                    ></i>
+                    {row.menu_name}
+                </span>
+            ),
+        },
+        {
+            name: (
+                <div className="d-flex align-items-center gap-2">
+                    <i
+                        className="fas fa-trash-alt"
+                        style={{ fontSize: "14px" }}
+                    ></i>
+                    <span>Action</span>
+                </div>
+            ),
+            cell: (row) => (
+                <button
+                    className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
+                    onClick={() => removeMenuForUser(row.id)}
+                    style={{
+                        borderRadius: "8px",
+                        padding: "6px 12px",
+                        fontSize: "12px",
+                        fontWeight: "500",
+                        transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "#dc3545";
+                        e.currentTarget.style.color = "white";
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "#dc3545";
+                        e.currentTarget.style.transform = "translateY(0)";
+                    }}
+                >
+                    <i className="fas fa-trash-alt"></i>
+                    <span>Retirer</span>
+                </button>
+            ),
+            grow: 1,
+            center: true,
+        },
+    ];
 
-const customStyles = {
-  table: {
-    style: {
-      borderRadius: "12px",
-      overflow: "hidden",
-    },
-  },
-  header: {
-    style: {
-      backgroundColor: "#f8f9fa",
-      padding: "16px 20px",
-      borderBottom: "2px solid #e9ecef",
-    },
-  },
-  headRow: {
-    style: {
-      backgroundColor: "teal",
-      borderBottom: "none",
-      borderRadius: "12px 12px 0 0",
-    },
-  },
-  headCells: {
-    style: {
-      padding: "14px 16px",
-      fontSize: "13px",
-      fontWeight: "700",
-      color: "white",
-      letterSpacing: "0.3px",
-      textTransform: "uppercase",
-      backgroundColor: "teal",
-      "&:first-of-type": {
-        borderTopLeftRadius: "12px",
-      },
-      "&:last-of-type": {
-        borderTopRightRadius: "12px",
-      },
-    },
-  },
-  rows: {
-    style: {
-      minHeight: "64px",
-      borderBottom: "1px solid #e9ecef",
-      transition: "all 0.2s ease",
-      "&:hover": {
-        backgroundColor: "#f8f9fa",
-      },
-    },
-    highlightOnHoverStyle: {
-      backgroundColor: "#f8f9fa",
-      borderBottomColor: "#dee2e6",
-      transition: "all 0.2s ease",
-    },
-  },
-  cells: {
-    style: {
-      padding: "12px 16px",
-      fontSize: "13px",
-      color: "#495057",
-    },
-  },
-  pagination: {
-    style: {
-      backgroundColor: "#f8f9fa",
-      borderTop: "1px solid #e9ecef",
-      padding: "12px 16px",
-      borderRadius: "0 0 12px 12px",
-    },
-    pageButtonsStyle: {
-      borderRadius: "6px",
-      margin: "0 4px",
-      transition: "all 0.2s ease",
-      "&:hover": {
-        backgroundColor: "#20c997",
-        color: "white",
-      },
-    },
-  },
-  noData: {
-    style: {
-      padding: "40px",
-      textAlign: "center",
-      color: "#6c757d",
-      fontSize: "14px",
-    },
-  },
-};
+    const customStyles = {
+        table: {
+            style: {
+                borderRadius: "12px",
+                overflow: "hidden",
+            },
+        },
+        header: {
+            style: {
+                backgroundColor: "#f8f9fa",
+                padding: "16px 20px",
+                borderBottom: "2px solid #e9ecef",
+            },
+        },
+        headRow: {
+            style: {
+                backgroundColor: "teal",
+                borderBottom: "none",
+                borderRadius: "12px 12px 0 0",
+            },
+        },
+        headCells: {
+            style: {
+                padding: "14px 16px",
+                fontSize: "13px",
+                fontWeight: "700",
+                color: "white",
+                letterSpacing: "0.3px",
+                textTransform: "uppercase",
+                backgroundColor: "teal",
+                "&:first-of-type": {
+                    borderTopLeftRadius: "12px",
+                },
+                "&:last-of-type": {
+                    borderTopRightRadius: "12px",
+                },
+            },
+        },
+        rows: {
+            style: {
+                minHeight: "64px",
+                borderBottom: "1px solid #e9ecef",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                    backgroundColor: "#f8f9fa",
+                },
+            },
+            highlightOnHoverStyle: {
+                backgroundColor: "#f8f9fa",
+                borderBottomColor: "#dee2e6",
+                transition: "all 0.2s ease",
+            },
+        },
+        cells: {
+            style: {
+                padding: "12px 16px",
+                fontSize: "13px",
+                color: "#495057",
+            },
+        },
+        pagination: {
+            style: {
+                backgroundColor: "#f8f9fa",
+                borderTop: "1px solid #e9ecef",
+                padding: "12px 16px",
+                borderRadius: "0 0 12px 12px",
+            },
+            pageButtonsStyle: {
+                borderRadius: "6px",
+                margin: "0 4px",
+                transition: "all 0.2s ease",
+                "&:hover": {
+                    backgroundColor: "#20c997",
+                    color: "white",
+                },
+            },
+        },
+        noData: {
+            style: {
+                padding: "40px",
+                textAlign: "center",
+                color: "#6c757d",
+                fontSize: "14px",
+            },
+        },
+    };
 
     useEffect(() => {
         getUsers();
@@ -795,41 +838,46 @@ const customStyles = {
         }
     };
 
-
-
-
-
     // ---- NOUVELLES COLONNES POUR LE TABLEAU DES AGENCES ----
     const columnsAgence = [
         {
             name: (
                 <div className="d-flex align-items-center gap-2">
-                    <i className="fas fa-building" style={{ fontSize: "14px" }}></i>
+                    <i
+                        className="fas fa-building"
+                        style={{ fontSize: "14px" }}
+                    ></i>
                     <span>Code agence</span>
                 </div>
             ),
-            selector: row => row.code_agence,
+            selector: (row) => row.code_agence,
             sortable: true,
             grow: 1,
         },
         {
             name: (
                 <div className="d-flex align-items-center gap-2">
-                    <i className="fas fa-store" style={{ fontSize: "14px" }}></i>
+                    <i
+                        className="fas fa-store"
+                        style={{ fontSize: "14px" }}
+                    ></i>
                     <span>Nom de l'agence</span>
                 </div>
             ),
-            selector: row => row.nom_agence,
+            selector: (row) => row.nom_agence,
             grow: 3,
         },
         {
             name: (
                 <div className="d-flex align-items-center gap-2">
-                    <i className="fas fa-plus-circle" style={{ fontSize: "14px" }}></i>
+                    <i
+                        className="fas fa-plus-circle"
+                        style={{ fontSize: "14px" }}
+                    ></i>
                     <span>Action</span>
                 </div>
             ),
-            cell: row => (
+            cell: (row) => (
                 <button
                     className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
                     onClick={() => addAgenceForUser(row.id)}
@@ -866,11 +914,14 @@ const customStyles = {
                     <span>Agence</span>
                 </div>
             ),
-            selector: row => row.nom_agence,
+            selector: (row) => row.nom_agence,
             grow: 3,
-            cell: row => (
+            cell: (row) => (
                 <span className="fw-semibold" style={{ color: "teal" }}>
-                    <i className="fas fa-building me-2" style={{ fontSize: "12px" }}></i>
+                    <i
+                        className="fas fa-building me-2"
+                        style={{ fontSize: "12px" }}
+                    ></i>
                     {row.code_agence} - {row.nom_agence}
                 </span>
             ),
@@ -878,11 +929,14 @@ const customStyles = {
         {
             name: (
                 <div className="d-flex align-items-center gap-2">
-                    <i className="fas fa-trash-alt" style={{ fontSize: "14px" }}></i>
+                    <i
+                        className="fas fa-trash-alt"
+                        style={{ fontSize: "14px" }}
+                    ></i>
                     <span>Action</span>
                 </div>
             ),
-            cell: row => (
+            cell: (row) => (
                 <button
                     className="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
                     onClick={() => removeAgenceForUser(row.id)}
@@ -937,8 +991,12 @@ const customStyles = {
         if (!fetchAgences?.data) return;
         const newData = fetchAgences.data.filter((row) => {
             return (
-                row.code_agence.toLowerCase().includes(event.target.value.toLowerCase()) ||
-                row.nom_agence.toLowerCase().includes(event.target.value.toLowerCase())
+                row.code_agence
+                    .toLowerCase()
+                    .includes(event.target.value.toLowerCase()) ||
+                row.nom_agence
+                    .toLowerCase()
+                    .includes(event.target.value.toLowerCase())
             );
         });
         setAgenceRecords(newData);
@@ -953,7 +1011,11 @@ const customStyles = {
     const getAgencesForSelectedUser = async (e) => {
         if (e) e.preventDefault();
         if (!selectedData || selectedData.length === 0) {
-            Swal.fire("Info", "Veuillez d'abord sélectionner un utilisateur", "info");
+            Swal.fire(
+                "Info",
+                "Veuillez d'abord sélectionner un utilisateur",
+                "info",
+            );
             return;
         }
         try {
@@ -967,7 +1029,11 @@ const customStyles = {
             }
         } catch (error) {
             console.error(error);
-            Swal.fire("Erreur", "Problème lors du chargement des agences de l'utilisateur", "error");
+            Swal.fire(
+                "Erreur",
+                "Problème lors du chargement des agences de l'utilisateur",
+                "error",
+            );
         }
     };
 
@@ -1032,7 +1098,11 @@ const customStyles = {
             }
         } catch (error) {
             console.error(error);
-            Swal.fire("Erreur", "Le backend multi‑agence n'est pas encore implémenté", "info");
+            Swal.fire(
+                "Erreur",
+                "Le backend multi‑agence n'est pas encore implémenté",
+                "info",
+            );
             // Pour le moment, on peut simuler un succès en attendant le backend
             // getAgencesForSelectedUser();
         } finally {
@@ -1040,527 +1110,750 @@ const customStyles = {
         }
     };
     return (
-      <div style={{ marginTop: "5px" }}>
-  <div className="card border-0 shadow-lg rounded-3 overflow-hidden">
-    {/* Tabs modernisées */}
-    <div className="card-header p-0" style={{ backgroundColor: "white", borderBottom: "none" }}>
-      <ul
-    className="nav nav-tabs border-0 user-tabs"
-    id="custom-tabs-one-tab"
-    role="tablist"
->
-    <li className="nav-item">
-        <a
-            className="nav-link active"
-            id="custom-tabs-one-users-tab"
-            data-toggle="pill"
-            href="#custom-tabs-one-users"
-            role="tab"
-            aria-controls="custom-tabs-one-users"
-            aria-selected="true"
-        >
-            <i className="fas fa-users"></i>
-            Utilisateurs
-        </a>
-    </li>
-    <li className="nav-item">
-        <a
-            className="nav-link"
-            id="custom-tabs-one-profil-tab"
-            data-toggle="pill"
-            href="#custom-tabs-one-profil"
-            role="tab"
-            aria-controls="custom-tabs-one-profil"
-            aria-selected="false"
-        >
-            <i className="fas fa-id-card"></i>
-            Profils
-        </a>
-    </li>
-    <li className="nav-item">
-        <a
-            className="nav-link"
-            id="custom-tabs-one-menu-tab"
-            data-toggle="pill"
-            href="#custom-tabs-one-menu"
-            role="tab"
-            aria-controls="custom-tabs-one-menu"
-            aria-selected="false"
-        >
-            <i className="fas fa-bars"></i>
-            Menus
-        </a>
-    </li>
-    {/* NOUVEL ONGLET AGENCE */}
+        <div style={{ marginTop: "5px" }}>
+            <div className="card border-0 shadow-lg rounded-3 overflow-hidden">
+                {/* Tabs modernisées */}
+                <div
+                    className="card-header p-0"
+                    style={{ backgroundColor: "white", borderBottom: "none" }}
+                >
+                    <ul
+                        className="nav nav-tabs border-0 user-tabs"
+                        id="custom-tabs-one-tab"
+                        role="tablist"
+                    >
                         <li className="nav-item">
-                            <a className="nav-link" id="custom-tabs-one-agence-tab" data-toggle="pill" href="#custom-tabs-one-agence" role="tab">
+                            <a
+                                className="nav-link active"
+                                id="custom-tabs-one-users-tab"
+                                data-toggle="pill"
+                                href="#custom-tabs-one-users"
+                                role="tab"
+                                aria-controls="custom-tabs-one-users"
+                                aria-selected="true"
+                            >
+                                <i className="fas fa-users"></i>
+                                Utilisateurs
+                            </a>
+                        </li>
+                        <li className="nav-item">
+                            <a
+                                className="nav-link"
+                                id="custom-tabs-one-profil-tab"
+                                data-toggle="pill"
+                                href="#custom-tabs-one-profil"
+                                role="tab"
+                                aria-controls="custom-tabs-one-profil"
+                                aria-selected="false"
+                            >
+                                <i className="fas fa-id-card"></i>
+                                Profils
+                            </a>
+                        </li>
+                        <li className="nav-item">
+                            <a
+                                className="nav-link"
+                                id="custom-tabs-one-menu-tab"
+                                data-toggle="pill"
+                                href="#custom-tabs-one-menu"
+                                role="tab"
+                                aria-controls="custom-tabs-one-menu"
+                                aria-selected="false"
+                            >
+                                <i className="fas fa-bars"></i>
+                                Menus
+                            </a>
+                        </li>
+                        {/* NOUVEL ONGLET AGENCE */}
+                        <li className="nav-item">
+                            <a
+                                className="nav-link"
+                                id="custom-tabs-one-agence-tab"
+                                data-toggle="pill"
+                                href="#custom-tabs-one-agence"
+                                role="tab"
+                            >
                                 <i className="fas fa-building"></i> Agences
                             </a>
                         </li>
-</ul>
-    </div>
-
-    <div className="card-body p-4">
-      <div className="tab-content" id="custom-tabs-one-tabContent">
-        {/* Tab Utilisateurs */}
-        <div
-          className="tab-pane fade show active"
-          id="custom-tabs-one-users"
-          role="tabpanel"
-          aria-labelledby="custom-tabs-one-users-tab"
-        >
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div>
-              <h4 className="fw-bold mb-0" style={{ color: "teal" }}>
-                <i className="fas fa-users me-2"></i>
-                Gestion des utilisateurs
-              </h4>
-              <small className="text-muted">Gérez les comptes utilisateurs et leurs permissions</small>
-            </div>
-          </div>
-
-          <div className="row g-4">
-            {/* Tableau des utilisateurs */}
-            <div className="col-md-8">
-              <div className="card border-0 shadow-sm rounded-3">
-                <div className="card-body p-0">
-                  <div className="p-3 border-bottom bg-light rounded-top">
-                    <div className="d-flex justify-content-end">
-                      <div className="position-relative">
-                        <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" style={{ fontSize: "12px" }}></i>
-                        <input
-                          type="text"
-                          onChange={handleFilter}
-                          className="form-control form-control-sm ps-5"
-                          style={{
-                            width: "250px",
-                            borderRadius: "20px",
-                            border: "1px solid #e9ecef",
-                            backgroundColor: "white"
-                          }}
-                          placeholder="Rechercher un utilisateur..."
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ overflowY: "auto", maxHeight: "500px" }}>
-                    {records ? (
-                      <DataTable
-                        data={records}
-                        columns={columns}
-                        selectableRows
-                        pagination={5}
-                        onSelectedRowsChange={handleChange}
-                        customStyles={{
-                          ...customStyles,
-                          headCells: {
-                            style: {
-                              fontWeight: "bold",
-                              backgroundColor: "#f8f9fa",
-                              color: "#495057"
-                            }
-                          }
-                        }}
-                      />
-                    ) : (
-                      <div className="text-center py-5">
-                        <div className="spinner-border text-teal" role="status">
-                          <span className="visually-hidden">Chargement...</span>
-                        </div>
-                        <p className="mt-2 text-muted">Chargement des utilisateurs...</p>
-                      </div>
-                    )}
-                  </div>
+                    </ul>
                 </div>
-              </div>
-            </div>
 
-            {/* Panneau d'édition sticky-top */}
-            <div className="col-md-4">
-              <div className="card border-0 shadow-sm rounded-3" style={{ top: "20px" }}>
-                <div className="card-header bg-white border-0 pt-3">
-                  <h6 className="fw-semibold mb-0">
-                    <i className="fas fa-cog text-teal me-2"></i>
-                    Actions utilisateur
-                  </h6>
-                </div>
-                <div className="card-body">
-                  {getEditForm && selectedData ? (
-                    <form className="mb-4">
-                      <div className="mb-3">
-                        <label className="form-label fw-semibold small">Nom utilisateur</label>
-                        <input
-                          id="userName"
-                          className="form-control form-control-sm modern-input"
-                          style={{ backgroundColor: "#f8f9fa" }}
-                          type="text"
-                          name="name"
-                          required
-                          onChange={(e) => setName(e.target.value)}
-                          value={name}
-                        />
-                        <input
-                          id="userId"
-                          name="userId"
-                          type="hidden"
-                          onChange={(e) => setUserId(e.target.value)}
-                          value={userId}
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label className="form-label fw-semibold small">Email</label>
-                        <input
-                          id="Email"
-                          className="form-control form-control-sm modern-input"
-                          style={{ backgroundColor: "#f8f9fa" }}
-                          type="email"
-                          name="email"
-                          onChange={(e) => setEmail(e.target.value)}
-                          value={email}
-                        />
-                      </div>
-                      <div className="d-grid gap-2">
-                        <button
-                          onClick={handleUpdate}
-                          className="btn btn-teal"
-                          style={{ backgroundColor: "teal", color: "white", borderRadius: "8px" }}
-                          disabled={loading}
+                <div className="card-body p-4">
+                    <div
+                        className="tab-content"
+                        id="custom-tabs-one-tabContent"
+                    >
+                        {/* Tab Utilisateurs */}
+                        <div
+                            className="tab-pane fade show active"
+                            id="custom-tabs-one-users"
+                            role="tabpanel"
+                            aria-labelledby="custom-tabs-one-users-tab"
                         >
-                          {loading ? (
-                            <span className="spinner-border spinner-border-sm"></span>
-                          ) : (
-                            <>
-                              <i className="fas fa-save me-2"></i>
-                              Mettre à jour
-                            </>
-                          )}
-                        </button>
-                        <button
-                          onClick={CreateCaissierAccount}
-                          className="btn btn-outline-success"
-                          style={{ borderRadius: "8px" }}
-                        >
-                          <i className="fas fa-plus-circle me-2"></i>
-                          Créer un compte caisse
-                        </button>
-                      </div>
-                    </form>
-                  ) : null}
-
-                  {getResetPassWordForm ? (
-                    <div className="alert alert-info p-3 rounded-3 mb-4">
-                      <i className="fas fa-info-circle me-2"></i>
-                      <p className="mb-0">
-                        Vous êtes sur le point de réinitialiser le mot de passe de{" "}
-                        <strong>{name}</strong>
-                      </p>
-                      <button
-                        onClick={handleInitPassword}
-                        className="btn btn-danger w-100 mt-3"
-                        style={{ borderRadius: "8px" }}
-                        disabled={loading2}
-                      >
-                        {loading2 ? (
-                          <span className="spinner-border spinner-border-sm"></span>
-                        ) : (
-                          <>
-                            <i className="fas fa-key me-2"></i>
-                            Réinitialiser le mot de passe
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  ) : null}
-
-                  {getLockUserForm ? (
-                    <div className="alert alert-warning p-3 rounded-3 mb-4">
-                      <i className="fas fa-exclamation-triangle me-2"></i>
-                      <p className="mb-0">
-                        Vous êtes sur le point de {selectedData[0]?.locked_state == 1 ? "débloquer" : "bloquer"} l'utilisateur{" "}
-                        <strong>{name}</strong>
-                      </p>
-                      <button
-                        onClick={handleLockUser}
-                        className={`btn w-100 mt-3 ${selectedData[0]?.locked_state == 1 ? "btn-success" : "btn-danger"}`}
-                        style={{ borderRadius: "8px" }}
-                      >
-                        {selectedData[0]?.locked_state == 1 ? (
-                          <>
-                            <i className="fas fa-unlock-alt me-2"></i>
-                            Débloquer l'utilisateur
-                          </>
-                        ) : (
-                          <>
-                            <i className="fas fa-lock me-2"></i>
-                            Bloquer l'utilisateur
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-                <div className="card-footer bg-white border-0 pb-3">
-                  <div className="btn-group w-100" role="group">
-                    <button
-                      type="button"
-                      className="btn btn-outline-primary"
-                      onClick={showEditForm}
-                      style={{ borderRadius: "8px 0 0 8px" }}
-                    >
-                      <i className="fas fa-edit me-1"></i>
-                      Éditer
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline-warning"
-                      onClick={showResetPWForm}
-                    >
-                      <i className="fas fa-key me-1"></i>
-                      Reset
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-outline-danger"
-                      onClick={showLockPWForm}
-                      style={{ borderRadius: "0 8px 8px 0" }}
-                    >
-                      <i className="fas fa-lock me-1"></i>
-                      Bloquer
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tab Profils */}
-        <div
-          className="tab-pane fade"
-          id="custom-tabs-one-profil"
-          role="tabpanel"
-          aria-labelledby="custom-tabs-one-profil-tab"
-        >
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div>
-              <h4 className="fw-bold mb-0" style={{ color: "teal" }}>
-                <i className="fas fa-id-card me-2"></i>
-                Gestion des profils
-              </h4>
-              <small className="text-muted">Créez et gérez les profils utilisateurs</small>
-            </div>
-          </div>
-
-          <div className="row g-4">
-            <div className="col-md-7">
-              <div className="card border-0 shadow-sm rounded-3">
-                <div className="card-body p-0">
-                  <div className="p-3 border-bottom bg-light rounded-top">
-                    <div className="d-flex justify-content-end">
-                      <div className="position-relative">
-                        <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                        <input
-                          type="text"
-                          onChange={handleFilterProfil}
-                          className="form-control form-control-sm ps-5"
-                          style={{ width: "250px", borderRadius: "20px" }}
-                          placeholder="Rechercher un profil..."
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ overflowY: "auto", maxHeight: "500px" }}>
-                    {Profilrecords ? (
-                      <DataTable
-                        data={Profilrecords}
-                        columns={columnsProfil}
-                        pagination={5}
-                        onSelectedRowsChange={handleChangeProfil}
-                        customStyles={customStyles}
-                      />
-                    ) : (
-                      <div className="text-center py-5">
-                        <div className="spinner-border text-teal"></div>
-                        <p className="mt-2 text-muted">Chargement des profils...</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-md-5">
-              <div className="card border-0 shadow-sm rounded-3 mb-4">
-                <div className="card-header bg-white border-0 pt-3">
-                  <h6 className="fw-semibold mb-0">
-                    <i className="fas fa-plus-circle text-teal me-2"></i>
-                    Ajouter un profil
-                  </h6>
-                </div>
-                <div className="card-body">
-                  <div className="mb-3">
-                    <label className="form-label fw-semibold small">Nom du profil</label>
-                    <input
-                      id="profilName"
-                      className="form-control form-control-sm modern-input"
-                      type="text"
-                      name="profilName"
-                      required
-                      onChange={(e) => setProfileName(e.target.value)}
-                      value={profilName}
-                    />
-                  </div>
-                  <button
-                    onClick={handleAddProfil}
-                    className="btn btn-teal w-100"
-                    style={{ backgroundColor: "teal", color: "white", borderRadius: "8px" }}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <span className="spinner-border spinner-border-sm"></span>
-                    ) : (
-                      <>
-                        <i className="fas fa-check me-2"></i>
-                        Valider
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="card border-0 shadow-sm rounded-3">
-                <div className="card-header bg-white border-0 pt-3">
-                  <h6 className="fw-semibold mb-0">
-                    <i className="fas fa-spinner me-2 text-teal"></i>
-                    Profils par utilisateur
-                  </h6>
-                </div>
-                <div className="card-body">
-                  <button
-                    className="btn btn-outline-teal w-100 mb-3"
-                    onClick={getProfilForSelectedUser}
-                    style={{ borderRadius: "8px", borderColor: "teal", color: "#000" }}
-                  >
-                    <i className="fas fa-sync-alt me-2"></i>
-                    Charger les profils
-                  </button>
-                  {fetchProfilForSelectedUser && fetchProfilForSelectedUser.length > 0 ? (
-                    <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-                      <DataTable
-                        data={fetchProfilForSelectedUser}
-                        columns={ProfilForUserCulumn}
-                        pagination={5}
-                        customStyles={customStyles}
-                      />
-                    </div>
-                  ) : (
-                    <p className="text-center text-muted small mt-3">Aucun profil sélectionné</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tab Menus */}
-        <div
-          className="tab-pane fade"
-          id="custom-tabs-one-menu"
-          role="tabpanel"
-          aria-labelledby="custom-tabs-one-menu-tab"
-        >
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div>
-              <h4 className="fw-bold mb-0" style={{ color: "teal" }}>
-                <i className="fas fa-bars me-2"></i>
-                Gestion des menus
-              </h4>
-              <small className="text-muted">Attribuez les permissions d'accès aux menus</small>
-            </div>
-          </div>
-
-          <div className="row g-4">
-            <div className="col-md-7">
-              <div className="card border-0 shadow-sm rounded-3">
-                <div className="card-body p-0">
-                  <div className="p-3 border-bottom bg-light rounded-top">
-                    <div className="d-flex justify-content-end">
-                      <div className="position-relative">
-                        <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
-                        <input
-                          type="text"
-                          onChange={handleFilterMenu}
-                          className="form-control form-control-sm ps-5"
-                          style={{ width: "250px", borderRadius: "20px" }}
-                          placeholder="Rechercher un menu..."
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ overflowY: "auto", maxHeight: "500px" }}>
-                    {menuRecords ? (
-                      <DataTable
-                        data={menuRecords}
-                        columns={columnsMenu}
-                        pagination={5}
-                        onSelectedRowsChange={handleChangeMenu}
-                        customStyles={customStyles}
-                      />
-                    ) : (
-                      <div className="text-center py-5">
-                        <div className="spinner-border text-teal"></div>
-                        <p className="mt-2 text-muted">Chargement des menus...</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-md-5">
-              <div className="card border-0 shadow-sm rounded-3">
-                <div className="card-header bg-white border-0 pt-3">
-                  <h6 className="fw-semibold mb-0">
-                    <i className="fas fa-spinner me-2 text-teal"></i>
-                    Menus par utilisateur
-                  </h6>
-                </div>
-                <div className="card-body">
-                  <button
-                    className="btn btn-outline-teal w-100 mb-3"
-                    onClick={getMenuForSelectedUser}
-                    style={{ borderRadius: "8px", borderColor: "teal", color: "#000" }}
-                  >
-                    <i className="fas fa-sync-alt me-2"></i>
-                    Charger les menus
-                  </button>
-                  {fetchMenuForSelectedUser && fetchMenuForSelectedUser.length > 0 ? (
-                    <div style={{ maxHeight: "350px", overflowY: "auto" }}>
-                      <DataTable
-                        data={fetchMenuForSelectedUser}
-                        columns={MenuForUserCulumn}
-                        pagination={5}
-                        customStyles={customStyles}
-                      />
-                    </div>
-                  ) : (
-                    <p className="text-center text-muted small mt-3">Aucun menu sélectionné</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-          {/* ================= TAB AGENCES ================= */}
-                        <div className="tab-pane fade" id="custom-tabs-one-agence" role="tabpanel">
                             <div className="d-flex justify-content-between align-items-center mb-4">
                                 <div>
-                                    <h4 className="fw-bold mb-0" style={{ color: "teal" }}>
+                                    <h4
+                                        className="fw-bold mb-0"
+                                        style={{ color: "teal" }}
+                                    >
+                                        <i className="fas fa-users me-2"></i>
+                                        Gestion des utilisateurs
+                                    </h4>
+                                    <small className="text-muted">
+                                        Gérez les comptes utilisateurs et leurs
+                                        permissions
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div className="row g-4">
+                                {/* Tableau des utilisateurs */}
+                                <div className="col-md-8">
+                                    <div className="card border-0 shadow-sm rounded-3">
+                                        <div className="card-body p-0">
+                                            <div className="p-3 border-bottom bg-light rounded-top">
+                                                <div className="d-flex justify-content-end">
+                                                    <div className="position-relative">
+                                                        <i
+                                                            className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"
+                                                            style={{
+                                                                fontSize:
+                                                                    "12px",
+                                                            }}
+                                                        ></i>
+                                                        <input
+                                                            type="text"
+                                                            onChange={
+                                                                handleFilter
+                                                            }
+                                                            className="form-control form-control-sm ps-5"
+                                                            style={{
+                                                                width: "250px",
+                                                                borderRadius:
+                                                                    "20px",
+                                                                border: "1px solid #e9ecef",
+                                                                backgroundColor:
+                                                                    "white",
+                                                            }}
+                                                            placeholder="Rechercher un utilisateur..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div
+                                                style={{
+                                                    overflowY: "auto",
+                                                    maxHeight: "500px",
+                                                }}
+                                            >
+                                                {records ? (
+                                                    <DataTable
+                                                        data={records}
+                                                        columns={columns}
+                                                        selectableRows
+                                                        pagination={5}
+                                                        onSelectedRowsChange={
+                                                            handleChange
+                                                        }
+                                                        customStyles={{
+                                                            ...customStyles,
+                                                            headCells: {
+                                                                style: {
+                                                                    fontWeight:
+                                                                        "bold",
+                                                                    backgroundColor:
+                                                                        "#f8f9fa",
+                                                                    color: "#495057",
+                                                                },
+                                                            },
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="text-center py-5">
+                                                        <div
+                                                            className="spinner-border text-teal"
+                                                            role="status"
+                                                        >
+                                                            <span className="visually-hidden">
+                                                                Chargement...
+                                                            </span>
+                                                        </div>
+                                                        <p className="mt-2 text-muted">
+                                                            Chargement des
+                                                            utilisateurs...
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Panneau d'édition sticky-top */}
+                                <div className="col-md-4">
+                                    <div
+                                        className="card border-0 shadow-sm rounded-3"
+                                        style={{ top: "20px" }}
+                                    >
+                                        <div className="card-header bg-white border-0 pt-3">
+                                            <h6 className="fw-semibold mb-0">
+                                                <i className="fas fa-cog text-teal me-2"></i>
+                                                Actions utilisateur
+                                            </h6>
+                                        </div>
+                                        <div className="card-body">
+                                            {getEditForm && selectedData ? (
+                                                <form className="mb-4">
+                                                    <div className="mb-3">
+                                                        <label className="form-label fw-semibold small">
+                                                            Nom utilisateur
+                                                        </label>
+                                                        <input
+                                                            id="userName"
+                                                            className="form-control form-control-sm modern-input"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    "#f8f9fa",
+                                                            }}
+                                                            type="text"
+                                                            name="name"
+                                                            required
+                                                            onChange={(e) =>
+                                                                setName(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            value={name}
+                                                        />
+                                                        <input
+                                                            id="userId"
+                                                            name="userId"
+                                                            type="hidden"
+                                                            onChange={(e) =>
+                                                                setUserId(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            value={userId}
+                                                        />
+                                                    </div>
+                                                    <div className="mb-3">
+                                                        <label className="form-label fw-semibold small">
+                                                            Email
+                                                        </label>
+                                                        <input
+                                                            id="Email"
+                                                            className="form-control form-control-sm modern-input"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    "#f8f9fa",
+                                                            }}
+                                                            type="email"
+                                                            name="email"
+                                                            onChange={(e) =>
+                                                                setEmail(
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            value={email}
+                                                        />
+                                                    </div>
+                                                    <div className="d-grid gap-2">
+                                                        <button
+                                                            onClick={
+                                                                handleUpdate
+                                                            }
+                                                            className="btn btn-teal"
+                                                            style={{
+                                                                backgroundColor:
+                                                                    "teal",
+                                                                color: "white",
+                                                                borderRadius:
+                                                                    "8px",
+                                                            }}
+                                                            disabled={loading}
+                                                        >
+                                                            {loading ? (
+                                                                <span className="spinner-border spinner-border-sm"></span>
+                                                            ) : (
+                                                                <>
+                                                                    <i className="fas fa-save me-2"></i>
+                                                                    Mettre à
+                                                                    jour
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            onClick={
+                                                                CreateCaissierAccount
+                                                            }
+                                                            className="btn btn-outline-success"
+                                                            style={{
+                                                                borderRadius:
+                                                                    "8px",
+                                                            }}
+                                                        >
+                                                            <i className="fas fa-plus-circle me-2"></i>
+                                                            Créer un compte
+                                                            caisse
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            ) : null}
+
+                                            {getResetPassWordForm ? (
+                                                <div className="alert alert-info p-3 rounded-3 mb-4">
+                                                    <i className="fas fa-info-circle me-2"></i>
+                                                    <p className="mb-0">
+                                                        Vous êtes sur le point
+                                                        de réinitialiser le mot
+                                                        de passe de{" "}
+                                                        <strong>{name}</strong>
+                                                    </p>
+                                                    <button
+                                                        onClick={
+                                                            handleInitPassword
+                                                        }
+                                                        className="btn btn-danger w-100 mt-3"
+                                                        style={{
+                                                            borderRadius: "8px",
+                                                        }}
+                                                        disabled={loading2}
+                                                    >
+                                                        {loading2 ? (
+                                                            <span className="spinner-border spinner-border-sm"></span>
+                                                        ) : (
+                                                            <>
+                                                                <i className="fas fa-key me-2"></i>
+                                                                Réinitialiser le
+                                                                mot de passe
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            ) : null}
+
+                                            {getLockUserForm ? (
+                                                <div className="alert alert-warning p-3 rounded-3 mb-4">
+                                                    <i className="fas fa-exclamation-triangle me-2"></i>
+                                                    <p className="mb-0">
+                                                        Vous êtes sur le point
+                                                        de{" "}
+                                                        {selectedData[0]
+                                                            ?.locked_state == 1
+                                                            ? "débloquer"
+                                                            : "bloquer"}{" "}
+                                                        l'utilisateur{" "}
+                                                        <strong>{name}</strong>
+                                                    </p>
+                                                    <button
+                                                        onClick={handleLockUser}
+                                                        className={`btn w-100 mt-3 ${selectedData[0]?.locked_state == 1 ? "btn-success" : "btn-danger"}`}
+                                                        style={{
+                                                            borderRadius: "8px",
+                                                        }}
+                                                    >
+                                                        {selectedData[0]
+                                                            ?.locked_state ==
+                                                        1 ? (
+                                                            <>
+                                                                <i className="fas fa-unlock-alt me-2"></i>
+                                                                Débloquer
+                                                                l'utilisateur
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <i className="fas fa-lock me-2"></i>
+                                                                Bloquer
+                                                                l'utilisateur
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                        <div className="card-footer bg-white border-0 pb-3">
+                                            <div
+                                                className="btn-group w-100"
+                                                role="group"
+                                            >
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-primary"
+                                                    onClick={showEditForm}
+                                                    style={{
+                                                        borderRadius:
+                                                            "8px 0 0 8px",
+                                                    }}
+                                                >
+                                                    <i className="fas fa-edit me-1"></i>
+                                                    Éditer
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-warning"
+                                                    onClick={showResetPWForm}
+                                                >
+                                                    <i className="fas fa-key me-1"></i>
+                                                    Reset
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-outline-danger"
+                                                    onClick={showLockPWForm}
+                                                    style={{
+                                                        borderRadius:
+                                                            "0 8px 8px 0",
+                                                    }}
+                                                >
+                                                    <i className="fas fa-lock me-1"></i>
+                                                    Bloquer
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tab Profils */}
+                        <div
+                            className="tab-pane fade"
+                            id="custom-tabs-one-profil"
+                            role="tabpanel"
+                            aria-labelledby="custom-tabs-one-profil-tab"
+                        >
+                            <div className="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <h4
+                                        className="fw-bold mb-0"
+                                        style={{ color: "teal" }}
+                                    >
+                                        <i className="fas fa-id-card me-2"></i>
+                                        Gestion des profils
+                                    </h4>
+                                    <small className="text-muted">
+                                        Créez et gérez les profils utilisateurs
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div className="row g-4">
+                                <div className="col-md-7">
+                                    <div className="card border-0 shadow-sm rounded-3">
+                                        <div className="card-body p-0">
+                                            <div className="p-3 border-bottom bg-light rounded-top">
+                                                <div className="d-flex justify-content-end">
+                                                    <div className="position-relative">
+                                                        <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                                                        <input
+                                                            type="text"
+                                                            onChange={
+                                                                handleFilterProfil
+                                                            }
+                                                            className="form-control form-control-sm ps-5"
+                                                            style={{
+                                                                width: "250px",
+                                                                borderRadius:
+                                                                    "20px",
+                                                            }}
+                                                            placeholder="Rechercher un profil..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div
+                                                style={{
+                                                    overflowY: "auto",
+                                                    maxHeight: "500px",
+                                                }}
+                                            >
+                                                {Profilrecords ? (
+                                                    <DataTable
+                                                        data={Profilrecords}
+                                                        columns={columnsProfil}
+                                                        pagination={5}
+                                                        onSelectedRowsChange={
+                                                            handleChangeProfil
+                                                        }
+                                                        customStyles={
+                                                            customStyles
+                                                        }
+                                                    />
+                                                ) : (
+                                                    <div className="text-center py-5">
+                                                        <div className="spinner-border text-teal"></div>
+                                                        <p className="mt-2 text-muted">
+                                                            Chargement des
+                                                            profils...
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="col-md-5">
+                                    <div className="card border-0 shadow-sm rounded-3 mb-4">
+                                        <div className="card-header bg-white border-0 pt-3">
+                                            <h6 className="fw-semibold mb-0">
+                                                <i className="fas fa-plus-circle text-teal me-2"></i>
+                                                Ajouter un profil
+                                            </h6>
+                                        </div>
+                                        <div className="card-body">
+                                            <div className="mb-3">
+                                                <label className="form-label fw-semibold small">
+                                                    Nom du profil
+                                                </label>
+                                                <input
+                                                    id="profilName"
+                                                    className="form-control form-control-sm modern-input"
+                                                    type="text"
+                                                    name="profilName"
+                                                    required
+                                                    onChange={(e) =>
+                                                        setProfileName(
+                                                            e.target.value,
+                                                        )
+                                                    }
+                                                    value={profilName}
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={handleAddProfil}
+                                                className="btn btn-teal w-100"
+                                                style={{
+                                                    backgroundColor: "teal",
+                                                    color: "white",
+                                                    borderRadius: "8px",
+                                                }}
+                                                disabled={loading}
+                                            >
+                                                {loading ? (
+                                                    <span className="spinner-border spinner-border-sm"></span>
+                                                ) : (
+                                                    <>
+                                                        <i className="fas fa-check me-2"></i>
+                                                        Valider
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="card border-0 shadow-sm rounded-3">
+                                        <div className="card-header bg-white border-0 pt-3">
+                                            <h6 className="fw-semibold mb-0">
+                                                <i className="fas fa-spinner me-2 text-teal"></i>
+                                                Profils par utilisateur
+                                            </h6>
+                                        </div>
+                                        <div className="card-body">
+                                            <button
+                                                className="btn btn-outline-teal w-100 mb-3"
+                                                onClick={
+                                                    getProfilForSelectedUser
+                                                }
+                                                style={{
+                                                    borderRadius: "8px",
+                                                    borderColor: "teal",
+                                                    color: "#000",
+                                                }}
+                                            >
+                                                <i className="fas fa-sync-alt me-2"></i>
+                                                Charger les profils
+                                            </button>
+                                            {fetchProfilForSelectedUser &&
+                                            fetchProfilForSelectedUser.length >
+                                                0 ? (
+                                                <div
+                                                    style={{
+                                                        maxHeight: "300px",
+                                                        overflowY: "auto",
+                                                    }}
+                                                >
+                                                    <DataTable
+                                                        data={
+                                                            fetchProfilForSelectedUser
+                                                        }
+                                                        columns={
+                                                            ProfilForUserCulumn
+                                                        }
+                                                        pagination={5}
+                                                        customStyles={
+                                                            customStyles
+                                                        }
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <p className="text-center text-muted small mt-3">
+                                                    Aucun profil sélectionné
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Tab Menus */}
+                        <div
+                            className="tab-pane fade"
+                            id="custom-tabs-one-menu"
+                            role="tabpanel"
+                            aria-labelledby="custom-tabs-one-menu-tab"
+                        >
+                            <div className="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <h4
+                                        className="fw-bold mb-0"
+                                        style={{ color: "teal" }}
+                                    >
+                                        <i className="fas fa-bars me-2"></i>
+                                        Gestion des menus
+                                    </h4>
+                                    <small className="text-muted">
+                                        Attribuez les permissions d'accès aux
+                                        menus
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div className="row g-4">
+                                <div className="col-md-7">
+                                    <div className="card border-0 shadow-sm rounded-3">
+                                        <div className="card-body p-0">
+                                            <div className="p-3 border-bottom bg-light rounded-top">
+                                                <div className="d-flex justify-content-end">
+                                                    <div className="position-relative">
+                                                        <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                                                        <input
+                                                            type="text"
+                                                            onChange={
+                                                                handleFilterMenu
+                                                            }
+                                                            className="form-control form-control-sm ps-5"
+                                                            style={{
+                                                                width: "250px",
+                                                                borderRadius:
+                                                                    "20px",
+                                                            }}
+                                                            placeholder="Rechercher un menu..."
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div
+                                                style={{
+                                                    overflowY: "auto",
+                                                    maxHeight: "500px",
+                                                }}
+                                            >
+                                                {menuRecords ? (
+                                                    <DataTable
+                                                        data={menuRecords}
+                                                        columns={columnsMenu}
+                                                        pagination={5}
+                                                        onSelectedRowsChange={
+                                                            handleChangeMenu
+                                                        }
+                                                        customStyles={
+                                                            customStyles
+                                                        }
+                                                    />
+                                                ) : (
+                                                    <div className="text-center py-5">
+                                                        <div className="spinner-border text-teal"></div>
+                                                        <p className="mt-2 text-muted">
+                                                            Chargement des
+                                                            menus...
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="col-md-5">
+                                    <div className="card border-0 shadow-sm rounded-3">
+                                        <div className="card-header bg-white border-0 pt-3">
+                                            <h6 className="fw-semibold mb-0">
+                                                <i className="fas fa-spinner me-2 text-teal"></i>
+                                                Menus par utilisateur
+                                            </h6>
+                                        </div>
+                                        <div className="card-body">
+                                            <button
+                                                className="btn btn-outline-teal w-100 mb-3"
+                                                onClick={getMenuForSelectedUser}
+                                                style={{
+                                                    borderRadius: "8px",
+                                                    borderColor: "teal",
+                                                    color: "#000",
+                                                }}
+                                            >
+                                                <i className="fas fa-sync-alt me-2"></i>
+                                                Charger les menus
+                                            </button>
+                                            {fetchMenuForSelectedUser &&
+                                            fetchMenuForSelectedUser.length >
+                                                0 ? (
+                                                <div
+                                                    style={{
+                                                        maxHeight: "350px",
+                                                        overflowY: "auto",
+                                                    }}
+                                                >
+                                                    <DataTable
+                                                        data={
+                                                            fetchMenuForSelectedUser
+                                                        }
+                                                        columns={
+                                                            MenuForUserCulumn
+                                                        }
+                                                        pagination={5}
+                                                        customStyles={
+                                                            customStyles
+                                                        }
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <p className="text-center text-muted small mt-3">
+                                                    Aucun menu sélectionné
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ================= TAB AGENCES ================= */}
+                        <div
+                            className="tab-pane fade"
+                            id="custom-tabs-one-agence"
+                            role="tabpanel"
+                        >
+                            <div className="d-flex justify-content-between align-items-center mb-4">
+                                <div>
+                                    <h4
+                                        className="fw-bold mb-0"
+                                        style={{ color: "teal" }}
+                                    >
                                         <i className="fas fa-building me-2"></i>
                                         Gestion des agences
                                     </h4>
-                                    <small className="text-muted">Attribuez une ou plusieurs agences à un utilisateur</small>
+                                    <small className="text-muted">
+                                        Attribuez une ou plusieurs agences à un
+                                        utilisateur
+                                    </small>
                                 </div>
                             </div>
 
@@ -1575,34 +1868,63 @@ const customStyles = {
                                                         <i className="fas fa-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
                                                         <input
                                                             type="text"
-                                                            onChange={handleFilterAgence}
+                                                            onChange={
+                                                                handleFilterAgence
+                                                            }
                                                             className="form-control form-control-sm ps-5"
-                                                            style={{ width: "250px", borderRadius: "20px" }}
+                                                            style={{
+                                                                width: "250px",
+                                                                borderRadius:
+                                                                    "20px",
+                                                            }}
                                                             placeholder="Code ou nom agence..."
                                                         />
                                                     </div>
                                                     <button
                                                         className="btn btn-sm btn-teal"
-                                                        onClick={() => getAgences()}
-                                                        style={{ backgroundColor: "teal", color: "white", borderRadius: "8px" }}
+                                                        onClick={() =>
+                                                            getAgences()
+                                                        }
+                                                        style={{
+                                                            backgroundColor:
+                                                                "teal",
+                                                            color: "white",
+                                                            borderRadius: "8px",
+                                                        }}
                                                     >
-                                                        <i className="fas fa-sync-alt me-1"></i> Rafraîchir
+                                                        <i className="fas fa-sync-alt me-1"></i>{" "}
+                                                        Rafraîchir
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div style={{ overflowY: "auto", maxHeight: "500px" }}>
+                                            <div
+                                                style={{
+                                                    overflowY: "auto",
+                                                    maxHeight: "500px",
+                                                }}
+                                            >
                                                 {agenceRecords ? (
                                                     <DataTable
                                                         data={agenceRecords}
                                                         columns={columnsAgence}
                                                         pagination={5}
-                                                        onSelectedRowsChange={handleChangeAgence}
-                                                        customStyles={customStyles}
+                                                        onSelectedRowsChange={
+                                                            handleChangeAgence
+                                                        }
+                                                        customStyles={
+                                                            customStyles
+                                                        }
                                                     />
                                                 ) : (
                                                     <div className="text-center py-5">
-                                                        <div className="spinner-border text-teal" role="status"></div>
-                                                        <p className="mt-2 text-muted">Chargement des agences...</p>
+                                                        <div
+                                                            className="spinner-border text-teal"
+                                                            role="status"
+                                                        ></div>
+                                                        <p className="mt-2 text-muted">
+                                                            Chargement des
+                                                            agences...
+                                                        </p>
                                                     </div>
                                                 )}
                                             </div>
@@ -1628,7 +1950,8 @@ const customStyles = {
                                                     <span className="spinner-border spinner-border-sm"></span>
                                                 ) : (
                                                     <>
-                                                        <i className="fas fa-layer-group me-1"></i> Multi‑agence
+                                                        <i className="fas fa-layer-group me-1"></i>{" "}
+                                                        Multi‑agence
                                                     </>
                                                 )}
                                             </button>
@@ -1636,24 +1959,45 @@ const customStyles = {
                                         <div className="card-body">
                                             <button
                                                 className="btn btn-outline-teal w-100 mb-3"
-                                                onClick={getAgencesForSelectedUser}
-                                                style={{ borderRadius: "8px", borderColor: "teal", color: "#000" }}
+                                                onClick={
+                                                    getAgencesForSelectedUser
+                                                }
+                                                style={{
+                                                    borderRadius: "8px",
+                                                    borderColor: "teal",
+                                                    color: "#000",
+                                                }}
                                             >
                                                 <i className="fas fa-sync-alt me-2"></i>
-                                                Charger les agences de l'utilisateur
+                                                Charger les agences de
+                                                l'utilisateur
                                             </button>
-                                            {fetchAgencesForSelectedUser && fetchAgencesForSelectedUser.length > 0 ? (
-                                                <div style={{ maxHeight: "350px", overflowY: "auto" }}>
+                                            {fetchAgencesForSelectedUser &&
+                                            fetchAgencesForSelectedUser.length >
+                                                0 ? (
+                                                <div
+                                                    style={{
+                                                        maxHeight: "350px",
+                                                        overflowY: "auto",
+                                                    }}
+                                                >
                                                     <DataTable
-                                                        data={fetchAgencesForSelectedUser}
-                                                        columns={AgenceForUserColumn}
+                                                        data={
+                                                            fetchAgencesForSelectedUser
+                                                        }
+                                                        columns={
+                                                            AgenceForUserColumn
+                                                        }
                                                         pagination={5}
-                                                        customStyles={customStyles}
+                                                        customStyles={
+                                                            customStyles
+                                                        }
                                                     />
                                                 </div>
                                             ) : (
                                                 <p className="text-center text-muted small mt-3">
-                                                    Aucune agence attribuée à cet utilisateur.
+                                                    Aucune agence attribuée à
+                                                    cet utilisateur.
                                                 </p>
                                             )}
                                         </div>
@@ -1662,10 +2006,10 @@ const customStyles = {
                             </div>
                         </div>
                         {/* ============= FIN TAB AGENCES ============= */}
-      </div>
-    </div>
-  </div>
-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
 

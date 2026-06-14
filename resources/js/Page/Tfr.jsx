@@ -20,7 +20,7 @@ const TFR = () => {
         resultat: 0,
     });
     const [currentPage, setCurrentPage] = useState(1);
-     const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
+    const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
     const itemsPerPage = 20;
 
     useEffect(() => {
@@ -63,7 +63,7 @@ const TFR = () => {
                     date_fin,
                     devise,
                     type_tfr: typeTFR,
-                     agence_filter: agenceFilter, // <- ajout
+                    agence_filter: agenceFilter, // <- ajout
                 },
             );
             if (res.data.status === 1) {
@@ -208,19 +208,18 @@ const TFR = () => {
         return anneeDebut === anneeFin;
     };
 
-
-        const getAgenceNom = () => {
-    if (agenceFilter === 'current') {
-         return "AGENCE DE " +currentAgence?.nom_agence || "Non définie";
-    }
-    if (agenceFilter === 'all') {
-        return "TOUTES AGENCES";
-    }
-    // agenceFilter est un id
-    const agence = userAgences.find(a => a.id == agenceFilter);
-    // return agence ? `${agence.code_agence} - ${agence.nom_agence}` : "Non définie";
-    return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
-};
+    const getAgenceNom = () => {
+        if (agenceFilter === "current") {
+            return "AGENCE DE " + currentAgence?.nom_agence || "Non définie";
+        }
+        if (agenceFilter === "all") {
+            return "TOUTES AGENCES";
+        }
+        // agenceFilter est un id
+        const agence = userAgences.find((a) => a.id == agenceFilter);
+        // return agence ? `${agence.code_agence} - ${agence.nom_agence}` : "Non définie";
+        return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
+    };
 
     return (
         <div className="tfr-container">
@@ -233,7 +232,7 @@ const TFR = () => {
                 </div>
             )}
 
-            <div className="tfr-header" style={{ background: "#138496" }}>
+            {/* <div className="tfr-header" style={{ background: "#138496" }}>
                 <div className="tfr-header-content">
                     <div className="tfr-header-icon">
                         <i className="fas fa-chart-line"></i>
@@ -243,9 +242,34 @@ const TFR = () => {
                         <p>Produits - Charges = Résultat net</p>
                     </div>
                 </div>
+            </div> */}
+
+            <div
+                className="card-body p-3"
+                style={{
+                    background: "#138496",
+                    borderRadius: "12px",
+                }}
+            >
+                <div className="d-flex align-items-center">
+                    <div className="me-3">
+                        <i
+                            className="fas fa-chart-line"
+                            style={{
+                                fontSize: "28px",
+                                color: "white",
+                            }}
+                        ></i>
+                    </div>
+                    <div>
+                        <h5 className="text-white fw-bold mb-0">
+                            Tableau de Formation du Résultat (TFR)
+                        </h5>
+                    </div>
+                </div>
             </div>
 
-            <div className="tfr-filters">
+            <div className="tfr-filters mt-2">
                 <div className="filter-card">
                     <div className="filter-header">
                         <i className="fas fa-calendar-alt"></i> Période
@@ -334,81 +358,81 @@ const TFR = () => {
                     </div>
                 </div>
 
-                
-                    <div  className="filter-card">
-                         <div className="filter-header">
-                                <h6 className="section-title">
-                                    <i
-                                        className="fas fa-building me-2"
-                                        style={{ color: "#6366f1" }}
-                                    ></i>
-                                    Agence
-                                </h6>
-                            </div>
-                        <div className="filter-body">
-                           
-                            <div className="card-body pt-2">
-                                <select
-                                    className="modern-select w-100"
-                                    value={agenceFilter}
-                                    onChange={(e) =>
-                                        setAgenceFilter(e.target.value)
-                                    }
-                                    disabled={userAgences.length <= 1}
-                                >
-                                    <option value="current">
-                                        Agence courante (
-                                        {currentAgence?.nom_agence ||
-                                            "Non définie"}
-                                        )
-                                    </option>
-                                    {userAgences.length > 1 && (
-                                        <>
-                                            <option value="all">
-                                                Toutes mes agences
-                                            </option>
-                                            {userAgences.map((agence) => (
-                                                <option
-                                                    key={agence.id}
-                                                    value={agence.id}
-                                                >
-                                                    {agence.code_agence} -{" "}
-                                                    {agence.nom_agence}
-                                                </option>
-                                            ))}
-                                        </>
-                                    )}
-                                </select>
-                            </div>
-                          <div className="filter-card action-card">
-                    <div className="btn-with-tooltip" style={{ width: "100%" }}>
-                        <button
-                            className="btn-primary-gradient mt-2"
-                            onClick={handleSearch}
-                            disabled={!isPeriodValid()}
-                            style={{
-                                opacity: !isPeriodValid() ? 0.6 : 1,
-                                width: "100%",
-                            }}
-                        >
-                            {loading ? (
-                                <span className="spinner-border spinner-border-sm"></span>
-                            ) : (
-                                <i className="fas fa-calculator"></i>
-                            )}
-                            Calculer le résultat
-                        </button>
-                        {!isPeriodValid() && (
-                            <span className="tooltip-text">
-                                <i className="fas fa-info-circle me-1"></i> Les
-                                dates doivent être dans la même année
-                            </span>
-                        )}
+                <div className="filter-card">
+                    <div className="filter-header">
+                        <h6 className="section-title">
+                            <i
+                                className="fas fa-building me-2"
+                                style={{ color: "#6366f1" }}
+                            ></i>
+                            Agence
+                        </h6>
                     </div>
-                </div>
+                    <div className="filter-body">
+                        <div className="card-body pt-2">
+                            <select
+                                className="modern-select w-100"
+                                value={agenceFilter}
+                                onChange={(e) =>
+                                    setAgenceFilter(e.target.value)
+                                }
+                                disabled={userAgences.length <= 1}
+                            >
+                                <option value="current">
+                                    Agence courante (
+                                    {currentAgence?.nom_agence || "Non définie"}
+                                    )
+                                </option>
+                                {userAgences.length > 1 && (
+                                    <>
+                                        <option value="all">
+                                            Toutes mes agences
+                                        </option>
+                                        {userAgences.map((agence) => (
+                                            <option
+                                                key={agence.id}
+                                                value={agence.id}
+                                            >
+                                                {agence.code_agence} -{" "}
+                                                {agence.nom_agence}
+                                            </option>
+                                        ))}
+                                    </>
+                                )}
+                            </select>
+                        </div>
+                        <div className="filter-card action-card">
+                            <div
+                                className="btn-with-tooltip"
+                                style={{ width: "100%" }}
+                            >
+                                <button
+                                    className="btn-primary-gradient mt-2"
+                                    onClick={handleSearch}
+                                    disabled={!isPeriodValid()}
+                                    style={{
+                                        opacity: !isPeriodValid() ? 0.6 : 1,
+                                        width: "100%",
+                                    }}
+                                >
+                                    {loading ? (
+                                        <span className="spinner-border spinner-border-sm"></span>
+                                    ) : (
+                                        <i className="fas fa-calculator"></i>
+                                    )}
+                                    Calculer le résultat
+                                </button>
+                                {!isPeriodValid() && (
+                                    <span className="tooltip-text">
+                                        <i className="fas fa-info-circle me-1"></i>{" "}
+                                        Les dates doivent être dans la même
+                                        année
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
-                
+                </div>
             </div>
 
             {tfrData.length > 0 && (
@@ -417,7 +441,10 @@ const TFR = () => {
                         <div className="tfr-report-card">
                             <div className="tfr-report-header">
                                 <EnteteRapport />
-                                <h2>TABLEAU DE FORMATION DU RÉSULTAT {getAgenceNom()}</h2>
+                                <h2>
+                                    TABLEAU DE FORMATION DU RÉSULTAT{" "}
+                                    {getAgenceNom()}
+                                </h2>
                                 <p>
                                     Du {dateParser(date_debut)} au{" "}
                                     {dateParser(date_fin)} | Devise : {devise}
