@@ -483,9 +483,16 @@ class TransactionsController extends Controller
             return response()->json(["status" => 0, "msg" => "Une erreur est survenue."]);
         }
     }
+
+
+    function getShortenedName($name)
+    {
+        if (empty($name)) return '';
+        return explode(' ', $name)[0] ?? '';
+    }
+
+    
     //PERMET D'EFFECTUER UN DEPOT
-
-
     public function DepositEspece(Request $request)
     {
         $validator = validator::make($request->all(), [
@@ -496,6 +503,8 @@ class TransactionsController extends Controller
         if ($validator->fails()) {
             return response()->json(['validate_error' => $validator->messages()]);
         }
+
+
 
         try {
             if ($request->devise == "CDF") {
@@ -761,8 +770,8 @@ class TransactionsController extends Controller
                         "NomUtilisateur" => Auth::user()->name,
                         "DateTransaction" => $dataSystem->DateSystem
                     ]);
-
-                    $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $request->DeposantName);
+                    $NomDeposant=$this->getShortenedName($request->DeposantName);
+                    $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $NomDeposant);
                     return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
                 } else {
                     return response()->json(['validate_error' => $validator->messages()]);
@@ -971,8 +980,8 @@ class TransactionsController extends Controller
                         "NomUtilisateur" => Auth::user()->name,
                         "DateTransaction" => $dataSystem->DateSystem
                     ]);
-
-                    $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $request->DeposantName);
+                      $NomDeposant=$this->getShortenedName($request->DeposantName);
+                    $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $NomDeposant);
                     return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
                 } else {
                     return response()->json(['validate_error' => $validator->messages()]);
@@ -2140,8 +2149,9 @@ class TransactionsController extends Controller
         } else {
             $userName = $user->name;
         }
-
-        $date = $request->input('date') ?? date('Y-m-d');
+        $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
+        $date = $request->input('date') ?? $dateSystem;
+        
 
         if ($devise === 'CDF') {
             $billetage = BilletageCdf::where('NomUtilisateur', $userName)
@@ -2469,7 +2479,7 @@ class TransactionsController extends Controller
                     "Libelle" => "Approvisionnement caisse secondaire de " . $getApproRow->NomDemandeur,
                 ]);
 
-                     //DEBITE LA CAISSE DU CAISSIER 
+                //DEBITE LA CAISSE DU CAISSIER 
                 Transactions::create([
                     "NumTransaction" => $NumTransaction,
                     "RefJournal" => JournalType::TRESORERIE,
@@ -2512,7 +2522,7 @@ class TransactionsController extends Controller
                     "NomUtilisateur" => Auth::user()->name,
                     "Libelle" => "Approvisionnement caisse secondaire de " . $getApproRow->NomDemandeur,
                 ]);
-           
+
 
                 //RENSEIGNE LE BILLETAGE
                 BilletageCDF::create([
@@ -2822,7 +2832,7 @@ class TransactionsController extends Controller
                 ->where("DateTransaction", $dateSystem)
                 ->where("delested", 0)->update([
                     "delested" => 1,
-                    "NomUtilisateur"=>Auth::user()->name,
+                    "NomUtilisateur" => Auth::user()->name,
                 ]);
             return response()->json(["status" => 1, "msg" => "Vous avez confirmé ce delestage avec succès."]);
         } else {
@@ -2941,7 +2951,7 @@ class TransactionsController extends Controller
             //ON RENSEIGNE LE DELESTAGE
             Delestages::where("id", $request->refDelestage)->update([
                 "received" => 1,
-                "NomUtilisateur"=>Auth::user()->name,
+                "NomUtilisateur" => Auth::user()->name,
             ]);
             //CONFIRME LE DELESTAGE AU PRET DU CAISSIER 
             BilletageCDF::where("NomUtilisateur", $data->NomDemandeur)

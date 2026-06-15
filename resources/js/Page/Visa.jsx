@@ -548,9 +548,9 @@ const Visa = () => {
                                             Devise
                                         </label>
                                         <div className="input-group">
-                                            <span className="input-group-text bg-light border-0 rounded-3">
+                                            {/* <span className="input-group-text bg-light border-0 rounded-3">
                                                 <i className="fas fa-dollar-sign text-muted"></i>
-                                            </span>
+                                            </span> */}
                                             <select
                                                 id="devise"
                                                 name="devise"

@@ -358,6 +358,7 @@ const [initialUSD, setInitialUSD] = useState(null);
                                             step="1"
                                             className="form-control form-control-sm text-center"
                                             value={data[item.field] || 0}
+                                             onFocus={(e) => e.target.select()}
                                             onChange={(e) => updateFn && updateFn(item.field, e.target.value)}
                                         />
                                     ) : (

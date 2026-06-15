@@ -3530,7 +3530,7 @@ const saveEcheancier = async (e) => {
 </div>
 
                     {/* Message d'information contextuel */}
-                    <div className="mt-4 p-3" style={{ background: "#e6f2f9", borderRadius: "10px" }}>
+                    {/* <div className="mt-4 p-3" style={{ background: "#e6f2f9", borderRadius: "10px" }}>
                         <small className="text-muted">
                             <i className="fas fa-info-circle me-2"></i>
                             {fetchDataToUpdate && fetchDataToUpdate.Accorde == 1 && fetchDataToUpdate.Octroye == 0 &&
@@ -3542,7 +3542,7 @@ const saveEcheancier = async (e) => {
                             {(!fetchDataToUpdate || (fetchDataToUpdate.Accorde == 0 && fetchDataToUpdate.Octroye == 0 && fetchDataToUpdate.Cloture == 0)) &&
                                 "Crédit en attente de validation. Veuillez d'abord accorder le crédit."}
                         </small>
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>

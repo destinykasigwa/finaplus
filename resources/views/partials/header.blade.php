@@ -357,15 +357,15 @@
 
 
         .navbar-modern .container-fluid {
-    padding-left: 5px;
-}
-@media (min-width: 768px) {
-    body:not(.sidebar-collapse) .navbar-modern .container-fluid {
-        padding-left: 270px; /* largeur sidebar + petit espace */
-    }
-}
+            padding-left: 5px;
+        }
 
-
+        @media (min-width: 768px) {
+            body:not(.sidebar-collapse) .navbar-modern .container-fluid {
+                padding-left: 270px;
+                /* largeur sidebar + petit espace */
+            }
+        }
 
 
         /* .sidebar-mini .main-sidebar {
@@ -377,380 +377,395 @@
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
         <!-- Navbar principale -->
-       <!-- Navbar principale -->
-<nav class="main-header navbar navbar-expand">
-    <div class="container-fluid">
-        <!-- Left navbar links -->
-        <ul class="navbar-nav d-flex w-100">
-            <li class="nav-item">
-                <a class="nav-link" data-widget="pushmenu" href="#" role="button">
-                    <i class="fas fa-bars"></i>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="eco/home" class="nav-link {{ request()->is('eco/home') ? 'active' : '' }}">
-                    <i class="fas fa-home me-1"></i>
-                    <span class="d-none d-md-inline">Accueil</span>
-                </a>
-            </li>
-            <!-- ========== SÉLECTEUR D'AGENCE MODERNE ========== -->
-            @php
-                $userAgences = session('user_agences', []);
-                $currentAgence = session('current_agence');
-            @endphp
-
-            @if (count($userAgences) > 1)
-                <li class="nav-item dropdown ms-auto">
-                    <a class="nav-link dropdown-toggle" href="#" id="agenceDropdown"
-                        data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-building me-1"></i>
-                        @if ($currentAgence)
-                            AGENCE DE
-                            {{ $currentAgence['nom_agence'] ?? '' }}-{{ $currentAgence['code_agence'] ?? '' }}
-                        @else
-                            Agence
-                        @endif
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-modern p-3" aria-labelledby="agenceDropdown"
-                        style="min-width: 280px;">
-                        <div class="form-group mb-2">
-                            <label class="small text-muted mb-1">Sélectionnez votre agence</label>
-                            <select id="agenceSelect" class="form-control form-control-sm">
-                                @foreach ($userAgences as $agence)
-                                    <option value="{{ $agence['id'] }}"
-                                        data-code="{{ $agence['code_agence'] }}"
-                                        data-nom="{{ $agence['nom_agence'] }}"
-                                        @if ($currentAgence && $currentAgence['id'] == $agence['id']) selected @endif>
-                                        {{ $agence['code_agence'] }} - {{ $agence['nom_agence'] }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <button id="btnConnectAgence" class="btn btn-teal btn-sm w-100">
-                            <i class="fas fa-plug me-1"></i> Se connecter
-                        </button>
-                    </div>
-                </li>
-            @elseif(count($userAgences) == 1)
-                <li class="nav-item ms-auto">
-                    <span class="nav-link text-white-50">
-                        <i class="fas fa-building me-1"></i> AGENCE DE {{ $userAgences[0]['nom_agence'] }}
-                        -{{ $userAgences[0]['code_agence'] }}
-                    </span>
-                </li>
-            @endif
-        </ul>
-
-        <!-- Right navbar links -->
-        <ul 
-        {{-- class="navbar-nav ms-auto" --}}
-        class="navbar-nav ms-auto mb-2 mb-lg-0"
-        >
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown"
-                    aria-haspopup="true" aria-expanded="false">
-                    <i class="fas fa-user-circle me-1"></i>
-                    <span class="d-none d-md-inline">{{ auth()->user()->name ?? 'Utilisateur' }}</span>
-                </a>
-                <div class="dropdown-menu dropdown-menu-end dropdown-menu-modern"
-                    aria-labelledby="userDropdown">
-                    <h6 class="dropdown-header text-center">
-                        <i class="fas fa-user-circle me-2"></i>
-                        {{ auth()->user()->name ?? 'Utilisateur' }}
-                    </h6>
-                    @if (!auth()->user())
-                        <a href="{{ route('auth.login') }}" class="dropdown-item">
-                            <i class="fas fa-sign-in-alt me-2"></i>
-                            Connexion
+        <!-- Navbar principale -->
+        <nav class="main-header navbar navbar-expand">
+            <div class="container-fluid">
+                <!-- Left navbar links -->
+                <ul class="navbar-nav d-flex w-100">
+                    <li class="nav-item">
+                        <a class="nav-link" data-widget="pushmenu" href="#" role="button">
+                            <i class="fas fa-bars"></i>
                         </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="eco/home" class="nav-link {{ request()->is('eco/home') ? 'active' : '' }}">
+                            <i class="fas fa-home me-1"></i>
+                            <span class="d-none d-md-inline">Accueil</span>
+                        </a>
+                    </li>
+                    <!-- ========== SÉLECTEUR D'AGENCE MODERNE ========== -->
+                    @php
+                        $userAgences = session('user_agences', []);
+                        $currentAgence = session('current_agence');
+                    @endphp
+
+                    @if (count($userAgences) > 1)
+                        <li class="nav-item dropdown ms-auto">
+                            <a class="nav-link dropdown-toggle" href="#" id="agenceDropdown"
+                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-building me-1"></i>
+                                @if ($currentAgence)
+                                    AGENCE DE
+                                    {{ $currentAgence['nom_agence'] ?? '' }}-{{ $currentAgence['code_agence'] ?? '' }}
+                                @else
+                                    Agence
+                                @endif
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-modern p-3" aria-labelledby="agenceDropdown"
+                                style="min-width: 280px;">
+                                <div class="form-group mb-2">
+                                    <label class="small text-muted mb-1">Sélectionnez votre agence</label>
+                                    <select id="agenceSelect" class="form-control form-control-sm">
+                                        @foreach ($userAgences as $agence)
+                                            <option value="{{ $agence['id'] }}"
+                                                data-code="{{ $agence['code_agence'] }}"
+                                                data-nom="{{ $agence['nom_agence'] }}"
+                                                @if ($currentAgence && $currentAgence['id'] == $agence['id']) selected @endif>
+                                                {{ $agence['code_agence'] }} - {{ $agence['nom_agence'] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <button id="btnConnectAgence" class="btn btn-teal btn-sm w-100">
+                                    <i class="fas fa-plug me-1"></i> Se connecter
+                                </button>
+                            </div>
+                        </li>
+                    @elseif(count($userAgences) == 1)
+                        <li class="nav-item ms-auto">
+                            <span class="nav-link text-white-50">
+                                <i class="fas fa-building me-1"></i> AGENCE DE {{ $userAgences[0]['nom_agence'] }}
+                                -{{ $userAgences[0]['code_agence'] }}
+                            </span>
+                        </li>
                     @endif
-                    <a style="cursor: pointer" class="dropdown-item"
-                        onclick="document.getElementById('logout-form').submit()">
-                        <i class="fas fa-sign-out-alt me-2"></i>
-                        Déconnexion
-                    </a>
-                    <form action="{{ route('auth/logout') }}" method="POST" id="logout-form">@csrf</form>
+                </ul>
+
+                <!-- Right navbar links -->
+                <ul {{-- class="navbar-nav ms-auto" --}} class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <span class="d-none d-md-inline">{{ auth()->user()->name ?? 'Utilisateur' }}</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-modern"
+                            aria-labelledby="userDropdown">
+                            <h6 class="dropdown-header text-center">
+                                <i class="fas fa-user-circle me-2"></i>
+                                {{ auth()->user()->name ?? 'Utilisateur' }}
+                            </h6>
+                            @if (!auth()->user())
+                                <a href="{{ route('auth.login') }}" class="dropdown-item">
+                                    <i class="fas fa-sign-in-alt me-2"></i>
+                                    Connexion
+                                </a>
+                            @endif
+                            <a style="cursor: pointer" class="dropdown-item"
+                                onclick="document.getElementById('logout-form').submit()">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                Déconnexion
+                            </a>
+                            <form action="{{ route('auth/logout') }}" method="POST" id="logout-form">@csrf</form>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Navigation secondaire avec menu centré -->
+        <nav class="navbar navbar-expand-lg navbar-modern sticky-top">
+            <div class="container-fluid">
+                <button class="navbar-toggler navbar-toggler-modern" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i> Menu
+                </button>
+
+                <div class="collapse navbar-collapse" id="mainNavigation">
+                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                        @php
+                            $currentUrl = url()->current();
+                        @endphp
+
+                        <!-- CAISSIER -->
+                        @if ($isCaissier)
+                            <li class="nav-item dropdown">
+                                @php
+                                    $caisseRoutes = [
+                                        'eco.pages.depot-espece',
+                                        'eco.pages.retrait-espece',
+                                        'eco.pages.visa',
+                                        'eco.pages.appro',
+                                        'eco.pages.delestage',
+                                    ];
+                                    $isCaisseActive = request()->routeIs(...$caisseRoutes);
+                                @endphp
+                                <a class="nav-link dropdown-toggle {{ $isCaisseActive ? 'active' : '' }}"
+                                    href="#" id="caisseDropdown" data-bs-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-money-bill-wave me-1"></i> Caisse
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
+                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.depot-espece') ? 'active' : '' }}"
+                                        href="{{ route('eco.pages.depot-espece') }}">
+                                        <i class="fas fa-plus-circle me-2"></i>Dépôt
+                                    </a>
+                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.retrait-espece') ? 'active' : '' }}"
+                                        href="{{ route('eco.pages.retrait-espece') }}">
+                                        <i class="fas fa-minus-circle me-2"></i>Retrait
+                                    </a>
+                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.visa') ? 'active' : '' }}"
+                                        href="{{ route('eco.pages.visa') }}">
+                                        <i class="fas fa-check-circle me-2"></i>Positionnement
+                                    </a>
+                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.appro') ? 'active' : '' }}"
+                                        href="{{ route('eco.pages.appro') }}">
+                                        <i class="fas fa-charging-station me-2"></i>Appro
+                                    </a>
+                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.delestage') ? 'active' : '' }}"
+                                        href="{{ route('eco.pages.delestage') }}">
+                                        <i class="fas fa-exchange-alt me-2"></i>Délestage
+                                    </a>
+                                </div>
+                            </li>
+                        @endif
+
+                        <!-- CHEF CAISSE (TRESOR) -->
+                        @if ($isChefCaisse)
+                            <li class="nav-item dropdown">
+                                @php
+                                    $tresorRoutes = ['eco.pages.appro', 'eco.pages.entreeT'];
+                                    $isTresorActive = request()->routeIs(...$tresorRoutes);
+                                @endphp
+                                <a class="nav-link dropdown-toggle {{ $isTresorActive ? 'active' : '' }}"
+                                    href="#" id="tresorDropdown" data-bs-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-landmark me-1"></i> Tresor
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="tresorDropdown">
+                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.appro') ? 'active' : '' }}"
+                                        href="{{ route('eco.pages.appro') }}">
+                                        <i class="fas fa-charging-station me-2"></i>Appro
+                                    </a>
+                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.entreeT') ? 'active' : '' }}"
+                                        href="{{ route('eco.pages.entreeT') }}">
+                                        <i class="fas fa-door-open me-2"></i>Entrée T
+                                    </a>
+                                </div>
+                            </li>
+                        @endif
+
+                        <!-- AGENT CREDIT -->
+                        @if ($isAgentCredit)
+                            <li class="nav-item dropdown">
+                                @php
+                                    $creditRoutes = ['eco.pages.montage-credit', 'eco.pages.rapport-credit'];
+                                    $isCreditActive = request()->routeIs(...$creditRoutes);
+                                @endphp
+                                <a class="nav-link dropdown-toggle {{ $isCreditActive ? 'active' : '' }}"
+                                    href="#" id="creditDropdown" data-bs-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-credit-card me-1"></i> Crédit
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="creditDropdown">
+                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.montage-credit') ? 'active' : '' }}"
+                                        href="{{ route('eco.pages.montage-credit') }}">
+                                        <i class="fas fa-chart-line me-2"></i>Montage crédit
+                                    </a>
+                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.rapport-credit') ? 'active' : '' }}"
+                                        href="{{ route('eco.pages.rapport-credit') }}">
+                                        <i class="fas fa-calendar-alt me-2"></i>Rapport crédit
+                                    </a>
+                                </div>
+                            </li>
+                        @endif
+
+                        <!-- AGENT CLIENTELE -->
+                        @if ($isAgentClientele)
+                            <li class="nav-item dropdown">
+                                @php
+                                    $clienteleRoutes = [
+                                        'eco.pages.adhesion-membre',
+                                        'eco.pages.releve',
+                                        'eco.pages.sommaire-compte',
+                                    ];
+                                    $isClienteleActive = request()->routeIs(...$clienteleRoutes);
+                                @endphp
+                                <a class="nav-link dropdown-toggle {{ $isClienteleActive ? 'active' : '' }}"
+                                    href="#" id="clienteleDropdown" data-bs-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false">
+                                    <i class="fas fa-users me-1"></i> Clientèle
+                                </a>
+                                <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="clienteleDropdown">
+                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.adhesion-membre') ? 'active' : '' }}"
+                                        href="{{ route('eco.pages.adhesion-membre') }}">
+                                        <i class="fas fa-user-plus me-2"></i>Adhésion membre
+                                    </a>
+                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.releve') ? 'active' : '' }}"
+                                        href="{{ route('eco.pages.releve') }}">
+                                        <i class="fas fa-receipt me-2"></i>Relevé de compte
+                                    </a>
+                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.sommaire-compte') ? 'active' : '' }}"
+                                        href="{{ route('eco.pages.sommaire-compte') }}">
+                                        <i class="fas fa-chart-pie me-2"></i>Sommaire de compte
+                                    </a>
+                                </div>
+                            </li>
+                        @endif
+
+                        <!-- LIEN RELEVE (simple, sans dropdown) -->
+                        <li class="nav-item">
+                            <a href="{{ route('eco.pages.releve') }}"
+                                class="nav-link {{ request()->routeIs('eco.pages.releve') ? 'active' : '' }}">
+                                <i class="fas fa-file-alt me-1"></i> Relevé
+                            </a>
+                        </li>
+
+                        <!-- IMMO (dropdown) -->
+                        <li class="nav-item dropdown">
+                            @php
+                                $immoRoutes = ['eco.pages.enregistrement-imo', 'eco.pages.rapport-immo'];
+                                $isImmoActive = request()->routeIs(...$immoRoutes);
+                            @endphp
+                            <a class="nav-link dropdown-toggle {{ $isImmoActive ? 'active' : '' }}" href="#"
+                                id="immoDropdown" data-bs-toggle="dropdown" aria-haspopup="true"
+                                aria-expanded="false">
+                                <i class="fas fa-building me-1"></i> Immo
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="immoDropdown">
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.enregistrement-imo') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.enregistrement-imo') }}">
+                                    <i class="fas fa-plus-circle me-2"></i> Ajouter
+                                </a>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.rapport-immo') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.rapport-immo') }}">
+                                    <i class="fas fa-chart-line me-2"></i>Tableau d'ammortissement
+                                </a>
+                            </div>
+                        </li>
+
+                        <!-- RAPPORT (dropdown avec sous-catégories) -->
+                        <li class="nav-item dropdown">
+                            @php
+                                $rapportRoutes = [
+                                    'eco.pages.balance',
+                                    'eco.pages.bilan',
+                                    'eco.pages.grandlivre',
+                                    'eco.pages.tfr',
+                                    'eco.pages.rapport-credit',
+                                    'eco.pages.remboursement-attendu',
+                                    'eco.pages.releve',
+                                    'eco.pages.sommaire-compte',
+                                    'eco.pages.journal',
+                                    'eco.pages.repertoire',
+                                ];
+                                $isRapportActive = request()->routeIs(...$rapportRoutes);
+                            @endphp
+                            <a class="nav-link dropdown-toggle {{ $isRapportActive ? 'active' : '' }}" href="#"
+                                id="rapportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-chart-bar me-1"></i> Rapport
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="rapportDropdown">
+                                <h6 class="dropdown-header">Rapports financiers</h6>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.balance') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.balance') }}">
+                                    <i class="fas fa-balance-scale me-2"></i>Balance
+                                </a>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.bilan') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.bilan') }}">
+                                    <i class="fas fa-chart-line me-2"></i>Bilan
+                                </a>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.grandlivre') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.grandlivre') }}">
+                                    <i class="fas fa-book me-2"></i>Grand Livre
+                                </a>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.tfr') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.tfr') }}">
+                                    <i class="fas fa-file-invoice me-2"></i>TFR
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Rapports de crédit</h6>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.rapport-credit') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.rapport-credit') }}">
+                                    <i class="fas fa-credit-card me-2"></i>Rapport crédit
+                                </a>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.remboursement-attendu') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.remboursement-attendu') }}">
+                                    <i class="fas fa-hourglass-half me-2"></i>Remboursement attendu
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Suivi clientèle</h6>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.releve') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.releve') }}">
+                                    <i class="fas fa-receipt me-2"></i>Relevé
+                                </a>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.sommaire-compte') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.sommaire-compte') }}">
+                                    <i class="fas fa-chart-pie me-2"></i>Sommaire de compte
+                                </a>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.journal') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.journal') }}">
+                                    <i class="fas fa-book me-2"></i>Journal
+                                </a>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.repertoire') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.repertoire') }}">
+                                    <i class="fas fa-address-book me-2"></i>Répertoire C
+                                </a>
+                            </div>
+                        </li>
+
+                        <!-- MENU PLUS -->
+                        <li class="nav-item dropdown">
+                            @php
+                                $plusRoutes = [
+                                    'eco.pages.paiment-batch',
+                                    'eco.pages.gestion-batch',
+                                    'eco.pages.sms-banking',
+                                    'eco.pages.radiation-credit',
+                                    'eco.pages.currency-exchange',
+                                ];
+                                $isPlusActive = request()->routeIs(...$plusRoutes);
+                            @endphp
+                            <a class="nav-link dropdown-toggle {{ $isPlusActive ? 'active' : '' }}" href="#"
+                                id="plusDropdown" data-bs-toggle="dropdown" aria-haspopup="true"
+                                aria-expanded="false">
+                                <i class="fas fa-ellipsis-h me-1"></i> PLUS
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="plusDropdown">
+                                <h6 class="dropdown-header">Paiement</h6>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.paiment-batch') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.paiment-batch') }}">
+                                    <i class="fas fa-plus-circle me-2"></i> Ajouter un paiement
+                                </a>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.gestion-batch') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.gestion-batch') }}">
+                                    <i class="fas fa-chart-line me-2"></i> Gestion batch
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Notifications</h6>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.sms-banking') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.sms-banking') }}">
+                                    <i class="fas fa-sms me-1"></i> SMS Banking
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Crédits</h6>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.radiation-credit') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.radiation-credit') }}">
+                                    <i class="fas fa-radiation me-1"></i> Radiation crédits
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Opérations de change</h6>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.currency-exchange') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.currency-exchange') }}">
+                                    <i class="fas fa-exchange-alt me-1"></i> Change de monnaie
+                                </a>
+                            </div>
+                        </li>
+                    </ul>
                 </div>
-            </li>
-        </ul>
-    </div>
-</nav>
-
-<!-- Navigation secondaire avec menu centré -->
-<nav class="navbar navbar-expand-lg navbar-modern sticky-top">
-    <div class="container-fluid">
-        <button class="navbar-toggler navbar-toggler-modern" type="button" data-bs-toggle="collapse"
-            data-bs-target="#mainNavigation" aria-controls="mainNavigation" aria-expanded="false"
-            aria-label="Toggle navigation">
-            <i class="fas fa-bars"></i> Menu
-        </button>
-
-        <div class="collapse navbar-collapse" id="mainNavigation">
-            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                @php
-                    $currentUrl = url()->current();
-                @endphp
-
-                <!-- CAISSIER -->
-                @if ($isCaissier)
-                    <li class="nav-item dropdown">
-                        @php
-                            $caisseRoutes = [
-                                'eco.pages.depot-espece',
-                                'eco.pages.retrait-espece',
-                                'eco.pages.visa',
-                                'eco.pages.appro',
-                                'eco.pages.delestage'
-                            ];
-                            $isCaisseActive = request()->routeIs(...$caisseRoutes);
-                        @endphp
-                        <a class="nav-link dropdown-toggle {{ $isCaisseActive ? 'active' : '' }}" href="#"
-                            id="caisseDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-money-bill-wave me-1"></i> Caisse
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="caisseDropdown">
-                            <a class="dropdown-item {{ request()->routeIs('eco.pages.depot-espece') ? 'active' : '' }}"
-                                href="{{ route('eco.pages.depot-espece') }}">
-                                <i class="fas fa-plus-circle me-2"></i>Dépôt
-                            </a>
-                            <a class="dropdown-item {{ request()->routeIs('eco.pages.retrait-espece') ? 'active' : '' }}"
-                                href="{{ route('eco.pages.retrait-espece') }}">
-                                <i class="fas fa-minus-circle me-2"></i>Retrait
-                            </a>
-                            <a class="dropdown-item {{ request()->routeIs('eco.pages.visa') ? 'active' : '' }}"
-                                href="{{ route('eco.pages.visa') }}">
-                                <i class="fas fa-check-circle me-2"></i>Positionnement
-                            </a>
-                            <a class="dropdown-item {{ request()->routeIs('eco.pages.appro') ? 'active' : '' }}"
-                                href="{{ route('eco.pages.appro') }}">
-                                <i class="fas fa-charging-station me-2"></i>Appro
-                            </a>
-                            <a class="dropdown-item {{ request()->routeIs('eco.pages.delestage') ? 'active' : '' }}"
-                                href="{{ route('eco.pages.delestage') }}">
-                                <i class="fas fa-exchange-alt me-2"></i>Délestage
-                            </a>
-                        </div>
-                    </li>
-                @endif
-
-                <!-- CHEF CAISSE (TRESOR) -->
-                @if ($isChefCaisse)
-                    <li class="nav-item dropdown">
-                        @php
-                            $tresorRoutes = ['eco.pages.appro', 'eco.pages.entreeT'];
-                            $isTresorActive = request()->routeIs(...$tresorRoutes);
-                        @endphp
-                        <a class="nav-link dropdown-toggle {{ $isTresorActive ? 'active' : '' }}" href="#"
-                            id="tresorDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-landmark me-1"></i> Tresor
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="tresorDropdown">
-                            <a class="dropdown-item {{ request()->routeIs('eco.pages.appro') ? 'active' : '' }}"
-                                href="{{ route('eco.pages.appro') }}">
-                                <i class="fas fa-charging-station me-2"></i>Appro
-                            </a>
-                            <a class="dropdown-item {{ request()->routeIs('eco.pages.entreeT') ? 'active' : '' }}"
-                                href="{{ route('eco.pages.entreeT') }}">
-                                <i class="fas fa-door-open me-2"></i>Entrée T
-                            </a>
-                        </div>
-                    </li>
-                @endif
-
-                <!-- AGENT CREDIT -->
-                @if ($isAgentCredit)
-                    <li class="nav-item dropdown">
-                        @php
-                            $creditRoutes = ['eco.pages.montage-credit', 'eco.pages.rapport-credit'];
-                            $isCreditActive = request()->routeIs(...$creditRoutes);
-                        @endphp
-                        <a class="nav-link dropdown-toggle {{ $isCreditActive ? 'active' : '' }}" href="#"
-                            id="creditDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-credit-card me-1"></i> Crédit
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="creditDropdown">
-                            <a class="dropdown-item {{ request()->routeIs('eco.pages.montage-credit') ? 'active' : '' }}"
-                                href="{{ route('eco.pages.montage-credit') }}">
-                                <i class="fas fa-chart-line me-2"></i>Montage crédit
-                            </a>
-                            <a class="dropdown-item {{ request()->routeIs('eco.pages.rapport-credit') ? 'active' : '' }}"
-                                href="{{ route('eco.pages.rapport-credit') }}">
-                                <i class="fas fa-calendar-alt me-2"></i>Rapport crédit
-                            </a>
-                        </div>
-                    </li>
-                @endif
-
-                <!-- AGENT CLIENTELE -->
-                @if ($isAgentClientele)
-                    <li class="nav-item dropdown">
-                        @php
-                            $clienteleRoutes = ['eco.pages.adhesion-membre', 'eco.pages.releve', 'eco.pages.sommaire-compte'];
-                            $isClienteleActive = request()->routeIs(...$clienteleRoutes);
-                        @endphp
-                        <a class="nav-link dropdown-toggle {{ $isClienteleActive ? 'active' : '' }}" href="#"
-                            id="clienteleDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-users me-1"></i> Clientèle
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="clienteleDropdown">
-                            <a class="dropdown-item {{ request()->routeIs('eco.pages.adhesion-membre') ? 'active' : '' }}"
-                                href="{{ route('eco.pages.adhesion-membre') }}">
-                                <i class="fas fa-user-plus me-2"></i>Adhésion membre
-                            </a>
-                            <a class="dropdown-item {{ request()->routeIs('eco.pages.releve') ? 'active' : '' }}"
-                                href="{{ route('eco.pages.releve') }}">
-                                <i class="fas fa-receipt me-2"></i>Relevé de compte
-                            </a>
-                            <a class="dropdown-item {{ request()->routeIs('eco.pages.sommaire-compte') ? 'active' : '' }}"
-                                href="{{ route('eco.pages.sommaire-compte') }}">
-                                <i class="fas fa-chart-pie me-2"></i>Sommaire de compte
-                            </a>
-                        </div>
-                    </li>
-                @endif
-
-                <!-- LIEN RELEVE (simple, sans dropdown) -->
-                <li class="nav-item">
-                    <a href="{{ route('eco.pages.releve') }}"
-                        class="nav-link {{ request()->routeIs('eco.pages.releve') ? 'active' : '' }}">
-                        <i class="fas fa-file-alt me-1"></i> Relevé
-                    </a>
-                </li>
-
-                <!-- IMMO (dropdown) -->
-                <li class="nav-item dropdown">
-                    @php
-                        $immoRoutes = ['eco.pages.enregistrement-imo', 'eco.pages.rapport-immo'];
-                        $isImmoActive = request()->routeIs(...$immoRoutes);
-                    @endphp
-                    <a class="nav-link dropdown-toggle {{ $isImmoActive ? 'active' : '' }}" href="#"
-                        id="immoDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-building me-1"></i> Immo
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="immoDropdown">
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.enregistrement-imo') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.enregistrement-imo') }}">
-                            <i class="fas fa-plus-circle me-2"></i> Ajouter
-                        </a>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.rapport-immo') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.rapport-immo') }}">
-                            <i class="fas fa-chart-line me-2"></i>Tableau d'ammortissement
-                        </a>
-                    </div>
-                </li>
-
-                <!-- RAPPORT (dropdown avec sous-catégories) -->
-                <li class="nav-item dropdown">
-                    @php
-                        $rapportRoutes = [
-                            'eco.pages.balance', 'eco.pages.bilan', 'eco.pages.grandlivre',
-                            'eco.pages.tfr', 'eco.pages.rapport-credit', 'eco.pages.remboursement-attendu',
-                            'eco.pages.releve', 'eco.pages.sommaire-compte', 'eco.pages.journal',
-                            'eco.pages.repertoire'
-                        ];
-                        $isRapportActive = request()->routeIs(...$rapportRoutes);
-                    @endphp
-                    <a class="nav-link dropdown-toggle {{ $isRapportActive ? 'active' : '' }}" href="#"
-                        id="rapportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-chart-bar me-1"></i> Rapport
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="rapportDropdown">
-                        <h6 class="dropdown-header">Rapports financiers</h6>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.balance') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.balance') }}">
-                            <i class="fas fa-balance-scale me-2"></i>Balance
-                        </a>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.bilan') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.bilan') }}">
-                            <i class="fas fa-chart-line me-2"></i>Bilan
-                        </a>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.grandlivre') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.grandlivre') }}">
-                            <i class="fas fa-book me-2"></i>Grand Livre
-                        </a>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.tfr') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.tfr') }}">
-                            <i class="fas fa-file-invoice me-2"></i>TFR
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <h6 class="dropdown-header">Rapports de crédit</h6>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.rapport-credit') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.rapport-credit') }}">
-                            <i class="fas fa-credit-card me-2"></i>Rapport crédit
-                        </a>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.remboursement-attendu') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.remboursement-attendu') }}">
-                            <i class="fas fa-hourglass-half me-2"></i>Remboursement attendu
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <h6 class="dropdown-header">Suivi clientèle</h6>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.releve') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.releve') }}">
-                            <i class="fas fa-receipt me-2"></i>Relevé
-                        </a>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.sommaire-compte') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.sommaire-compte') }}">
-                            <i class="fas fa-chart-pie me-2"></i>Sommaire de compte
-                        </a>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.journal') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.journal') }}">
-                            <i class="fas fa-book me-2"></i>Journal
-                        </a>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.repertoire') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.repertoire') }}">
-                            <i class="fas fa-address-book me-2"></i>Répertoire C
-                        </a>
-                    </div>
-                </li>
-
-                <!-- MENU PLUS -->
-                <li class="nav-item dropdown">
-                    @php
-                        $plusRoutes = [
-                            'eco.pages.paiment-batch', 'eco.pages.gestion-batch',
-                            'eco.pages.sms-banking', 'eco.pages.radiation-credit',
-                            'eco.pages.currency-exchange'
-                        ];
-                        $isPlusActive = request()->routeIs(...$plusRoutes);
-                    @endphp
-                    <a class="nav-link dropdown-toggle {{ $isPlusActive ? 'active' : '' }}" href="#"
-                        id="plusDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-ellipsis-h me-1"></i> PLUS
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-modern" aria-labelledby="plusDropdown">
-                        <h6 class="dropdown-header">Paiement</h6>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.paiment-batch') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.paiment-batch') }}">
-                            <i class="fas fa-plus-circle me-2"></i> Ajouter un paiement
-                        </a>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.gestion-batch') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.gestion-batch') }}">
-                            <i class="fas fa-chart-line me-2"></i> Gestion batch
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <h6 class="dropdown-header">Notifications</h6>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.sms-banking') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.sms-banking') }}">
-                            <i class="fas fa-sms me-1"></i> SMS Banking
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <h6 class="dropdown-header">Crédits</h6>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.radiation-credit') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.radiation-credit') }}">
-                            <i class="fas fa-radiation me-1"></i> Radiation crédits
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <h6 class="dropdown-header">Opérations de change</h6>
-                        <a class="dropdown-item {{ request()->routeIs('eco.pages.currency-exchange') ? 'active' : '' }}"
-                            href="{{ route('eco.pages.currency-exchange') }}">
-                            <i class="fas fa-exchange-alt me-1"></i> Change de monnaie
-                        </a>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+            </div>
+        </nav>
 
         <div class="d-flex flex-column min-vh-100">
             <main class="flex-grow-1" style="flex: 1;">

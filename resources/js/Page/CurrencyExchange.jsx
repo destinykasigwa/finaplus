@@ -725,7 +725,7 @@ const CurrencyExchange = () => {
                     <div className="col-md-6">
                         {/* Carte Client */}
                         <div className="card border-0 shadow-sm rounded-4 dashboard-card">
-                            <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                            <div className="card-header bg-transparent border-0 pt-3 pb-0 ">
                                 <h6 className="section-title">
                                     <i className="fas fa-user me-2"></i>Client
                                 </h6>
@@ -981,7 +981,7 @@ const CurrencyExchange = () => {
                         )}
                     </div>
 
-                    <div className="col-md-6">
+                    <div className="col-md-6 h-100">
                         <div className="card border-0 shadow-sm rounded-4 dashboard-card">
                             <div className="card-header bg-transparent border-0 pt-3 pb-0">
                                 <h6 className="section-title">
@@ -1010,7 +1010,7 @@ const CurrencyExchange = () => {
                 <div className="row g-4">
                     {/* Taux de change */}
                     <div className="col-md-6">
-                        <div className="card border-0 shadow-sm rounded-4 dashboard-card">
+                        <div className="card border-0 shadow-sm rounded-4 dashboard-card h-100">
                             <div className="card-header bg-transparent border-0 pt-3 pb-0">
                                 <h6 className="section-title">
                                     <i className="fas fa-chart-line me-2"></i>
@@ -1155,7 +1155,7 @@ const CurrencyExchange = () => {
 
                     {/* Configuration des marges */}
                     <div className="col-md-6">
-                        <div className="card border-0 shadow-sm rounded-4 dashboard-card">
+                        <div className="card border-0 shadow-sm rounded-4 dashboard-card h-100">
                             <div className="card-header bg-transparent border-0 pt-3 pb-0">
                                 <h6 className="section-title">
                                     <i

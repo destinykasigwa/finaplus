@@ -925,6 +925,51 @@ const TFR = () => {
                     visibility: visible;
                     opacity: 1;
                 }
+
+                /* Réduction des cartes filtres */
+                .filter-card,
+                .dashboard-card {
+                    margin-bottom: 0.5rem !important;
+                }
+
+                .filter-body,
+                .card-body {
+                    padding: 0.5rem 0.75rem !important;
+                }
+
+                .card-header {
+                    padding: 0.5rem 0.75rem !important;
+                }
+
+                /* Espacement entre les champs */
+                .filter-body label,
+                .card-body label {
+                    margin-bottom: 0.2rem;
+                    font-size: 0.75rem;
+                }
+
+                .modern-input,
+                .modern-select {
+                    padding: 0.3rem 0.5rem !important;
+                    font-size: 0.85rem;
+                }
+
+                /* Radios plus compacts */
+                .form-check {
+                    margin-bottom: 0.25rem !important;
+                }
+
+                /* Bouton */
+                .btn-primary-gradient {
+                    padding: 0.4rem 0.5rem !important;
+                    font-size: 0.85rem;
+                }
+
+                /* Espacement de la section agence */
+                .border-top {
+                    margin-top: 0.5rem !important;
+                    padding-top: 0.5rem !important;
+                }
             `}</style>
         </div>
     );
