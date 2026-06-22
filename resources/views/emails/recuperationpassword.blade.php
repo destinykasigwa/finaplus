@@ -360,6 +360,9 @@
 </head>
 
 <body style="margin: 0; padding: 20px; background-color: #f4f7fb;">
+    <?php
+    use Illuminate\Support\Facades\DB;
+    $dataInfo = DB::select('select * from company_models')[0]; ?>
     <div class="email-container">
         <!-- Header avec logo et dégradé -->
         <div class="email-header">
@@ -413,11 +416,11 @@
             </div>
             
             <!-- Bouton d'action -->
-            <div class="action-button">
+            {{-- <div class="action-button">
                 <a href="https://app.ihdemunis.org/auth/recuperation" class="btn-primary">
                     <i class="fas fa-arrow-right"></i> Réinitialiser mon mot de passe
                 </a>
-            </div>
+            </div> --}}
             
             <!-- Information complémentaire -->
             <div class="info-box">
@@ -435,33 +438,24 @@
                     <div class="contact-item">
                         <div class="label">Adresse</div>
                         <div class="value">
-                            61 Av. de la Conférence, Q. Kyeshero, <br>
-                             ville de Goma, Commune de Goma <br> (derrière l'hopital CBCA Ndosho). <br>
-                             Courriel: initiativedemunis2012@gmail.com
-                            Avenue MONT GOMA N°13, Quartier Les Volcans<br>
-                            Nord Kivu
-                            République Démocratique du Congo
+                          {{ $dataInfo->ville }} {{ $dataInfo->pays }} <br>
+                     {{$dataInfo->adresse }}
                         </div>
                     </div>
                     <div class="contact-item">
                         <div class="label">Téléphone</div>
                         <div class="value">
-                            <a href="tel:+243999743253">+243 999 743 253</a>
+                            <a href="">{{ $dataInfo->tel }}</a>
                         </div>
                     </div>
                     <div class="contact-item">
                         <div class="label">Email</div>
                         <div class="value">
-                            <a href="mailto:contact@ihdemunis.org">contact@ihdemunis.org</a><br>
-                            <a href="mailto:ihdemunis@ihdemunis.org">ihdemunis@ihdemunis.org</a>
+                            <a href="{{ $dataInfo->email }}">{{ $dataInfo->email }}</a><br>
+                         
                         </div>
                     </div>
-                    <div class="contact-item">
-                        <div class="label">Site web</div>
-                        <div class="value">
-                            <a href="https://www.coopecakibayetu.org">www.ihdemunis.org</a>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
         </div>
@@ -480,7 +474,7 @@
                 </a>
             </div>
             <div class="copyright">
-                © {{ date('Y') }} IHDEMUNSI ASBL - Tous droits réservés<br>
+                © {{ date('Y') }} {{$dataInfo->sigle }} - Tous droits réservés<br>
                 Ce message est automatique, merci de ne pas y répondre directement.
             </div>
         </div>

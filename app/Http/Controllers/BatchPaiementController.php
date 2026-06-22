@@ -36,7 +36,7 @@ class BatchPaiementController extends Controller
     }
 
 
-public function GestionBatchHomePage()
+    public function GestionBatchHomePage()
     {
         return view("eco.pages.gestion-batch");
     }
@@ -397,10 +397,10 @@ public function GestionBatchHomePage()
             return response()->json(['status' => 0, 'msg' => 'Le batch doit être validé avant exécution']);
         }
 
-         $user = auth()->user();
+        $user = auth()->user();
         if ($user->admin !== 1) {
-        return response()->json(['status' => 0, 'msg' => 'Seul un administrateur peut exécuter un batch']);
-         }
+            return response()->json(['status' => 0, 'msg' => 'Seul un administrateur peut exécuter un batch']);
+        }
 
         // Lancer le job en queue
         ExecuterBatchPaiement::dispatch($batch->id, auth()->id());
@@ -417,7 +417,7 @@ public function GestionBatchHomePage()
     public function historique()
     {
 
-    
+
         $batchs = BatchPaiement::with(['createur', 'validateur', 'executeur'])
             ->orderBy('created_at', 'desc')
             ->paginate(20);
@@ -456,21 +456,21 @@ public function GestionBatchHomePage()
 
     public function preview(Request $request)
     {
-         $validator = Validator::make($request->all(), [
-        'fichier' => 'required|file|mimes:xlsx,csv',
-        'compte_num' => 'required|exists:comptes,NumCompte',
-    ]);
-    if ($validator->fails()) {
-        return response()->json(['status' => 0, 'errors' => $validator->errors()]);
-    }
+        $validator = Validator::make($request->all(), [
+            'fichier' => 'required|file|mimes:xlsx,csv',
+            'compte_num' => 'required|exists:comptes,NumCompte',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['status' => 0, 'errors' => $validator->errors()]);
+        }
 
-    $comptePrincipal = Comptes::where('NumCompte', $request->compte_num)->first();
-    if (!$comptePrincipal) {
-        return response()->json(['status' => 0, 'msg' => 'Compte principal introuvable']);
-    }
-    $devise = $this->determinerDeviseParCompte($comptePrincipal->NumCompte);
-    $file = $request->file('fichier');
-    $import = new BatchPaiementImport();
+        $comptePrincipal = Comptes::where('NumCompte', $request->compte_num)->first();
+        if (!$comptePrincipal) {
+            return response()->json(['status' => 0, 'msg' => 'Compte principal introuvable']);
+        }
+        $devise = $this->determinerDeviseParCompte($comptePrincipal->NumCompte);
+        $file = $request->file('fichier');
+        $import = new BatchPaiementImport();
         $rows = Excel::toArray($import, $file)[0];
 
         $lignes = [];
@@ -534,39 +534,92 @@ public function GestionBatchHomePage()
 
 
     public function historiqueAdmin(Request $request)
-{
-       $query = BatchPaiement::with(['createur', 'validateur', 'executeur', 'compte'])
-        ->orderBy('created_at', 'desc');
+    {
+        $query = BatchPaiement::with(['createur', 'validateur', 'executeur', 'compte'])
+            ->orderBy('created_at', 'desc');
 
-    if (auth()->user()->admin!== 1) {
-        $query->where('cree_par', auth()->id());
+        if (auth()->user()->admin !== 1) {
+            $query->where('cree_par', auth()->id());
+        }
+
+        if ($request->filled('statut')) {
+            $query->where('statut', $request->statut);
+        }
+
+        // $batches = $query->get(); // ← retourne une collection, pas une pagination
+        $batches = $query->paginate(100); // 20 par page
+        return response()->json(['status' => 1, 'data' => $batches]);
     }
 
-    if ($request->filled('statut')) {
-        $query->where('statut', $request->statut);
+    public function detailAdmin($id)
+    {
+        $batch = BatchPaiement::with(['lignes', 'compte', 'createur', 'validateur', 'executeur'])
+            ->find($id);
+
+        if (!$batch) {
+            return response()->json(['status' => 0, 'msg' => 'Batch introuvable']);
+        }
+
+        // Sécurité : seul l'admin ou le créateur peut voir le batch
+        if (auth()->user()->admin !== 1 && $batch->cree_par !== auth()->id()) {
+            return response()->json(['status' => 0, 'msg' => 'Accès non autorisé']);
+        }
+
+        return response()->json(['status' => 1, 'data' => $batch]);
     }
 
-    // $batches = $query->get(); // ← retourne une collection, pas une pagination
-     $batches = $query->paginate(100); // 20 par page
-    return response()->json(['status' => 1, 'data' => $batches]);
-}
 
-public function detailAdmin($id)
-{
-    $batch = BatchPaiement::with(['lignes', 'compte', 'createur', 'validateur', 'executeur'])
-        ->find($id);
+    public function rejeter(Request $request, $id)
+    {
+        // 1. Valider les données entrantes
+        $request->validate([
+            'motif' => 'required|string|max:255',
+        ]);
 
-    if (!$batch) {
-        return response()->json(['status' => 0, 'msg' => 'Batch introuvable']);
+        // 2. Démarrer une transaction (optionnel, mais conseillé)
+        DB::beginTransaction();
+
+        try {
+            // 3. Récupérer le batch
+            $batch = BatchPaiement::find($id);
+            if (!$batch) {
+                return response()->json([
+                    'status' => 0,
+                    'msg' => 'Batch introuvable'
+                ], 404);
+            }
+
+            // 4. Vérifier si le batch peut être rejeté (ex: statut = "en_attente" ou "en_cours")
+            if (!in_array($batch->statut, ['en_attente', 'en_cours'])) {
+                return response()->json([
+                    'status' => 0,
+                    'msg' => 'Ce batch ne peut pas être rejeté (statut actuel : ' . $batch->statut . ')'
+                ], 422);
+            }
+
+            // 5. Mettre à jour le batch
+            $batch->statut = 'rejete';
+            $batch->observations = $request->motif;
+            $batch->date_execution = now();
+            // optionnel : enregistrer l'utilisateur qui a rejeté
+            // $batch->rejete_par = auth()->id();
+            $batch->save();
+
+            // 6. (Optionnel) Ajouter une trace dans un log ou une table d'historique
+            // Historique::create([...]);
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 1,
+                'msg' => 'Batch rejeté avec succès'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'status' => 0,
+                'msg' => 'Erreur lors du rejet : ' . $e->getMessage()
+            ], 500);
+        }
     }
-
-    // Sécurité : seul l'admin ou le créateur peut voir le batch
-    if (auth()->user()->admin !== 1 && $batch->cree_par !== auth()->id()) {
-        return response()->json(['status' => 0, 'msg' => 'Accès non autorisé']);
-    }
-
-    return response()->json(['status' => 1, 'data' => $batch]);
-}
-
-  
 }

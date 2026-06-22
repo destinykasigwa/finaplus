@@ -8,7 +8,7 @@
     <section class="content">
         <div class="container-fluid">
             <div class="row" id="remboursement-attendu">
-
+               <div class="widget-spinner"></div>
             </div>
         </div>
     </section>

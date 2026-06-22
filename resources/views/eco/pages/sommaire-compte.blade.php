@@ -8,7 +8,7 @@
     <section class="content">
         <div class="container-fluid">
             <div class="row" id="sommaire-compte">
-
+             <div class="widget-spinner"></div>
             </div>
         </div>
     </section>

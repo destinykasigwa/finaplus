@@ -3,8 +3,8 @@
 <div class="content-wrapper">
     <section class="content">
         <div class="container-fluid">
-            <div class="row" id="cloture">
-                <div class="widget-spinner"></div>
+            <div class="row" id="budget">
+             <div class="widget-spinner"></div>
             </div>
         </div>
     </section>

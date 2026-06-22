@@ -57,6 +57,7 @@ import BatchPaiement from "./Page/BatchPaiement";
 import GestionBatchs from "./Page/GestionBatchs";
 import CreditsRadies from "./Page/CreditsRadies";
 import CurrencyExchange from "./Page/CurrencyExchange";
+import BudgetManager from "./Page/BudgetManager";
 
 if (document.getElementById("app")) {
     ReactDOM.createRoot(document.getElementById("app")).render(
@@ -364,5 +365,14 @@ if (document.getElementById("currencyExchange")) {
     );
 }
 
+
+
+if (document.getElementById("budget")) {
+    ReactDOM.createRoot(document.getElementById("budget")).render(
+        <BrowserRouter>
+            <BudgetManager />
+        </BrowserRouter>
+    );
+}
 
 

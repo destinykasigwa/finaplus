@@ -13,6 +13,7 @@ use App\Http\Controllers\SendSMSController;
 use App\Http\Controllers\SessionController;
 use App\Http\Controllers\AdhesionController;
 use App\Http\Controllers\BatchPaiementController;
+use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\ClotureJourneeController;
 use App\Http\Controllers\PDFExportController;
 use App\Http\Controllers\RemboursementManuel;
@@ -63,7 +64,7 @@ Route::middleware(['web'])->group(function () {
     Route::get('/eco/pages/retrait-espece', [TransactionsController::class, 'getRetraitHomePage'])->name('eco.pages.retrait-espece');
     Route::get('/eco/pages/delestage', [TransactionsController::class, 'getDelestageHomePage'])->name('eco.pages.delestage');
     // Route::get('/eco/pages/appro', [TransactionsController::class, 'getApproHomePage'])->middleware('checkRole:isChefCaisse')->name('eco.pages.appro');
-     Route::get('/eco/pages/appro', [TransactionsController::class, 'getApproHomePage'])->name('eco.pages.appro');
+    Route::get('/eco/pages/appro', [TransactionsController::class, 'getApproHomePage'])->name('eco.pages.appro');
     Route::get('/eco/pages/entreeT', [TransactionsController::class, 'getEntreeTHomePage'])->name('eco.pages.entreeT');
     Route::get('/eco/pages/releve', [TransactionsController::class, 'getReleveHomePage'])->name('eco.pages.releve');
     Route::get('/eco/pages/journal', [ReportsController::class, 'getJournalHomePage'])->name('eco.pages.journal');
@@ -76,7 +77,7 @@ Route::middleware(['web'])->group(function () {
     Route::get('/eco/pages/credit/rapport-credit', [ReportsController::class, 'getEcheancierCreditHomePage'])->name('eco.pages.rapport-credit');
     Route::get('/eco/pages/balance', [ReportsController::class, 'getBalanceHomePage'])->name('eco.pages.balance');
     Route::get('/eco/pages/grandlivre', [ReportsController::class, 'getGrandLivreHomePage'])->name('eco.pages.grandlivre');
-     //GET GRAND LIVRE HOME PAGE 
+    //GET GRAND LIVRE HOME PAGE 
     Route::get('/eco/pages/bilan', [ReportsController::class, 'getBilanHomePage'])->name('eco.pages.bilan');
     Route::get('/eco/pages/tfr', [ReportsController::class, 'getTfrHomePage'])->name('eco.pages.tfr');
     Route::get('/eco/pages/remboursement-attendu', [ReportsController::class, 'getRemboursementAttenduHomePage'])->name('eco.pages.remboursement-attendu');
@@ -197,8 +198,8 @@ Route::middleware(['web'])->group(function () {
 
     Route::post('eco/page/adhesion/edit-signature', [AdhesionController::class, 'updateMembreSignature']);
 
-  
-   Route::post('/eco/page/adhesion/edit-photo', [AdhesionController::class, 'updateMembrePhoto'])->name('update.membre.photo');
+
+    Route::post('/eco/page/adhesion/edit-photo', [AdhesionController::class, 'updateMembrePhoto'])->name('update.membre.photo');
 
     //CREATE NEW ACCOUNT 
     Route::post('eco/page/adhesion/creation-compte', [AdhesionController::class, 'createAccount']);
@@ -355,7 +356,7 @@ eco/page/report/get-searched-repertoire', [ReportsController::class, 'getSearche
     //PERMET DE CLOTURER LE CREDIT 
     Route::post('eco/page/montage-credit/cloture-credit', [SuiviCreditController::class, 'ClotureCredit']);
 
-    
+
 
     //PERMET DE DECAISSER UN CREDIT 
     Route::post('eco/page/montage-credit/decaissement-credit', [SuiviCreditController::class, 'DecaissementCredit']);
@@ -366,13 +367,13 @@ eco/page/report/get-searched-repertoire', [ReportsController::class, 'getSearche
     Route::post('eco/page/montage-credit/remboursement-manuel-capital', [SuiviCreditController::class, 'rembourserCapital']);
 
 
-      //PERMET D'EFFECTUER EUN REMBOURSEMENT EN INTERET
+    //PERMET D'EFFECTUER EUN REMBOURSEMENT EN INTERET
     Route::post('eco/page/montage-credit/remboursement-manuel-interet', [SuiviCreditController::class, 'rembourserInteret']);
 
 
 
-    
-      //PERMET D'EFFECTUER EUN REMBOURSEMENT ANTICIPE
+
+    //PERMET D'EFFECTUER EUN REMBOURSEMENT ANTICIPE
     Route::post('eco/page/montage-credit/remboursement-manuel-anticipe', [SuiviCreditController::class, 'rembourserAnticipe']);
 
 
@@ -483,7 +484,7 @@ eco/page/report/get-searched-repertoire', [ReportsController::class, 'getSearche
 
 
 
-    
+
 
     //PERMET DE DEFINIR LA DATE DU SYSTEME
     Route::post(
@@ -504,8 +505,8 @@ eco/page/report/get-searched-repertoire', [ReportsController::class, 'getSearche
     Route::get('/sms-banking', [SMSbankingController::class, 'smsBankingHomepage'])->name("sms.banking");
 
 
-     //PERMET DE PASSER LES ECRITIRE DE FRAIS DES SMS 
- Route::post(
+    //PERMET DE PASSER LES ECRITIRE DE FRAIS DES SMS 
+    Route::post(
         "eco/pages/prelevement-sms/executer",
         [SMSBankingController::class, "prelevementFraisSMS"]
     );
@@ -630,150 +631,151 @@ eco/page/report/get-searched-repertoire', [ReportsController::class, 'getSearche
     //PERMET DE SUPPRIMER UN MANDATAIRE
     Route::get('eco/pages/adhesion/suppression-mandataire/{id}', [AdhesionController::class, 'deleteMandataire']);
 
- 
- //GET GRAND LIVRE
+
+    //GET GRAND LIVRE
     Route::post('/eco/pages/rapport/grand-livre', [ReportsController::class, 'getGrandLivre']);
 
- //GET AGENCES
- Route::get('eco/pages/getagences', [UtilisateurController::class, 'getAgences']);
+    //GET AGENCES
+    Route::get('eco/pages/getagences', [UtilisateurController::class, 'getAgences']);
 
- // Nouvelles routes pour la gestion des agences utilisateur
-Route::post('eco/pages/getusers/agences', [UtilisateurController::class, 'getUserAgences']);
-Route::post('eco/pages/add/agence', [UtilisateurController::class, 'addAgenceToUser']);
-Route::post('eco/pages/remove/agence', [UtilisateurController::class, 'removeAgenceFromUser']);
-Route::post('eco/pages/add/all-agences', [UtilisateurController::class, 'addAllAgencesToUser']);
-Route::post('eco/agence/change', [UtilisateurController::class, 'changeActiveAgence'])->name('eco.agence.change');
-
-
-Route::get('eco/pages/user-agences', [AdhesionController::class, 'getUserAgencesForAdhesion']);
+    // Nouvelles routes pour la gestion des agences utilisateur
+    Route::post('eco/pages/getusers/agences', [UtilisateurController::class, 'getUserAgences']);
+    Route::post('eco/pages/add/agence', [UtilisateurController::class, 'addAgenceToUser']);
+    Route::post('eco/pages/remove/agence', [UtilisateurController::class, 'removeAgenceFromUser']);
+    Route::post('eco/pages/add/all-agences', [UtilisateurController::class, 'addAllAgencesToUser']);
+    Route::post('eco/agence/change', [UtilisateurController::class, 'changeActiveAgence'])->name('eco.agence.change');
 
 
-Route::get('/eco/agence/courante', [ReportsController::class, 'getCurrentAgence']);
+    Route::get('eco/pages/user-agences', [AdhesionController::class, 'getUserAgencesForAdhesion']);
 
 
-
-// Route::post('/eco/agences/store', [ComptesParamController::class, 'storeNewAgence'])->name('agences.store');
-// Route::put('/eco/agences/update/{id}', [ComptesParamController::class, 'updateNewAgence'])->name('agences.update');
-
-
-// Gestion des agences
-// Routes pour la liste et la suppression (sans préfixe)
-Route::get('/agences/list', [ComptesParamController::class, 'listAgences']);
-Route::delete('/agences/delete/{id}', [ComptesParamController::class, 'deleteAgence']);
-
-// Routes avec le préfixe /eco/agences (pour correspondre aux appels du formulaire)
-Route::prefix('eco/agences')->group(function () {
-    Route::get('/store/{id}', [ComptesParamController::class, 'showAgence']);      // ⚠️ GET pour récupérer une agence
-    Route::post('/store', [ComptesParamController::class, 'storeNewAgence']);      // création
-    Route::put('/update/{id}', [ComptesParamController::class, 'updateNewAgence']); // modification
-});
-
-
-// ==================== IMMOBILISATIONS ====================
-//RECUPERE LA PAGE D'ACCEUILLE POUR ENREGISTRER LES IMMOBILISATIONS
-Route::get('/eco/pages/enregistrement-imo', [ImmobilisationController::class, 'getImmoHomePage'])->name('eco.pages.enregistrement-imo');;
-Route::get('/eco/immo/types', [ImmobilisationController::class, 'getTypes']);
-Route::get('/eco/immo/liste', [ImmobilisationController::class, 'listeImmobilisations']);
-Route::post('/eco/immo/creer', [ImmobilisationController::class, 'creerImmobilisation']);
-Route::put('/eco/immo/modifier/{id}', [ImmobilisationController::class, 'modifierImmobilisation']);
-Route::delete('/eco/immo/supprimer/{id}', [ImmobilisationController::class, 'supprimerImmobilisation']);
-Route::get('/eco/comptes/immobilisations', [ImmobilisationController::class, 'getComptesImmobilisations']);
-Route::get('/eco/comptes/amortissements', [ImmobilisationController::class, 'getComptesAmortissements']);
-Route::post('/eco/immo/amortissement', [ImmobilisationController::class, 'calculerAmortissementMensuel']);
-Route::get('/eco/pages/rapport-immo', [ImmobilisationController::class, 'getRapportImmoHomage'])->name('eco.pages.rapport-immo');
-// Route::post('', [ImmobilisationController::class, 'rapportImmobilisations']);
-
-Route::get('/eco/immo/categories', [ImmobilisationController::class, 'getCategories']);
-Route::get('/eco/immo/services', [ImmobilisationController::class, 'getServices']);
-Route::post('/eco/immo/rapport', [ImmobilisationController::class, 'getRapportImmobilisations']);
+    Route::get('/eco/agence/courante', [ReportsController::class, 'getCurrentAgence']);
 
 
 
-//PAIMENT Batch
-Route::get('/eco/pages/paiment-batch', [BatchPaiementController::class, 'getPaimentBatch'])->name('eco.pages.paiment-batch');
- Route::get('/eco/batch/comptes-disponibles', [BatchPaiementController::class, 'comptesDisponibles']);
+    // Route::post('/eco/agences/store', [ComptesParamController::class, 'storeNewAgence'])->name('agences.store');
+    // Route::put('/eco/agences/update/{id}', [ComptesParamController::class, 'updateNewAgence'])->name('agences.update');
 
 
-Route::middleware(['auth'])->prefix('eco/batch')->group(function () {
-    Route::post('/upload', [BatchPaiementController::class, 'upload']);
-    Route::get('/previsualisation/{id}', [BatchPaiementController::class, 'previsualisation']);
-    Route::post('/soumettre/{id}', [BatchPaiementController::class, 'soumettreValidation']);
-    Route::post('/valider/{id}', [BatchPaiementController::class, 'validerBatch']);
-    Route::post('/executer/{id}', [BatchPaiementController::class, 'executerBatch']);
-    Route::get('/historique', [BatchPaiementController::class, 'historique']);
-    Route::get('/detail/{id}', [BatchPaiementController::class, 'detail']);
-    Route::post('/preview', [BatchPaiementController::class, 'preview']);
+    // Gestion des agences
+    // Routes pour la liste et la suppression (sans préfixe)
+    Route::get('/agences/list', [ComptesParamController::class, 'listAgences']);
+    Route::delete('/agences/delete/{id}', [ComptesParamController::class, 'deleteAgence']);
 
-});
-//Route::get('/eco/pages/generate-amort-comptes', [ImmobilisationController::class, 'genererComptesAmortissement']);
- //Route::get('/eco/pages/test-amortissement', [ImmobilisationController::class, 'calculerAmortissementMensuel']);
- Route::get('/batch/gestion', [BatchPaiementController::class, 'GestionBatchHomePage'])->name('eco.pages.gestion-batch');
-   // Historique des batches (avec filtre par statut)
- Route::get('/eco/batch/historique', [BatchPaiementController::class, 'historiqueAdmin']);
+    // Routes avec le préfixe /eco/agences (pour correspondre aux appels du formulaire)
+    Route::prefix('eco/agences')->group(function () {
+        Route::get('/store/{id}', [ComptesParamController::class, 'showAgence']);      // ⚠️ GET pour récupérer une agence
+        Route::post('/store', [ComptesParamController::class, 'storeNewAgence']);      // création
+        Route::put('/update/{id}', [ComptesParamController::class, 'updateNewAgence']); // modification
+    });
+
+
+    // ==================== IMMOBILISATIONS ====================
+    //RECUPERE LA PAGE D'ACCEUILLE POUR ENREGISTRER LES IMMOBILISATIONS
+    Route::get('/eco/pages/enregistrement-imo', [ImmobilisationController::class, 'getImmoHomePage'])->name('eco.pages.enregistrement-imo');;
+    Route::get('/eco/immo/types', [ImmobilisationController::class, 'getTypes']);
+    Route::get('/eco/immo/liste', [ImmobilisationController::class, 'listeImmobilisations']);
+    Route::post('/eco/immo/creer', [ImmobilisationController::class, 'creerImmobilisation']);
+    Route::put('/eco/immo/modifier/{id}', [ImmobilisationController::class, 'modifierImmobilisation']);
+    Route::delete('/eco/immo/supprimer/{id}', [ImmobilisationController::class, 'supprimerImmobilisation']);
+    Route::get('/eco/comptes/immobilisations', [ImmobilisationController::class, 'getComptesImmobilisations']);
+    Route::get('/eco/comptes/amortissements', [ImmobilisationController::class, 'getComptesAmortissements']);
+    Route::post('/eco/immo/amortissement', [ImmobilisationController::class, 'calculerAmortissementMensuel']);
+    Route::get('/eco/pages/rapport-immo', [ImmobilisationController::class, 'getRapportImmoHomage'])->name('eco.pages.rapport-immo');
+    // Route::post('', [ImmobilisationController::class, 'rapportImmobilisations']);
+
+    Route::get('/eco/immo/categories', [ImmobilisationController::class, 'getCategories']);
+    Route::get('/eco/immo/services', [ImmobilisationController::class, 'getServices']);
+    Route::post('/eco/immo/rapport', [ImmobilisationController::class, 'getRapportImmobilisations']);
+
+
+
+    //PAIMENT Batch
+    Route::get('/eco/pages/paiment-batch', [BatchPaiementController::class, 'getPaimentBatch'])->name('eco.pages.paiment-batch');
+    Route::get('/eco/batch/comptes-disponibles', [BatchPaiementController::class, 'comptesDisponibles']);
+
+
+    Route::middleware(['auth'])->prefix('eco/batch')->group(function () {
+        Route::post('/upload', [BatchPaiementController::class, 'upload']);
+        Route::get('/previsualisation/{id}', [BatchPaiementController::class, 'previsualisation']);
+        Route::post('/soumettre/{id}', [BatchPaiementController::class, 'soumettreValidation']);
+        Route::post('/valider/{id}', [BatchPaiementController::class, 'validerBatch']);
+        Route::post('/executer/{id}', [BatchPaiementController::class, 'executerBatch']);
+        Route::get('/historique', [BatchPaiementController::class, 'historique']);
+        Route::get('/detail/{id}', [BatchPaiementController::class, 'detail']);
+        Route::post('/preview', [BatchPaiementController::class, 'preview']);
+        Route::post('/rejeter/{id}', [BatchPaiementController::class, 'rejeter']);
+    });
+    //Route::get('/eco/pages/generate-amort-comptes', [ImmobilisationController::class, 'genererComptesAmortissement']);
+    //Route::get('/eco/pages/test-amortissement', [ImmobilisationController::class, 'calculerAmortissementMensuel']);
+    Route::get('/batch/gestion', [BatchPaiementController::class, 'GestionBatchHomePage'])->name('eco.pages.gestion-batch');
+    // Historique des batches (avec filtre par statut)
+    Route::get('/eco/batch/historique', [BatchPaiementController::class, 'historiqueAdmin']);
 
     // Détail d’un batch (pour prévisualisation)
- Route::get('/eco/batch/detail/{id}', [BatchPaiementController::class, 'detailAdmin']);
+    Route::get('/eco/batch/detail/{id}', [BatchPaiementController::class, 'detailAdmin']);
 
 
-Route::get('/eco/pages/radiation-credit', [SuiviCreditController::class, 'getRadiationCreditHomePage'])->name('eco.pages.radiation-credit');
- Route::middleware(['auth'])->prefix('eco/credits/radies')->group(function () {
-    Route::get('/liste', [SuiviCreditController::class, 'listeCreditsARadier']);
-    Route::post('/radier', [SuiviCreditController::class, 'radierCredits']);
+    Route::get('/eco/pages/radiation-credit', [SuiviCreditController::class, 'getRadiationCreditHomePage'])->name('eco.pages.radiation-credit');
+    Route::middleware(['auth'])->prefix('eco/credits/radies')->group(function () {
+        Route::get('/liste', [SuiviCreditController::class, 'listeCreditsARadier']);
+        Route::post('/radier', [SuiviCreditController::class, 'radierCredits']);
+    });
+
+
+
+    Route::post('/eco/page/montage-credit/get-credits-by-member', [SuiviCreditController::class, 'getCreditsByMember']);
+    Route::post('/eco/page/montage-credit/get-credit-by-dossier', [SuiviCreditController::class, 'getCreditByDossier']);
+
+
+
+
+
+    // Middleware d'authentification
+    Route::middleware(['auth'])->prefix('eco/exchange')->group(function () {
+
+        // Taux de change
+        Route::get('/rates', [CurrencyExchangeController::class, 'getRates']);
+        Route::post('/rates', [CurrencyExchangeController::class, 'storeRate']);
+        Route::get('/reference-rate', [CurrencyExchangeController::class, 'getReferenceRate']);
+
+        // Comptes de change (par agence)
+        Route::get('/accounts', [CurrencyExchangeController::class, 'getExchangeAccounts']);
+        Route::post('/accounts', [CurrencyExchangeController::class, 'updateExchangeAccounts']);
+
+        // Opérations
+        Route::post('/search-client', [CurrencyExchangeController::class, 'searchClient']);
+        Route::post('/client-accounts', [CurrencyExchangeController::class, 'getClientAccounts']);
+        Route::post('/balance', [CurrencyExchangeController::class, 'getAccountBalance']);
+        Route::post('/execute', [CurrencyExchangeController::class, 'executeExchange']);
+        Route::post('/cancel', [CurrencyExchangeController::class, 'cancelExchange']);
+
+        // Historique et rapports
+        Route::get('/transactions', [CurrencyExchangeController::class, 'getTransactions']);
+        Route::get('/daily-report', [CurrencyExchangeController::class, 'getDailyReport']);
+    });
+
+    // Vue Blade pour le module
+    Route::get('/eco/change-devises', [CurrencyExchangeController::class, 'getChangeCreditHomePage'])->name('eco.pages.currency-exchange');
+    Route::get('/eco/exchange/marges', [CurrencyExchangeController::class, 'getMarges']);
+    Route::post('/eco/exchange/marges', [CurrencyExchangeController::class, 'updateMarge']);
+
+
+    Route::get('/eco/pages/budget', [BudgetController::class, 'getBudgetHomePage'])->name('eco.pages.budget');
+   
+    Route::prefix('eco/budget')->middleware('auth')->group(function () {
+    // Exercices
+   Route::get('/fiscal-years', [BudgetController::class, 'getFiscalYears']);
+    Route::post('/fiscal-years', [BudgetController::class, 'storeFiscalYear']);
+    Route::put('/fiscal-years/{id}', [BudgetController::class, 'updateFiscalYear']);
+    Route::delete('/fiscal-years/{id}', [BudgetController::class, 'deleteFiscalYear']);
+
+    Route::get('/lines/{fiscalYearId}', [BudgetController::class, 'getBudgetLines']);
+    Route::post('/lines/bulk', [BudgetController::class, 'bulkStoreBudgetLines']);
+    Route::delete('/lines/{id}', [BudgetController::class, 'deleteBudgetLine']);
+
+    Route::post('/validate/{fiscalYearId}', [BudgetController::class, 'validateBudget']);
+
+    Route::get('/accounts', [BudgetController::class, 'getAccountsByClasses']);
 });
-
-
-
- Route::post('/eco/page/montage-credit/get-credits-by-member', [SuiviCreditController::class, 'getCreditsByMember']);
- Route::post('/eco/page/montage-credit/get-credit-by-dossier', [SuiviCreditController::class, 'getCreditByDossier']);
-
-
-
-
-
-
-
-
-
-
-
-
-  // Middleware d'authentification
-Route::middleware(['auth'])->prefix('eco/exchange')->group(function () {
-
-    // Taux de change
-    Route::get('/rates', [CurrencyExchangeController::class, 'getRates']);
-    Route::post('/rates', [CurrencyExchangeController::class, 'storeRate']);
-    Route::get('/reference-rate', [CurrencyExchangeController::class, 'getReferenceRate']);
-
-    // Comptes de change (par agence)
-    Route::get('/accounts', [CurrencyExchangeController::class, 'getExchangeAccounts']);
-    Route::post('/accounts', [CurrencyExchangeController::class, 'updateExchangeAccounts']);
-
-    // Opérations
-    Route::post('/search-client', [CurrencyExchangeController::class, 'searchClient']);
-    Route::post('/client-accounts', [CurrencyExchangeController::class, 'getClientAccounts']);
-    Route::post('/balance', [CurrencyExchangeController::class, 'getAccountBalance']);
-    Route::post('/execute', [CurrencyExchangeController::class, 'executeExchange']);
-    Route::post('/cancel', [CurrencyExchangeController::class, 'cancelExchange']);
-
-    // Historique et rapports
-    Route::get('/transactions', [CurrencyExchangeController::class, 'getTransactions']);
-    Route::get('/daily-report', [CurrencyExchangeController::class, 'getDailyReport']);
 });
-
-// Vue Blade pour le module
-Route::get('/eco/change-devises', [CurrencyExchangeController::class, 'getChangeCreditHomePage'])->name('eco.pages.currency-exchange');
-Route::get('/eco/exchange/marges', [CurrencyExchangeController::class, 'getMarges']);
-Route::post('/eco/exchange/marges', [CurrencyExchangeController::class, 'updateMarge']);
-  
-
-
-
-});
-
-
-
-
-
-
-

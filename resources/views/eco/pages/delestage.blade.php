@@ -7,7 +7,7 @@
     <section class="content">
         <div class="container-fluid">
             <div class="row" id="delestage">
-
+              <div class="widget-spinner"></div>
             </div>
         </div>
     </section>

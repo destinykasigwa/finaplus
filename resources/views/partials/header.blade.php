@@ -724,6 +724,7 @@
                                     'eco.pages.sms-banking',
                                     'eco.pages.radiation-credit',
                                     'eco.pages.currency-exchange',
+                                    'eco.pages.budget',
                                 ];
                                 $isPlusActive = request()->routeIs(...$plusRoutes);
                             @endphp
@@ -759,6 +760,13 @@
                                 <a class="dropdown-item {{ request()->routeIs('eco.pages.currency-exchange') ? 'active' : '' }}"
                                     href="{{ route('eco.pages.currency-exchange') }}">
                                     <i class="fas fa-exchange-alt me-1"></i> Change de monnaie
+                                </a>
+
+                                <div class="dropdown-divider"></div>
+                                <h6 class="dropdown-header">Suivi budget</h6>
+                                <a class="dropdown-item {{ request()->routeIs('eco.pages.budget') ? 'active' : '' }}"
+                                    href="{{ route('eco.pages.budget') }}">
+                                    <i class="fas fa-exchange-alt me-1"></i> Suivi budget
                                 </a>
                             </div>
                         </li>

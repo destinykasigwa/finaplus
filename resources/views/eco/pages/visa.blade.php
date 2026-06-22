@@ -4,7 +4,7 @@
     <section class="content">
         <div class="container-fluid">
             <div class="row" id="visa">
-
+              <div class="widget-spinner"></div>
             </div>
         </div>
     </section>
