@@ -1233,6 +1233,7 @@ class ClotureJourneeCopy
                             $creditRet->numAdherant,
                             $numTransaction
                         );
+                        if ($montantRembourse > 0) {
                         $this->sendNotification->sendNotificationRemboursementCredit(
                             $creditRet->numAdherant,
                             $creditRet->CodeMonnaie,
@@ -1240,6 +1241,7 @@ class ClotureJourneeCopy
                             "Capital",
                             "partiel"
                         );
+                         }
                     }
                 } else { // $creditEnRetard->CapitalPaye == 0
                     $capitalApayer = $creditRet->CapAmmorti;
