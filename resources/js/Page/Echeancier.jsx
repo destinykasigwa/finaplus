@@ -2003,157 +2003,72 @@ const safeToFixed = (value, decimals = 2) => {
                                                     <th>Plus de 180</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                {(() => {
-                                                    // Fonction de sécurité pour formater un nombre avec 2 décimales
-                                                    const safeToFixed = (
-                                                        value,
-                                                    ) => {
-                                                        if (
-                                                            value ===
-                                                                undefined ||
-                                                            value === null
-                                                        )
-                                                            return "0.00";
-                                                        const num =
-                                                            parseFloat(value);
-                                                        return isNaN(num)
-                                                            ? "0.00"
-                                                            : num.toFixed(2);
-                                                    };
+                                         <tbody>
+  {(() => {
+    const safeToFixed = (value) => {
+      if (value === undefined || value === null) return "0.00";
+      const num = parseFloat(value);
+      return isNaN(num) ? "0.00" : num.toFixed(2);
+    };
 
-                                                    return Object.entries(
-                                                        groupedData,
-                                                    ).map(
-                                                        ([tranche, items]) => (
-                                                            <React.Fragment
-                                                                key={tranche}
-                                                            >
-                                                                {items.length >
-                                                                    0 && (
-                                                                    <>
-                                                                        <tr
-                                                                            style={{
-                                                                                backgroundColor:
-                                                                                    "#444",
-                                                                                color: "white",
-                                                                            }}
-                                                                        >
-                                                                            <td colSpan="20">
-                                                                                <strong>
-                                                                                    {
-                                                                                        tranche
-                                                                                    }
-                                                                                </strong>
-                                                                            </td>
-                                                                        </tr>
-                                                                        {items.map(
-                                                                            (
-                                                                                res,
-                                                                                idx,
-                                                                            ) => (
-                                                                                <tr
-                                                                                    key={
-                                                                                        idx
-                                                                                    }
-                                                                                >
-                                                                                    <td>
-                                                                                        {idx +
-                                                                                            1}
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {
-                                                                                            res.NumDossier
-                                                                                        }
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {
-                                                                                            res.NumCompteCredit
-                                                                                        }
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {
-                                                                                            res.NomCompte
-                                                                                        }
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {
-                                                                                            res.Duree
-                                                                                        }
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {dateParser(
-                                                                                            res.DateOctroi,
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {dateParser(
-                                                                                            res.DateEcheance,
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {numberWithSpaces(
-                                                                                            res.MontantAccorde,
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {numberWithSpaces(
-                                                                                            safeToFixed(
-                                                                                                res.TotalCapitalRembourse,
-                                                                                            ),
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {numberWithSpaces(
-                                                                                            safeToFixed(
-                                                                                                res.TotalInteretRembourse,
-                                                                                            ),
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {numberWithSpaces(
-                                                                                            safeToFixed(
-                                                                                                res.CapitalRestant,
-                                                                                            ),
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {numberWithSpaces(
-                                                                                            safeToFixed(
-                                                                                                res.InteretRestant,
-                                                                                            ),
-                                                                                        )}
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        -
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        -
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        -
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        -
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        -
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {
-                                                                                            res.NbrJrRetard
-                                                                                        }
-                                                                                    </td>
-                                                                                </tr>
-                                                                            ),
-                                                                        )}
-                                                                    </>
-                                                                )}
-                                                            </React.Fragment>
-                                                        ),
-                                                    );
-                                                })()}
-                                            </tbody>
+    return Object.entries(groupedData).map(([tranche, items]) => (
+      <React.Fragment key={tranche}>
+        {items.length > 0 && (
+          <>
+            <tr style={{ backgroundColor: "#444", color: "white" }}>
+              <td colSpan="20">
+                <strong>{tranche}</strong>
+              </td>
+            </tr>
+            {items.map((res, idx) => {
+              const nbrJrRetard = parseInt(res.NbrJrRetard, 10) || 0;
+              const capitalRestantFormatted = numberWithSpaces(
+                safeToFixed(res.CapitalRestant)
+              );
+
+              let trancheRetard = '';
+              if (nbrJrRetard >= 1 && nbrJrRetard <= 30) trancheRetard = '1-30';
+              else if (nbrJrRetard >= 31 && nbrJrRetard <= 60) trancheRetard = '31-60';
+              else if (nbrJrRetard >= 61 && nbrJrRetard <= 90) trancheRetard = '61-90';
+              else if (nbrJrRetard >= 91 && nbrJrRetard <= 180) trancheRetard = '91-180';
+              else if (nbrJrRetard > 180) trancheRetard = '180+';
+
+              const renderRetard = (tranche) => {
+                if (tranche === trancheRetard) {
+                  return <span style={{ color: 'red', fontWeight: 'bold' }}>{capitalRestantFormatted}</span>;
+                }
+                return '-';
+              };
+
+              return (
+                <tr key={idx}>
+                  <td>{idx + 1}</td>
+                  <td>{res.NumDossier}</td>
+                  <td>{res.NumCompteCredit}</td>
+                  <td>{res.NomCompte}</td>
+                  <td>{res.Duree}</td>
+                  <td>{dateParser(res.DateOctroi)}</td>
+                  <td>{dateParser(res.DateEcheance)}</td>
+                  <td>{numberWithSpaces(res.MontantAccorde)}</td>
+                  <td>{numberWithSpaces(safeToFixed(res.TotalCapitalRembourse))}</td>
+                  <td>{numberWithSpaces(safeToFixed(res.TotalInteretRembourse))}</td>
+                  <td>{numberWithSpaces(safeToFixed(res.CapitalRestant))}</td>
+                  <td>{numberWithSpaces(safeToFixed(res.InteretRestant))}</td>
+                  <td>{renderRetard('1-30')}</td>
+                  <td>{renderRetard('31-60')}</td>
+                  <td>{renderRetard('61-90')}</td>
+                  <td>{renderRetard('91-180')}</td>
+                  <td>{renderRetard('180+')}</td>
+                  <td>{nbrJrRetard}</td>
+                </tr>
+              );
+            })}
+          </>
+        )}
+      </React.Fragment>
+    ));
+  })()}
+</tbody>
                                         </table>
                                     </div>
 

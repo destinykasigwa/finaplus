@@ -383,14 +383,13 @@ class ClotureJourneeCopy
                 $interetApayer = $credit->Interet;
                 $MontantTotalApayer = $CapAmmorti + $interetApayer;
 
-
                 $this->checkAndStopOnError(
                     $CapAmmorti < 0 || $interetApayer < 0,
                     "Montants négatifs détectés pour le dossier {$credit->NumDossier}: Capital={$CapAmmorti}, Intérêt={$interetApayer}",
                     "ERR_MONTANT_001"
                 );
-
                 //RETOURNE true SI LE MEMBRE EST EN RETARD false SI SON CREDIT EST SAIN
+
                 $checkRetard = $this->calculerJoursRetard(
                     $credit->NumDossier,
                 );
@@ -1424,6 +1423,7 @@ class ClotureJourneeCopy
 
                         $this->gererProvisions();
                         $this->IncrementerJourRetard($creditRet->NumDossier, $this->dateSystem, $creditRet->NumCompteEpargne, $creditRet->NumCompteCredit);
+                        if ($montantRembourse > 0) {
                         $this->sendNotification->sendNotificationRemboursementCredit(
                             $creditRet->numAdherant,
                             $creditRet->CodeMonnaie,
@@ -1431,6 +1431,7 @@ class ClotureJourneeCopy
                             "Capital",
                             "partiel"
                         );
+                        }
                     }
                 }
             }
