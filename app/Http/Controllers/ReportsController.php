@@ -398,10 +398,21 @@ class ReportsController extends Controller
         }
 
         // Base de la requête commune (on ajoute le filtre agence sur transactions et comptes)
+        // $baseQuery = DB::table('transactions')
+        //     ->join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
+        //     ->whereBetween('transactions.DateTransaction', [$request->DateDebut, $request->DateFin])
+        //     ->where('comptes.RefGroupe', 330)
+        //     ->when($request->filled('UserName'), function ($q) use ($request) {
+        //         $q->where('transactions.NomUtilisateur', $request->UserName);
+        //     })
+        //     ->when($codeAgence, function ($q) use ($codeAgence) {
+        //         return $q->where('transactions.CodeAgence', $codeAgence)
+        //             ->where('comptes.CodeAgence', $codeAgence);
+        //     });
         $baseQuery = DB::table('transactions')
             ->join('comptes', 'transactions.NumCompte', '=', 'comptes.NumCompte')
             ->whereBetween('transactions.DateTransaction', [$request->DateDebut, $request->DateFin])
-            ->where('comptes.RefGroupe', 330)
+            ->whereIn('comptes.RefGroupe', [330])   // ← modification ici
             ->when($request->filled('UserName'), function ($q) use ($request) {
                 $q->where('transactions.NomUtilisateur', $request->UserName);
             })

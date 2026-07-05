@@ -587,7 +587,7 @@
                                 @php
                                     $clienteleRoutes = [
                                         'eco.pages.adhesion-membre',
-                                        'eco.pages.releve',
+                                        // 'eco.pages.releve',
                                         'eco.pages.sommaire-compte',
                                     ];
                                     $isClienteleActive = request()->routeIs(...$clienteleRoutes);
@@ -602,10 +602,10 @@
                                         href="{{ route('eco.pages.adhesion-membre') }}">
                                         <i class="fas fa-user-plus me-2"></i>Adhésion membre
                                     </a>
-                                    <a class="dropdown-item {{ request()->routeIs('eco.pages.releve') ? 'active' : '' }}"
+                                    {{-- <a class="dropdown-item {{ request()->routeIs('eco.pages.releve') ? 'active' : '' }}"
                                         href="{{ route('eco.pages.releve') }}">
                                         <i class="fas fa-receipt me-2"></i>Relevé de compte
-                                    </a>
+                                    </a> --}}
                                     <a class="dropdown-item {{ request()->routeIs('eco.pages.sommaire-compte') ? 'active' : '' }}"
                                         href="{{ route('eco.pages.sommaire-compte') }}">
                                         <i class="fas fa-chart-pie me-2"></i>Sommaire de compte
@@ -762,12 +762,12 @@
                                     <i class="fas fa-exchange-alt me-1"></i> Change de monnaie
                                 </a>
 
-                                <div class="dropdown-divider"></div>
+                                {{-- <div class="dropdown-divider"></div>
                                 <h6 class="dropdown-header">Suivi budget</h6>
                                 <a class="dropdown-item {{ request()->routeIs('eco.pages.budget') ? 'active' : '' }}"
                                     href="{{ route('eco.pages.budget') }}">
                                     <i class="fas fa-exchange-alt me-1"></i> Suivi budget
-                                </a>
+                                </a> --}}
                             </div>
                         </li>
                     </ul>

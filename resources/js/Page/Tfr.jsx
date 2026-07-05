@@ -12,7 +12,7 @@ const TFR = () => {
     const [date_debut, setDateDebut] = useState("");
     const [date_fin, setDateFin] = useState("");
     const [devise, setDevise] = useState("CDF");
-    const [typeTFR, setTypeTFR] = useState("detail");
+    const [typeTFR, setTypeTFR] = useState("consolide");
     const [tfrData, setTfrData] = useState([]);
     const [totaux, setTotaux] = useState({
         produits: 0,

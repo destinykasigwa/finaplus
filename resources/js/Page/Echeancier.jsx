@@ -735,7 +735,7 @@ const safeToFixed = (value, decimals = 2) => {
                                 {/* Balance âgée */}
                                 {radioValue === "balance_agee" && (
                                     <div className="row g-3 mt-3 pt-3 border-top fade-in">
-                                        <div className="col-md-4 col-lg-3">
+                                        {/* <div className="col-md-4 col-lg-3">
                                             <label className="form-label fw-semibold small text-secondary">
                                                 <i className="far fa-calendar-alt me-1" />{" "}
                                                 Date
@@ -750,7 +750,7 @@ const safeToFixed = (value, decimals = 2) => {
                                                     )
                                                 }
                                             />
-                                        </div>
+                                        </div> */}
                                         <div className="col-md-4 col-lg-3">
                                             <label className="form-label fw-semibold small text-secondary">
                                                 <i className="fas fa-money-bill-wave me-1" />{" "}

@@ -251,7 +251,7 @@
                             'eco.pages.visa',
                             'eco.pages.delestage',
                             'eco.pages.repertoire',
-                            'eco.pages.releve',
+                            // 'eco.pages.releve',
                             'eco.pages.appro',
                             'eco.pages.suspens'
                         ];
@@ -269,7 +269,7 @@
                             <li class="nav-item"><a href="{{ route('eco.pages.visa') }}" class="nav-link {{ request()->routeIs('eco.pages.visa') ? 'active' : '' }}"><i class="fas fa-check-circle"></i><p>Visa</p></a></li>
                             <li class="nav-item"><a href="{{ route('eco.pages.delestage') }}" class="nav-link {{ request()->routeIs('eco.pages.delestage') ? 'active' : '' }}"><i class="fas fa-exchange-alt"></i><p>Délestage</p></a></li>
                             <li class="nav-item"><a href="{{ route('eco.pages.repertoire') }}" class="nav-link {{ request()->routeIs('eco.pages.repertoire') ? 'active' : '' }}"><i class="fas fa-address-book"></i><p>Répertoire</p></a></li>
-                            <li class="nav-item"><a href="{{ route('eco.pages.releve') }}" class="nav-link {{ request()->routeIs('eco.pages.releve') ? 'active' : '' }}"><i class="fas fa-file-invoice"></i><p>Relevé</p></a></li>
+                            {{-- <li class="nav-item"><a href="{{ route('eco.pages.releve') }}" class="nav-link {{ request()->routeIs('eco.pages.releve') ? 'active' : '' }}"><i class="fas fa-file-invoice"></i><p>Relevé</p></a></li> --}}
                             <li class="nav-item"><a href="{{ route('eco.pages.appro') }}" class="nav-link {{ request()->routeIs('eco.pages.appro') ? 'active' : '' }}"><i class="fas fa-truck"></i><p>Appro</p></a></li>
                             <li class="nav-item"><a href="{{ route('eco.pages.suspens') }}" class="nav-link {{ request()->routeIs('eco.pages.suspens') ? 'active' : '' }}"><i class="fas fa-pause-circle"></i><p>Suspens</p></a></li>
                         </ul>
@@ -282,7 +282,7 @@
                         $tresorRoutes = [
                             'eco.pages.entreeT',
                             'eco.pages.repertoire',
-                            'eco.pages.releve',
+                            // 'eco.pages.releve',
                             'eco.pages.appro'
                         ];
                         $isTresorActive = request()->routeIs(...$tresorRoutes);
@@ -296,7 +296,7 @@
                         <ul class="nav nav-treeview">
                             <li class="nav-item"><a href="{{ route('eco.pages.entreeT') }}" class="nav-link {{ request()->routeIs('eco.pages.entreeT') ? 'active' : '' }}"><i class="fas fa-sign-in-alt"></i><p>Entrée T</p></a></li>
                             <li class="nav-item"><a href="{{ route('eco.pages.repertoire') }}" class="nav-link {{ request()->routeIs('eco.pages.repertoire') ? 'active' : '' }}"><i class="fas fa-address-book"></i><p>Répertoire</p></a></li>
-                            <li class="nav-item"><a href="{{ route('eco.pages.releve') }}" class="nav-link {{ request()->routeIs('eco.pages.releve') ? 'active' : '' }}"><i class="fas fa-file-invoice"></i><p>Relevé</p></a></li>
+                            {{-- <li class="nav-item"><a href="{{ route('eco.pages.releve') }}" class="nav-link {{ request()->routeIs('eco.pages.releve') ? 'active' : '' }}"><i class="fas fa-file-invoice"></i><p>Relevé</p></a></li> --}}
                             <li class="nav-item"><a href="{{ route('eco.pages.appro') }}" class="nav-link {{ request()->routeIs('eco.pages.appro') ? 'active' : '' }}"><i class="fas fa-truck"></i><p>Appro</p></a></li>
                         </ul>
                     </li>

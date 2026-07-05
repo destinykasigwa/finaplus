@@ -831,7 +831,9 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteCredit
                             );
                             //ENVOIE UN MESSAGE AU CLIENT
+                            if ($soldeMembre > 0){
                             $this->sendNotification->sendNotificationRemboursementCredit($creditRet->numAdherant, $creditRet->CodeMonnaie, round($soldeMembre, 2), "Interet", "complement");
+                            }
                         }
                     } else if ($creditEnRetard->InteretPaye == 0) {
                         //SI L'INTERET DEJA REMBOURSE EST EGAL ZERO CELA SIGNIFIE QU'AUCUN REMBOURS EN INTERET N'EST ENCORE FAIT
@@ -1184,7 +1186,7 @@ class ClotureJourneeCopy
                             "Capital",
                             ""
                         );
-                    } elseif ($soldeMembre < $CapitalRestant) {
+                    } elseif ($soldeMembre > 0 && $soldeMembre < $CapitalRestant) {
                         $montantRembourse = $soldeMembre;
                         $numTransaction = $this->insertInTransactionCapital(
                             round($montantRembourse, 2),
