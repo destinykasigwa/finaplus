@@ -762,98 +762,7 @@ class ReportsController extends Controller
                 $agentCreditName = $request->agent_credit_name;
                 $devise = $request->devise;
                 $selectedDate = $request->selectedDate ?? date('Y-m-d');
-                // $balanceQuery = Portefeuille::where("portefeuilles.CodeMonnaie", "=", $devise)
-                //     ->where("portefeuilles.Octroye", 1)
-                //     ->where("portefeuilles.Cloture", "!=", 1)
-                //     ->where("portefeuilles.Radie", "!=", 1)
-                //     ->when(!empty($request->selectedDate), function ($query) use ($selectedDate) {
-                //         $query->whereDate("portefeuilles.DateOctroi", "<=", $selectedDate);
-                //     })
-                //     ->join("comptes", "portefeuilles.NumCompteEpargne", "=", "comptes.NumCompte")
-                //     ->leftJoin("jour_retards", "portefeuilles.NumDossier", "=", "jour_retards.NumDossier")
-                //     ->leftJoin("interets_courus_suivi", "portefeuilles.NumDossier", "=", "interets_courus_suivi.NumDossier")
-                //     ->when(!empty($agentCreditName), function ($query) use ($agentCreditName) {
-                //         $query->where("portefeuilles.Gestionnaire", $agentCreditName);
-                //     })
-                //     ->when($codeAgence, function ($q) use ($codeAgence) {
-                //         return $q->where('portefeuilles.CodeAgence', $codeAgence);
-                //     })
-                //     ->selectRaw("
-                //     portefeuilles.NumDossier,
-                //     portefeuilles.NumCompteEpargne,
-                //     portefeuilles.CodeMonnaie,
-                //     portefeuilles.NumCompteCredit,
-                //     portefeuilles.NomCompte,
-                //     portefeuilles.DateOctroi,
-                //     portefeuilles.DateEcheance,
-                //     portefeuilles.MontantAccorde,
-                //     portefeuilles.Duree,
-                //     jour_retards.DateRetard,
-                //     COALESCE((
-                //             SELECT MAX(DATEDIFF(?, e.DateTranch))
-                //             FROM echeanciers e
-                //             WHERE e.NumDossier = portefeuilles.NumDossier
-                //             AND e.DateTranch <= ?
-                //             AND (
-                //                 e.CapAmmorti > (
-                //                     SELECT COALESCE(SUM(rc.CapitalPaye), 0)
-                //                     FROM remboursementcredits rc
-                //                     WHERE rc.RefEcheance = e.ReferenceEch
-                //                         AND rc.DateTranche <= ?
-                //                 )
-                //                 OR e.Interet > (
-                //                     SELECT COALESCE(SUM(rc.InteretPaye), 0)
-                //                     FROM remboursementcredits rc
-                //                     WHERE rc.RefEcheance = e.ReferenceEch
-                //                         AND rc.DateTranche <= ?
-                //                 )
-                //             )
-                //         ), 0) AS NbrJrRetard,
-                //         COALESCE((
-                //             SELECT COALESCE(SUM(e2.CapAmmorti), 0)
-                //             FROM echeanciers e2
-                //             WHERE e2.NumDossier = portefeuilles.NumDossier
-                //             AND e2.statutPayement = 1 AND e2.posted = 1
-                //         ), 0) AS TotalCapitalRembourse,
-                //         COALESCE((
-                //             SELECT COALESCE(SUM(e2.Interet), 0)
-                //             FROM echeanciers e2
-                //             WHERE e2.NumDossier = portefeuilles.NumDossier
-                //             AND e2.statutPayement = 1 AND e2.posted = 1
-                //         ), 0) AS TotalInteretRembourse,
-                //         COALESCE((
-                //             SELECT COALESCE(SUM(e2.CapAmmorti), 0) - COALESCE(SUM(CASE WHEN e2.statutPayement = 1 AND e2.posted = 1 THEN e2.CapAmmorti ELSE 0 END), 0)
-                //             FROM echeanciers e2
-                //             WHERE e2.NumDossier = portefeuilles.NumDossier
-                //         ), 0) AS CapitalRestant,
-                //         COALESCE((
-                //             SELECT COALESCE(SUM(e2.Interet), 0) - COALESCE(SUM(CASE WHEN e2.statutPayement = 1 AND e2.posted = 1 THEN e2.Interet ELSE 0 END), 0)
-                //             FROM echeanciers e2
-                //             WHERE e2.NumDossier = portefeuilles.NumDossier
-                //         ), 0) AS InteretRestantEcheancier,   -- intérêts planifiés restants
-                //         COALESCE(interets_courus_suivi.InteretCouruNonPaye, 0) AS InteretPostEcheanceNonPaye,
-                //         COALESCE((
-                //             SELECT COALESCE(SUM(e2.Interet), 0) - COALESCE(SUM(CASE WHEN e2.statutPayement = 1 AND e2.posted = 1 THEN e2.Interet ELSE 0 END), 0)
-                //             FROM echeanciers e2
-                //             WHERE e2.NumDossier = portefeuilles.NumDossier
-                //         ), 0) + COALESCE(interets_courus_suivi.InteretCouruNonPaye, 0) AS InteretTotalRestant
-                //     ", [$selectedDate, $selectedDate, $selectedDate, $selectedDate])
-                //     ->groupBy(
-                //         'portefeuilles.NumDossier',
-                //         'portefeuilles.NumCompteEpargne',
-                //         'portefeuilles.CodeMonnaie',
-                //         'portefeuilles.NumCompteCredit',
-                //         'portefeuilles.NomCompte',
-                //         'portefeuilles.DateOctroi',
-                //         'portefeuilles.DateEcheance',
-                //         'portefeuilles.MontantAccorde',
-                //         'portefeuilles.Duree',
-                //         'jour_retards.DateRetard',
-                //         'interets_courus_suivi.InteretCouruNonPaye'
-                //     )
-                //     ->orderBy('portefeuilles.DateOctroi', 'desc');
 
-                // $dataBalanceAgee = $balanceQuery->get();
                 $balanceQuery = Portefeuille::where("portefeuilles.CodeMonnaie", "=", $devise)
                     ->where("portefeuilles.Octroye", 1)
                     ->where("portefeuilles.Cloture", "!=", 1)
@@ -1108,7 +1017,11 @@ class ReportsController extends Controller
              * 1. TOTAL REMBOURSÉ PAR DOSSIER
              * ============================================
              */
+            // $subRemboursementGlobal = DB::table('remboursementcredits')
+            //     ->selectRaw('NumDossie as NumDossier, SUM(CapitalPaye) as total_rembourse')
+            //     ->groupBy('NumDossie');
             $subRemboursementGlobal = DB::table('remboursementcredits')
+                ->where('DateTranche', '<=', $date)   // ← filtre ajouté
                 ->selectRaw('NumDossie as NumDossier, SUM(CapitalPaye) as total_rembourse')
                 ->groupBy('NumDossie');
 
@@ -1149,6 +1062,9 @@ class ReportsController extends Controller
                 ->leftJoinSub($subRetardMax, 'ret', function ($join) {
                     $join->on('p.NumDossier', '=', 'ret.NumDossier');
                 })
+
+                // ✅ NOUVEAU FILTRE SUR LA DATE D'OCTROI
+                ->where('p.DateOctroi', '<=', $date)
 
                 ->where(function ($q) {
                     $q->where('p.Cloture', '!=', 1)
@@ -1701,8 +1617,56 @@ class ReportsController extends Controller
         };
     }
 
-    //GET BILAN REPORTS 
 
+    private function getEncoursTotalParDossier($date, $devise, $codeAgence = null)
+    {
+        // Sous-requête : total remboursé par dossier jusqu'à la date
+        $subRemb = DB::table('remboursementcredits')
+            ->where('DateTranche', '<=', $date)
+            ->selectRaw('
+            NumDossie as NumDossier,
+            SUM(CAST(CapitalPaye AS DECIMAL(15,2))) as total_rembourse
+        ')
+            ->groupBy('NumDossie');
+
+        // Requête principale
+        $query = DB::table('portefeuilles as p')
+            ->leftJoinSub($subRemb, 'rg', function ($join) {
+                $join->on('p.NumDossier', '=', 'rg.NumDossier');
+            })
+            ->where(function ($q) {
+                $q->where('p.Cloture', '!=', 1)->orWhereNull('p.Cloture');
+            })
+            ->where(function ($q) {
+                $q->where('p.Accorde', '=', 1)->orWhereNull('p.Accorde');
+            })
+            ->where(function ($q) {
+                $q->where('p.Octroye', '=', 1)->orWhereNull('p.Octroye');
+            })
+            ->where(function ($q) {
+                $q->where('p.Radie', '=', 0)->orWhereNull('p.Radie');
+            })
+            ->where('p.DateOctroi', '<=', $date)
+            ->where(function ($q) use ($date) {
+                $q->whereNull('p.DateCloture')->orWhere('p.DateCloture', '>', $date);
+            })
+            ->when($codeAgence, function ($q) use ($codeAgence) {
+                return $q->where('p.CodeAgence', $codeAgence);
+            })
+            ->when($devise, function ($q) use ($devise) {
+                return $q->where('p.CodeMonnaie', $devise);
+            });
+
+        // On cast aussi le MontantAccorde avant de faire la soustraction
+        $total = $query->sum(DB::raw('
+        CAST(p.MontantAccorde AS DECIMAL(15,2)) - COALESCE(rg.total_rembourse, 0)
+    '));
+
+        // Retourner un float bien propre
+        return floatval($total);
+    }
+
+    //GET BILAN REPORTS
     public function getBilanCompte(Request $request)
     {
         $date1 = $request->date_debut_balance;
@@ -1747,18 +1711,7 @@ class ReportsController extends Controller
             ->first();
 
         // Sous-requête : soldes des comptes de niveau 5 par parent
-        // $subQuery = DB::table('transactions as t')
-        //     ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
-        //     ->where('c.niveau', 5)
-        //     ->where('c.est_classe', 0)
-        //     ->where('t.CodeMonnaie', $monnaieValue)
-        //     ->when($codeAgence, fn($q) => $q->where('c.CodeAgence', $codeAgence))
-        //     ->select(
-        //         'c.compte_parent',
-        //         DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date1' THEN t.$debitCol - t.$creditCol ELSE 0 END), 0) AS soldeDebut"),
-        //         DB::raw("COALESCE(SUM(CASE WHEN t.DateTransaction <= '$date2' THEN t.$debitCol - t.$creditCol ELSE 0 END), 0) AS soldeFin")
-        //     )
-        //     ->groupBy('c.compte_parent');
+
         $subQuery = DB::table('transactions as t')
             ->join('comptes as c', 't.NumCompte', '=', 'c.NumCompte')
             ->where('c.niveau', 5)
@@ -1879,6 +1832,34 @@ class ReportsController extends Controller
 
         // Ajouter les immobilisations nettes à l'actif
         $actifData = $actifData->merge($immobilisationsNettes)->sortBy('NumCompte')->values();
+
+
+        // ==================== CORRECTION DU COMPTE 32 (basé sur les échéanciers) ====================
+
+        // Calcul des encours à partir des échéanciers
+        $encoursDebut32 = $this->getEncoursTotalParDossier($dateN_1, $devise, $codeAgence);
+        $encoursFin32   = $this->getEncoursTotalParDossier($date2, $devise, $codeAgence);
+
+        // Supprimer l'ancienne ligne du compte 32 (si elle existe)
+        $actifData = $actifData->reject(fn($item) => $item->RefCadre == '32')->values();
+
+        // Créer la nouvelle ligne pour le compte 32
+        $ligne32 = (object) [
+            'NumCompte'      => '32',
+            'NomCompte'      => 'CREDITS A COURT TERME',
+            'RefCadre'       => '32',
+            'NomCadre'       => $this->getNomCadre('32'),
+            'RefGroupe'      => null,
+            'RefSousGroupe'  => null,
+            'RefTypeCompte'  => '3',
+            'nature_compte'  => 'ACTIF',
+            'soldeDebut'     => $encoursDebut32,
+            'soldeFin'       => $encoursFin32,
+        ];
+        $actifData->push($ligne32);
+
+        // Trier à nouveau
+        $actifData = $actifData->sortBy('NumCompte')->values();
 
 
         // ==================== COMPTE 39 ====================

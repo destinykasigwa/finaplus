@@ -161,9 +161,9 @@ class CurrencyExchangeService
 
             Log::info("Gain calculé: $gainLoss");
             $this->sendNotification->sendNotificationComptabilite(
-                $clientId,   // ← correction ici
-                $sourceDevise,
-                $amount,
+                $targetAccount,   // ← correction ici
+                $targetDevise,
+                $amountTarget,
                 'C',                                     // ← type fixe : débit
                 $motif
             );

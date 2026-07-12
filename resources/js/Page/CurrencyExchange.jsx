@@ -1087,7 +1087,7 @@ const CurrencyExchange = () => {
                                             }
                                         />
                                     </div>
-                                    <div className="col-6">
+                                    {/* <div className="col-6">
                                         <label className="small text-muted">
                                             Date fin (optionnel)
                                         </label>
@@ -1102,7 +1102,7 @@ const CurrencyExchange = () => {
                                                 })
                                             }
                                         />
-                                    </div>
+                                    </div> */}
                                     <div className="col-12 mt-2">
                                         <button
                                             className="btn btn-sm btn-teal w-100"
@@ -1110,7 +1110,7 @@ const CurrencyExchange = () => {
                                             disabled={loading}
                                         >
                                             <i className="fas fa-save me-2"></i>
-                                            Ajouter / modifier taux
+                                            Ajouter le taux
                                         </button>
                                     </div>
                                 </div>
