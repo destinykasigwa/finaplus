@@ -491,7 +491,7 @@ class TransactionsController extends Controller
         return explode(' ', $name)[0] ?? '';
     }
 
-    
+
     //PERMET D'EFFECTUER UN DEPOT
     public function DepositEspece(Request $request)
     {
@@ -770,7 +770,7 @@ class TransactionsController extends Controller
                         "NomUtilisateur" => Auth::user()->name,
                         "DateTransaction" => $dataSystem->DateSystem
                     ]);
-                    $NomDeposant=$this->getShortenedName($request->DeposantName);
+                    $NomDeposant = $this->getShortenedName($request->DeposantName);
                     $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $NomDeposant);
                     return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
                 } else {
@@ -980,7 +980,7 @@ class TransactionsController extends Controller
                         "NomUtilisateur" => Auth::user()->name,
                         "DateTransaction" => $dataSystem->DateSystem
                     ]);
-                      $NomDeposant=$this->getShortenedName($request->DeposantName);
+                    $NomDeposant = $this->getShortenedName($request->DeposantName);
                     $this->sendNotification->sendNotification($dataCompte->NumAdherant, $request->devise, $request->Montant, "C", $NomDeposant);
                     return response()->json(["status" => 1, "msg" => "Opération bien enregistrée"]);
                 } else {
@@ -2151,7 +2151,7 @@ class TransactionsController extends Controller
         }
         $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
         $date = $request->input('date') ?? $dateSystem;
-        
+
 
         if ($devise === 'CDF') {
             $billetage = BilletageCdf::where('NomUtilisateur', $userName)
@@ -3107,7 +3107,7 @@ class TransactionsController extends Controller
                 $params[] = $codeAgence;
             }
 
-            $query .= " ORDER BY t.DateTransaction, t.created_at, t.RefTransaction";
+            $query .= " ORDER BY t.RefTransaction,t.DateTransaction";
 
             $data = DB::select($query, $params);
 
@@ -4104,11 +4104,26 @@ class TransactionsController extends Controller
     public function extourneOperation($reference)
     {
 
+        // if (strpos($reference, 'AT') === 0) {
+        //     try {
+        //         $cloture = new ClotureJourneeCopy(new \Illuminate\Http\Request());
+        //         // Utilise la méthode qui détermine automatiquement le type (capital ou intérêt)
+        //         $result = $cloture->annulerRemboursementPartielParReference($reference);
+        //         if ($result) {
+        //             return response()->json(["status" => 1, "msg" => "Remboursement annulé avec succès."]);
+        //         } else {
+        //             return response()->json(["status" => 0, "msg" => "Échec de l'annulation du remboursement."]);
+        //         }
+        //     } catch (\Exception $e) {
+        //         return response()->json(["status" => 0, "msg" => $e->getMessage()]);
+        //     }
+        // }
+
         if (strpos($reference, 'AT') === 0) {
             try {
                 $cloture = new ClotureJourneeCopy(new \Illuminate\Http\Request());
-                // Utilise la méthode qui détermine automatiquement le type (capital ou intérêt)
-                $result = $cloture->annulerRemboursementPartielParReference($reference);
+                // Utilise la nouvelle méthode qui annule UNIQUEMENT cette transaction
+                $result = $cloture->annulerTransactionSpecifique($reference, 'Extourne manuelle');
                 if ($result) {
                     return response()->json(["status" => 1, "msg" => "Remboursement annulé avec succès."]);
                 } else {

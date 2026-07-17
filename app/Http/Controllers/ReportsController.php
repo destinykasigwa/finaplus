@@ -1845,7 +1845,7 @@ class ReportsController extends Controller
 
         // Créer la nouvelle ligne pour le compte 32
         $ligne32 = (object) [
-            'NumCompte'      => '32',
+            'NumCompte'      => '3200',
             'NomCompte'      => 'CREDITS A COURT TERME',
             'RefCadre'       => '32',
             'NomCadre'       => $this->getNomCadre('32'),
@@ -1880,7 +1880,7 @@ class ReportsController extends Controller
         $actifData = collect($actifData)->reject(fn($item) => $item->RefCadre == '39')->values();
 
         $ligne39 = (object)[
-            'NumCompte'      => '39',
+            'NumCompte'      => '3900',
             'NomCompte'      => 'Créances douteuses ou litigieuses (NET)',
             'RefCadre'       => '39',
             'NomCadre'       => $this->getNomCadre('39'),
@@ -1973,7 +1973,7 @@ class ReportsController extends Controller
         if ($soldeResultat != 0) {
             $estBenefice = $soldeResultat > 0;
             $passifData->push((object)[
-                'NumCompte'     => $estBenefice ? '131' : '139',
+                'NumCompte'     => $estBenefice ? '1310' : '1390',
                 'NomCompte'     => $estBenefice ? 'RESULTAT NET : BENEFICE' : 'RESULTAT NET : PERTE',
                 'NomCadre'       => $this->getNomCadre('13'),
                 'RefCadre'      => '13',

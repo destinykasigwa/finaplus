@@ -74,7 +74,7 @@ class ClotureJourneeCopy
         $this->sendNotification = app(SendNotification::class);
         $this->gestionPostEcheance = new GestionInteretsPostEcheance($this->dateSystem, $this->tauxDuJour);
         // 🔥 Ajout : instanciation de la classe de pénalités
-        $delaiAvantPenalite = 30; // À configurer selon votre politique (peut venir d'une config)
+        $delaiAvantPenalite = 0; // À configurer selon votre politique (peut venir d'une config)
         $this->gestionPenalites = new GestionInteretsRetard($this->dateSystem, $this->tauxDuJour, $delaiAvantPenalite);
         //PARAMETRE SOLDE MINIMUM
         $params = EpargneAdhesionModel::first();
@@ -126,12 +126,11 @@ class ClotureJourneeCopy
             //     ['id' => 1],
             //     ['last_cloture_date' => $this->dateSystem, 'updated_at' => now()]
             // );
+            $this->gestionPenalites->execute();      // 👈 pénalités en premier
+            $this->gestionPostEcheance->execute();   // 👈 intérêts post-échéance ensuite
 
             $this->traiterRemboursementsAEcheance();
             $this->traiterRemboursementsEnRetard();
-
-            $this->gestionPenalites->execute();      // 👈 pénalités en premier
-            $this->gestionPostEcheance->execute();   // 👈 intérêts post-échéance ensuite
             DB::commit();
 
             Log::info("Exécution de la clôture terminée avec succès");
@@ -348,9 +347,9 @@ class ClotureJourneeCopy
 
 
     protected function getSoldeMinimum($codeMonnaie)
-{
-    return $codeMonnaie == 1 ? $this->soldeMinimumUSD : $this->soldeMinimumCDF;
-}
+    {
+        return $codeMonnaie == 1 ? $this->soldeMinimumUSD : $this->soldeMinimumCDF;
+    }
 
 
     /**
@@ -831,8 +830,8 @@ class ClotureJourneeCopy
                                 $creditRet->NumCompteCredit
                             );
                             //ENVOIE UN MESSAGE AU CLIENT
-                            if ($soldeMembre > 0){
-                            $this->sendNotification->sendNotificationRemboursementCredit($creditRet->numAdherant, $creditRet->CodeMonnaie, round($soldeMembre, 2), "Interet", "complement");
+                            if ($soldeMembre > 0) {
+                                $this->sendNotification->sendNotificationRemboursementCredit($creditRet->numAdherant, $creditRet->CodeMonnaie, round($soldeMembre, 2), "Interet", "complement");
                             }
                         }
                     } else if ($creditEnRetard->InteretPaye == 0) {
@@ -1235,14 +1234,14 @@ class ClotureJourneeCopy
                             $numTransaction
                         );
                         if ($montantRembourse > 0) {
-                        $this->sendNotification->sendNotificationRemboursementCredit(
-                            $creditRet->numAdherant,
-                            $creditRet->CodeMonnaie,
-                            round($montantRembourse, 2),
-                            "Capital",
-                            "partiel"
-                        );
-                         }
+                            $this->sendNotification->sendNotificationRemboursementCredit(
+                                $creditRet->numAdherant,
+                                $creditRet->CodeMonnaie,
+                                round($montantRembourse, 2),
+                                "Capital",
+                                "partiel"
+                            );
+                        }
                     }
                 } else { // $creditEnRetard->CapitalPaye == 0
                     $capitalApayer = $creditRet->CapAmmorti;
@@ -1426,13 +1425,13 @@ class ClotureJourneeCopy
                         $this->gererProvisions();
                         $this->IncrementerJourRetard($creditRet->NumDossier, $this->dateSystem, $creditRet->NumCompteEpargne, $creditRet->NumCompteCredit);
                         if ($montantRembourse > 0) {
-                        $this->sendNotification->sendNotificationRemboursementCredit(
-                            $creditRet->numAdherant,
-                            $creditRet->CodeMonnaie,
-                            round($montantRembourse, 2),
-                            "Capital",
-                            "partiel"
-                        );
+                            $this->sendNotification->sendNotificationRemboursementCredit(
+                                $creditRet->numAdherant,
+                                $creditRet->CodeMonnaie,
+                                round($montantRembourse, 2),
+                                "Capital",
+                                "partiel"
+                            );
                         }
                     }
                 }
@@ -4158,6 +4157,185 @@ class ClotureJourneeCopy
         return "AT00" . $id;
     }
 
+
+
+// /**
+//  * Annule une transaction de remboursement spécifique (capital ou intérêt)
+//  * en s'inspirant des méthodes existantes.
+//  * @param string $numTransaction
+//  * @param string $motif
+//  * @return bool
+//  * @throws \Exception
+//  */
+// public function annulerTransactionSpecifique($numTransaction, $motif = 'Annulation manuelle')
+// {
+//     DB::beginTransaction();
+//     try {
+//         // 1. Récupérer la transaction originale
+//         $original = Transactions::where('NumTransaction', $numTransaction)->first();
+//         if (!$original) {
+//             throw new \Exception("Transaction $numTransaction introuvable.");
+//         }
+
+//         // 2. Vérifier qu'elle n'est pas déjà extournée
+//         if ($original->extourner == 1) {
+//             throw new \Exception("Cette transaction a déjà été annulée.");
+//         }
+
+//         // 3. Vérifier qu'elle est liée à une échéance
+//         if (!$original->RefEcheance) {
+//             throw new \Exception("Cette transaction n'est pas liée à une échéance.");
+//         }
+
+//         // 4. Créer l'écriture d'annulation (inverse)
+//         $this->createAnnulationWriting($original, $motif);
+
+//         // 5. Déterminer le montant et le type (capital ou intérêt)
+//         $montant = ($original->TypeTransaction == 'D') ? $original->Debit : $original->Credit;
+//         $libelle = strtolower($original->Libelle);
+//         $type = null;
+
+//         if (strpos($libelle, 'capital') !== false) {
+//             $type = 'capital';
+//         } elseif (strpos($libelle, 'interet') !== false || strpos($libelle, 'intérêt') !== false) {
+//             $type = 'interet';
+//         } else {
+//             // Si le libellé ne permet pas de distinguer, on utilise le compte
+//             // Par exemple, si NumCompte est un compte de crédit (32 ou 39) -> capital
+//             // Sinon, c'est un compte d'intérêt (70) -> intérêt
+//             $compte = Comptes::where('NumCompte', $original->NumCompte)->first();
+//             if ($compte && in_array(substr($compte->RefCadre, 0, 2), ['32', '39'])) {
+//                 $type = 'capital';
+//             } else {
+//                 $type = 'interet';
+//             }
+//         }
+
+//         // 6. Mettre à jour Remboursementcredit (soustraire le montant)
+//         $remb = Remboursementcredit::where('RefEcheance', $original->RefEcheance)->first();
+//         if (!$remb) {
+//             throw new \Exception("Aucun remboursement trouvé pour cette échéance.");
+//         }
+
+//         if ($type == 'capital') {
+//             $remb->CapitalPaye = max(0, $remb->CapitalPaye - $montant);
+//         } elseif ($type == 'interet') {
+//             $remb->InteretPaye = max(0, $remb->InteretPaye - $montant);
+//         } else {
+//             // Par sécurité, on annule les deux
+//             $remb->CapitalPaye = max(0, $remb->CapitalPaye - $montant);
+//             $remb->InteretPaye = max(0, $remb->InteretPaye - $montant);
+//         }
+//         $remb->save();
+
+//         // 7. Marquer la transaction originale comme extournée
+//         $original->extourner = 1;
+//         $original->save();
+
+//         // 8. Mettre à jour le statut de l'échéance (appelle automatiquement recalculerRetardEtProvisions)
+//         $this->mettreAJourStatutEcheance($original->RefEcheance);
+
+//         DB::commit();
+//         return true;
+//     } catch (\Exception $e) {
+//         DB::rollBack();
+//         Log::error("Annulation transaction spécifique échouée", ['numTransaction' => $numTransaction, 'error' => $e->getMessage()]);
+//         throw $e;
+//     }
+// }
+
+
+/**
+ * Annule toutes les transactions d'une opération double (même NumTransaction)
+ * en s'inspirant de l'ancienne méthode.
+ * @param string $numTransaction
+ * @param string $motif
+ * @return bool
+ * @throws \Exception
+ */
+public function annulerTransactionSpecifique($numTransaction, $motif = 'Annulation manuelle')
+{
+    DB::beginTransaction();
+    try {
+        // 1. Récupérer toutes les transactions ayant ce NumTransaction
+        $transactions = Transactions::where('NumTransaction', $numTransaction)->get();
+        if ($transactions->isEmpty()) {
+            throw new \Exception("Aucune transaction trouvée pour le numéro $numTransaction.");
+        }
+
+        // Vérifier qu'aucune n'est déjà extournée
+        $dejaExtournee = $transactions->contains('extourner', 1);
+        if ($dejaExtournee) {
+            throw new \Exception("Une ou plusieurs transactions de cette opération sont déjà extournées.");
+        }
+
+        // Vérifier que toutes sont liées à la même échéance (optionnel)
+        $refEcheance = $transactions->first()->RefEcheance;
+        $refs = $transactions->pluck('RefEcheance')->unique();
+        if ($refs->count() > 1) {
+            // Si plusieurs échéances, on ne peut pas annuler en bloc facilement.
+            // On pourrait boucler ou lever une exception.
+            // Par simplicité, on n'annule que si c'est la même échéance.
+            // Sinon, il faudrait traiter chaque échéance séparément.
+            throw new \Exception("Les transactions de cette opération concernent plusieurs échéances.");
+        }
+
+        // 2. Créer les écritures d'annulation pour CHAQUE transaction
+        foreach ($transactions as $trans) {
+            $this->createAnnulationWriting($trans, $motif);
+        }
+
+        // 3. Mettre à jour Remboursementcredit pour l'échéance concernée
+        $remb = Remboursementcredit::where('RefEcheance', $refEcheance)->first();
+        if (!$remb) {
+            throw new \Exception("Aucun remboursement trouvé pour l'échéance $refEcheance.");
+        }
+
+        // On recalcule les montants en soustrayant les montants des transactions annulées
+        foreach ($transactions as $trans) {
+            $montant = ($trans->TypeTransaction == 'D') ? $trans->Debit : $trans->Credit;
+            $libelle = strtolower($trans->Libelle);
+            $type = null;
+
+            // Déterminer si capital ou intérêt
+            if (strpos($libelle, 'capital') !== false) {
+                $type = 'capital';
+            } elseif (strpos($libelle, 'interet') !== false || strpos($libelle, 'intérêt') !== false) {
+                $type = 'interet';
+            } else {
+                // Fallback sur le compte
+                $compte = Comptes::where('NumCompte', $trans->NumCompte)->first();
+                if ($compte && in_array(substr($compte->RefCadre, 0, 2), ['32', '39'])) {
+                    $type = 'capital';
+                } else {
+                    $type = 'interet';
+                }
+            }
+
+            if ($type == 'capital') {
+                $remb->CapitalPaye = max(0, $remb->CapitalPaye - $montant);
+            } else {
+                $remb->InteretPaye = max(0, $remb->InteretPaye - $montant);
+            }
+        }
+        $remb->save();
+
+        // 4. Marquer toutes les transactions comme extournées
+        Transactions::where('NumTransaction', $numTransaction)->update(['extourner' => 1]);
+
+        // 5. Mettre à jour le statut de l'échéance (et recalculer retard/provisions)
+        $this->mettreAJourStatutEcheance($refEcheance);
+
+        DB::commit();
+        return true;
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error("Annulation opération spécifique échouée", ['numTransaction' => $numTransaction, 'error' => $e->getMessage()]);
+        throw $e;
+    }
+}
+   
+
     /**
      * Retrouve la référence d'échéance à partir d'un numéro de transaction
      * @param string $numTransaction
@@ -4410,7 +4588,7 @@ class ClotureJourneeCopy
         $new = new Transactions();
         $new->NumTransaction = $newNumTransaction;
         $new->RefEcheance = $original->RefEcheance; // conserve le lien
-        $new->DateTransaction = $dateSysteme;
+        $new->DateTransaction =  $original->DateTransaction;
         $new->DateSaisie = $dateSysteme;
         $new->TypeTransaction = ($original->TypeTransaction == 'D') ? 'C' : 'D';
         $new->CodeMonnaie = $original->CodeMonnaie;
@@ -4422,7 +4600,7 @@ class ClotureJourneeCopy
         $new->Operant = $original->Operant;
         $new->NomUtilisateur = auth()->user()->name ?? 'SYSTEM';
         $new->Libelle = "ANNULATION - $motif - " . $original->Libelle;
-        $new->extourner = 0; // si vous avez ce champ
+        $new->extourner = 1; // si vous avez ce champ
 
         // Initialiser les montants à zéro
         $new->Debit = 0;
@@ -4521,10 +4699,6 @@ class ClotureJourneeCopy
             }
         }
     }
-
-
-
-
 
     /**
      * Annule toutes les provisions et reclassement 39 -> 32 pour un dossier clôturé
