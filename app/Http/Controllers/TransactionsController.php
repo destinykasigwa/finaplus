@@ -1892,6 +1892,7 @@ class TransactionsController extends Controller
 
     public function getDelestageInfo(Request $request)
     {
+        
         $user = Auth::user();
         $isSuperAdmin = ($user->role === 'SuperAdmin');
 
@@ -1952,12 +1953,126 @@ class TransactionsController extends Controller
 
 
 
+
+
+
         return response()->json([
             "status" => 1,
             "billetageUSD" => $billetageUSD,
             "billetageCDF" => $billetageCDF
         ]);
     }
+
+
+    public function getBilletageToDispalyForUsers(Request $request){
+         $user = Auth::user();
+    $dateDebut = $request->input('date_debut');
+    $dateFin = $request->input('date_fin');
+
+    // Si les dates ne sont pas fournies, on prend la date système par défaut
+    if (!$dateDebut || !$dateFin) {
+        $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
+        $dateDebut = $dateSystem;
+        $dateFin = $dateSystem;
+    }
+
+    // Requête USD
+    $queryUSD = BilletageUSD::select(
+        'NomUtilisateur',
+        DB::raw("SUM(centDollars) - SUM(centDollarsSortie) as centDollars"),
+        DB::raw("SUM(cinquanteDollars) - SUM(cinquanteDollarsSortie) as cinquanteDollars"),
+        DB::raw("SUM(vightDollars) - SUM(vightDollarsSortie) as vightDollars"),
+        DB::raw("SUM(dixDollars) - SUM(dixDollarsSortie) as dixDollars"),
+        DB::raw("SUM(cinqDollars) - SUM(cinqDollarsSortie) as cinqDollars"),
+        DB::raw("SUM(unDollars) - SUM(unDollarsSortie) as unDollars"),
+        DB::raw("SUM(montantEntre) - SUM(montantSortie) as sommeMontantUSD")
+    )
+    ->where('NomUtilisateur', $user->name)
+    ->whereBetween('DateTransaction', [$dateDebut, $dateFin])
+    ->groupBy('NomUtilisateur');
+
+    // Requête CDF
+    $queryCDF = BilletageCDF::select(
+        'NomUtilisateur',
+        DB::raw("SUM(vightMilleFranc) - SUM(vightMilleFrancSortie) as vightMilleFranc"),
+        DB::raw("SUM(dixMilleFranc) - SUM(dixMilleFrancSortie) as dixMilleFranc"),
+        DB::raw("SUM(cinqMilleFranc) - SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
+        DB::raw("SUM(milleFranc) - SUM(milleFrancSortie) as milleFranc"),
+        DB::raw("SUM(cinqCentFranc) - SUM(cinqCentFrancSortie) as cinqCentFranc"),
+        DB::raw("SUM(deuxCentFranc) - SUM(deuxCentFrancSortie) as deuxCentFranc"),
+        DB::raw("SUM(centFranc) - SUM(centFrancSortie) as centFranc"),
+        DB::raw("SUM(cinquanteFanc) - SUM(cinquanteFancSortie) as cinquanteFanc"),
+        DB::raw("SUM(montantEntre) - SUM(montantSortie) as sommeMontantCDF")
+    )
+    ->where('NomUtilisateur', $user->name)
+    ->whereBetween('DateTransaction', [$dateDebut, $dateFin])
+    ->groupBy('NomUtilisateur');
+
+    $billetageUSD = $queryUSD->get();
+    $billetageCDF = $queryCDF->get();
+
+    return response()->json([
+        "status" => 1,
+        "billetageUSD" => $billetageUSD,
+        "billetageCDF" => $billetageCDF
+    ]);
+    }
+
+
+  public function getDelestageInfo2(Request $request)
+{
+    $user = $request->input('UserName');
+    $dateDebut = $request->input('date_debut');
+    $dateFin = $request->input('date_fin');
+
+    // Si les dates ne sont pas fournies, on prend la date système par défaut
+    if (!$dateDebut || !$dateFin) {
+        $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
+        $dateDebut = $dateSystem;
+        $dateFin = $dateSystem;
+    }
+
+    // Requête USD
+    $queryUSD = BilletageUSD::select(
+        'NomUtilisateur',
+        DB::raw("SUM(centDollars) - SUM(centDollarsSortie) as centDollars"),
+        DB::raw("SUM(cinquanteDollars) - SUM(cinquanteDollarsSortie) as cinquanteDollars"),
+        DB::raw("SUM(vightDollars) - SUM(vightDollarsSortie) as vightDollars"),
+        DB::raw("SUM(dixDollars) - SUM(dixDollarsSortie) as dixDollars"),
+        DB::raw("SUM(cinqDollars) - SUM(cinqDollarsSortie) as cinqDollars"),
+        DB::raw("SUM(unDollars) - SUM(unDollarsSortie) as unDollars"),
+        DB::raw("SUM(montantEntre) - SUM(montantSortie) as sommeMontantUSD")
+    )
+    ->where('NomUtilisateur', $user)
+    ->whereBetween('DateTransaction', [$dateDebut, $dateFin])
+    ->groupBy('NomUtilisateur');
+
+    // Requête CDF
+    $queryCDF = BilletageCDF::select(
+        'NomUtilisateur',
+        DB::raw("SUM(vightMilleFranc) - SUM(vightMilleFrancSortie) as vightMilleFranc"),
+        DB::raw("SUM(dixMilleFranc) - SUM(dixMilleFrancSortie) as dixMilleFranc"),
+        DB::raw("SUM(cinqMilleFranc) - SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
+        DB::raw("SUM(milleFranc) - SUM(milleFrancSortie) as milleFranc"),
+        DB::raw("SUM(cinqCentFranc) - SUM(cinqCentFrancSortie) as cinqCentFranc"),
+        DB::raw("SUM(deuxCentFranc) - SUM(deuxCentFrancSortie) as deuxCentFranc"),
+        DB::raw("SUM(centFranc) - SUM(centFrancSortie) as centFranc"),
+        DB::raw("SUM(cinquanteFanc) - SUM(cinquanteFancSortie) as cinquanteFanc"),
+        DB::raw("SUM(montantEntre) - SUM(montantSortie) as sommeMontantCDF")
+    )
+    ->where('NomUtilisateur', $user)
+    ->whereBetween('DateTransaction', [$dateDebut, $dateFin])
+    ->groupBy('NomUtilisateur');
+
+    $billetageUSD = $queryUSD->get();
+    $billetageCDF = $queryCDF->get();
+
+    return response()->json([
+        "status" => 1,
+        "billetageUSD" => $billetageUSD,
+        "billetageCDF" => $billetageCDF
+    ]);
+}
 
     //VALIDATE DELESTAGE
 
@@ -2032,6 +2147,26 @@ class TransactionsController extends Controller
                 ->where("delested", 0)
                 ->groupBy("NomUtilisateur")
                 ->first();
+                  
+
+                //RENSEIGNE LE BILLETAGE
+                // BilletageCDF::create([
+                //      "refOperation" =>$NumTransaction,
+                //     "NumCompte"=>$CompteCaissierCDF,
+                //     "vightMilleFrancSortie" => $billetageCDF->vightMilleFranc,
+                //     "dixMilleFrancSortie" => $billetageCDF->dixMilleFranc,
+                //     "cinqMilleFrancSortie" => $billetageCDF->cinqMilleFranc,
+                //     "milleFrancSortie" => $billetageCDF->milleFranc,
+                //     "cinqCentFrancSortie" => $billetageCDF->cinqCentFranc,
+                //     "deuxCentFrancSortie" => $billetageCDF->deuxCentFranc,
+                //     "centFrancSortie" => $billetageCDF->centFranc,
+                //     "cinquanteFancSortie" => $billetageCDF->cinquanteFanc,
+                //     "montantSortie" => $billetageCDF->sommeMontantCDF,
+                //     "NomUtilisateur" => $caissierNom,
+                //     "DateTransaction" => $transactionDate,
+
+                // ]);
+
 
             if (!$billetageCDF) {
                 return response()->json(['status' => 0, 'msg' => 'Aucun billetage à délester ou déjà effectué pour cette date']);
@@ -2101,8 +2236,23 @@ class TransactionsController extends Controller
                 return response()->json(['status' => 0, 'msg' => 'Aucun billetage à délester ou déjà effectué pour cette date']);
             }
 
+            //  //RENSEIGNE LE BILLETAGE
+            //     BilletageUSD::create([
+            //         "refOperation" => $NumTransaction,
+            //         "NumCompte"=>$CompteCaissierUSD,
+            //         "centDollarsSortie" => $billetageUSD->centDollars,
+            //         "cinquanteDollarsSortie" => $billetageUSD->cinquanteDollars,
+            //         "vightDollarsSortie" => $billetageUSD->vightDollars,
+            //         "dixDollarsSortie" => $billetageUSD->dixDollars,
+            //         "cinqDollarsSortie" => $billetageUSD->cinqDollars,
+            //         "unDollarsSortie" => $billetageUSD->unDollars,
+            //         "montantSortie" => $billetageUSD->sommeMontantUSD,
+            //         "NomUtilisateur" => $caissierNom,
+            //         "DateTransaction" => $transactionDate,
+            //     ]);
+
             // Marquer comme délesté
-            BilletageUsd::where("NomUtilisateur", $caissierNom)
+            BilletageUSD::where("NomUtilisateur", $caissierNom)
                 ->where("DateTransaction", $transactionDate)
                 ->update(["delested" => 1]);
 
@@ -2823,6 +2973,42 @@ class TransactionsController extends Controller
                 "NomUtilisateur" => Auth::user()->name,
                 "Libelle" => "Delestage caisse secondaire de " . $data->NomDemandeur,
             ]);
+
+
+             // Récupérer le billetage USD non délesté
+            $billetageUSD = BilletageUsd::select(
+                DB::raw("SUM(centDollars)-SUM(centDollarsSortie) as centDollars"),
+                DB::raw("SUM(cinquanteDollars)-SUM(cinquanteDollarsSortie) as cinquanteDollars"),
+                DB::raw("SUM(vightDollars)-SUM(vightDollarsSortie) as vightDollars"),
+                DB::raw("SUM(dixDollars)-SUM(dixDollarsSortie) as dixDollars"),
+                DB::raw("SUM(cinqDollars)-SUM(cinqDollarsSortie) as cinqDollars"),
+                DB::raw("SUM(unDollars)-SUM(unDollarsSortie) as unDollars"),
+                DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantUSD"),
+            )
+                ->where("NomUtilisateur", $data->NomDemandeur)
+                ->where("DateTransaction", $dateSystem)
+                ->where("delested", 1)
+                ->groupBy("NomUtilisateur")
+                ->first();
+
+            if (!$billetageUSD) {
+                return response()->json(['status' => 0, 'msg' => 'Aucun billetage à délester ou déjà effectué pour cette date']);
+            }
+
+             //RENSEIGNE LE BILLETAGE
+                BilletageUSD::create([
+                    "refOperation" => $data->Reference,
+                    "NumCompte"=>$data->NumCompteCaissier,
+                    "centDollarsSortie" => $billetageUSD->centDollars,
+                    "cinquanteDollarsSortie" => $billetageUSD->cinquanteDollars,
+                    "vightDollarsSortie" => $billetageUSD->vightDollars,
+                    "dixDollarsSortie" => $billetageUSD->dixDollars,
+                    "cinqDollarsSortie" => $billetageUSD->cinqDollars,
+                    "unDollarsSortie" => $billetageUSD->unDollars,
+                    "montantSortie" => $billetageUSD->sommeMontantUSD,
+                    "NomUtilisateur" => $data->NomDemandeur,
+                    "DateTransaction" => $dateSystem,
+                ]);
             //ON RENSEIGNE LE DELESTAGE
             Delestages::where("id", $request->refDelestage)->update([
                 "received" => 1,
@@ -2948,6 +3134,52 @@ class TransactionsController extends Controller
                 "NomUtilisateur" => Auth::user()->name,
                 "Libelle" => "Delestage caisse secondaire de " . $data->NomDemandeur,
             ]);
+
+
+
+            // Récupérer le billetage CDF non délesté du caissier à cette date
+            $billetageCDF = BilletageCdf::select(
+                DB::raw("SUM(vightMilleFranc)-SUM(vightMilleFrancSortie) as vightMilleFranc"),
+                DB::raw("SUM(dixMilleFranc)-SUM(dixMilleFrancSortie) as dixMilleFranc"),
+                DB::raw("SUM(cinqMilleFranc)-SUM(cinqMilleFrancSortie) as cinqMilleFranc"),
+                DB::raw("SUM(milleFranc)-SUM(milleFrancSortie) as milleFranc"),
+                DB::raw("SUM(cinqCentFranc)-SUM(cinqCentFrancSortie) as cinqCentFranc"),
+                DB::raw("SUM(deuxCentFranc)-SUM(deuxCentFrancSortie) as deuxCentFranc"),
+                DB::raw("SUM(centFranc)-SUM(centFrancSortie) as centFranc"),
+                DB::raw("SUM(cinquanteFanc)-SUM(cinquanteFancSortie) as cinquanteFanc"),
+                DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF"),
+            )
+                ->where("NomUtilisateur", $data->NomDemandeur)
+                ->where("DateTransaction", $dateSystem)
+                ->where("delested", 1)
+                ->groupBy("NomUtilisateur")
+                ->first();
+
+                
+
+                if (!$billetageCDF) {
+                return response()->json(['status' => 0, 'msg' => 'Aucun billetage à délester ou déjà effectué pour cette date']);
+            }
+                  
+                //RENSEIGNE LE BILLETAGE
+                BilletageCDF::create([
+                     "refOperation" =>$data->Reference,
+                    "NumCompte"=>$data->NumCompteCaissier,
+                    "vightMilleFrancSortie" => $billetageCDF->vightMilleFranc,
+                    "dixMilleFrancSortie" => $billetageCDF->dixMilleFranc,
+                    "cinqMilleFrancSortie" => $billetageCDF->cinqMilleFranc,
+                    "milleFrancSortie" => $billetageCDF->milleFranc,
+                    "cinqCentFrancSortie" => $billetageCDF->cinqCentFranc,
+                    "deuxCentFrancSortie" => $billetageCDF->deuxCentFranc,
+                    "centFrancSortie" => $billetageCDF->centFranc,
+                    "cinquanteFancSortie" => $billetageCDF->cinquanteFanc,
+                    "montantSortie" => $billetageCDF->sommeMontantCDF,
+                    "NomUtilisateur" => $data->NomDemandeur,
+                    "DateTransaction" => $dateSystem,
+
+                ]);
+
+
             //ON RENSEIGNE LE DELESTAGE
             Delestages::where("id", $request->refDelestage)->update([
                 "received" => 1,
@@ -3078,7 +3310,7 @@ class TransactionsController extends Controller
                 ->value("solde");
 
             DB::statement("SET @cumul := " . ($soldeReport ?? 0));
-
+          
             // Requête principale
             $query = "
         SELECT 
@@ -4140,9 +4372,9 @@ class TransactionsController extends Controller
 
         if ($data) {
             if ($data->extourner != 1) {
-                if ($data->NomUtilisateur == "AUTO") {
-                    return response()->json(["status" => 0, "msg" => "Vous n'êtes pas autorisé à extourner une écriture automatique."]);
-                }
+                // if ($data->NomUtilisateur == "AUTO") {
+                //     return response()->json(["status" => 0, "msg" => "Vous n'êtes pas autorisé à extourner une écriture automatique."]);
+                // }
                 $data = Transactions::where("NumTransaction", "=", $reference)->get();
                 for ($i = 0; $i < sizeof($data); $i++) {
                     if ($data[$i]->TypeTransaction == "C") {

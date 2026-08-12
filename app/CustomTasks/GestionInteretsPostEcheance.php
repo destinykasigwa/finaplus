@@ -11,6 +11,7 @@ use App\Models\Comptes;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Services\SendNotification;
+use Illuminate\Support\Facades\Log;
 
 class GestionInteretsPostEcheance
 {
@@ -39,89 +40,190 @@ class GestionInteretsPostEcheance
     /**
      * Récupère les crédits dont l'échéance est dépassée et le capital restant > 0
      */
+    // protected function recupererCreditsPostEcheance()
+    // {
+    //     return Portefeuille::where('Cloture', 0)
+    //         ->where('Octroye', 1)
+    //         ->where('Radie', 0)
+    //         ->where("Reechelonne", "=", 0)
+    //         ->where('DateEcheance', '<', $this->dateSystem)
+    //         ->whereRaw('MontantAccorde - (
+    //             SELECT COALESCE(SUM(CapitalPaye), 0)
+    //             FROM remboursementcredits
+    //             WHERE NumDossie = portefeuilles.NumDossier
+    //         ) > 0')
+    //         ->get();
+    // }
     protected function recupererCreditsPostEcheance()
-    {
-        return Portefeuille::where('Cloture', 0)
-            ->where('Octroye', 1)
-            ->where('Radie', 0)
-            ->where("Reechelonne", "=", 0)
-            ->where('DateEcheance', '<', $this->dateSystem)
-            ->whereRaw('MontantAccorde - (
-                SELECT COALESCE(SUM(CapitalPaye), 0)
-                FROM remboursementcredits
-                WHERE NumDossie = portefeuilles.NumDossier
-            ) > 0')
-            ->get();
-    }
+{
+    $credits = Portefeuille::where('Cloture', 0)
+        ->where('Octroye', 1)
+        ->where('Radie', 0)
+        ->where("Reechelonne", "=", 0)
+        ->where('DateEcheance', '<', $this->dateSystem)
+        ->whereRaw('MontantAccorde - (
+            SELECT COALESCE(SUM(CapitalPaye), 0)
+            FROM remboursementcredits
+            WHERE NumDossie = portefeuilles.NumDossier
+        ) > 0')
+        ->get();
+
+    Log::info("Nombre de crédits post-échéance trouvés : " . $credits->count());
+    return $credits;
+}
 
     /**
      * Traite un crédit : calcule les intérêts courus, tente le prélèvement
      */
+    // protected function traiterCreditPostEcheance($credit)
+    // {
+    //     $suivi = InteretsCourusSuivi::firstOrNew(['NumDossier' => $credit->NumDossier]);
+    //     $derniereDate = $suivi->DateDernierCalcul ?? $credit->DateEcheance;
+    //     $capitalRestant = $this->getCapitalRestant($credit->NumDossier);
+
+    //     // Si capital restant nul, on nettoie le suivi
+    //     if ($capitalRestant <= 0) {
+    //         if ($suivi->exists) $suivi->delete();
+    //         return;
+    //     }
+
+    //     // Calcul du nombre de jours depuis le dernier calcul
+    //     $nbJours = Carbon::parse($this->dateSystem)->diffInDays(Carbon::parse($derniereDate));
+    //     if ($nbJours <= 0) return;
+
+    //     // Conversion du taux (ex: "3,2" -> 0.032)
+    //     $tauxMensuel = $this->convertirTaux($credit->TauxInteret);
+    //     $tauxJournalier = $tauxMensuel / 30;  // ou divisez par 30,4167 si moyenne exacte
+
+    //     // Intérêt couru sur la période
+    //     $interetCouru = $capitalRestant * $tauxJournalier * $nbJours;
+
+    //     // On ajoute l'intérêt non payé des périodes précédentes (si capitalisation souhaitée)
+    //     $interetTotalDu = $interetCouru + $suivi->InteretCouruNonPaye;
+
+    //     // Montant total à prélever = intérêts + (optionnel) une partie du capital
+    //     // Ici nous ne prélevons que les intérêts, pas le capital, pour ne pas pénaliser le client.
+    //     // Mais vous pouvez aussi prélever un % du capital.
+    //     $montantTotalDu = $interetTotalDu;
+
+    //     $soldeDisponible = $this->getSoldeEpargne($credit->NumCompteEpargne, $credit->CodeMonnaie);
+    //     if ($soldeDisponible <= 0) {
+    //         // Aucun paiement : on stocke l'intérêt couru
+    //         $suivi->InteretCouruNonPaye = $interetTotalDu;
+    //         $suivi->DateDernierCalcul = $this->dateSystem;
+    //         $suivi->CapitalRestant = $capitalRestant;
+    //         $suivi->save();
+    //         return;
+    //     }
+
+    //     $montantAPrelever = min($montantTotalDu, $soldeDisponible);
+    //     $interetPaye = $montantAPrelever; // tout est affecté aux intérêts d'abord
+
+    //     // Enregistrement des écritures comptables
+    //     $this->enregistrerPaiementInterets($credit, $interetPaye);
+
+    //     // Mise à jour du suivi
+    //     $nouvelInteretNonPaye = $interetTotalDu - $interetPaye;
+    //     $suivi->InteretCouruNonPaye = $nouvelInteretNonPaye;
+    //     $suivi->DateDernierCalcul = $this->dateSystem;
+    //     $suivi->CapitalRestant = $capitalRestant;
+    //     $suivi->save();
+
+    //     // Notification au client
+    //     if ($interetPaye > 0) {
+    //         $this->sendNotification->sendNotificationRemboursementCredit(
+    //             $credit->numAdherant, 
+    //             $credit->CodeMonnaie, 
+    //             $interetPaye, 
+    //             "Intérêts post-échéance", 
+    //             $montantAPrelever >= $montantTotalDu ? "complet" : "partiel"
+    //         );
+    //     }
+    // }
+
     protected function traiterCreditPostEcheance($credit)
-    {
-        $suivi = InteretsCourusSuivi::firstOrNew(['NumDossier' => $credit->NumDossier]);
-        $derniereDate = $suivi->DateDernierCalcul ?? $credit->DateEcheance;
-        $capitalRestant = $this->getCapitalRestant($credit->NumDossier);
+{
+    $suivi = InteretsCourusSuivi::firstOrNew(['NumDossier' => $credit->NumDossier]);
+    $derniereDate = $suivi->DateDernierCalcul ?? $credit->DateEcheance;
+    $capitalRestant = $this->getCapitalRestant($credit->NumDossier);
 
-        // Si capital restant nul, on nettoie le suivi
-        if ($capitalRestant <= 0) {
-            if ($suivi->exists) $suivi->delete();
-            return;
+    Log::info("Traitement crédit {$credit->NumDossier} - capitalRestant: $capitalRestant, derniereDate: $derniereDate");
+
+    // Si capital restant nul, on nettoie le suivi
+    if ($capitalRestant <= 0) {
+        if ($suivi->exists) {
+            $suivi->delete();
+            Log::info("Capital restant nul pour {$credit->NumDossier}, suivi supprimé.");
         }
+        return;
+    }
 
-        // Calcul du nombre de jours depuis le dernier calcul
-        $nbJours = Carbon::parse($this->dateSystem)->diffInDays(Carbon::parse($derniereDate));
-        if ($nbJours <= 0) return;
+    // Calcul du nombre de jours depuis le dernier calcul
+    $nbJours = Carbon::parse($this->dateSystem)->diffInDays(Carbon::parse($derniereDate));
+    Log::info("nbJours pour {$credit->NumDossier} : $nbJours");
 
-        // Conversion du taux (ex: "3,2" -> 0.032)
-        $tauxMensuel = $this->convertirTaux($credit->TauxInteret);
-        $tauxJournalier = $tauxMensuel / 30;  // ou divisez par 30,4167 si moyenne exacte
-
-        // Intérêt couru sur la période
-        $interetCouru = $capitalRestant * $tauxJournalier * $nbJours;
-
-        // On ajoute l'intérêt non payé des périodes précédentes (si capitalisation souhaitée)
-        $interetTotalDu = $interetCouru + $suivi->InteretCouruNonPaye;
-
-        // Montant total à prélever = intérêts + (optionnel) une partie du capital
-        // Ici nous ne prélevons que les intérêts, pas le capital, pour ne pas pénaliser le client.
-        // Mais vous pouvez aussi prélever un % du capital.
-        $montantTotalDu = $interetTotalDu;
-
-        $soldeDisponible = $this->getSoldeEpargne($credit->NumCompteEpargne, $credit->CodeMonnaie);
-        if ($soldeDisponible <= 0) {
-            // Aucun paiement : on stocke l'intérêt couru
-            $suivi->InteretCouruNonPaye = $interetTotalDu;
-            $suivi->DateDernierCalcul = $this->dateSystem;
-            $suivi->CapitalRestant = $capitalRestant;
-            $suivi->save();
-            return;
-        }
-
-        $montantAPrelever = min($montantTotalDu, $soldeDisponible);
-        $interetPaye = $montantAPrelever; // tout est affecté aux intérêts d'abord
-
-        // Enregistrement des écritures comptables
-        $this->enregistrerPaiementInterets($credit, $interetPaye);
-
-        // Mise à jour du suivi
-        $nouvelInteretNonPaye = $interetTotalDu - $interetPaye;
-        $suivi->InteretCouruNonPaye = $nouvelInteretNonPaye;
+    // Même si aucun jour n'est passé, on met à jour la date pour éviter de recalculer sans cesse
+    if ($nbJours <= 0) {
+        // On met à jour la date de dernier calcul pour ne pas rester bloqué
         $suivi->DateDernierCalcul = $this->dateSystem;
         $suivi->CapitalRestant = $capitalRestant;
         $suivi->save();
-
-        // Notification au client
-        if ($interetPaye > 0) {
-            $this->sendNotification->sendNotificationRemboursementCredit(
-                $credit->numAdherant, 
-                $credit->CodeMonnaie, 
-                $interetPaye, 
-                "Intérêts post-échéance", 
-                $montantAPrelever >= $montantTotalDu ? "complet" : "partiel"
-            );
-        }
+        Log::info("Aucun jour écoulé pour {$credit->NumDossier}, date mise à jour.");
+        return;
     }
+
+    // Conversion du taux
+    $tauxMensuel = $this->convertirTaux($credit->TauxInteret);
+    $tauxJournalier = $tauxMensuel / 30;
+    $interetCouru = round($capitalRestant * $tauxJournalier * $nbJours, 2);
+    $interetTotalDu = round($interetCouru + ($suivi->InteretCouruNonPaye ?? 0), 2);
+    Log::info("interetCouru: $interetCouru, interetTotalDu: $interetTotalDu");
+
+    // Si l'intérêt est négligeable, on met à jour la date et on sauvegarde
+    if ($interetTotalDu < 0.01) {
+        $suivi->DateDernierCalcul = $this->dateSystem;
+        $suivi->CapitalRestant = $capitalRestant;
+        $suivi->save();
+        Log::info("Intérêt négligeable pour {$credit->NumDossier}, date mise à jour.");
+        return;
+    }
+
+    $soldeDisponible = $this->getSoldeEpargne($credit->NumCompteEpargne, $credit->CodeMonnaie);
+    if ($soldeDisponible <= 0) {
+        $suivi->InteretCouruNonPaye = $interetTotalDu;
+        $suivi->DateDernierCalcul = $this->dateSystem;
+        $suivi->CapitalRestant = $capitalRestant;
+        $suivi->save();
+        Log::info("Solde insuffisant pour {$credit->NumDossier}, intérêts stockés.");
+        return;
+    }
+
+    $montantAPrelever = min($interetTotalDu, $soldeDisponible);
+    $montantAPrelever = round($montantAPrelever, 2);
+
+    if ($montantAPrelever > 0) {
+        $this->enregistrerPaiementInterets($credit, $montantAPrelever);
+        $nouvelInteretNonPaye = round($interetTotalDu - $montantAPrelever, 2);
+        Log::info("Prélèvement de $montantAPrelever pour {$credit->NumDossier}");
+    } else {
+        $nouvelInteretNonPaye = $interetTotalDu;
+    }
+
+    $suivi->InteretCouruNonPaye = $nouvelInteretNonPaye;
+    $suivi->DateDernierCalcul = $this->dateSystem;
+    $suivi->CapitalRestant = $capitalRestant;
+    $suivi->save();
+
+    if ($montantAPrelever > 0) {
+        $this->sendNotification->sendNotificationRemboursementCredit(
+            $credit->numAdherant,
+            $credit->CodeMonnaie,
+            $montantAPrelever,
+            "Intérêts post-échéance",
+            $montantAPrelever >= $interetTotalDu ? "complet" : "partiel"
+        );
+    }
+}
 
     /**
      * Convertit le taux stocké (ex: "3,2") en décimal (0.032)
@@ -173,7 +275,6 @@ class GestionInteretsPostEcheance
         // Déterminer le compte de produit financier (intérêts)
         // Exemple : 701000... pour USD/CDF. Vous pouvez utiliser une méthode similaire à getCompteDotationProvision.
         $compteProduit = $this->getCompteProduitFinancier($credit->CodeAgence, $credit->CodeMonnaie);
-
         // 1. Débit du compte épargne du client
         Transactions::create([
             "NumTransaction" => $numTransaction,

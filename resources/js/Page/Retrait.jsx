@@ -142,7 +142,7 @@ const RetraitEspece = () => {
 
     const GetInformation = async () => {
         const res = await axios.get(
-            "/eco/page/delestage/get-billetage-caissier",
+            "/eco/page/delestage/get-billetage-caissier/forusers",
         );
         if (res.data.status == 1) {
             setFetchBilletageCDF(res.data.billetageCDF[0]);

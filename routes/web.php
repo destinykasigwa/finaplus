@@ -238,6 +238,15 @@ Route::middleware(['web'])->group(function () {
     //RECUPERE LES INFORMATIONS POUR DELESTAGE
     Route::get('eco/page/delestage/get-billetage-caissier', [TransactionsController::class, 'getDelestageInfo']);
 
+
+    
+    //RECUPERE LES INFORMATIONS POUR DELESTAGE
+    Route::get('eco/page/delestage/get-billetage-caissier/forusers', [TransactionsController::class, 'getBilletageToDispalyForUsers']);
+
+    //RECUPERE LES INFORMATIONS POUR DELESTAGE
+    Route::post('eco/page/delestage/get-billetage-caissier2', [TransactionsController::class, 'getDelestageInfo2']);
+
+
     //SAVE DELESTAGE 
     Route::post('eco/page/delestage/validation', [TransactionsController::class, 'ValidateDelestage']);
 

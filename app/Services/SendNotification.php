@@ -588,6 +588,10 @@ class SendNotification
     //PERMET D'ENVOYER DES NOTIFICATION
     public function sendNotificationRemboursementCredit($NumCompte, $devise, $montant, $typeTransaction, $isPartielOrComplete)
     {
+        // 🔥 Empêcher l’envoi si le montant est nul (solde inchangé)
+        if ($montant <= 0) {
+            return;
+        }
         if ($typeTransaction == "Interet") {
             //RECUPERE LES INFORMATIONS DE LA PERSONNE QUI VENAIT D'EFFECTUER UN MOUVEMENT
             $getMembreInfo = SMSBanking::where("NumAbrege", "=", $NumCompte)->orWhere("NumCompte", $NumCompte)->first();

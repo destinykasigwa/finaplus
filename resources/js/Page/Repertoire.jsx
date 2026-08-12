@@ -12,28 +12,14 @@ import { EnteteRapport } from "./HeaderReport";
 
 const Repertoire = () => {
     const [loading, setloading] = useState(false);
-    // const [devise, setDevise] = useState("CDF");
     const [getDataCDF, setGetdataCDF] = useState();
     const [getDataUSD, setGetdataUSD] = useState();
     const [getdefaultDateDebut, setGetdefaultDateDebut] = useState();
     const [getdefaultDateFin, setGetdefaultDateFin] = useState();
     const [dateDebut, setDateDebut] = useState();
     const [dateFin, setDateFin] = useState();
-       const [agenceFilter, setAgenceFilter] = useState("current"); // 'current', 'all', ou un id d'agence
-    // const [getTypeJournal, setGetTypeJournal] = useState();
-    // const [checkboxValue, setCheckboxValue] = useState(false);
-    // const [radioValue, setRadioValue] = useState("");
-    // const [radioValue2, setRadioValue2] = useState("");
-    // const [checkboxValues, setCheckboxValues] = useState({
-    //     userCheckbox: false,
-    //     SuspensTransactions: false,
-    //     givenCurrency: false,
-    //     GivenJournal: false,
-    // });
-    // const [AgenceFrom, setAgenceFrom] = useState("GOMA");
+    const [agenceFilter, setAgenceFilter] = useState("current");
     const [fetchUsers, setFetchUsers] = useState();
-    // const [MonnaieDonnee, setMonnaieDonnee] = useState();
-    // const [JournalDonne, setJournalDonne] = useState();
     const [getAllUsers, setgetAllUsers] = useState();
     const [UserName, setUserName] = useState();
     const [getTot, setGetTot] = useState({
@@ -42,6 +28,11 @@ const Repertoire = () => {
         totDebitUSD: "",
         totCreditUSD: "",
     });
+
+    // États pour le billetage
+    const [billetageUSD, setBilletageUSD] = useState(null);
+    const [billetageCDF, setBilletageCDF] = useState(null);
+    const [loadingBilletage, setLoadingBilletage] = useState(false);
 
     useEffect(() => {
         getDefaultDate();
@@ -59,10 +50,33 @@ const Repertoire = () => {
         const res = await axios.get("/eco/page/report/get-journal-drop-menu");
         if (res.data.status == 1) {
             setgetAllUsers(res.data.users);
-            // setFetchUsers(getAllUsers);
-            // console.log(UserName);
         }
     };
+
+    // Récupération du billetage
+    const fetchBilletage = async () => {
+        setLoadingBilletage(true);
+        try {
+            const res = await axios.post("eco/page/delestage/get-billetage-caissier2", {
+                date_debut: dateDebut || getdefaultDateDebut,
+                date_fin: dateFin || getdefaultDateFin,
+                UserName: UserName,
+                agence_filter: agenceFilter
+            });
+            if (res.data.status === 1) {
+                // Les données sont structurées en tableaux (un par utilisateur)
+                // On prend le premier (ou on peut filtrer par nom)
+                const usd = res.data.billetageUSD?.[0] || null;
+                const cdf = res.data.billetageCDF?.[0] || null;
+                setBilletageUSD(usd);
+                setBilletageCDF(cdf);
+            }
+        } catch (error) {
+            console.error("Erreur lors du chargement du billetage", error);
+        }
+        setLoadingBilletage(false);
+    };
+
     const GetRepertoire = async (e) => {
         e.preventDefault();
         setloading(true);
@@ -85,7 +99,8 @@ const Repertoire = () => {
                 totDebitUSD: res.data.totDebitUSD,
                 totCreditUSD: res.data.totCreditUSD,
             });
-            console.log(getTot);
+            // Après récupération des données, on charge le billetage
+            await fetchBilletage();
         } else {
             setloading(false);
             Swal.fire({
@@ -98,6 +113,15 @@ const Repertoire = () => {
         }
     };
 
+    // Au changement de filtre, on recharge le billetage si les données existent déjà
+    useEffect(() => {
+        if (getDataCDF || getDataUSD) {
+            fetchBilletage();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dateFin, UserName, agenceFilter]);
+
+    // export functions (inchangées)
     const exportTableData = (tableId) => {
         const s2ab = (s) => {
             const buf = new ArrayBuffer(s.length);
@@ -116,46 +140,7 @@ const Repertoire = () => {
             fileName
         );
     };
-    // const exportToPDFCDF = () => {
-    //     const content = document.getElementById("content-to-download-cdf");
 
-    //     if (!content) {
-    //         console.error("Element not found!");
-    //         return;
-    //     }
-
-    //     html2canvas(content, { scale: 3 }).then((canvas) => {
-    //         const paddingTop = 50;
-    //         const paddingRight = 50;
-    //         const paddingBottom = 50;
-    //         const paddingLeft = 50;
-
-    //         const canvasWidth = canvas.width + paddingLeft + paddingRight;
-    //         const canvasHeight = canvas.height + paddingTop + paddingBottom;
-
-    //         const newCanvas = document.createElement("canvas");
-    //         newCanvas.width = canvasWidth;
-    //         newCanvas.height = canvasHeight;
-    //         const ctx = newCanvas.getContext("2d");
-
-    //         if (ctx) {
-    //             ctx.fillStyle = "#ffffff"; // Background color
-    //             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    //             ctx.drawImage(canvas, paddingLeft, paddingTop);
-    //         }
-
-    //         const pdf = new jsPDF("p", "mm", "a4");
-    //         const imgData = newCanvas.toDataURL("image/png");
-    //         const imgProps = pdf.getImageProperties(imgData);
-    //         const pdfWidth = pdf.internal.pageSize.getWidth();
-    //         const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-    //         pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    //         pdf.autoPrint();
-    //         window.open(pdf.output("bloburl"), "_blank");
-    //         // pdf.save("releve-de-compte.pdf");
-    //     });
-    // };
     const exportToPDF = () => {
         const content = document.getElementById("content-to-download-repertoire");
 
@@ -166,7 +151,7 @@ const Repertoire = () => {
 
         html2canvas(content, { scale: 2 })
             .then((canvas) => {
-                const imgData = canvas.toDataURL("image/jpeg", 0.75); // Change to JPEG and set quality to 0.75
+                const imgData = canvas.toDataURL("image/jpeg", 0.75);
                 const pdf = new jsPDF("p", "mm", "a4");
 
                 const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -186,7 +171,7 @@ const Repertoire = () => {
                     imgHeight,
                     undefined,
                     "FAST"
-                ); // Use 'FAST' compression
+                );
                 heightLeft -= pdfHeight;
 
                 while (heightLeft >= 0) {
@@ -201,7 +186,7 @@ const Repertoire = () => {
                         imgHeight,
                         undefined,
                         "FAST"
-                    ); // Use 'FAST' compression
+                    );
                     heightLeft -= pdfHeight;
                 }
 
@@ -215,7 +200,6 @@ const Repertoire = () => {
 
     const dateParser = (num) => {
         const options = {
-            // weekday: "long",
             year: "numeric",
             month: "numeric",
             day: "numeric",
@@ -231,365 +215,475 @@ const Repertoire = () => {
     let compteur2 = 1;
     function numberWithSpaces(x) {
         if (x === null || x === undefined) {
-            return "0.00"; // ou une autre valeur par défaut appropriée
+            return "0.00";
         }
 
-        // Convertir le nombre en un string avec deux chiffres après la virgule
         var fixedNumber = parseFloat(x).toFixed(2);
-
-        // Séparer les parties entière et décimale
         var parts = fixedNumber.split(".");
-
-        // Ajouter des espaces tous les trois chiffres dans la partie entière
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-
         return parts.join(".");
     }
 
-
     const getAgenceNom = () => {
-    if (agenceFilter === 'current') {
-         return "AGENCE DE " +currentAgence?.nom_agence || "Non définie";
-    }
-    if (agenceFilter === 'all') {
-        return "TOUTES AGENCES";
-    }
-    // agenceFilter est un id
-    const agence = userAgences.find(a => a.id == agenceFilter);
-    // return agence ? `${agence.code_agence} - ${agence.nom_agence}` : "Non définie";
-    return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
-};
+        if (agenceFilter === 'current') {
+            return "AGENCE DE " + currentAgence?.nom_agence || "Non définie";
+        }
+        if (agenceFilter === 'all') {
+            return "TOUTES AGENCES";
+        }
+        const agence = userAgences.find(a => a.id == agenceFilter);
+        return agence ? `AGENCE DE ${agence.nom_agence}` : "Non définie";
+    };
+
     return (
         <div className="container-fluid" style={{ marginTop: "10px", padding: "0 15px" }}>
-    {/* En-tête moderne */}
-    <div className="row mb-4">
-        <div className="col-12">
-            <div className="card border-0 shadow-sm rounded-3">
-                <div className="card-body p-3" style={{
-                    background: "#138496",
-                    borderRadius: "12px"
-                }}>
-                    <div className="d-flex align-items-center">
-                        <div className="me-3">
-                            <i className="fas fa-address-book" style={{ fontSize: "28px", color: "white" }}></i>
-                        </div>
-                        <div>
-                            <h5 className="text-white fw-bold mb-0">Répertoire caisse</h5>
-                            <small className="text-white-50">Historique des opérations par caissier</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {/* Filtres */}
-    {/* Filtres */}
-<div className="row g-4 mb-4">
-    {/* Période */}
-    <div className="col-md-3">
-        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-            <div className="card-header bg-transparent border-0 pt-3 pb-0">
-                <h6 className="section-title">
-                    <i className="fas fa-calendar-alt me-2" style={{ color: "#6366f1" }}></i>
-                    Période
-                </h6>
-            </div>
-            <div className="card-body pt-2">
-                <div className="mb-3">
-                    <label className="label-modern">Date début</label>
-                    <input
-                        type="date"
-                        className="form-control modern-input"
-                        value={dateDebut || getdefaultDateDebut}
-                        onChange={(e) => setDateDebut(e.target.value)}
-                    />
-                </div>
-                <div>
-                    <label className="label-modern">Date fin</label>
-                    <input
-                        type="date"
-                        className="form-control modern-input"
-                        value={dateFin || getdefaultDateFin}
-                        onChange={(e) => setDateFin(e.target.value)}
-                    />
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {/* Utilisateur */}
-    <div className="col-md-3">
-        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-            <div className="card-header bg-transparent border-0 pt-3 pb-0">
-                <h6 className="section-title">
-                    <i className="fas fa-user me-2" style={{ color: "#6366f1" }}></i>
-                    Utilisateur
-                </h6>
-            </div>
-            <div className="card-body pt-2">
-                <label className="label-modern">Sélectionner un caissier</label>
-                <select
-                    className="modern-select w-100"
-                    value={UserName}
-                    onChange={(e) => setUserName(e.target.value)}
-                >
-                    <option value="">Tous les caissiers</option>
-                    {getAllUsers?.map((user, idx) => (
-                        <option key={idx} value={user.name}>{user.name}</option>
-                    ))}
-                </select>
-            </div>
-        </div>
-    </div>
-
-    {/* Agence */}
-    <div className="col-md-3">
-        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-            <div className="card-header bg-transparent border-0 pt-3 pb-0">
-                <h6 className="section-title">
-                    <i className="fas fa-building me-2" style={{ color: "#6366f1" }}></i>
-                    Agence
-                </h6>
-            </div>
-            <div className="card-body pt-2">
-                <select
-                    className="modern-select w-100"
-                    value={agenceFilter}
-                    onChange={(e) => setAgenceFilter(e.target.value)}
-                    disabled={userAgences.length <= 1}
-                >
-                    <option value="current">
-                        Agence courante ({currentAgence?.nom_agence || "Non définie"})
-                    </option>
-                    {userAgences.length > 1 && (
-                        <>
-                            <option value="all">Toutes mes agences</option>
-                            {userAgences.map((agence) => (
-                                <option key={agence.id} value={agence.id}>
-                                    {agence.code_agence} - {agence.nom_agence}
-                                </option>
-                            ))}
-                        </>
-                    )}
-                </select>
-            </div>
-        </div>
-    </div>
-
-    {/* Action */}
-    <div className="col-md-3">
-        <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
-            <div className="card-header bg-transparent border-0 pt-3 pb-0">
-                <h6 className="section-title">
-                    <i className="fas fa-play me-2" style={{ color: "#6366f1" }}></i>
-                    Action
-                </h6>
-            </div>
-            <div className="card-body d-flex align-items-center justify-content-center pt-2">
-                <button
-                    onClick={GetRepertoire}
-                    className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
-                    disabled={loading}
-                >
-                    {loading ? (
-                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    ) : (
-                        <i className="fas fa-desktop"></i>
-                    )}
-                    <span>Afficher</span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-    {/* Tableau des résultats */}
-    {(getDataCDF && getDataCDF.length > 0) || (getDataUSD && getDataUSD.length > 0) ? (
-        <div className="card border-0 shadow-sm rounded-3 mb-4">
-            <div className="card-body p-4">
-                <div id="content-to-download-repertoire">
-                    {/* En-tête du rapport */}
-                    <div className="text-center mb-3">
-                        <EnteteRapport />
-                    </div>
-                    
-                    <div className="text-center mb-4">
-                        <h4 style={{ 
-                            background: "#1a2632", 
-                            padding: "12px", 
-                            color: "#fff", 
-                            borderRadius: "8px", 
-                            display: "inline-block",
-                            borderLeft: "5px solid #20c997"
+            {/* En-tête moderne (inchangé) */}
+            <div className="row mb-4">
+                <div className="col-12">
+                    <div className="card border-0 shadow-sm rounded-3">
+                        <div className="card-body p-3" style={{
+                            background: "#138496",
+                            borderRadius: "12px"
                         }}>
-                            <i className="fas fa-address-book me-2"></i>
-                            RÉPERTOIRE CAISSE {getAgenceNom()}
-                            <br />
-                            <small style={{ fontSize: "14px" }}>
-                                Du {dateDebut ? dateParser(dateDebut) : dateParser(getdefaultDateDebut)} 
-                                au {dateFin ? dateParser(dateFin) : dateParser(getdefaultDateFin)}
-                            </small>
-                        </h4>
-                    </div>
-
-                    {/* Information caissier */}
-                    {UserName && (
-                        <div className="alert alert-info mb-3" style={{ background: "#e6f2f9", border: "none", borderRadius: "8px" }}>
-                            <i className="fas fa-user-check me-2"></i>
-                            <strong>Caissier(ère):</strong> {UserName}
+                            <div className="d-flex align-items-center">
+                                <div className="me-3">
+                                    <i className="fas fa-address-book" style={{ fontSize: "28px", color: "white" }}></i>
+                                </div>
+                                <div>
+                                    <h5 className="text-white fw-bold mb-0">Répertoire caisse</h5>
+                                    <small className="text-white-50">Historique des opérations par caissier</small>
+                                </div>
+                            </div>
                         </div>
-                    )}
+                    </div>
+                </div>
+            </div>
 
-                    <div className="table-responsive">
-                        <table className="table table-bordered" id="content-repertoire-table" style={{ fontSize: "13px" }}>
-                            <thead style={{ backgroundColor: "#1a2632", color: "white" }}>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Réf. Op</th>
-                                    <th>Num cpte</th>
-                                    <th>Nom compte</th>
-                                    <th>Libellé</th>
-                                    <th className="text-end">Débit</th>
-                                    <th className="text-end">Crédit</th>
-                                 </tr>
-                            </thead>
-                            <tbody>
-                                {/* Section CDF */}
-                                {getDataCDF && getDataCDF.length > 0 && (
-                                    <>
-                                        <tr style={{ backgroundColor: "#e6f2f9" }}>
-                                            <td colSpan="7" className="fw-bold fs-5" style={{ color: "steelblue" }}>
-                                                <i className="fas fa-chart-line me-2"></i>CDF
-                                            </td>
-                                        </tr>
-                                        {getDataCDF.map((res, index) => (
-                                            <tr key={`cdf-${index}`}>
-                                                <td>{dateParser(res.DateTransaction)}</td>
-                                                <td className="fw-semibold">{res.NumTransaction}</td>
-                                                <td>{res.NumCompte}</td>
-                                                <td>{res.NomCompte}</td>
-                                                <td>{res.Libelle}</td>
-                                                <td className="text-end text-danger fw-bold">{res.Debitfc?.toLocaleString() || "0,00"}</td>
-                                                <td className="text-end text-success fw-bold">{res.Creditfc?.toLocaleString() || "0,00"}</td>
-                                            </tr>
-                                        ))}
-                                        {/* Total CDF */}
-                                        <tr style={{ backgroundColor: "#20c997", color: "white", fontWeight: "bold" }}>
-                                            <td colSpan="5" className="text-end fw-bold">TOTAL CDF :</td>
-                                            <td className="text-end fw-bold">{numberWithSpaces(getTot?.totDebitCDF?.totDebitCDF)}</td>
-                                            <td className="text-end fw-bold">{numberWithSpaces(getTot?.totCreditCDF?.totCreditCDF)}</td>
-                                        </tr>
-                                    </>
-                                )}
-
-                                {/* Section USD */}
-                                {getDataUSD && getDataUSD.length > 0 && (
-                                    <>
-                                        <tr style={{ backgroundColor: "#e6f2f9" }}>
-                                            <td colSpan="7" className="fw-bold fs-5" style={{ color: "steelblue" }}>
-                                                <i className="fas fa-dollar-sign me-2"></i>USD
-                                            </td>
-                                        </tr>
-                                        {getDataUSD.map((res, index) => (
-                                            <tr key={`usd-${index}`}>
-                                                <td>{dateParser(res.DateTransaction)}</td>
-                                                <td className="fw-semibold">{res.NumTransaction}</td>
-                                                <td>{res.NumCompte}</td>
-                                                <td>{res.NomCompte}</td>
-                                                <td>{res.Libelle}</td>
-                                                <td className="text-end text-danger fw-bold">{res.Debitusd?.toLocaleString() || "0,00"}</td>
-                                                <td className="text-end text-success fw-bold">{res.Creditusd?.toLocaleString() || "0,00"}</td>
-                                            </tr>
-                                        ))}
-                                        {/* Total USD */}
-                                        <tr style={{ backgroundColor: "#20c997", color: "white", fontWeight: "bold" }}>
-                                            <td colSpan="5" className="text-end fw-bold">TOTAL USD :</td>
-                                            <td className="text-end fw-bold">{numberWithSpaces(getTot?.totDebitUSD?.totDebitUSD)}</td>
-                                            <td className="text-end fw-bold">{numberWithSpaces(getTot?.totCreditUSD?.totCreditUSD)}</td>
-                                        </tr>
-                                    </>
-                                )}
-                            </tbody>
-                        </table>
+            {/* Filtres (inchangés) */}
+            <div className="row g-4 mb-4">
+                {/* Période */}
+                <div className="col-md-3">
+                    <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                        <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                            <h6 className="section-title">
+                                <i className="fas fa-calendar-alt me-2" style={{ color: "#6366f1" }}></i>
+                                Période
+                            </h6>
+                        </div>
+                        <div className="card-body pt-2">
+                            <div className="mb-3">
+                                <label className="label-modern">Date début</label>
+                                <input
+                                    type="date"
+                                    className="form-control modern-input"
+                                    value={dateDebut || getdefaultDateDebut}
+                                    onChange={(e) => setDateDebut(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="label-modern">Date fin</label>
+                                <input
+                                    type="date"
+                                    className="form-control modern-input"
+                                    value={dateFin || getdefaultDateFin}
+                                    onChange={(e) => setDateFin(e.target.value)}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Boutons d'export */}
-                <div className="d-flex justify-content-end gap-2 mt-4">
-                    <button onClick={() => exportTableData("content-to-download-repertoire")} 
-                        className="btn" style={{ background: "#28a745", color: "white", borderRadius: "8px" }}>
-                        <i className="fas fa-file-excel me-2"></i>Exporter en Excel
-                    </button>
-                    <button onClick={exportToPDF} 
-                        className="btn" style={{ background: "#dc3545", color: "white", borderRadius: "8px" }}>
-                        <i className="fas fa-file-pdf me-2"></i>Exporter en PDF
-                    </button>
+                {/* Utilisateur */}
+                <div className="col-md-3">
+                    <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                        <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                            <h6 className="section-title">
+                                <i className="fas fa-user me-2" style={{ color: "#6366f1" }}></i>
+                                Utilisateur
+                            </h6>
+                        </div>
+                        <div className="card-body pt-2">
+                            <label className="label-modern">Sélectionner un caissier</label>
+                            <select
+                                className="modern-select w-100"
+                                value={UserName}
+                                onChange={(e) => setUserName(e.target.value)}
+                            >
+                                <option value="">Tous les caissiers</option>
+                                {getAllUsers?.map((user, idx) => (
+                                    <option key={idx} value={user.name}>{user.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Agence */}
+                <div className="col-md-3">
+                    <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                        <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                            <h6 className="section-title">
+                                <i className="fas fa-building me-2" style={{ color: "#6366f1" }}></i>
+                                Agence
+                            </h6>
+                        </div>
+                        <div className="card-body pt-2">
+                            <select
+                                className="modern-select w-100"
+                                value={agenceFilter}
+                                onChange={(e) => setAgenceFilter(e.target.value)}
+                                disabled={userAgences.length <= 1}
+                            >
+                                <option value="current">
+                                    Agence courante ({currentAgence?.nom_agence || "Non définie"})
+                                </option>
+                                {userAgences.length > 1 && (
+                                    <>
+                                        <option value="all">Toutes mes agences</option>
+                                        {userAgences.map((agence) => (
+                                            <option key={agence.id} value={agence.id}>
+                                                {agence.code_agence} - {agence.nom_agence}
+                                            </option>
+                                        ))}
+                                    </>
+                                )}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Action */}
+                <div className="col-md-3">
+                    <div className="card border-0 shadow-sm rounded-4 h-100 dashboard-card">
+                        <div className="card-header bg-transparent border-0 pt-3 pb-0">
+                            <h6 className="section-title">
+                                <i className="fas fa-play me-2" style={{ color: "#6366f1" }}></i>
+                                Action
+                            </h6>
+                        </div>
+                        <div className="card-body d-flex align-items-center justify-content-center pt-2">
+                            <button
+                                onClick={GetRepertoire}
+                                className="btn gradient-btn w-100 py-3 text-white d-flex align-items-center justify-content-center gap-2"
+                                disabled={loading}
+                            >
+                                {loading ? (
+                                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                ) : (
+                                    <i className="fas fa-desktop"></i>
+                                )}
+                                <span>Afficher</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    ) : (
-        // Message si aucune donnée
-        (getDataCDF || getDataUSD) && (
-            <div className="text-center py-5">
-                <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
-                <p className="text-muted">Aucune opération trouvée pour la période et le caissier sélectionnés.</p>
-            </div>
-        )
-    )}
 
-    <div style={{ height: "30px" }}></div>
-     <style>
-        {`
-        .modern-input {
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    padding: 10px 14px;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
-}
-.modern-input:focus {
-    border-color: #20c997;
-    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
-}
-.modern-select {
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    padding: 10px 14px;
-    font-size: 0.9rem;
-    background-color: white;
-    transition: all 0.2s ease;
-}
-.modern-select:focus {
-    border-color: #20c997;
-    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
-}
-.label-modern {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #4a5568;
-    margin-bottom: 6px;
-    display: block;
-}
-.section-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin: 0;
-}
-.gradient-btn {
-    background: linear-gradient(135deg, #20c997, #198764);
-    border: none;
-    border-radius: 12px;
-    transition: all 0.2s ease;
-}
-.gradient-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(32, 201, 151, 0.3);
-}
-        `}
-    </style>
-</div>
+            {/* Tableau des résultats (inchangé) */}
+            {(getDataCDF && getDataCDF.length > 0) || (getDataUSD && getDataUSD.length > 0) ? (
+                <div className="card border-0 shadow-sm rounded-3 mb-4">
+                    <div className="card-body p-4">
+                        <div id="content-to-download-repertoire">
+                            {/* En-tête du rapport */}
+                            <div className="text-center mb-3">
+                                <EnteteRapport />
+                            </div>
+                            
+                            <div className="text-center mb-4">
+                                <h4 style={{ 
+                                    background: "#1a2632", 
+                                    padding: "12px", 
+                                    color: "#fff", 
+                                    borderRadius: "8px", 
+                                    display: "inline-block",
+                                    borderLeft: "5px solid #20c997"
+                                }}>
+                                    <i className="fas fa-address-book me-2"></i>
+                                    RÉPERTOIRE CAISSE {getAgenceNom()}
+                                    <br />
+                                    <small style={{ fontSize: "14px" }}>
+                                        Du {dateDebut ? dateParser(dateDebut) : dateParser(getdefaultDateDebut)} 
+                                        au {dateFin ? dateParser(dateFin) : dateParser(getdefaultDateFin)}
+                                    </small>
+                                </h4>
+                            </div>
+
+                            {/* Information caissier */}
+                            {UserName && (
+                                <div className="alert alert-info mb-3" style={{ background: "#e6f2f9", border: "none", borderRadius: "8px" }}>
+                                    <i className="fas fa-user-check me-2"></i>
+                                    <strong>Caissier(ère):</strong> {UserName}
+                                </div>
+                            )}
+
+                            <div className="table-responsive">
+                                <table className="table table-bordered" id="content-repertoire-table" style={{ fontSize: "13px" }}>
+                                    <thead style={{ backgroundColor: "#1a2632", color: "white" }}>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Réf. Op</th>
+                                            <th>Num cpte</th>
+                                            <th>Nom compte</th>
+                                            <th>Libellé</th>
+                                            <th className="text-end">Débit</th>
+                                            <th className="text-end">Crédit</th>
+                                         </tr>
+                                    </thead>
+                                    <tbody>
+                                        {/* Section CDF */}
+                                        {getDataCDF && getDataCDF.length > 0 && (
+                                            <>
+                                                <tr style={{ backgroundColor: "#e6f2f9" }}>
+                                                    <td colSpan="7" className="fw-bold fs-5" style={{ color: "steelblue" }}>
+                                                        <i className="fas fa-chart-line me-2"></i>CDF
+                                                    </td>
+                                                </tr>
+                                                {getDataCDF.map((res, index) => (
+                                                    <tr key={`cdf-${index}`}>
+                                                        <td>{dateParser(res.DateTransaction)}</td>
+                                                        <td className="fw-semibold">{res.NumTransaction}</td>
+                                                        <td>{res.NumCompte}</td>
+                                                        <td>{res.NomCompte}</td>
+                                                        <td>{res.Libelle}</td>
+                                                        <td className="text-end text-danger fw-bold">{res.Debitfc?.toLocaleString() || "0,00"}</td>
+                                                        <td className="text-end text-success fw-bold">{res.Creditfc?.toLocaleString() || "0,00"}</td>
+                                                    </tr>
+                                                ))}
+                                                {/* Total CDF */}
+                                                <tr style={{ backgroundColor: "#20c997", color: "white", fontWeight: "bold" }}>
+                                                    <td colSpan="5" className="text-end fw-bold">TOTAL CDF :</td>
+                                                    <td className="text-end fw-bold">{numberWithSpaces(getTot?.totDebitCDF?.totDebitCDF)}</td>
+                                                    <td className="text-end fw-bold">{numberWithSpaces(getTot?.totCreditCDF?.totCreditCDF)}</td>
+                                                </tr>
+                                            </>
+                                        )}
+
+                                        {/* Section USD */}
+                                        {getDataUSD && getDataUSD.length > 0 && (
+                                            <>
+                                                <tr style={{ backgroundColor: "#e6f2f9" }}>
+                                                    <td colSpan="7" className="fw-bold fs-5" style={{ color: "steelblue" }}>
+                                                        <i className="fas fa-dollar-sign me-2"></i>USD
+                                                    </td>
+                                                </tr>
+                                                {getDataUSD.map((res, index) => (
+                                                    <tr key={`usd-${index}`}>
+                                                        <td>{dateParser(res.DateTransaction)}</td>
+                                                        <td className="fw-semibold">{res.NumTransaction}</td>
+                                                        <td>{res.NumCompte}</td>
+                                                        <td>{res.NomCompte}</td>
+                                                        <td>{res.Libelle}</td>
+                                                        <td className="text-end text-danger fw-bold">{res.Debitusd?.toLocaleString() || "0,00"}</td>
+                                                        <td className="text-end text-success fw-bold">{res.Creditusd?.toLocaleString() || "0,00"}</td>
+                                                    </tr>
+                                                ))}
+                                                {/* Total USD */}
+                                                <tr style={{ backgroundColor: "#20c997", color: "white", fontWeight: "bold" }}>
+                                                    <td colSpan="5" className="text-end fw-bold">TOTAL USD :</td>
+                                                    <td className="text-end fw-bold">{numberWithSpaces(getTot?.totDebitUSD?.totDebitUSD)}</td>
+                                                    <td className="text-end fw-bold">{numberWithSpaces(getTot?.totCreditUSD?.totCreditUSD)}</td>
+                                                </tr>
+                                            </>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Boutons d'export (inchangés) */}
+                        <div className="d-flex justify-content-end gap-2 mt-4">
+                            <button onClick={() => exportTableData("content-to-download-repertoire")} 
+                                className="btn" style={{ background: "#28a745", color: "white", borderRadius: "8px" }}>
+                                <i className="fas fa-file-excel me-2"></i>Exporter en Excel
+                            </button>
+                            <button onClick={exportToPDF} 
+                                className="btn" style={{ background: "#dc3545", color: "white", borderRadius: "8px" }}>
+                                <i className="fas fa-file-pdf me-2"></i>Exporter en PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                // Message si aucune donnée
+                (getDataCDF || getDataUSD) && (
+                    <div className="text-center py-5">
+                        <i className="fas fa-inbox fa-4x mb-3 text-muted"></i>
+                        <p className="text-muted">Aucune opération trouvée pour la période et le caissier sélectionnés.</p>
+                    </div>
+                )
+            )}
+
+            {/* 🆕 BILLETAGE - Deux cartes côte à côte */}
+            {(billetageUSD || billetageCDF) && (
+                <div className="row g-4 mb-4">
+                    {/* Billetage USD */}
+                    <div className="col-md-6">
+                        <div className="card border-0 shadow-sm rounded-3 h-100">
+                            <div className="card-header bg-white border-0 pt-3">
+                                <h6 className="fw-bold" style={{ color: "steelblue" }}>
+                                    <i className="fas fa-money-bill me-2"></i>
+                                    Billetage Disponible en USD
+                                </h6>
+                            </div>
+                            <div className="card-body" style={{ maxHeight: "450px", overflowY: "auto" }}>
+                                {billetageUSD ? (
+                                    <div className="table-responsive">
+                                        <table className="table table-bordered table-sm table-ultra-compact">
+                                            <thead style={{ backgroundColor: "#e6f2f9" }}>
+                                                <tr style={{ color: "steelblue" }}>
+                                                    <th>Coupure</th>
+                                                    <th>Nbr Billets</th>
+                                                    <th>Montant</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {[
+                                                    { label: "100", value: billetageUSD.centDollars, multiplier: 100 },
+                                                    { label: "50", value: billetageUSD.cinquanteDollars, multiplier: 50 },
+                                                    { label: "20", value: billetageUSD.vightDollars, multiplier: 20 },
+                                                    { label: "10", value: billetageUSD.dixDollars, multiplier: 10 },
+                                                    { label: "5", value: billetageUSD.cinqDollars, multiplier: 5 },
+                                                    { label: "1", value: billetageUSD.unDollars, multiplier: 1 },
+                                                ].map((item, idx) => (
+                                                    <tr key={idx}>
+                                                        <td className="fw-semibold">{item.label} X</td>
+                                                        <td>{parseInt(item.value) || 0}</td>
+                                                        <td className="text-success">
+                                                            {(parseInt(item.value) * item.multiplier).toLocaleString()}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr style={{ backgroundColor: "#6c757d", color: "white" }}>
+                                                    <th colSpan="2">Total</th>
+                                                    <th className="fw-bold">
+                                                        {billetageUSD.sommeMontantUSD !== undefined &&
+                                                            numberWithSpaces(parseInt(billetageUSD.sommeMontantUSD))}
+                                                    </th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <p className="text-muted text-center">Aucune donnée USD disponible</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Billetage CDF */}
+                    <div className="col-md-6">
+                        <div className="card border-0 shadow-sm rounded-3 h-100">
+                            <div className="card-header bg-white border-0 pt-3">
+                                <h6 className="fw-bold" style={{ color: "steelblue" }}>
+                                    <i className="fas fa-money-bill-wave me-2"></i>
+                                    Billetage Disponible en CDF
+                                </h6>
+                            </div>
+                            <div className="card-body" style={{ maxHeight: "450px", overflowY: "auto" }}>
+                                {billetageCDF ? (
+                                    <div className="table-responsive">
+                                        <table className="table table-bordered table-sm table-ultra-compact">
+                                            <thead style={{ backgroundColor: "#e6f2f9" }}>
+                                                <tr style={{ color: "steelblue" }}>
+                                                    <th>Coupure</th>
+                                                    <th>Nbr Billets</th>
+                                                    <th>Montant</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {[
+                                                    { label: "20 000", value: billetageCDF.vightMilleFranc, multiplier: 20000 },
+                                                    { label: "10 000", value: billetageCDF.dixMilleFranc, multiplier: 10000 },
+                                                    { label: "5 000", value: billetageCDF.cinqMilleFranc, multiplier: 5000 },
+                                                    { label: "1 000", value: billetageCDF.milleFranc, multiplier: 1000 },
+                                                    { label: "500", value: billetageCDF.cinqCentFranc, multiplier: 500 },
+                                                    { label: "200", value: billetageCDF.deuxCentFranc, multiplier: 200 },
+                                                    { label: "100", value: billetageCDF.centFranc, multiplier: 100 },
+                                                    { label: "50", value: billetageCDF.cinquanteFanc, multiplier: 50 },
+                                                ].map((item, idx) => (
+                                                    <tr key={idx}>
+                                                        <td className="fw-semibold">{item.label} X</td>
+                                                        <td>{parseInt(item.value) || 0}</td>
+                                                        <td className="text-success">
+                                                            {(parseInt(item.value) * item.multiplier).toLocaleString()}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr style={{ backgroundColor: "#6c757d", color: "white" }}>
+                                                    <th colSpan="2">Total</th>
+                                                    <th className="fw-bold">
+                                                        {billetageCDF.sommeMontantCDF !== undefined &&
+                                                            numberWithSpaces(parseInt(billetageCDF.sommeMontantCDF))}
+                                                    </th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <p className="text-muted text-center">Aucune donnée CDF disponible</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <div style={{ height: "30px" }}></div>
+            <style>
+                {`
+                .modern-input {
+                    border-radius: 12px;
+                    border: 1px solid #e2e8f0;
+                    padding: 10px 14px;
+                    font-size: 0.9rem;
+                    transition: all 0.2s ease;
+                }
+                .modern-input:focus {
+                    border-color: #20c997;
+                    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+                }
+                .modern-select {
+                    border-radius: 12px;
+                    border: 1px solid #e2e8f0;
+                    padding: 10px 14px;
+                    font-size: 0.9rem;
+                    background-color: white;
+                    transition: all 0.2s ease;
+                }
+                .modern-select:focus {
+                    border-color: #20c997;
+                    box-shadow: 0 0 0 3px rgba(32, 201, 151, 0.1);
+                }
+                .label-modern {
+                    font-size: 0.8rem;
+                    font-weight: 600;
+                    color: #4a5568;
+                    margin-bottom: 6px;
+                    display: block;
+                }
+                .section-title {
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: #1e293b;
+                    margin: 0;
+                }
+                .gradient-btn {
+                    background: linear-gradient(135deg, #20c997, #198764);
+                    border: none;
+                    border-radius: 12px;
+                    transition: all 0.2s ease;
+                }
+                .gradient-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 8px 20px rgba(32, 201, 151, 0.3);
+                }
+                `}
+            </style>
+        </div>
     );
 };
 
