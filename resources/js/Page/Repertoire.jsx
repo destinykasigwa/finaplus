@@ -64,8 +64,6 @@ const Repertoire = () => {
                 agence_filter: agenceFilter
             });
             if (res.data.status === 1) {
-                // Les données sont structurées en tableaux (un par utilisateur)
-                // On prend le premier (ou on peut filtrer par nom)
                 const usd = res.data.billetageUSD?.[0] || null;
                 const cdf = res.data.billetageCDF?.[0] || null;
                 setBilletageUSD(usd);
@@ -99,7 +97,6 @@ const Repertoire = () => {
                 totDebitUSD: res.data.totDebitUSD,
                 totCreditUSD: res.data.totCreditUSD,
             });
-            // Après récupération des données, on charge le billetage
             await fetchBilletage();
         } else {
             setloading(false);
@@ -113,7 +110,7 @@ const Repertoire = () => {
         }
     };
 
-    // Au changement de filtre, on recharge le billetage si les données existent déjà
+    // Rechargement du billetage lors d'un changement de filtre
     useEffect(() => {
         if (getDataCDF || getDataUSD) {
             fetchBilletage();
@@ -121,7 +118,7 @@ const Repertoire = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [dateFin, UserName, agenceFilter]);
 
-    // export functions (inchangées)
+    // Fonctions d'export
     const exportTableData = (tableId) => {
         const s2ab = (s) => {
             const buf = new ArrayBuffer(s.length);
@@ -204,20 +201,15 @@ const Repertoire = () => {
             month: "numeric",
             day: "numeric",
         };
-
         let timestamp = Date.parse(num);
-
         let date = new Date(timestamp).toLocaleDateString("fr-FR", options);
-
         return date.toString();
     };
-    let compteur = 1;
-    let compteur2 = 1;
+
     function numberWithSpaces(x) {
         if (x === null || x === undefined) {
             return "0.00";
         }
-
         var fixedNumber = parseFloat(x).toFixed(2);
         var parts = fixedNumber.split(".");
         parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -237,7 +229,7 @@ const Repertoire = () => {
 
     return (
         <div className="container-fluid" style={{ marginTop: "10px", padding: "0 15px" }}>
-            {/* En-tête moderne (inchangé) */}
+            {/* En-tête moderne */}
             <div className="row mb-4">
                 <div className="col-12">
                     <div className="card border-0 shadow-sm rounded-3">
@@ -259,7 +251,7 @@ const Repertoire = () => {
                 </div>
             </div>
 
-            {/* Filtres (inchangés) */}
+            {/* Filtres */}
             <div className="row g-4 mb-4">
                 {/* Période */}
                 <div className="col-md-3">
@@ -379,22 +371,23 @@ const Repertoire = () => {
                 </div>
             </div>
 
-            {/* Tableau des résultats (inchangé) */}
+            {/* Affichage des résultats */}
             {(getDataCDF && getDataCDF.length > 0) || (getDataUSD && getDataUSD.length > 0) ? (
                 <div className="card border-0 shadow-sm rounded-3 mb-4">
                     <div className="card-body p-4">
+                        {/* 👇 Contenu exportable (tableau + billetage + boutons) */}
                         <div id="content-to-download-repertoire">
                             {/* En-tête du rapport */}
                             <div className="text-center mb-3">
                                 <EnteteRapport />
                             </div>
-                            
+
                             <div className="text-center mb-4">
-                                <h4 style={{ 
-                                    background: "#1a2632", 
-                                    padding: "12px", 
-                                    color: "#fff", 
-                                    borderRadius: "8px", 
+                                <h4 style={{
+                                    background: "#1a2632",
+                                    padding: "12px",
+                                    color: "#fff",
+                                    borderRadius: "8px",
                                     display: "inline-block",
                                     borderLeft: "5px solid #20c997"
                                 }}>
@@ -402,7 +395,7 @@ const Repertoire = () => {
                                     RÉPERTOIRE CAISSE {getAgenceNom()}
                                     <br />
                                     <small style={{ fontSize: "14px" }}>
-                                        Du {dateDebut ? dateParser(dateDebut) : dateParser(getdefaultDateDebut)} 
+                                        Du {dateDebut ? dateParser(dateDebut) : dateParser(getdefaultDateDebut)}
                                         au {dateFin ? dateParser(dateFin) : dateParser(getdefaultDateFin)}
                                     </small>
                                 </h4>
@@ -416,6 +409,7 @@ const Repertoire = () => {
                                 </div>
                             )}
 
+                            {/* Tableau des opérations */}
                             <div className="table-responsive">
                                 <table className="table table-bordered" id="content-repertoire-table" style={{ fontSize: "13px" }}>
                                     <thead style={{ backgroundColor: "#1a2632", color: "white" }}>
@@ -427,7 +421,7 @@ const Repertoire = () => {
                                             <th>Libellé</th>
                                             <th className="text-end">Débit</th>
                                             <th className="text-end">Crédit</th>
-                                         </tr>
+                                        </tr>
                                     </thead>
                                     <tbody>
                                         {/* Section CDF */}
@@ -488,19 +482,141 @@ const Repertoire = () => {
                                     </tbody>
                                 </table>
                             </div>
+
+                            {/* 🆕 BILLETAGE - intégré dans la zone exportable */}
+                            {(billetageUSD || billetageCDF) && (
+                                <div className="row g-4 mt-3">
+                                    {/* Billetage USD */}
+                                    <div className="col-md-6">
+                                        <div className="card border-0 shadow-sm rounded-3 h-100">
+                                            <div className="card-header bg-white border-0 pt-3">
+                                                <h6 className="fw-bold" style={{ color: "steelblue" }}>
+                                                    <i className="fas fa-money-bill me-2"></i>
+                                                    Billetage Disponible en USD
+                                                </h6>
+                                            </div>
+                                            <div className="card-body" style={{ maxHeight: "450px", overflowY: "auto" }}>
+                                                {billetageUSD ? (
+                                                    <div className="table-responsive">
+                                                        <table className="table table-bordered table-sm table-ultra-compact">
+                                                            <thead style={{ backgroundColor: "#e6f2f9" }}>
+                                                                <tr style={{ color: "steelblue" }}>
+                                                                    <th>Coupure</th>
+                                                                    <th>Nbr Billets</th>
+                                                                    <th>Montant</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {[
+                                                                    { label: "100", value: billetageUSD.centDollars, multiplier: 100 },
+                                                                    { label: "50", value: billetageUSD.cinquanteDollars, multiplier: 50 },
+                                                                    { label: "20", value: billetageUSD.vightDollars, multiplier: 20 },
+                                                                    { label: "10", value: billetageUSD.dixDollars, multiplier: 10 },
+                                                                    { label: "5", value: billetageUSD.cinqDollars, multiplier: 5 },
+                                                                    { label: "1", value: billetageUSD.unDollars, multiplier: 1 },
+                                                                ].map((item, idx) => (
+                                                                    <tr key={idx}>
+                                                                        <td className="fw-semibold">{item.label} X</td>
+                                                                        <td>{parseInt(item.value) || 0}</td>
+                                                                        <td className="text-success">
+                                                                            {(parseInt(item.value) * item.multiplier).toLocaleString()}
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                            <tfoot>
+                                                                <tr style={{ backgroundColor: "#6c757d", color: "white" }}>
+                                                                    <th colSpan="2">Total</th>
+                                                                    <th className="fw-bold">
+                                                                        {billetageUSD.sommeMontantUSD !== undefined &&
+                                                                            numberWithSpaces(parseInt(billetageUSD.sommeMontantUSD))}
+                                                                    </th>
+                                                                </tr>
+                                                            </tfoot>
+                                                        </table>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-muted text-center">Aucune donnée USD disponible</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Billetage CDF */}
+                                    <div className="col-md-6">
+                                        <div className="card border-0 shadow-sm rounded-3 h-100">
+                                            <div className="card-header bg-white border-0 pt-3">
+                                                <h6 className="fw-bold" style={{ color: "steelblue" }}>
+                                                    <i className="fas fa-money-bill-wave me-2"></i>
+                                                    Billetage Disponible en CDF
+                                                </h6>
+                                            </div>
+                                            <div className="card-body" style={{ maxHeight: "450px", overflowY: "auto" }}>
+                                                {billetageCDF ? (
+                                                    <div className="table-responsive">
+                                                        <table className="table table-bordered table-sm table-ultra-compact">
+                                                            <thead style={{ backgroundColor: "#e6f2f9" }}>
+                                                                <tr style={{ color: "steelblue" }}>
+                                                                    <th>Coupure</th>
+                                                                    <th>Nbr Billets</th>
+                                                                    <th>Montant</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {[
+                                                                    { label: "20 000", value: billetageCDF.vightMilleFranc, multiplier: 20000 },
+                                                                    { label: "10 000", value: billetageCDF.dixMilleFranc, multiplier: 10000 },
+                                                                    { label: "5 000", value: billetageCDF.cinqMilleFranc, multiplier: 5000 },
+                                                                    { label: "1 000", value: billetageCDF.milleFranc, multiplier: 1000 },
+                                                                    { label: "500", value: billetageCDF.cinqCentFranc, multiplier: 500 },
+                                                                    { label: "200", value: billetageCDF.deuxCentFranc, multiplier: 200 },
+                                                                    { label: "100", value: billetageCDF.centFranc, multiplier: 100 },
+                                                                    { label: "50", value: billetageCDF.cinquanteFanc, multiplier: 50 },
+                                                                ].map((item, idx) => (
+                                                                    <tr key={idx}>
+                                                                        <td className="fw-semibold">{item.label} X</td>
+                                                                        <td>{parseInt(item.value) || 0}</td>
+                                                                        <td className="text-success">
+                                                                            {(parseInt(item.value) * item.multiplier).toLocaleString()}
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                            <tfoot>
+                                                                <tr style={{ backgroundColor: "#6c757d", color: "white" }}>
+                                                                    <th colSpan="2">Total</th>
+                                                                    <th className="fw-bold">
+                                                                        {billetageCDF.sommeMontantCDF !== undefined &&
+                                                                            numberWithSpaces(parseInt(billetageCDF.sommeMontantCDF))}
+                                                                    </th>
+                                                                </tr>
+                                                            </tfoot>
+                                                        </table>
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-muted text-center">Aucune donnée CDF disponible</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                           
                         </div>
 
-                        {/* Boutons d'export (inchangés) */}
-                        <div className="d-flex justify-content-end gap-2 mt-4">
-                            <button onClick={() => exportTableData("content-to-download-repertoire")} 
-                                className="btn" style={{ background: "#28a745", color: "white", borderRadius: "8px" }}>
-                                <i className="fas fa-file-excel me-2"></i>Exporter en Excel
-                            </button>
-                            <button onClick={exportToPDF} 
-                                className="btn" style={{ background: "#dc3545", color: "white", borderRadius: "8px" }}>
-                                <i className="fas fa-file-pdf me-2"></i>Exporter en PDF
-                            </button>
-                        </div>
+                         {/* 🆕 Boutons d'export en bas du contenu exportable */}
+                            <div className="d-flex justify-content-end gap-2 mt-4">
+                                <button onClick={() => exportTableData("content-to-download-repertoire")}
+                                    className="btn" style={{ background: "#28a745", color: "white", borderRadius: "8px" }}>
+                                    <i className="fas fa-file-excel me-2"></i>Exporter en Excel
+                                </button>
+                                <button onClick={exportToPDF}
+                                    className="btn" style={{ background: "#dc3545", color: "white", borderRadius: "8px" }}>
+                                    <i className="fas fa-file-pdf me-2"></i>Exporter en PDF
+                                </button>
+                            </div>
+                        {/* Fin du contenu exportable */}
                     </div>
                 </div>
             ) : (
@@ -511,125 +627,6 @@ const Repertoire = () => {
                         <p className="text-muted">Aucune opération trouvée pour la période et le caissier sélectionnés.</p>
                     </div>
                 )
-            )}
-
-            {/* 🆕 BILLETAGE - Deux cartes côte à côte */}
-            {(billetageUSD || billetageCDF) && (
-                <div className="row g-4 mb-4">
-                    {/* Billetage USD */}
-                    <div className="col-md-6">
-                        <div className="card border-0 shadow-sm rounded-3 h-100">
-                            <div className="card-header bg-white border-0 pt-3">
-                                <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                                    <i className="fas fa-money-bill me-2"></i>
-                                    Billetage Disponible en USD
-                                </h6>
-                            </div>
-                            <div className="card-body" style={{ maxHeight: "450px", overflowY: "auto" }}>
-                                {billetageUSD ? (
-                                    <div className="table-responsive">
-                                        <table className="table table-bordered table-sm table-ultra-compact">
-                                            <thead style={{ backgroundColor: "#e6f2f9" }}>
-                                                <tr style={{ color: "steelblue" }}>
-                                                    <th>Coupure</th>
-                                                    <th>Nbr Billets</th>
-                                                    <th>Montant</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {[
-                                                    { label: "100", value: billetageUSD.centDollars, multiplier: 100 },
-                                                    { label: "50", value: billetageUSD.cinquanteDollars, multiplier: 50 },
-                                                    { label: "20", value: billetageUSD.vightDollars, multiplier: 20 },
-                                                    { label: "10", value: billetageUSD.dixDollars, multiplier: 10 },
-                                                    { label: "5", value: billetageUSD.cinqDollars, multiplier: 5 },
-                                                    { label: "1", value: billetageUSD.unDollars, multiplier: 1 },
-                                                ].map((item, idx) => (
-                                                    <tr key={idx}>
-                                                        <td className="fw-semibold">{item.label} X</td>
-                                                        <td>{parseInt(item.value) || 0}</td>
-                                                        <td className="text-success">
-                                                            {(parseInt(item.value) * item.multiplier).toLocaleString()}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                            <tfoot>
-                                                <tr style={{ backgroundColor: "#6c757d", color: "white" }}>
-                                                    <th colSpan="2">Total</th>
-                                                    <th className="fw-bold">
-                                                        {billetageUSD.sommeMontantUSD !== undefined &&
-                                                            numberWithSpaces(parseInt(billetageUSD.sommeMontantUSD))}
-                                                    </th>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <p className="text-muted text-center">Aucune donnée USD disponible</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Billetage CDF */}
-                    <div className="col-md-6">
-                        <div className="card border-0 shadow-sm rounded-3 h-100">
-                            <div className="card-header bg-white border-0 pt-3">
-                                <h6 className="fw-bold" style={{ color: "steelblue" }}>
-                                    <i className="fas fa-money-bill-wave me-2"></i>
-                                    Billetage Disponible en CDF
-                                </h6>
-                            </div>
-                            <div className="card-body" style={{ maxHeight: "450px", overflowY: "auto" }}>
-                                {billetageCDF ? (
-                                    <div className="table-responsive">
-                                        <table className="table table-bordered table-sm table-ultra-compact">
-                                            <thead style={{ backgroundColor: "#e6f2f9" }}>
-                                                <tr style={{ color: "steelblue" }}>
-                                                    <th>Coupure</th>
-                                                    <th>Nbr Billets</th>
-                                                    <th>Montant</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {[
-                                                    { label: "20 000", value: billetageCDF.vightMilleFranc, multiplier: 20000 },
-                                                    { label: "10 000", value: billetageCDF.dixMilleFranc, multiplier: 10000 },
-                                                    { label: "5 000", value: billetageCDF.cinqMilleFranc, multiplier: 5000 },
-                                                    { label: "1 000", value: billetageCDF.milleFranc, multiplier: 1000 },
-                                                    { label: "500", value: billetageCDF.cinqCentFranc, multiplier: 500 },
-                                                    { label: "200", value: billetageCDF.deuxCentFranc, multiplier: 200 },
-                                                    { label: "100", value: billetageCDF.centFranc, multiplier: 100 },
-                                                    { label: "50", value: billetageCDF.cinquanteFanc, multiplier: 50 },
-                                                ].map((item, idx) => (
-                                                    <tr key={idx}>
-                                                        <td className="fw-semibold">{item.label} X</td>
-                                                        <td>{parseInt(item.value) || 0}</td>
-                                                        <td className="text-success">
-                                                            {(parseInt(item.value) * item.multiplier).toLocaleString()}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                            <tfoot>
-                                                <tr style={{ backgroundColor: "#6c757d", color: "white" }}>
-                                                    <th colSpan="2">Total</th>
-                                                    <th className="fw-bold">
-                                                        {billetageCDF.sommeMontantCDF !== undefined &&
-                                                            numberWithSpaces(parseInt(billetageCDF.sommeMontantCDF))}
-                                                    </th>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                ) : (
-                                    <p className="text-muted text-center">Aucune donnée CDF disponible</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
             )}
 
             <div style={{ height: "30px" }}></div>

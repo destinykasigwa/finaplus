@@ -66,80 +66,7 @@ class TransactionsController extends Controller
     }
 
     //GET SEACHED ACCOUNT
-    // public function getSeachedAccount(Request $request)
-    // {
-    //     if (isset($request->searched_account)) {
-    //         $checkRowExist = Comptes::where("NumCompte", $request->searched_account)->orWhere("NumAdherant", $request->searched_account)->first();
-
-    //         $numDocument = CompteurDocument::latest()->first();
-    //         if ($checkRowExist) {
-    //             $data = Comptes::where(function ($query) use ($request) {
-    //                 $query->where('NumCompte', $request->searched_account)
-    //                     ->orWhere('NumAdherant', $request->searched_account);
-    //             })->where('niveau', 5)->get();
-    //             $membreSignature =  AdhesionMembre::where("compte_abrege", $request->searched_account)->first();
-    //             $madantairedata = Mandataires::where("refCompte", $request->searched_account)->get();
-    //             // CompteurDocument::create([
-    //             //     "fakenumber" => 000,
-    //             // ]);
-    //             return response()->json([
-    //                 "status" => 1,
-    //                 "data" => $data,
-    //                 "membreSignature" => $membreSignature,
-    //                 "numDocument" => $numDocument,
-    //                 "madantairedata" => $madantairedata
-    //             ]);
-    //         } else {
-    //             return response()->json(["status" => 0, "msg" => "Ce numero de compte n'existe pas."]);
-    //         }
-    //     } else {
-    //         return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
-    //     }
-    // }
-
-    // public function getSeachedAccount(Request $request)
-    // {
-    //     if (!isset($request->searched_account)) {
-    //         return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
-    //     }
-
-    //     // Récupération de l'agence courante
-    //     $currentAgence = session('current_agence');
-    //     $codeAgence = $currentAgence['code_agence'] ?? null;
-    //     if (!$codeAgence) {
-    //         return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
-    //     }
-
-    //     $search = $request->searched_account;
-
-    //     // Recherche des comptes de niveau 5 appartenant à l'agence courante
-    //     $data = Comptes::where('niveau', 5)
-    //         ->where('CodeAgence', $codeAgence)
-    //         ->where(function ($query) use ($search) {
-    //             $query->where('NumCompte', $search)
-    //                 ->orWhere('NumAdherant', $search)
-    //                 ->orWhere('Num_Manuel', $search);
-    //         })
-    //         ->get();
-
-    //     if ($data->isEmpty()) {
-    //         return response()->json(["status" => 0, "msg" => "Aucun compte trouvé dans votre agence pour ce numéro."]);
-    //     }
-
-    //     // Récupération des infos complémentaires (signature, mandataire)
-    //     $compte = $data->first();
-    //     $membreSignature = AdhesionMembre::where("compte_abrege", $compte->NumAdherant)->first();
-    //     $madantairedata = Mandataires::where("refCompte", $compte->NumAdherant)->get();
-    //     $numDocument = CompteurDocument::latest()->first();
-
-    //     return response()->json([
-    //         "status"          => 1,
-    //         "data"            => $data,
-    //         "membreSignature" => $membreSignature,
-    //         "numDocument"     => $numDocument,
-    //         "madantairedata"  => $madantairedata
-    //     ]);
-    // }
+   
 
     public function getSeachedAccount(Request $request)
     {
@@ -196,134 +123,6 @@ class TransactionsController extends Controller
             "madantairedata"  => $madantairedata
         ]);
     }
-
-    // public function getSeachedAccount2(Request $request)
-    // {
-    //     if (isset($request->searched_account)) {
-    //         $checkRowExist = Comptes::where("NumCompte", $request->searched_account)->orWhere("NumAdherant", $request->searched_account)->first();
-    //         $numDocument = CompteurDocument::latest()->first();
-    //         if ($checkRowExist) {
-    //             $data = Comptes::where(function ($query) use ($request) {
-    //                 $query->where('NumCompte', $request->searched_account)
-    //                     ->orWhere('NumAdherant', $request->searched_account);
-    //             })
-    //                 ->where('niveau', 5)
-    //                 ->where('RefGroupe', 330) // ← Ajout du filtre
-    //                 ->get();
-    //             $membreSignature =  AdhesionMembre::where("compte_abrege", $request->searched_account)->first();
-    //             $madantairedata = Mandataires::where("refCompte", $request->searched_account)->get();
-    //             // CompteurDocument::create([
-    //             //     "fakenumber" => 000,
-    //             // ]);
-    //             return response()->json([
-    //                 "status" => 1,
-    //                 "data" => $data,
-    //                 "membreSignature" => $membreSignature,
-    //                 "numDocument" => $numDocument,
-    //                 "madantairedata" => $madantairedata
-    //             ]);
-    //         } else {
-    //             return response()->json(["status" => 0, "msg" => "Ce numero de compte n'existe pas."]);
-    //         }
-    //     } else {
-    //         return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
-    //     }
-    // }
-
-    //     public function getSeachedAccount2(Request $request)
-    // {
-    //     if (!isset($request->searched_account)) {
-    //         return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
-    //     }
-
-    //     // Récupération de l'agence courante
-    //     $currentAgence = session('current_agence');
-    //     $codeAgence = $currentAgence['code_agence'] ?? null;
-    //     if (!$codeAgence) {
-    //         return response()->json(["status" => 0, "msg" => "Aucune agence de travail sélectionnée."]);
-    //     }
-
-    //     $search = $request->searched_account;
-
-    //     // Vérifier l'existence d'un compte dans l'agence courante
-    //     $checkRowExist = Comptes::where('CodeAgence', $codeAgence)
-    //         ->where(function ($q) use ($search) {
-    //             $q->where('NumCompte', $search)
-    //               ->orWhere('NumAdherant', $search)
-    //               ->orWhere('num_manuel', $search);
-    //         })
-    //         ->first();
-
-    //     $numDocument = CompteurDocument::latest()->first();
-
-    //     if ($checkRowExist) {
-    //         $data = Comptes::where('CodeAgence', $codeAgence)
-    //             ->where(function ($query) use ($search) {
-    //                 $query->where('NumCompte', $search)
-    //                       ->orWhere('NumAdherant', $search)
-    //                       ->orWhere('num_manuel', $search);
-    //             })
-    //             ->where('niveau', 5)
-    //             ->where('RefGroupe', 330)
-    //             ->get();
-
-    //         $membreSignature = AdhesionMembre::where('compte_abrege', $checkRowExist->NumAdherant)->first();
-    //         $madantairedata = Mandataires::where('refCompte', $checkRowExist->NumAdherant)->get();
-
-    //         return response()->json([
-    //             "status" => 1,
-    //             "data" => $data,
-    //             "membreSignature" => $membreSignature,
-    //             "numDocument" => $numDocument,
-    //             "madantairedata" => $madantairedata
-    //         ]);
-    //     } else {
-    //         return response()->json(["status" => 0, "msg" => "Ce numéro de compte n'existe pas dans votre agence."]);
-    //     }
-    // }
-
-    // public function getSeachedAccount2(Request $request)
-    // {
-    //     if (!isset($request->searched_account)) {
-    //         return response()->json(["status" => 0, "msg" => "Aucun numéro de compte renseigné."]);
-    //     }
-
-    //     $search = $request->searched_account;
-
-    //     // Recherche sans restriction d'agence (compte n'importe où)
-    //     $checkRowExist = Comptes::where(function ($q) use ($search) {
-    //         $q->where('NumCompte', $search)
-    //             ->orWhere('NumAdherant', $search)
-    //             ->orWhere('num_manuel', $search);
-    //     })->first();
-
-    //     $numDocument = CompteurDocument::latest()->first();
-
-    //     if ($checkRowExist) {
-    //         $data = Comptes::where(function ($query) use ($search) {
-    //             $query->where('NumCompte', $search)
-    //                 ->orWhere('NumAdherant', $search)
-    //                 ->orWhere('num_manuel', $search);
-    //         })
-    //             ->where('niveau', 5)
-    //             ->where('RefGroupe', 330)
-    //             ->get();
-
-    //         $membreSignature = AdhesionMembre::where('compte_abrege', $checkRowExist->NumAdherant)->first();
-    //         $madantairedata = Mandataires::where('refCompte', $checkRowExist->NumAdherant)->get();
-
-    //         return response()->json([
-    //             "status" => 1,
-    //             "data" => $data,
-    //             "membreSignature" => $membreSignature,
-    //             "numDocument" => $numDocument,
-    //             "madantairedata" => $madantairedata
-    //         ]);
-    //     } else {
-    //         return response()->json(["status" => 0, "msg" => "Ce numéro de compte n'existe pas."]);
-    //     }
-    // }
-
 
     public function getSeachedAccount2(Request $request)
     {
@@ -4404,10 +4203,10 @@ class TransactionsController extends Controller
                         ]);
                         if ($data[$i]->CodeMonnaie == 1) {
                             //CORRIGE LE BILLETAGE
-                            BilletageUsd::where("refOperation", $data[$i]->RéfTransaction)->delete();
+                            BilletageUsd::where("refOperation", $data[$i]->NumTransaction )->delete();
                         } else if ($data[$i]->CodeMonnaie == 2) {
                             //CORRIGE LE BILLETAGE
-                            BilletageCdf::where("refOperation", $data[$i]->RéfTransaction)->delete();
+                            BilletageCdf::where("refOperation", $data[$i]->NumTransaction)->delete();
                         }
 
                         Transactions::where("NumTransaction", "=", $data[$i]->NumTransaction)->update([
