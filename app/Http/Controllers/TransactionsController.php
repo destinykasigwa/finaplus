@@ -2081,117 +2081,155 @@ class TransactionsController extends Controller
     }
 
     public function adjustBilletage(Request $request)
-    {
-        $user = Auth::user();
-        $isSuperAdmin = ($user->role === 'SuperAdmin');
-        $devise = $request->devise;
-        $adjustedData = $request->adjusted_data;
+{
+    $user = Auth::user();
+    $isSuperAdmin = ($user->role === 'SuperAdmin');
+    $devise = $request->devise;
+    $adjustedData = $request->adjusted_data; // contient les nouvelles quantités par coupure
 
-        // Déterminer le caissier
-        if ($isSuperAdmin && $request->filled('caissier')) {
-            $caissierNom = $request->input('caissier');
-            $caissier = \App\Models\User::where('name', $caissierNom)->first();
-            if (!$caissier) {
-                return response()->json(['status' => 0, 'msg' => 'Caissier introuvable']);
-            }
-            $userName = $caissier->name;
-        } else {
-            $userName = $user->name;
+    // Déterminer le caissier
+    if ($isSuperAdmin && $request->filled('caissier')) {
+        $caissierNom = $request->input('caissier');
+        $caissier = \App\Models\User::where('name', $caissierNom)->first();
+        if (!$caissier) {
+            return response()->json(['status' => 0, 'msg' => 'Caissier introuvable']);
         }
-        $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
-        $date = $request->input('date') ?? $dateSystem;
-
-
-        if ($devise === 'CDF') {
-            $billetage = BilletageCdf::where('NomUtilisateur', $userName)
-                ->where('DateTransaction', $date)
-                ->where('delested', 0)
-                ->first();
-
-            if (!$billetage) {
-                return response()->json(['status' => 0, 'msg' => 'Aucun billetage CDF non délesté trouvé']);
-            }
-
-            // Sauvegarder l'ancien total
-            $ancienTotal = $billetage->montantEntre ?? $billetage->sommeMontantCDF ?? 0;
-
-            // Mise à jour des quantités
-            $fields = [
-                'vightMilleFranc',
-                'dixMilleFranc',
-                'cinqMilleFranc',
-                'milleFranc',
-                'cinqCentFranc',
-                'deuxCentFranc',
-                'centFranc',
-                'cinquanteFanc'
-            ];
-            foreach ($fields as $field) {
-                $billetage->$field = (int) ($adjustedData[$field] ?? 0);
-            }
-
-            // Recalcul du nouveau total
-            $nouveauTotal =
-                ($billetage->vightMilleFranc * 20000) +
-                ($billetage->dixMilleFranc * 10000) +
-                ($billetage->cinqMilleFranc * 5000) +
-                ($billetage->milleFranc * 1000) +
-                ($billetage->cinqCentFranc * 500) +
-                ($billetage->deuxCentFranc * 200) +
-                ($billetage->centFranc * 100) +
-                ($billetage->cinquanteFanc * 50);
-
-            // 🔥 Validation : on n'autorise pas un total supérieur à l'ancien total
-            if ($nouveauTotal > $ancienTotal) {
-                return response()->json([
-                    'status' => 0,
-                    'msg' => "Le montant total ajusté ($nouveauTotal) ne peut pas dépasser l'ancien total ($ancienTotal)."
-                ]);
-            }
-
-            $billetage->montantEntre = $nouveauTotal;
-            // $billetage->sommeMontantCDF = $nouveauTotal; // si nécessaire
-            $billetage->save();
-        } elseif ($devise === 'USD') {
-            $billetage = BilletageUsd::where('NomUtilisateur', $userName)
-                ->where('DateTransaction', $date)
-                ->where('delested', 0)
-                ->first();
-
-            if (!$billetage) {
-                return response()->json(['status' => 0, 'msg' => 'Aucun billetage USD non délesté trouvé']);
-            }
-
-            $ancienTotal = $billetage->montantEntre ?? $billetage->sommeMontantUSD ?? 0;
-
-            $fields = ['centDollars', 'cinquanteDollars', 'vightDollars', 'dixDollars', 'cinqDollars', 'unDollars'];
-            foreach ($fields as $field) {
-                $billetage->$field = (int) ($adjustedData[$field] ?? 0);
-            }
-
-            $nouveauTotal =
-                ($billetage->centDollars * 100) +
-                ($billetage->cinquanteDollars * 50) +
-                ($billetage->vightDollars * 20) +
-                ($billetage->dixDollars * 10) +
-                ($billetage->cinqDollars * 5) +
-                ($billetage->unDollars * 1);
-
-            if ($nouveauTotal > $ancienTotal) {
-                return response()->json([
-                    'status' => 0,
-                    'msg' => "Le montant total ajusté ($nouveauTotal) ne peut pas dépasser l'ancien total ($ancienTotal)."
-                ]);
-            }
-
-            $billetage->montantEntre = $nouveauTotal;
-            $billetage->save();
-        } else {
-            return response()->json(['status' => 0, 'msg' => 'Devise non reconnue']);
-        }
-
-        return response()->json(['status' => 1, 'msg' => 'Ajustement enregistré avec succès']);
+        $userName = $caissier->name;
+    } else {
+        $userName = $user->name;
     }
+
+    $dateSystem = TauxEtDateSystem::latest()->first()->DateSystem;
+    $date = $request->input('date') ?? $dateSystem;
+
+    if ($devise === 'CDF') {
+        // 1. Calculer l'ancien total net (somme des montantEntre - somme des montantSortie)
+        $ancienTotalNet = BilletageCdf::where('NomUtilisateur', $userName)
+            ->where('DateTransaction', $date)
+            ->where('delested', 0)
+            ->select(DB::raw('SUM(montantEntre) - SUM(montantSortie) as totalNet'))
+            ->value('totalNet') ?: 0;
+
+        // 2. Marquer toutes les lignes existantes comme délestées
+        BilletageCdf::where('NomUtilisateur', $userName)
+            ->where('DateTransaction', $date)
+            ->where('delested', 0)
+            ->update(['delested' => 1]);
+
+        // 3. Créer une nouvelle ligne avec les quantités ajustées
+        $nouveauBilletage = new BilletageCdf();
+        $nouveauBilletage->NomUtilisateur = $userName;
+        $nouveauBilletage->DateTransaction = $date;
+        $nouveauBilletage->delested = 0;
+
+        // Liste des champs de coupures (entrées)
+        $fields = [
+            'vightMilleFranc', 'dixMilleFranc', 'cinqMilleFranc',
+            'milleFranc', 'cinqCentFranc', 'deuxCentFranc',
+            'centFranc', 'cinquanteFanc'
+        ];
+        foreach ($fields as $field) {
+            $nouveauBilletage->$field = (int) ($adjustedData[$field] ?? 0);
+        }
+
+        // Mettre les champs de sortie à 0 (car c'est un état net)
+        $sortieFields = [
+            'vightMilleFrancSortie', 'dixMilleFrancSortie', 'cinqMilleFrancSortie',
+            'milleFrancSortie', 'cinqCentFrancSortie', 'deuxCentFrancSortie',
+            'centFrancSortie', 'cinquanteFancSortie'
+        ];
+        foreach ($sortieFields as $field) {
+            $nouveauBilletage->$field = 0;
+        }
+        $nouveauBilletage->montantSortie = 0;
+
+        // Calcul du nouveau total net (somme des coupures)
+        $nouveauTotal =
+            ($nouveauBilletage->vightMilleFranc * 20000) +
+            ($nouveauBilletage->dixMilleFranc * 10000) +
+            ($nouveauBilletage->cinqMilleFranc * 5000) +
+            ($nouveauBilletage->milleFranc * 1000) +
+            ($nouveauBilletage->cinqCentFranc * 500) +
+            ($nouveauBilletage->deuxCentFranc * 200) +
+            ($nouveauBilletage->centFranc * 100) +
+            ($nouveauBilletage->cinquanteFanc * 50);
+
+        // 4. Validation stricte : le nouveau total doit être égal à l'ancien
+        if (abs($nouveauTotal - $ancienTotalNet) > 0.01) {
+            return response()->json([
+                'status' => 0,
+                'msg' => "Le montant total ajusté ($nouveauTotal) ne correspond pas à l'ancien total ($ancienTotalNet). Veuillez ajuster les quantités pour que le total reste identique."
+            ]);
+        }
+
+        // Enregistrer
+        $nouveauBilletage->montantEntre = $nouveauTotal;
+        $nouveauBilletage->save();
+
+        // (Optionnel) On peut aussi enregistrer l'écart (ici 0) et le motif
+        // $nouveauBilletage->ancien_total = $ancienTotalNet;
+        // $nouveauBilletage->motif = $request->input('motif', 'Ajustement');
+
+    } elseif ($devise === 'USD') {
+        // Même logique pour USD
+        $ancienTotalNet = BilletageUsd::where('NomUtilisateur', $userName)
+            ->where('DateTransaction', $date)
+            ->where('delested', 0)
+            ->select(DB::raw('SUM(montantEntre) - SUM(montantSortie) as totalNet'))
+            ->value('totalNet') ?: 0;
+
+        BilletageUsd::where('NomUtilisateur', $userName)
+            ->where('DateTransaction', $date)
+            ->where('delested', 0)
+            ->update(['delested' => 1]);
+
+        $nouveauBilletage = new BilletageUsd();
+        $nouveauBilletage->NomUtilisateur = $userName;
+        $nouveauBilletage->DateTransaction = $date;
+        $nouveauBilletage->delested = 0;
+
+        $fields = ['centDollars', 'cinquanteDollars', 'vightDollars', 'dixDollars', 'cinqDollars', 'unDollars'];
+        foreach ($fields as $field) {
+            $nouveauBilletage->$field = (int) ($adjustedData[$field] ?? 0);
+        }
+
+        // Sorties à 0
+        $sortieFields = ['centDollarsSortie', 'cinquanteDollarsSortie', 'vightDollarsSortie', 'dixDollarsSortie', 'cinqDollarsSortie', 'unDollarsSortie'];
+        foreach ($sortieFields as $field) {
+            $nouveauBilletage->$field = 0;
+        }
+        $nouveauBilletage->montantSortie = 0;
+
+        $nouveauTotal =
+            ($nouveauBilletage->centDollars * 100) +
+            ($nouveauBilletage->cinquanteDollars * 50) +
+            ($nouveauBilletage->vightDollars * 20) +
+            ($nouveauBilletage->dixDollars * 10) +
+            ($nouveauBilletage->cinqDollars * 5) +
+            ($nouveauBilletage->unDollars * 1);
+
+        if (abs($nouveauTotal - $ancienTotalNet) > 0.01) {
+            return response()->json([
+                'status' => 0,
+                'msg' => "Le montant total ajusté ($nouveauTotal) ne correspond pas à l'ancien total ($ancienTotalNet). Veuillez ajuster les quantités pour que le total reste identique."
+            ]);
+        }
+
+        $nouveauBilletage->montantEntre = $nouveauTotal;
+        $nouveauBilletage->save();
+
+    } else {
+        return response()->json(['status' => 0, 'msg' => 'Devise non reconnue']);
+    }
+
+    return response()->json([
+        'status' => 1,
+        'msg' => 'Ajustement enregistré avec succès',
+        'ancien_total' => $ancienTotalNet,
+        'nouveau_total' => $nouveauTotal
+    ]);
+}
+    
 
 
     //GET APPRO HOME PAGE 
@@ -2817,7 +2855,7 @@ class TransactionsController extends Controller
                 ->where("DateTransaction", $dateSystem)
                 ->where("delested", 0)->update([
                     "delested" => 1,
-                    "NomUtilisateur" => Auth::user()->name,
+                    // "NomUtilisateur" => Auth::user()->name,
                 ]);
             return response()->json(["status" => 1, "msg" => "Vous avez confirmé ce delestage avec succès."]);
         } else {
