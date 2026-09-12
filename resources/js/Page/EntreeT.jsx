@@ -365,14 +365,14 @@ const EntreeT = () => {
                                                                                     >
                                                                                         <i className="fas fa-check-circle me-1"></i> Délester
                                                                                     </button>
-                                                                                    <button
+                                                                                    {/* <button
                                                                                         className="btn btn-sm"
                                                                                         type="button"
                                                                                         style={{ background: "#dc3545", color: "white", borderRadius: "0 6px 6px 0" }}
                                                                                         onClick={() => CuncelDelestageCDF(res.id)}
                                                                                     >
                                                                                         <i className="fas fa-times-circle me-1"></i> Réjeter
-                                                                                    </button>
+                                                                                    </button> */}
                                                                                 </div>
                                                                             </td>
                                                                         </tr>
@@ -420,14 +420,14 @@ const EntreeT = () => {
                                                                                     >
                                                                                         <i className="fas fa-check-circle me-1"></i> Délester
                                                                                     </button>
-                                                                                    <button
+                                                                                    {/* <button
                                                                                         className="btn btn-sm"
                                                                                         type="button"
                                                                                         style={{ background: "#dc3545", color: "white", borderRadius: "0 6px 6px 0" }}
                                                                                         onClick={() => CuncelDelestageUSD(res.id)}
                                                                                     >
                                                                                         <i className="fas fa-times-circle me-1"></i> Réjeter
-                                                                                    </button>
+                                                                                    </button> */}
                                                                                 </div>
                                                                             </td>
                                                                         </tr>

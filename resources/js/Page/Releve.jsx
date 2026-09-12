@@ -39,10 +39,20 @@ const Releve = () => {
     return `${year}-01-01`;
 };
     // Fonction pour la date du jour
+    // const getToday = () => {
+    //     const today = new Date();
+    //     return today.toISOString().split('T')[0];
+    // };
+
     const getToday = () => {
-        const today = new Date();
-        return today.toISOString().split('T')[0];
-    };
+    const today = new Date();
+
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+};
 
      // États avec les valeurs par défaut
     const [dateDebut, setDateDebut] = useState(getFirstDayOfYear());
@@ -165,20 +175,20 @@ const Releve = () => {
         return parts.join(".");
     }
 
-    const dateParser = (num) => {
-        const options = {
-            // weekday: "long",
-            year: "numeric",
-            month: "numeric",
-            day: "numeric",
-        };
+    // const dateParser = (num) => {
+    //     const options = {
+    //         // weekday: "long",
+    //         year: "numeric",
+    //         month: "numeric",
+    //         day: "numeric",
+    //     };
 
-        let timestamp = Date.parse(num);
+    //     let timestamp = Date.parse(num);
 
-        let date = new Date(timestamp).toLocaleDateString("fr-FR", options);
+    //     let date = new Date(timestamp).toLocaleDateString("fr-FR", options);
 
-        return date.toString();
-    };
+    //     return date.toString();
+    // };
 
     //
     // const exportTableData = (tableId) => {
@@ -199,6 +209,22 @@ const Releve = () => {
     //         fileName
     //     );
     // };
+   
+    const dateParser = (num) => {
+    if (!num) return "";
+
+    // Convertit directement la partie YYYY-MM-DD
+    // sans passer par new Date() et sans décalage de fuseau horaire
+    const datePart = String(num).substring(0, 10);
+
+    const [year, month, day] = datePart.split("-");
+
+    if (!year || !month || !day) return num;
+
+    return `${day}/${month}/${year}`;
+};
+   
+   
     const exportTableData = (tableId) => {
         const s2ab = (s) => {
             const buf = new ArrayBuffer(s.length);

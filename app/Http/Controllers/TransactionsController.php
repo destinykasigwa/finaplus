@@ -1725,6 +1725,7 @@ class TransactionsController extends Controller
             DB::raw("SUM(montantEntre)-SUM(montantSortie) as sommeMontantCDF")
         )
             ->where("delested", 0);
+            
 
         if ($isSuperAdmin) {
             // Admin : ajouter DateTransaction au select et group by
@@ -1737,6 +1738,7 @@ class TransactionsController extends Controller
                 $queryUSD->where('DateTransaction', $selectedDate);
                 $queryCDF->where('DateTransaction', $selectedDate);
             }
+         
         } else {
             // Caissier normal : pas de DateTransaction dans select, groupe sur NomUtilisateur
             $queryUSD->where('NomUtilisateur', $user->name)
@@ -1749,7 +1751,7 @@ class TransactionsController extends Controller
 
         $billetageUSD = $queryUSD->get();
         $billetageCDF = $queryCDF->get();
-
+      
 
 
 

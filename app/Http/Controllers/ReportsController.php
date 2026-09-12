@@ -1461,7 +1461,7 @@ class ReportsController extends Controller
             '30' => 'STOCKS',
             '31' => 'MARCHANDISES',
             '32' => 'CREDITS A COURT TERME',
-            '33' => 'EPARGNE A VUE',
+            '33' => 'EPARGNE',
 
             '38' => 'PROVISIONS',
             '39' => 'CREANCES DOUTEUSES',
@@ -1624,7 +1624,7 @@ class ReportsController extends Controller
                         WHEN '30' THEN 'STOCKS'
                         WHEN '31' THEN 'MARCHANDISES'
                         WHEN '32' THEN 'CREDITS A COURT TERME'
-                        WHEN '33' THEN 'EPARGNE A VUE'
+                        WHEN '33' THEN 'EPARGNE'
 
                         WHEN '38' THEN 'PROVISIONS'
                         WHEN '39' THEN 'CREANCES DOUTEUSES'
@@ -1784,7 +1784,7 @@ class ReportsController extends Controller
                             WHEN '30' THEN 'STOCKS'
                             WHEN '31' THEN 'MARCHANDISES'
                             WHEN '32' THEN 'CREDITS A COURT TERME'
-                            WHEN '33' THEN 'EPARGNE A VUE'
+                            WHEN '33' THEN 'EPARGNE'
 
                             WHEN '38' THEN 'PROVISIONS'
                             WHEN '39' THEN 'CREANCES DOUTEUSES'

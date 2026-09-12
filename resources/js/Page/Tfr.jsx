@@ -66,7 +66,7 @@ const TFR = () => {
                     agence_filter: agenceFilter, // <- ajout
                 },
             );
-            if (res.data.status === 1) {
+            if (res.data.status == 1) {
                 setTfrData(res.data.data);
                 setTotaux(res.data.totaux);
                 setCurrentPage(1);
@@ -86,7 +86,7 @@ const TFR = () => {
     };
 
     const numberWithSpaces = (x) => {
-        if (x === null || x === undefined) return "0,00";
+        if (x == null || x == undefined) return "0,00";
         return Number(x).toLocaleString("fr-FR", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -122,7 +122,7 @@ const TFR = () => {
                 <button
                     className="page-nav"
                     onClick={() => onPageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
+                    disabled={currentPage == 1}
                 >
                     <i className="fas fa-chevron-left"></i>
                 </button>
@@ -142,7 +142,7 @@ const TFR = () => {
                 {pages.map((page) => (
                     <button
                         key={page}
-                        className={`page-number ${page === currentPage ? "active" : ""}`}
+                        className={`page-number ${page == currentPage ? "active" : ""}`}
                         onClick={() => onPageChange(page)}
                     >
                         {page}
@@ -164,7 +164,7 @@ const TFR = () => {
                 <button
                     className="page-nav"
                     onClick={() => onPageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage == totalPages}
                 >
                     <i className="fas fa-chevron-right"></i>
                 </button>
@@ -178,7 +178,7 @@ const TFR = () => {
     const exportToExcel = () => {
         const wsData = tfrData.map((item) => ({
             Compte: item.compte,
-            Nature: item.nature === "PRODUIT" ? "Produit" : "Charge",
+            Nature: item.nature == "PRODUIT" ? "Produit" : "Charge",
             Montant: item.solde,
         }));
         const ws = XLSX.utils.json_to_sheet(wsData);
@@ -205,14 +205,14 @@ const TFR = () => {
         if (!date_debut || !date_fin) return true;
         const anneeDebut = new Date(date_debut).getFullYear();
         const anneeFin = new Date(date_fin).getFullYear();
-        return anneeDebut === anneeFin;
+        return anneeDebut == anneeFin;
     };
 
     const getAgenceNom = () => {
-        if (agenceFilter === "current") {
+        if (agenceFilter == "current") {
             return "AGENCE DE " + currentAgence?.nom_agence || "Non définie";
         }
-        if (agenceFilter === "all") {
+        if (agenceFilter == "all") {
             return "TOUTES AGENCES";
         }
         // agenceFilter est un id
@@ -281,8 +281,8 @@ const TFR = () => {
                             className="modern-input"
                             value={date_debut}
                             onChange={(e) => setDateDebut(e.target.value)}
-                        />
-                        {!isPeriodValid() && (
+                            />
+                        {/* {!isPeriodValid() && (
                             <small
                                 className="text-muted"
                                 style={{ fontSize: "16px" }}
@@ -293,7 +293,7 @@ const TFR = () => {
                                     année{" "}
                                 </i>
                             </small>
-                        )}
+                        )} */}
                         <label>Date fin</label>
                         <input
                             type="date"
@@ -329,7 +329,7 @@ const TFR = () => {
                                 className="form-check-input"
                                 id="detail"
                                 value="detail"
-                                checked={typeTFR === "detail"}
+                                checked={typeTFR == "detail"}
                                 onChange={(e) => setTypeTFR(e.target.value)}
                             />
                             <label
@@ -345,7 +345,7 @@ const TFR = () => {
                                 className="form-check-input"
                                 id="consolide"
                                 value="consolide"
-                                checked={typeTFR === "consolide"}
+                                checked={typeTFR == "consolide"}
                                 onChange={(e) => setTypeTFR(e.target.value)}
                             />
                             <label
@@ -409,9 +409,9 @@ const TFR = () => {
                                 <button
                                     className="btn-primary-gradient mt-2"
                                     onClick={handleSearch}
-                                    disabled={!isPeriodValid()}
+                                    // disabled={!isPeriodValid()}
                                     style={{
-                                        opacity: !isPeriodValid() ? 0.6 : 1,
+                                        // opacity: !isPeriodValid() ? 0.6 : 1,
                                         width: "100%",
                                     }}
                                 >
@@ -422,13 +422,13 @@ const TFR = () => {
                                     )}
                                     Calculer le résultat
                                 </button>
-                                {!isPeriodValid() && (
+                                {/* {!isPeriodValid() && (
                                     <span className="tooltip-text">
                                         <i className="fas fa-info-circle me-1"></i>{" "}
                                         Les dates doivent être dans la même
                                         année
                                     </span>
-                                )}
+                                )} */}
                             </div>
                         </div>
                     </div>
@@ -466,7 +466,7 @@ const TFR = () => {
                                             <tr key={idx}>
                                                 <td>{item.compte}</td>
                                                 <td>
-                                                    {item.nature === "PRODUIT"
+                                                    {item.nature == "PRODUIT"
                                                         ? "Produit"
                                                         : "Charge"}
                                                 </td>
@@ -546,7 +546,7 @@ const TFR = () => {
                 </>
             )}
 
-            {tfrData.length === 0 && !loading && (
+            {tfrData.length == 0 && !loading && (
                 <div className="tfr-empty">
                     <i className="fas fa-chart-line"></i>
                     <p>Aucune donnée trouvée pour la période sélectionnée.</p>

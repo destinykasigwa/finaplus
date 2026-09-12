@@ -812,7 +812,8 @@ return response()->json(["status" => 0, "msg" => "Aucune information trouvée"])
                     $lastRowData  = Echeancier::orderBy('ReferenceEch', 'desc')->first();
                 }
             }
-        } else if ($getTypeCredit->type_credit == "C. A LA CONSOMMATION FC" or  $getTypeCredit->type_credit == "C. PETIT COMMERCE FC" or $getTypeCredit->type_credit == "C. A LA CONSOMMATION USD" or  $getTypeCredit->type_credit == "C. PETIT COMMERCE USD") {
+        } 
+        else if ($getTypeCredit->type_credit == "C. A LA CONSOMMATION FC" or  $getTypeCredit->type_credit == "C. PETIT COMMERCE FC" or $getTypeCredit->type_credit == "C. A LA CONSOMMATION USD" or  $getTypeCredit->type_credit == "C. PETIT COMMERCE USD") {
 
             Echeancier::create([
                 "CodeAgence" => $codeAgence,

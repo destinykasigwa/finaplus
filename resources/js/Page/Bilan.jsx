@@ -1210,7 +1210,7 @@ const Bilan = () => {
                     <div className="d-flex justify-content-end gap-2 mb-4">
                         <button
                             onClick={() =>
-                                exportTableData("main-table-balance")
+                                exportTableData("content-to-download-balance")
                             }
                             className="btn"
                             style={{
